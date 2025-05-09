@@ -159,8 +159,7 @@ export const fetchLotteryById = async (id: string): Promise<Lottery | null> => {
   }
 };
 
-// Nouvelle fonction pour créer un produit
-export const createProduct = async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product | null> => {
+export const createProduct = async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product> => {
   try {
     console.log("Creating new product:", product);
     const { data, error } = await supabase
@@ -182,8 +181,7 @@ export const createProduct = async (product: Omit<Product, 'id' | 'created_at' |
   }
 };
 
-// Nouvelle fonction pour créer une loterie
-export const createLottery = async (lottery: Omit<Lottery, 'id' | 'created_at' | 'updated_at'>): Promise<Lottery | null> => {
+export const createLottery = async (lottery: Omit<Lottery, 'id' | 'created_at' | 'updated_at'>): Promise<Lottery> => {
   try {
     console.log("Creating new lottery:", lottery);
     const { data, error } = await supabase
