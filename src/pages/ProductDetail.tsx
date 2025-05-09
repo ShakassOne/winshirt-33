@@ -55,7 +55,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { HexColorPicker } from 'react-colorful';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Définition des polices Google Fonts
 const googleFonts = [
@@ -87,17 +87,41 @@ const googleFonts = [
   { value: 'Permanent Marker', label: 'Permanent Marker' },
   { value: 'Satisfy', label: 'Satisfy' },
   { value: 'Amatic SC', label: 'Amatic SC' },
-  { value: 'Pathway Gothic One', label: 'Pathway Gothic One' }
+  { value: 'Pathway Gothic One', label: 'Pathway Gothic One' },
+  { value: 'Abel', label: 'Abel' },
+  { value: 'Barlow', label: 'Barlow' },
+  { value: 'Cabin', label: 'Cabin' },
+  { value: 'Crimson Text', label: 'Crimson Text' },
+  { value: 'Exo 2', label: 'Exo 2' },
+  { value: 'Fjalla One', label: 'Fjalla One' },
+  { value: 'Josefin Sans', label: 'Josefin Sans' },
+  { value: 'Karla', label: 'Karla' },
+  { value: 'Libre Baskerville', label: 'Libre Baskerville' },
+  { value: 'Muli', label: 'Muli' },
+  { value: 'Noto Serif', label: 'Noto Serif' },
+  { value: 'Oxygen', label: 'Oxygen' },
+  { value: 'Prompt', label: 'Prompt' },
+  { value: 'Rubik', label: 'Rubik' },
+  { value: 'Space Mono', label: 'Space Mono' },
+  { value: 'Work Sans', label: 'Work Sans' },
+  { value: 'Yanone Kaffeesatz', label: 'Yanone Kaffeesatz' },
+  { value: 'Bree Serif', label: 'Bree Serif' },
+  { value: 'Crete Round', label: 'Crete Round' },
+  { value: 'Abril Fatface', label: 'Abril Fatface' },
+  { value: 'Righteous', label: 'Righteous' },
+  { value: 'Philosopher', label: 'Philosopher' },
+  { value: 'Kanit', label: 'Kanit' },
+  { value: 'Russo One', label: 'Russo One' }
 ];
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const productCanvasRef = useRef<HTMLDivElement>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [selectedTab, setSelectedTab] = useState('general');
+  const [selectedTab, setSelectedTab] = useState('design');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [designDialogOpen, setDesignDialogOpen] = useState(false);
   const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
@@ -174,11 +198,6 @@ const ProductDetail = () => {
       document.body.style.overflow = 'auto';
     };
   }, [pageScrollLocked]);
-
-  // Rendez-vous visible lorsqu'on change d'onglet
-  useEffect(() => {
-    // Toujours garder le design visible, même lorsqu'on passe à l'onglet texte
-  }, [selectedTab]);
 
   const handleQuantityChange = (type: 'increase' | 'decrease') => {
     if (type === 'increase') {
@@ -291,7 +310,7 @@ const ProductDetail = () => {
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-    window.addEventListener('touchmove', handleMouseMove);
+    window.addEventListener('touchmove', handleMouseMove, { passive: false });
     window.addEventListener('touchend', handleMouseUp);
     
     return () => {
@@ -405,6 +424,13 @@ const ProductDetail = () => {
   const productImage = product.image_url;
   const activeLotteries = lotteries.filter(lottery => lottery.is_active);
 
+  // Prévenir le défilement de la page pendant la personnalisation sur mobile
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isDragging || isDraggingText) {
+      e.preventDefault();
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -423,7 +449,8 @@ const ProductDetail = () => {
             <div 
               ref={productCanvasRef}
               className="relative bg-black/30 rounded-lg overflow-hidden shadow-xl aspect-square flex justify-center items-center"
-              style={{ touchAction: isDragging || isDraggingText ? 'none' : 'auto' }}
+              style={{ touchAction: 'none' }}
+              onTouchMove={handleTouchMove}
             >
               <img 
                 src={productImage} 
@@ -431,7 +458,7 @@ const ProductDetail = () => {
                 className="w-full h-full object-contain"
               />
               
-              {/* Design superposé */}
+              {/* Design superposé - toujours visible */}
               {selectedDesign && (
                 <div 
                   className="absolute cursor-move select-none"
@@ -440,7 +467,7 @@ const ProductDetail = () => {
                                rotate(${designTransform.rotation}deg) 
                                scale(${designTransform.scale})`,
                     transformOrigin: 'center',
-                    display: (currentPrintPosition === selectedTab || selectedTab === 'design') ? 'block' : 'none'
+                    zIndex: 10
                   }}
                   onMouseDown={(e) => handleMouseDown(e)}
                   onTouchStart={(e) => handleMouseDown(e)}
@@ -454,7 +481,7 @@ const ProductDetail = () => {
                 </div>
               )}
               
-              {/* Texte superposé */}
+              {/* Texte superposé - toujours visible */}
               {textEnabled && textContent && (
                 <div 
                   className="absolute cursor-move select-none"
@@ -470,7 +497,7 @@ const ProductDetail = () => {
                     textDecoration: textStyles.underline ? 'underline' : 'none',
                     fontSize: '24px',
                     textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
-                    display: (textPosition === selectedTab || selectedTab === 'text') ? 'block' : 'none'
+                    zIndex: 20
                   }}
                   onMouseDown={(e) => handleMouseDown(e, true)}
                   onTouchStart={(e) => handleMouseDown(e, true)}
@@ -546,7 +573,7 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Options de personnalisation */}
+              {/* Options de personnalisation - maintenant avant les loteries */}
               {product.is_customizable && (
                 <div className="bg-black/20 rounded-lg p-4 mb-6">
                   <h3 className="text-lg font-semibold mb-4">Personnalisation</h3>
@@ -631,7 +658,7 @@ const ProductDetail = () => {
                                 </span>
                               </div>
                               <Slider
-                                min={0.05}
+                                min={0.02}
                                 max={2}
                                 step={0.01}
                                 value={[designTransform.scale]}
@@ -760,7 +787,7 @@ const ProductDetail = () => {
                                 <SelectTrigger>
                                   <SelectValue placeholder="Choisir une police" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="max-h-[300px]">
                                   <SelectGroup>
                                     {googleFonts.map((font) => (
                                       <SelectItem
@@ -811,7 +838,7 @@ const ProductDetail = () => {
                                   </span>
                                 </div>
                                 <Slider
-                                  min={0.1}
+                                  min={0.05}
                                   max={3}
                                   step={0.01}
                                   value={[textTransform.scale]}
@@ -867,7 +894,7 @@ const ProductDetail = () => {
                 </div>
               )}
               
-              {/* Loteries disponibles - Maintenant sous la personnalisation */}
+              {/* Loteries disponibles - Maintenant APRÈS la personnalisation */}
               {product.tickets_offered > 0 && activeLotteries.length > 0 && (
                 <div className="bg-black/20 rounded-lg p-4 mb-6">
                   <h3 className="text-lg font-semibold mb-2">
