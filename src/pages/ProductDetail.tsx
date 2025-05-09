@@ -6,11 +6,14 @@ import Footer from '@/components/layout/Footer';
 import { fetchProductById, fetchAllLotteries, fetchDesigns } from '@/services/api.service';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Check } from 'lucide-react';
+import { ShoppingCart, Check, Upload, Image } from 'lucide-react';
 import GlassCard from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/badge';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +23,8 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [showCustomizationPanel, setShowCustomizationPanel] = useState(false);
   const [selectedDesign, setSelectedDesign] = useState<string | null>(null);
+  const [designTab, setDesignTab] = useState<string>('animaux');
+  const [selectedLotteries, setSelectedLotteries] = useState<string[]>([]);
   
   const { data: product, isLoading: productLoading, error: productError } = useQuery({
     queryKey: ['product', id],
@@ -51,6 +56,12 @@ const ProductDetail = () => {
       return;
     }
 
+    // Vérifier si des loteries sont sélectionnées quand le produit offre des tickets
+    if (product?.tickets_offered && product.tickets_offered > 0 && selectedLotteries.length === 0) {
+      toast.error("Veuillez sélectionner au moins une loterie");
+      return;
+    }
+
     toast.success("Produit ajouté au panier");
   };
 
@@ -61,6 +72,25 @@ const ProductDetail = () => {
   const handleDesignSelect = (designId: string) => {
     setSelectedDesign(designId);
     toast.success("Design sélectionné");
+  };
+
+  const handleLotterySelect = (lotteryId: string) => {
+    // Si la loterie est déjà sélectionnée, la désélectionner
+    if (selectedLotteries.includes(lotteryId)) {
+      setSelectedLotteries(selectedLotteries.filter(id => id !== lotteryId));
+    } else {
+      // Vérifier si on a atteint le nombre max de tickets/loteries
+      if (selectedLotteries.length < (product?.tickets_offered || 0)) {
+        setSelectedLotteries([...selectedLotteries, lotteryId]);
+      } else {
+        toast.error(`Vous ne pouvez sélectionner que ${product?.tickets_offered} loterie(s)`);
+      }
+    }
+  };
+
+  const filterDesignsByCategory = (category: string) => {
+    if (!designs) return [];
+    return designs.filter(design => design.category.toLowerCase() === category.toLowerCase());
   };
 
   if (productLoading) {
@@ -90,11 +120,17 @@ const ProductDetail = () => {
   const getColorName = (colorCode: string) => {
     const colorMap: Record<string, string> = {
       'white': 'Blanc',
+      '#ffffff': 'Blanc',
       'black': 'Noir',
+      '#000000': 'Noir',
       'blue': 'Bleu',
+      '#0000ff': 'Bleu',
       'red': 'Rouge',
+      '#ff0000': 'Rouge',
       'gray': 'Gris',
+      '#808080': 'Gris',
       'navy': 'Bleu marine',
+      '#000080': 'Bleu marine',
     };
     return colorMap[colorCode] || colorCode;
   };
@@ -160,34 +196,78 @@ const ProductDetail = () => {
               {showCustomizationPanel && (
                 <div className="mt-6">
                   <GlassCard className="p-6">
-                    <h3 className="text-lg font-medium mb-3">Sélectionner un design</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-                      {designs ? designs.map(design => (
-                        <div 
-                          key={design.id} 
-                          className={`relative aspect-square rounded-md overflow-hidden cursor-pointer ${
-                            selectedDesign === design.id ? 'ring-2 ring-winshirt-purple' : 'hover:opacity-80'
-                          }`}
-                          onClick={() => handleDesignSelect(design.id)}
-                        >
-                          <img 
-                            src={design.image_url} 
-                            alt={design.name} 
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity">
-                            <p className="text-white text-sm font-medium">{design.name}</p>
-                          </div>
-                          {selectedDesign === design.id && (
-                            <div className="absolute top-2 right-2 bg-winshirt-purple rounded-full w-5 h-5 flex items-center justify-center">
-                              <Check className="w-3 h-3 text-white" />
+                    <Tabs defaultValue="animaux" value={designTab} onValueChange={setDesignTab}>
+                      <TabsList className="grid w-full grid-cols-2 mb-6">
+                        <TabsTrigger value="animaux">Animaux</TabsTrigger>
+                        <TabsTrigger value="abstrait">Abstrait</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="animaux" className="space-y-4">
+                        <h3 className="text-lg font-medium mb-2">Choisissez un visuel pour le recto</h3>
+                        <div className="grid grid-cols-3 gap-3">
+                          {filterDesignsByCategory('animaux').map(design => (
+                            <div 
+                              key={design.id} 
+                              className={`relative aspect-square rounded-md overflow-hidden cursor-pointer border ${
+                                selectedDesign === design.id ? 'border-2 border-winshirt-purple' : 'border-white/20'
+                              }`}
+                              onClick={() => handleDesignSelect(design.id)}
+                            >
+                              <img 
+                                src={design.image_url} 
+                                alt={design.name} 
+                                className="w-full h-full object-cover"
+                              />
+                              {selectedDesign === design.id && (
+                                <div className="absolute top-2 right-2 bg-winshirt-purple rounded-full w-5 h-5 flex items-center justify-center">
+                                  <Check className="w-3 h-3 text-white" />
+                                </div>
+                              )}
                             </div>
-                          )}
+                          ))}
                         </div>
-                      )) : (
-                        <p>Chargement des designs...</p>
-                      )}
-                    </div>
+
+                        <div className="mt-4">
+                          <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+                            <Upload size={16} />
+                            Upload
+                          </Button>
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="abstrait" className="space-y-4">
+                        <h3 className="text-lg font-medium mb-2">Choisissez un visuel pour le recto</h3>
+                        <div className="grid grid-cols-3 gap-3">
+                          {filterDesignsByCategory('abstrait').map(design => (
+                            <div 
+                              key={design.id} 
+                              className={`relative aspect-square rounded-md overflow-hidden cursor-pointer border ${
+                                selectedDesign === design.id ? 'border-2 border-winshirt-purple' : 'border-white/20'
+                              }`}
+                              onClick={() => handleDesignSelect(design.id)}
+                            >
+                              <img 
+                                src={design.image_url} 
+                                alt={design.name} 
+                                className="w-full h-full object-cover"
+                              />
+                              {selectedDesign === design.id && (
+                                <div className="absolute top-2 right-2 bg-winshirt-purple rounded-full w-5 h-5 flex items-center justify-center">
+                                  <Check className="w-3 h-3 text-white" />
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-4">
+                          <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+                            <Upload size={16} />
+                            Upload
+                          </Button>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
                   </GlassCard>
                 </div>
               )}
@@ -238,10 +318,10 @@ const ProductDetail = () => {
                     {product.available_sizes.map((size) => (
                       <button
                         key={size}
-                        className={`px-3 py-1 rounded-md border transition-colors ${
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
                           selectedSize === size
                             ? 'bg-winshirt-purple border-winshirt-purple text-white'
-                            : 'border-white/20 bg-white/5 hover:bg-white/10'
+                            : 'border border-white/20 bg-white/5 hover:bg-white/10'
                         }`}
                         onClick={() => setSelectedSize(size)}
                       >
@@ -298,30 +378,63 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {eligibleLotteries && eligibleLotteries.length > 0 && (
+              {eligibleLotteries && eligibleLotteries.length > 0 && product.tickets_offered > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-sm font-medium mb-2">Loteries associées</h3>
+                  <h3 className="text-sm font-medium mb-2">
+                    Choisissez vos loteries ({selectedLotteries.length}/{product.tickets_offered})
+                  </h3>
                   <GlassCard className="p-4">
                     <p className="text-white/70 mb-3">
                       Avec ce produit, participez aux loteries suivantes:
                     </p>
-                    <div className="space-y-2">
-                      {eligibleLotteries.map(lottery => (
-                        <div key={lottery.id} className="flex items-center p-2 rounded-lg bg-white/5 border border-white/10">
-                          <div className="w-12 h-12 rounded-md overflow-hidden mr-3">
-                            <img 
-                              src={lottery.image_url} 
-                              alt={lottery.title} 
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-medium text-sm">{lottery.title}</h4>
-                            <p className="text-xs text-white/50">Valeur: {lottery.value.toFixed(2)} €</p>
+                    
+                    {eligibleLotteries.map((lottery, index) => (
+                      <div 
+                        key={lottery.id} 
+                        onClick={() => handleLotterySelect(lottery.id)}
+                        className={`flex items-center p-3 rounded-lg cursor-pointer mb-3 border ${
+                          selectedLotteries.includes(lottery.id) 
+                            ? 'border-winshirt-purple bg-white/10' 
+                            : 'border-white/10 bg-white/5 hover:bg-white/10'
+                        }`}
+                      >
+                        <div className="mr-2 flex items-center justify-center">
+                          <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                            selectedLotteries.includes(lottery.id) 
+                              ? 'border-winshirt-purple bg-winshirt-purple' 
+                              : 'border-white/40'
+                          }`}>
+                            {selectedLotteries.includes(lottery.id) && (
+                              <Check className="w-3 h-3 text-white" />
+                            )}
                           </div>
                         </div>
-                      ))}
-                    </div>
+                        
+                        <div className="w-12 h-12 rounded-md overflow-hidden mr-3">
+                          <img 
+                            src={lottery.image_url} 
+                            alt={lottery.title} 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        
+                        <div className="flex-1">
+                          <h4 className="font-medium">
+                            Ticket {index+1}: {lottery.title}
+                          </h4>
+                          <p className="text-sm text-white/70">Valeur: {lottery.value.toFixed(2)} €</p>
+                          <div className="w-full bg-white/20 rounded-full h-1.5 mt-1">
+                            <div 
+                              className="bg-winshirt-blue h-1.5 rounded-full" 
+                              style={{ width: `${Math.min((lottery.participants / lottery.goal) * 100, 100)}%` }} 
+                            />
+                          </div>
+                          <p className="text-xs text-white/50 mt-1">
+                            {lottery.participants} / {lottery.goal} participants
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </GlassCard>
                 </div>
               )}
