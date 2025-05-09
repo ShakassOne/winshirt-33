@@ -94,6 +94,17 @@ export interface CartItem {
       scale: number;
       rotation: number;
     };
+    text?: {
+      content: string;
+      font: string;
+      color: string;
+      printPosition: 'front' | 'back';
+      transform?: {
+        position: { x: number; y: number };
+        scale: number;
+        rotation: number;
+      };
+    };
   };
   lotteries?: string[];
 }

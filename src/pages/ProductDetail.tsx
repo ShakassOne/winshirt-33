@@ -6,7 +6,7 @@ import Footer from '@/components/layout/Footer';
 import { fetchProductById, fetchAllLotteries, fetchDesigns, fetchMockupById } from '@/services/api.service';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Check, Upload, Image, Circle, ArrowLeft, ArrowRight, Move, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { ShoppingCart, Check, Upload, Image, Circle, ArrowLeft, ArrowRight, Move, ZoomIn, ZoomOut, RotateCw, Type, Bold, Italic, Underline, TextCursor } from 'lucide-react';
 import GlassCard from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/badge';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CartItem, Design, Mockup } from '@/types/supabase.types';
 import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
 
 // Prix par taille d'impression
 const PRINT_SIZES_PRICES = {
@@ -23,6 +24,17 @@ const PRINT_SIZES_PRICES = {
   'a4': 10.00,
   'a3': 15.00
 };
+
+// Familles de polices disponibles
+const AVAILABLE_FONTS = [
+  { name: 'Arial', value: 'Arial, sans-serif' },
+  { name: 'Helvetica', value: 'Helvetica, Arial, sans-serif' },
+  { name: 'Georgia', value: 'Georgia, serif' },
+  { name: 'Times New Roman', value: 'Times New Roman, Times, serif' },
+  { name: 'Courier New', value: 'Courier New, monospace' },
+  { name: 'Impact', value: 'Impact, Charcoal, sans-serif' },
+  { name: 'Comic Sans MS', value: 'Comic Sans MS, cursive' }
+];
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,7 +49,7 @@ const ProductDetail = () => {
   const [mockupData, setMockupData] = useState<Mockup | null>(null);
   const [selectedPrintPosition, setSelectedPrintPosition] = useState<'front' | 'back'>('front');
   const [selectedPrintSize, setSelectedPrintSize] = useState<'a4'>('a4');
-  const [currentDesignView, setCurrentDesignView] = useState<'browse' | 'upload'>('browse');
+  const [currentDesignView, setCurrentDesignView] = useState<'browse' | 'upload' | 'text'>('browse');
   const [uploadedDesignUrl, setUploadedDesignUrl] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState<boolean>(true);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -49,6 +61,21 @@ const ProductDetail = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [customizationPrice, setCustomizationPrice] = useState(0);
+  
+  // Nouvel état pour la personnalisation du texte
+  const [customText, setCustomText] = useState('');
+  const [textFont, setTextFont] = useState<string>(AVAILABLE_FONTS[0].value);
+  const [textColor, setTextColor] = useState<string>('#ffffff');
+  const [textPosition, setTextPosition] = useState({ x: 0, y: 0 });
+  const [textScale, setTextScale] = useState(1);
+  const [textRotation, setTextRotation] = useState(0);
+  const [isTextDragging, setIsTextDragging] = useState(false);
+  const [textDragStart, setTextDragStart] = useState({ x: 0, y: 0 });
+  const [showTextEditor, setShowTextEditor] = useState(false);
+  const [textCustomizationPrice, setTextCustomizationPrice] = useState(0);
+  const [textBold, setTextBold] = useState(false);
+  const [textItalic, setTextItalic] = useState(false);
+  const [textUnderline, setTextUnderline] = useState(false);
   
   // Référence à la div contenant l'aperçu pour manipulation
   const previewContainerRef = useRef<HTMLDivElement>(null);
@@ -62,6 +89,14 @@ const ProductDetail = () => {
     // Ajouter le prix de personnalisation si un design est sélectionné
     if ((selectedDesign || uploadedDesignUrl) && selectedPrintSize) {
       basePrice += PRINT_SIZES_PRICES[selectedPrintSize as keyof typeof PRINT_SIZES_PRICES] * quantity;
+    }
+    
+    // Ajouter le prix de personnalisation du texte si un texte est entré
+    if (customText && mockupData) {
+      const textPrice = selectedPrintPosition === 'front' 
+        ? mockupData.text_price_front 
+        : mockupData.text_price_back;
+      basePrice += textPrice * quantity;
     }
     
     return basePrice;
@@ -122,6 +157,16 @@ const ProductDetail = () => {
       setCustomizationPrice(PRINT_SIZES_PRICES[selectedPrintSize as keyof typeof PRINT_SIZES_PRICES]);
     }
   }, [selectedPrintSize]);
+  
+  // Mettre à jour le prix du texte lorsque le mockup change
+  useEffect(() => {
+    if (mockupData && customText) {
+      const textPrice = selectedPrintPosition === 'front' 
+        ? mockupData.text_price_front 
+        : mockupData.text_price_back;
+      setTextCustomizationPrice(textPrice);
+    }
+  }, [mockupData, selectedPrintPosition, customText]);
 
   // Sauvegarde du panier dans localStorage
   const saveCart = (newCart: CartItem[]) => {
@@ -150,40 +195,111 @@ const ProductDetail = () => {
       x: e.clientX - designPosition.x,
       y: e.clientY - designPosition.y
     });
+    
+    // Arrêter le drag du texte pour éviter les conflits
+    setIsTextDragging(false);
   };
   
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
+    if (!isDragging && !isTextDragging) return;
     
-    const newX = e.clientX - dragStart.x;
-    const newY = e.clientY - dragStart.y;
+    if (isDragging) {
+      const newX = e.clientX - dragStart.x;
+      const newY = e.clientY - dragStart.y;
+      
+      setDesignPosition({
+        x: newX,
+        y: newY
+      });
+    }
     
-    setDesignPosition({
-      x: newX,
-      y: newY
-    });
+    if (isTextDragging) {
+      const newX = e.clientX - textDragStart.x;
+      const newY = e.clientY - textDragStart.y;
+      
+      setTextPosition({
+        x: newX,
+        y: newY
+      });
+    }
   };
   
   const handleMouseUp = () => {
     setIsDragging(false);
+    setIsTextDragging(false);
+  };
+  
+  // Gestion du drag & drop pour le texte
+  const handleTextMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation(); // Empêcher la propagation pour éviter de déclencher aussi le drag du design
+    
+    if (!previewContainerRef.current) return;
+    
+    setIsTextDragging(true);
+    setTextDragStart({
+      x: e.clientX - textPosition.x,
+      y: e.clientY - textPosition.y
+    });
+    
+    // Arrêter le drag du design pour éviter les conflits
+    setIsDragging(false);
   };
   
   const handleZoomIn = () => {
-    setDesignScale(prev => Math.min(prev + 0.1, 2));
+    if (showTextEditor) {
+      setTextScale(prev => Math.min(prev + 0.1, 2));
+    } else {
+      setDesignScale(prev => Math.min(prev + 0.1, 2));
+    }
   };
   
   const handleZoomOut = () => {
-    setDesignScale(prev => Math.max(prev - 0.1, 0.5));
+    if (showTextEditor) {
+      setTextScale(prev => Math.max(prev - 0.1, 0.5));
+    } else {
+      setDesignScale(prev => Math.max(prev - 0.1, 0.5));
+    }
   };
   
   const handleRotate = () => {
-    setDesignRotation(prev => prev + 15);
+    if (showTextEditor) {
+      setTextRotation(prev => prev + 15);
+    } else {
+      setDesignRotation(prev => prev + 15);
+    }
   };
   
   const resetDesignTransform = () => {
-    setDesignPosition({ x: 0, y: 0 });
-    setDesignScale(1);
-    setDesignRotation(0);
+    if (showTextEditor) {
+      setTextPosition({ x: 0, y: 0 });
+      setTextScale(1);
+      setTextRotation(0);
+    } else {
+      setDesignPosition({ x: 0, y: 0 });
+      setDesignScale(1);
+      setDesignRotation(0);
+    }
+  };
+  
+  // Toggle pour le mode d'édition du texte
+  const toggleTextEditor = () => {
+    setShowTextEditor(!showTextEditor);
+    if (!showTextEditor) {
+      setCurrentDesignView('text');
+    }
+  };
+  
+  // Toggle pour le style du texte
+  const toggleTextBold = () => {
+    setTextBold(!textBold);
+  };
+  
+  const toggleTextItalic = () => {
+    setTextItalic(!textItalic);
+  };
+  
+  const toggleTextUnderline = () => {
+    setTextUnderline(!textUnderline);
   };
 
   // Ajout au panier
@@ -219,7 +335,7 @@ const ProductDetail = () => {
       color: selectedColor,
       size: selectedSize,
       image_url: product.image_url,
-      customization: selectedDesign || uploadedDesignUrl ? {
+      customization: (selectedDesign || uploadedDesignUrl || customText) ? {
         designId: selectedDesign || 'custom',
         designName: selectedDesignDetails?.name || 'Design personnalisé',
         designUrl: currentDesignView === 'upload' ? uploadedDesignUrl! : selectedDesignDetails?.image_url || '',
@@ -229,7 +345,19 @@ const ProductDetail = () => {
           position: designPosition,
           scale: designScale,
           rotation: designRotation
-        }
+        },
+        // Ajouter les informations du texte si présent
+        text: customText ? {
+          content: customText,
+          font: textFont,
+          color: textColor,
+          printPosition: selectedPrintPosition,
+          transform: {
+            position: textPosition,
+            scale: textScale,
+            rotation: textRotation
+          }
+        } : undefined
       } : undefined,
       lotteries: selectedLotteries.length > 0 ? selectedLotteries : undefined,
     };
@@ -376,9 +504,14 @@ const ProductDetail = () => {
             <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
             <div className="flex items-center mb-4">
               <span className="text-xl font-bold">{product.price.toFixed(2)} €</span>
-              {(selectedDesign || uploadedDesignUrl) && (
+              {((selectedDesign || uploadedDesignUrl) && customizationPrice > 0) && (
                 <span className="ml-2 text-sm text-white/70">
                   + {customizationPrice.toFixed(2)} € (personnalisation)
+                </span>
+              )}
+              {(customText && textCustomizationPrice > 0) && (
+                <span className="ml-2 text-sm text-white/70">
+                  + {textCustomizationPrice.toFixed(2)} € (texte)
                 </span>
               )}
             </div>
@@ -391,7 +524,7 @@ const ProductDetail = () => {
               <div className="bg-gradient-to-br from-black to-gray-800 rounded-xl p-4">
                 <div
                   ref={previewContainerRef}
-                  className={`relative aspect-square overflow-hidden rounded-lg flex items-center justify-center bg-black/50 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+                  className={`relative aspect-square overflow-hidden rounded-lg flex items-center justify-center bg-black/50 ${isDragging || isTextDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
                   onMouseDown={handleMouseDown}
                   onMouseMove={handleMouseMove}
                   onMouseUp={handleMouseUp}
@@ -426,49 +559,163 @@ const ProductDetail = () => {
                       />
                     </div>
                   )}
+                  
+                  {/* Texte personnalisé */}
+                  {previewMode && customText && (
+                    <div 
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                      style={{
+                        pointerEvents: isTextDragging ? 'none' : 'auto'
+                      }}
+                      onMouseDown={handleTextMouseDown}
+                      onClick={() => setShowTextEditor(true)}
+                    >
+                      <div 
+                        className={`text-center p-2 rounded inline-block cursor-move pointer-events-auto ${
+                          showTextEditor ? 'ring-2 ring-winshirt-purple' : ''
+                        }`}
+                        style={{ 
+                          fontFamily: textFont,
+                          color: textColor,
+                          fontWeight: textBold ? 'bold' : 'normal',
+                          fontStyle: textItalic ? 'italic' : 'normal',
+                          textDecoration: textUnderline ? 'underline' : 'none',
+                          transform: `translate(${textPosition.x}px, ${textPosition.y}px) scale(${textScale}) rotate(${textRotation}deg)`,
+                          transformOrigin: 'center center',
+                          textShadow: '1px 1px 3px rgba(0,0,0,0.3)',
+                          maxWidth: '80%',
+                          fontSize: '24px'
+                        }}
+                      >
+                        {customText}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Contrôles de manipulation du design */}
-                {previewMode && (selectedDesign || uploadedDesignUrl) && (
-                  <div className="flex justify-center mt-4 space-x-2">
+                {/* Contrôles de manipulation */}
+                <div className="flex justify-between mt-4">
+                  <div className="flex items-center">
+                    {/* Mode d'édition actif */}
+                    {(selectedDesign || uploadedDesignUrl || customText) && (
+                      <div className="flex items-center mr-3 bg-black/30 px-2 py-1 rounded text-sm">
+                        <span className="mr-1">Mode:</span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className={`px-2 ${!showTextEditor ? 'bg-white/10' : ''}`}
+                          onClick={() => setShowTextEditor(false)}
+                        >
+                          <Image className="h-4 w-4 mr-1" />
+                          Design
+                        </Button>
+                        {customText && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className={`px-2 ${showTextEditor ? 'bg-white/10' : ''}`}
+                            onClick={() => setShowTextEditor(true)}
+                          >
+                            <TextCursor className="h-4 w-4 mr-1" />
+                            Texte
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Contrôles de l'élément actif (design ou texte) */}
+                  {(selectedDesign || uploadedDesignUrl || customText) && (
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleZoomIn}
+                        className="bg-black/30 hover:bg-black/50"
+                      >
+                        <ZoomIn className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleZoomOut}
+                        className="bg-black/30 hover:bg-black/50"
+                      >
+                        <ZoomOut className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleRotate}
+                        className="bg-black/30 hover:bg-black/50"
+                      >
+                        <RotateCw className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={resetDesignTransform}
+                        className="bg-black/30 hover:bg-black/50 text-xs"
+                      >
+                        Réinitialiser
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Contrôles supplémentaires pour le texte (quand mode texte actif) */}
+                {showTextEditor && customText && (
+                  <div className="mt-3 flex flex-wrap gap-2">
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={handleZoomIn}
-                      className="bg-black/30 hover:bg-black/50"
+                      onClick={toggleTextBold}
+                      className={`bg-black/30 hover:bg-black/50 ${textBold ? 'bg-white/20' : ''}`}
                     >
-                      <ZoomIn className="h-4 w-4" />
+                      <Bold className="h-4 w-4" />
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={handleZoomOut}
-                      className="bg-black/30 hover:bg-black/50"
+                      onClick={toggleTextItalic}
+                      className={`bg-black/30 hover:bg-black/50 ${textItalic ? 'bg-white/20' : ''}`}
                     >
-                      <ZoomOut className="h-4 w-4" />
+                      <Italic className="h-4 w-4" />
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={handleRotate}
-                      className="bg-black/30 hover:bg-black/50"
+                      onClick={toggleTextUnderline}
+                      className={`bg-black/30 hover:bg-black/50 ${textUnderline ? 'bg-white/20' : ''}`}
                     >
-                      <RotateCw className="h-4 w-4" />
+                      <Underline className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={resetDesignTransform}
-                      className="bg-black/30 hover:bg-black/50 text-xs"
-                    >
-                      Réinitialiser
-                    </Button>
+                    
+                    <Select value={textFont} onValueChange={setTextFont}>
+                      <SelectTrigger className="h-8 bg-black/30 border-white/20 text-xs">
+                        <SelectValue placeholder="Police" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AVAILABLE_FONTS.map((font) => (
+                          <SelectItem key={font.value} value={font.value} style={{fontFamily: font.value}}>
+                            {font.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <input
+                      type="color"
+                      value={textColor}
+                      onChange={(e) => setTextColor(e.target.value)}
+                      className="w-8 h-8 rounded cursor-pointer bg-transparent"
+                    />
                   </div>
                 )}
               </div>
 
               {/* Position du design (avant/arrière) */}
-              {product.is_customizable && (selectedDesign || uploadedDesignUrl) && (
+              {product.is_customizable && (
                 <div className="flex justify-center mt-4">
                   <div className="inline-flex border rounded-md overflow-hidden">
                     <Button 
@@ -495,11 +742,14 @@ const ProductDetail = () => {
               {product.is_customizable && (
                 <div className="mt-6">
                   <Tabs defaultValue={showCustomizationPanel ? "designs" : "info"} className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 mb-4">
+                    <TabsList className="grid w-full grid-cols-4 mb-4">
                       <TabsTrigger value="info">Infos</TabsTrigger>
                       <TabsTrigger 
                         value="designs" 
-                        onClick={() => setShowCustomizationPanel(true)}
+                        onClick={() => {
+                          setShowCustomizationPanel(true);
+                          setCurrentDesignView('browse');
+                        }}
                       >
                         Designs
                       </TabsTrigger>
@@ -511,6 +761,15 @@ const ProductDetail = () => {
                         }}
                       >
                         Upload
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="text"
+                        onClick={() => {
+                          setShowCustomizationPanel(true);
+                          setCurrentDesignView('text');
+                        }}
+                      >
+                        Texte
                       </TabsTrigger>
                     </TabsList>
                     
@@ -670,6 +929,103 @@ const ProductDetail = () => {
                         </div>
                       </GlassCard>
                     </TabsContent>
+                    
+                    {/* Nouvel onglet pour la personnalisation du texte */}
+                    <TabsContent value="text">
+                      <GlassCard className="p-4">
+                        <div className="space-y-4">
+                          <div>
+                            <label htmlFor="customText" className="block text-sm font-medium mb-2">
+                              Votre texte personnalisé
+                            </label>
+                            <Input 
+                              id="customText" 
+                              placeholder="Saisissez votre texte..." 
+                              value={customText}
+                              onChange={(e) => setCustomText(e.target.value)}
+                              className="w-full bg-white/5 border-white/20"
+                            />
+                          </div>
+                          
+                          {customText && (
+                            <>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Police</label>
+                                  <Select value={textFont} onValueChange={setTextFont}>
+                                    <SelectTrigger className="w-full bg-white/5">
+                                      <SelectValue placeholder="Choisir une police" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {AVAILABLE_FONTS.map((font) => (
+                                        <SelectItem key={font.value} value={font.value} style={{fontFamily: font.value}}>
+                                          {font.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Couleur</label>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="color"
+                                      value={textColor}
+                                      onChange={(e) => setTextColor(e.target.value)}
+                                      className="w-10 h-10 rounded cursor-pointer bg-transparent"
+                                    />
+                                    <span style={{ color: textColor }}>{textColor}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Style</label>
+                                <div className="flex gap-2">
+                                  <Button 
+                                    onClick={toggleTextBold}
+                                    variant={textBold ? "default" : "outline"}
+                                    size="sm"
+                                  >
+                                    <Bold className="h-4 w-4 mr-1" />
+                                    Gras
+                                  </Button>
+                                  <Button 
+                                    onClick={toggleTextItalic}
+                                    variant={textItalic ? "default" : "outline"}
+                                    size="sm"
+                                  >
+                                    <Italic className="h-4 w-4 mr-1" />
+                                    Italique
+                                  </Button>
+                                  <Button 
+                                    onClick={toggleTextUnderline}
+                                    variant={textUnderline ? "default" : "outline"}
+                                    size="sm"
+                                  >
+                                    <Underline className="h-4 w-4 mr-1" />
+                                    Souligné
+                                  </Button>
+                                </div>
+                              </div>
+                              
+                              {mockupData && (
+                                <div className="pt-2">
+                                  <p className="text-sm font-medium">
+                                    Prix de l'impression texte: +{
+                                      (selectedPrintPosition === 'front' 
+                                        ? mockupData.text_price_front 
+                                        : mockupData.text_price_back).toFixed(2)
+                                    }€
+                                  </p>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </GlassCard>
+                    </TabsContent>
                   </Tabs>
                 </div>
               )}
@@ -694,9 +1050,14 @@ const ProductDetail = () => {
                 
                 <div className="flex items-center mb-6">
                   <span className="text-2xl font-bold">{calculateTotalPrice().toFixed(2)} €</span>
-                  {(selectedDesign || uploadedDesignUrl) && (
+                  {((selectedDesign || uploadedDesignUrl) && customizationPrice > 0) && (
                     <span className="ml-2 text-sm text-white/70">
-                      (inclus personnalisation: +{customizationPrice.toFixed(2)} €)
+                      (inclus design: +{customizationPrice.toFixed(2)} €)
+                    </span>
+                  )}
+                  {(customText && textCustomizationPrice > 0) && (
+                    <span className="ml-2 text-sm text-white/70">
+                      (inclus texte: +{textCustomizationPrice.toFixed(2)} €)
                     </span>
                   )}
                 </div>
@@ -843,7 +1204,7 @@ const ProductDetail = () => {
                 )}
                 
                 {/* Récapitulatif de personnalisation */}
-                {(selectedDesign || selectedColor || selectedSize) && (
+                {(selectedDesign || selectedColor || selectedSize || customText) && (
                   <div className="md:hidden">
                     <GlassCard className="p-4">
                       <h3 className="text-sm font-medium mb-2">Récapitulatif</h3>
@@ -880,6 +1241,12 @@ const ProductDetail = () => {
                               <span className="font-medium">{selectedPrintSize.toUpperCase()}</span>
                             </li>
                           </>
+                        )}
+                        {customText && (
+                          <li className="flex justify-between">
+                            <span>Texte:</span>
+                            <span className="font-medium truncate ml-2 max-w-[150px]">{customText}</span>
+                          </li>
                         )}
                         {selectedLotteries.length > 0 && (
                           <li className="flex justify-between">
