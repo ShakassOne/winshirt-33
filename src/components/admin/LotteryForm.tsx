@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -74,8 +73,15 @@ const LotteryForm = ({ isOpen, onClose, onSuccess }: LotteryFormProps) => {
     try {
       setIsSubmitting(true);
       
+      // Nous nous assurons que toutes les propriétés requises sont définies
       const lotteryData = {
-        ...data,
+        title: data.title,
+        description: data.description,
+        image_url: data.image_url,
+        value: data.value,
+        goal: data.goal,
+        is_active: data.is_active,
+        is_featured: data.is_featured,
         draw_date: drawDate.toISOString(),
         participants: 0
       };

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -86,8 +85,18 @@ const ProductForm = ({ isOpen, onClose, onSuccess }: ProductFormProps) => {
     try {
       setIsSubmitting(true);
       
+      // Nous nous assurons que toutes les propriétés requises sont définies
+      // et ajoutons la propriété color qui est requise
       const productData = {
-        ...data,
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        image_url: data.image_url,
+        category: data.category,
+        is_customizable: data.is_customizable,
+        is_active: data.is_active,
+        tickets_offered: data.tickets_offered,
+        color: colors.length > 0 ? colors[0] : null,
         available_colors: colors,
         available_sizes: sizes
       };
