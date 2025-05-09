@@ -223,20 +223,20 @@ export const deleteLottery = async (lotteryId: string) => {
 };
 
 export const fetchDesigns = async () => {
-    try {
-        const { data, error } = await supabase
-            .from(DESIGNS_TABLE)
-            .select('*');
+  try {
+    const { data, error } = await supabase
+        .from(DESIGNS_TABLE)
+        .select('*');
 
-        if (error) {
-            throw new Error(error.message);
-        }
-
-        return data;
-    } catch (error) {
-        console.error("Error fetching designs:", error);
-        throw error;
+    if (error) {
+        throw new Error(error.message);
     }
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching designs:", error);
+    throw error;
+  }
 };
 
 export const fetchAllMockups = async () => {
@@ -255,7 +255,7 @@ export const fetchAllMockups = async () => {
       ...mockup,
       print_areas: Array.isArray(mockup.print_areas) 
         ? mockup.print_areas 
-        : JSON.parse(mockup.print_areas || '[]')
+        : JSON.parse(mockup.print_areas as string || '[]')
     }));
     
     return mockupsWithParsedAreas;
@@ -282,7 +282,7 @@ export const fetchMockupById = async (id: string) => {
       ...data,
       print_areas: Array.isArray(data.print_areas) 
         ? data.print_areas 
-        : JSON.parse(data.print_areas || '[]')
+        : JSON.parse(data.print_areas as string || '[]')
     };
   } catch (error) {
     console.error('Error fetching mockup:', error);
@@ -314,7 +314,7 @@ export const createMockup = async (mockupData: Omit<Mockup, 'id' | 'created_at' 
       ...data[0],
       print_areas: Array.isArray(data[0].print_areas) 
         ? data[0].print_areas 
-        : JSON.parse(data[0].print_areas || '[]')
+        : JSON.parse(data[0].print_areas as string || '[]')
     };
     
     return mockupWithParsedArea;
@@ -349,7 +349,7 @@ export const updateMockup = async (id: string, mockupData: Partial<Mockup>) => {
       ...data[0],
       print_areas: Array.isArray(data[0].print_areas) 
         ? data[0].print_areas 
-        : JSON.parse(data[0].print_areas || '[]')
+        : JSON.parse(data[0].print_areas as string || '[]')
     };
     
     return mockupWithParsedArea;

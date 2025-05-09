@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,10 +33,10 @@ interface MockupFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  mockup?: Mockup | null;
+  initialData?: Mockup | null;
 }
 
-const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => {
+const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [printAreas, setPrintAreas] = useState<PrintArea[]>([]);
@@ -63,25 +62,25 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
   });
 
   useEffect(() => {
-    if (mockup) {
-      setValue('name', mockup.name);
-      setValue('category', mockup.category);
-      setValue('svg_front_url', mockup.svg_front_url);
-      setValue('svg_back_url', mockup.svg_back_url || '');
-      setValue('price_a3', mockup.price_a3);
-      setValue('price_a4', mockup.price_a4);
-      setValue('price_a5', mockup.price_a5);
-      setValue('price_a6', mockup.price_a6);
-      setValue('text_price_front', mockup.text_price_front);
-      setValue('text_price_back', mockup.text_price_back);
-      setValue('is_active', mockup.is_active);
+    if (initialData) {
+      setValue('name', initialData.name);
+      setValue('category', initialData.category);
+      setValue('svg_front_url', initialData.svg_front_url);
+      setValue('svg_back_url', initialData.svg_back_url || '');
+      setValue('price_a3', initialData.price_a3);
+      setValue('price_a4', initialData.price_a4);
+      setValue('price_a5', initialData.price_a5);
+      setValue('price_a6', initialData.price_a6);
+      setValue('text_price_front', initialData.text_price_front);
+      setValue('text_price_back', initialData.text_price_back);
+      setValue('is_active', initialData.is_active);
 
-      setPrintAreas(mockup.print_areas || []);
+      setPrintAreas(initialData.print_areas || []);
     } else {
       reset(defaultValues);
       setPrintAreas([]);
     }
-  }, [mockup, setValue, reset]);
+  }, [initialData, setValue, reset]);
 
   const addPrintArea = (side: 'front' | 'back') => {
     const newArea: PrintArea = {
@@ -127,8 +126,8 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
         print_areas: printAreas
       };
 
-      if (mockup) {
-        await updateMockup(mockup.id, mockupData);
+      if (initialData) {
+        await updateMockup(initialData.id, mockupData);
         toast({
           title: "Succès",
           description: "Le mockup a été mis à jour avec succès",

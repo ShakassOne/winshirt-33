@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { createLottery } from '@/services/api.service';
+import { createLottery, updateLottery } from '@/services/api.service';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { Lottery } from '@/types/supabase.types';
 
 const lotterySchema = z.object({
   title: z.string().min(3, { message: 'Le titre doit contenir au moins 3 caractères' }),
@@ -36,9 +38,10 @@ interface LotteryFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  initialData?: Lottery | null;
 }
 
-const LotteryForm = ({ isOpen, onClose, onSuccess }: LotteryFormProps) => {
+const LotteryForm = ({ isOpen, onClose, onSuccess, initialData }: LotteryFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [drawDate, setDrawDate] = useState<Date | undefined>(new Date());
@@ -57,6 +60,20 @@ const LotteryForm = ({ isOpen, onClose, onSuccess }: LotteryFormProps) => {
     resolver: zodResolver(lotterySchema),
     defaultValues
   });
+
+  // Initialize form with initialData if provided
+  useEffect(() => {
+    if (initialData) {
+      setValue('title', initialData.title);
+      setValue('description', initialData.description);
+      setValue('image_url', initialData.image_url);
+      setValue('value', initialData.value);
+      setValue('goal', initialData.goal);
+      setValue('is_active', initialData.is_active);
+      setValue('is_featured', initialData.is_featured);
+      setDrawDate(new Date(initialData.draw_date));
+    }
+  }, [initialData, setValue]);
 
   const isFeatured = watch('is_featured');
 
@@ -83,26 +100,34 @@ const LotteryForm = ({ isOpen, onClose, onSuccess }: LotteryFormProps) => {
         is_active: data.is_active,
         is_featured: data.is_featured,
         draw_date: drawDate.toISOString(),
-        participants: 0
+        participants: initialData?.participants || 0
       };
       
-      await createLottery(lotteryData);
-      
-      toast({
-        title: "Succès",
-        description: "La loterie a été créée avec succès",
-        variant: "default"
-      });
+      if (initialData) {
+        await updateLottery(initialData.id, lotteryData);
+        toast({
+          title: "Succès",
+          description: "La loterie a été mise à jour avec succès",
+          variant: "default"
+        });
+      } else {
+        await createLottery(lotteryData);
+        toast({
+          title: "Succès",
+          description: "La loterie a été créée avec succès",
+          variant: "default"
+        });
+      }
       
       reset(defaultValues);
       setDrawDate(new Date());
       if (onSuccess) onSuccess();
       onClose();
     } catch (error) {
-      console.error("Erreur lors de la création de la loterie:", error);
+      console.error("Erreur lors de l'opération sur la loterie:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur s'est produite lors de la création de la loterie",
+        description: "Une erreur s'est produite lors de l'opération",
         variant: "destructive"
       });
     } finally {
@@ -114,7 +139,9 @@ const LotteryForm = ({ isOpen, onClose, onSuccess }: LotteryFormProps) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-black/50 backdrop-blur-xl border-white/20 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Nouvelle loterie</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">
+            {initialData ? 'Modifier la loterie' : 'Nouvelle loterie'}
+          </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 py-4">
@@ -215,7 +242,9 @@ const LotteryForm = ({ isOpen, onClose, onSuccess }: LotteryFormProps) => {
               Annuler
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Création en cours..." : "Créer la loterie"}
+              {isSubmitting 
+                ? (initialData ? "Mise à jour en cours..." : "Création en cours...") 
+                : (initialData ? "Mettre à jour" : "Créer la loterie")}
             </Button>
           </DialogFooter>
         </form>

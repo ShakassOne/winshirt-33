@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import LotteryCard from '../ui/LotteryCard';
 import { cn } from '@/lib/utils';
@@ -57,6 +57,9 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
     );
   }
 
+  // Ensure lotteries is always treated as an array
+  const lotteriesList = Array.isArray(lotteries) ? lotteries : [];
+
   return (
     <section className={cn('py-20', className)}>
       <div className="container mx-auto px-4">
@@ -88,7 +91,7 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
             className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-none"
             style={{ gridAutoFlow: 'column', gridAutoColumns: '300px' }}
           >
-            {lotteries && lotteries.map((lottery: Lottery) => (
+            {lotteriesList.map((lottery: Lottery) => (
               <div key={lottery.id} className="snap-start">
                 <LotteryCard 
                   id={lottery.id}
@@ -107,7 +110,7 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
         </div>
         
         <div className="md:hidden grid grid-cols-1 gap-6">
-          {lotteries && lotteries.slice(0, 2).map((lottery: Lottery) => (
+          {lotteriesList.slice(0, 2).map((lottery: Lottery) => (
             <LotteryCard 
               key={lottery.id}
               id={lottery.id}

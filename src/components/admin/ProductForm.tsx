@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { createProduct, fetchAllMockups } from '@/services/api.service';
+import { createProduct, updateProduct, fetchAllMockups } from '@/services/api.service';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -12,8 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { X, Plus } from 'lucide-react';
-import GlassCard from '../ui/GlassCard';
 import { useQuery } from '@tanstack/react-query';
+import { Product } from '@/types/supabase.types';
 
 const productSchema = z.object({
   name: z.string().min(3, { message: 'Le nom doit contenir au moins 3 caractères' }),
@@ -33,9 +33,10 @@ interface ProductFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  initialData?: Product | null;
 }
 
-const ProductForm = ({ isOpen, onClose, onSuccess }: ProductFormProps) => {
+const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [colors, setColors] = useState<string[]>([]);
@@ -65,6 +66,28 @@ const ProductForm = ({ isOpen, onClose, onSuccess }: ProductFormProps) => {
     resolver: zodResolver(productSchema),
     defaultValues
   });
+
+  // Initialize form with product data if editing
+  useEffect(() => {
+    if (initialData) {
+      setValue('name', initialData.name);
+      setValue('description', initialData.description);
+      setValue('price', initialData.price);
+      setValue('image_url', initialData.image_url);
+      setValue('category', initialData.category);
+      setValue('is_customizable', initialData.is_customizable);
+      setValue('is_active', initialData.is_active);
+      setValue('tickets_offered', initialData.tickets_offered);
+      setValue('mockup_id', initialData.mockup_id);
+      
+      setColors(initialData.available_colors || []);
+      setSizes(initialData.available_sizes || []);
+    } else {
+      reset(defaultValues);
+      setColors([]);
+      setSizes([]);
+    }
+  }, [initialData, setValue, reset]);
 
   const isCustomizable = watch('is_customizable');
   const ticketsOffered = watch('tickets_offered');
@@ -107,7 +130,6 @@ const ProductForm = ({ isOpen, onClose, onSuccess }: ProductFormProps) => {
       setIsSubmitting(true);
       
       // Nous nous assurons que toutes les propriétés requises sont définies
-      // et ajoutons la propriété color qui est requise
       const productData = {
         name: data.name,
         description: data.description,
@@ -123,13 +145,21 @@ const ProductForm = ({ isOpen, onClose, onSuccess }: ProductFormProps) => {
         available_sizes: sizes
       };
       
-      await createProduct(productData);
-      
-      toast({
-        title: "Succès",
-        description: "Le produit a été créé avec succès",
-        variant: "default"
-      });
+      if (initialData) {
+        await updateProduct(initialData.id, productData);
+        toast({
+          title: "Succès",
+          description: "Le produit a été mis à jour avec succès",
+          variant: "default"
+        });
+      } else {
+        await createProduct(productData);
+        toast({
+          title: "Succès",
+          description: "Le produit a été créé avec succès",
+          variant: "default"
+        });
+      }
       
       reset(defaultValues);
       setColors([]);
@@ -137,10 +167,10 @@ const ProductForm = ({ isOpen, onClose, onSuccess }: ProductFormProps) => {
       if (onSuccess) onSuccess();
       onClose();
     } catch (error) {
-      console.error("Erreur lors de la création du produit:", error);
+      console.error("Erreur lors de l'opération sur le produit:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur s'est produite lors de la création du produit",
+        description: "Une erreur s'est produite lors de l'opération",
         variant: "destructive"
       });
     } finally {
@@ -152,7 +182,9 @@ const ProductForm = ({ isOpen, onClose, onSuccess }: ProductFormProps) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-black/50 backdrop-blur-xl border-white/20 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Nouveau produit</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">
+            {initialData ? 'Modifier le produit' : 'Nouveau produit'}
+          </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 py-4">
@@ -323,7 +355,10 @@ const ProductForm = ({ isOpen, onClose, onSuccess }: ProductFormProps) => {
               Annuler
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Création en cours..." : "Créer le produit"}
+              {isSubmitting 
+                ? (initialData ? "Mise à jour en cours..." : "Création en cours...")
+                : (initialData ? "Mettre à jour" : "Créer le produit")
+              }
             </Button>
           </DialogFooter>
         </form>
