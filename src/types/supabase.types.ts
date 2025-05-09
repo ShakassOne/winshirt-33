@@ -18,6 +18,7 @@ export interface PrintArea {
   y: number;
   width: number;
   height: number;
+  side: 'front' | 'back';  // Added this property
 }
 
 export interface Mockup {
