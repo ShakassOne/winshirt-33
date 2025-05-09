@@ -10,20 +10,40 @@ import GlassCard from '@/components/ui/GlassCard';
 import { Edit, Trash, Eye, Plus, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import ProductForm from '@/components/admin/ProductForm';
+import { useToast } from '@/hooks/use-toast';
 
 const ProductsAdmin = () => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   
-  const { data: products, isLoading, error } = useQuery({
+  const { data: products, isLoading, error, refetch } = useQuery({
     queryKey: ['adminProducts'],
     queryFn: fetchAllProducts,
   });
 
-  const filteredProducts = products?.filter(product => 
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleCreateSuccess = () => {
+    refetch();
+    toast({
+      title: "Produit créé",
+      description: "Le nouveau produit a été ajouté avec succès",
+    });
+  };
+
+  const filteredProducts = products?.filter(product => {
+    const matchesSearch = 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = !activeCategory || product.category === activeCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  const categories = [...new Set(products?.map(product => product.category) || [])];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -43,7 +63,11 @@ const ProductsAdmin = () => {
                 </p>
               </div>
               
-              <Button className="bg-gradient-purple mt-4 md:mt-0" size="lg">
+              <Button 
+                className="bg-gradient-purple mt-4 md:mt-0" 
+                size="lg"
+                onClick={() => setShowProductForm(true)}
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Nouveau produit
               </Button>
@@ -67,10 +91,24 @@ const ProductsAdmin = () => {
                 </div>
                 
                 <div className="flex gap-2 flex-wrap">
-                  <Button variant="outline" size="sm">Tous</Button>
-                  <Button variant="outline" size="sm">T-shirts</Button>
-                  <Button variant="outline" size="sm">Sweatshirts</Button>
-                  <Button variant="outline" size="sm">Casquettes</Button>
+                  <Button 
+                    variant={activeCategory === null ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setActiveCategory(null)}
+                  >
+                    Tous
+                  </Button>
+                  
+                  {categories.map((category) => (
+                    <Button 
+                      key={category} 
+                      variant={activeCategory === category ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => setActiveCategory(category)}
+                    >
+                      {category}
+                    </Button>
+                  ))}
                 </div>
               </div>
             </GlassCard>
@@ -166,6 +204,12 @@ const ProductsAdmin = () => {
       </main>
       
       <Footer />
+      
+      <ProductForm 
+        isOpen={showProductForm} 
+        onClose={() => setShowProductForm(false)} 
+        onSuccess={handleCreateSuccess}
+      />
     </div>
   );
 };

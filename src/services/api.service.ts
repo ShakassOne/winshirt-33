@@ -20,7 +20,7 @@ export const fetchFeaturedLotteries = async (): Promise<Lottery[]> => {
     return data || [];
   } catch (err) {
     console.error("Exception while fetching featured lotteries:", err);
-    return [];
+    throw err;
   }
 };
 
@@ -47,7 +47,7 @@ export const fetchProductsByCategory = async (category?: string): Promise<Produc
     return data || [];
   } catch (err) {
     console.error("Exception while fetching products by category:", err);
-    return [];
+    throw err;
   }
 };
 
@@ -57,7 +57,6 @@ export const fetchAllProducts = async (): Promise<Product[]> => {
     const { data, error } = await supabase
       .from("products")
       .select("*")
-      .eq("is_active", true)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -69,7 +68,7 @@ export const fetchAllProducts = async (): Promise<Product[]> => {
     return data || [];
   } catch (err) {
     console.error("Exception while fetching all products:", err);
-    return [];
+    throw err;
   }
 };
 
@@ -90,7 +89,7 @@ export const fetchAllLotteries = async (): Promise<Lottery[]> => {
     return data || [];
   } catch (err) {
     console.error("Exception while fetching all lotteries:", err);
-    return [];
+    throw err;
   }
 };
 
@@ -112,7 +111,7 @@ export const fetchDesigns = async (): Promise<Design[]> => {
     return data || [];
   } catch (err) {
     console.error("Exception while fetching designs:", err);
-    return [];
+    throw err;
   }
 };
 
@@ -127,7 +126,7 @@ export const fetchProductById = async (id: string): Promise<Product | null> => {
 
     if (error) {
       console.error("Error fetching product:", error);
-      return null;
+      throw error;
     }
 
     console.log("Fetched product by id:", data);
@@ -149,7 +148,7 @@ export const fetchLotteryById = async (id: string): Promise<Lottery | null> => {
 
     if (error) {
       console.error("Error fetching lottery:", error);
-      return null;
+      throw error;
     }
 
     console.log("Fetched lottery by id:", data);
@@ -157,5 +156,51 @@ export const fetchLotteryById = async (id: string): Promise<Lottery | null> => {
   } catch (err) {
     console.error("Exception while fetching lottery by id:", err);
     return null;
+  }
+};
+
+// Nouvelle fonction pour créer un produit
+export const createProduct = async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product | null> => {
+  try {
+    console.log("Creating new product:", product);
+    const { data, error } = await supabase
+      .from("products")
+      .insert([product])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating product:", error);
+      throw error;
+    }
+
+    console.log("Created product:", data);
+    return data;
+  } catch (err) {
+    console.error("Exception while creating product:", err);
+    throw err;
+  }
+};
+
+// Nouvelle fonction pour créer une loterie
+export const createLottery = async (lottery: Omit<Lottery, 'id' | 'created_at' | 'updated_at'>): Promise<Lottery | null> => {
+  try {
+    console.log("Creating new lottery:", lottery);
+    const { data, error } = await supabase
+      .from("lotteries")
+      .insert([lottery])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating lottery:", error);
+      throw error;
+    }
+
+    console.log("Created lottery:", data);
+    return data;
+  } catch (err) {
+    console.error("Exception while creating lottery:", err);
+    throw err;
   }
 };

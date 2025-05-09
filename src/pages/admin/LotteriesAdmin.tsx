@@ -10,19 +10,41 @@ import GlassCard from '@/components/ui/GlassCard';
 import { Edit, Trash, Eye, Plus, Search, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import LotteryForm from '@/components/admin/LotteryForm';
+import { useToast } from '@/hooks/use-toast';
 
 const LotteriesAdmin = () => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showLotteryForm, setShowLotteryForm] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
   
-  const { data: lotteries, isLoading, error } = useQuery({
+  const { data: lotteries, isLoading, error, refetch } = useQuery({
     queryKey: ['adminLotteries'],
     queryFn: fetchAllLotteries,
   });
 
-  const filteredLotteries = lotteries?.filter(lottery => 
-    lottery.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lottery.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleCreateSuccess = () => {
+    refetch();
+    toast({
+      title: "Loterie créée",
+      description: "La nouvelle loterie a été ajoutée avec succès",
+    });
+  };
+
+  const filteredLotteries = lotteries?.filter(lottery => {
+    const matchesSearch = 
+      lottery.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lottery.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!activeFilter) return matchesSearch;
+    
+    if (activeFilter === 'active') return matchesSearch && lottery.is_active;
+    if (activeFilter === 'inactive') return matchesSearch && !lottery.is_active;
+    if (activeFilter === 'featured') return matchesSearch && lottery.is_featured;
+    
+    return matchesSearch;
+  });
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -51,7 +73,11 @@ const LotteriesAdmin = () => {
                 </p>
               </div>
               
-              <Button className="bg-gradient-purple mt-4 md:mt-0" size="lg">
+              <Button 
+                className="bg-gradient-purple mt-4 md:mt-0" 
+                size="lg"
+                onClick={() => setShowLotteryForm(true)}
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Nouvelle loterie
               </Button>
@@ -75,10 +101,34 @@ const LotteriesAdmin = () => {
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">Toutes</Button>
-                  <Button variant="outline" size="sm">Actives</Button>
-                  <Button variant="outline" size="sm">Terminées</Button>
-                  <Button variant="outline" size="sm">En vedette</Button>
+                  <Button 
+                    variant={activeFilter === null ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setActiveFilter(null)}
+                  >
+                    Toutes
+                  </Button>
+                  <Button 
+                    variant={activeFilter === 'active' ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setActiveFilter('active')}
+                  >
+                    Actives
+                  </Button>
+                  <Button 
+                    variant={activeFilter === 'inactive' ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setActiveFilter('inactive')}
+                  >
+                    Terminées
+                  </Button>
+                  <Button 
+                    variant={activeFilter === 'featured' ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setActiveFilter('featured')}
+                  >
+                    En vedette
+                  </Button>
                 </div>
               </div>
             </GlassCard>
@@ -183,6 +233,12 @@ const LotteriesAdmin = () => {
       </main>
       
       <Footer />
+
+      <LotteryForm
+        isOpen={showLotteryForm}
+        onClose={() => setShowLotteryForm(false)}
+        onSuccess={handleCreateSuccess}
+      />
     </div>
   );
 };
