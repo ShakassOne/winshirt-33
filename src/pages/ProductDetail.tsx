@@ -6,15 +6,14 @@ import Footer from '@/components/layout/Footer';
 import { fetchProductById, fetchAllLotteries, fetchDesigns, fetchMockupById } from '@/services/api.service';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Check, Upload, Image } from 'lucide-react';
+import { ShoppingCart, Check, Upload, Image, Circle, ArrowLeft, ArrowRight } from 'lucide-react';
 import GlassCard from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/badge';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Mockup } from '@/types/supabase.types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CartItem, Design, Mockup } from '@/types/supabase.types';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -27,25 +26,34 @@ const ProductDetail = () => {
   const [designTab, setDesignTab] = useState<string>('animaux');
   const [selectedLotteries, setSelectedLotteries] = useState<string[]>([]);
   const [mockupData, setMockupData] = useState<Mockup | null>(null);
+  const [selectedPrintPosition, setSelectedPrintPosition] = useState<'front' | 'back'>('front');
+  const [selectedPrintSize, setSelectedPrintSize] = useState<'a4'>('a4');
+  const [currentDesignView, setCurrentDesignView] = useState<'browse' | 'upload'>('browse');
+  const [uploadedDesignUrl, setUploadedDesignUrl] = useState<string | null>(null);
+  const [previewMode, setPreviewMode] = useState<boolean>(false);
+  const [cart, setCart] = useState<CartItem[]>([]);
   
+  // Chargement du produit
   const { data: product, isLoading: productLoading, error: productError } = useQuery({
     queryKey: ['product', id],
     queryFn: () => fetchProductById(id as string),
     enabled: !!id,
   });
 
+  // Chargement des loteries
   const { data: lotteries, isLoading: lotteriesLoading } = useQuery({
     queryKey: ['lotteries'],
     queryFn: fetchAllLotteries,
   });
 
+  // Chargement des designs
   const { data: designs, isLoading: designsLoading } = useQuery({
     queryKey: ['designs'],
     queryFn: fetchDesigns,
     enabled: showCustomizationPanel,
   });
 
-  // Fetch mockup data if product has a mockup_id
+  // Récupération du mockup si le produit en a un
   useEffect(() => {
     const fetchMockup = async () => {
       if (product?.mockup_id) {
@@ -62,9 +70,41 @@ const ProductDetail = () => {
     fetchMockup();
   }, [product]);
 
+  // Récupération du panier depuis localStorage
+  useEffect(() => {
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      try {
+        setCart(JSON.parse(savedCart));
+      } catch (e) {
+        console.error("Error parsing cart from localStorage:", e);
+      }
+    }
+  }, []);
+
+  // Sauvegarde du panier dans localStorage
+  const saveCart = (newCart: CartItem[]) => {
+    localStorage.setItem('cart', JSON.stringify(newCart));
+    setCart(newCart);
+  };
+
+  // Filtrage des loteries éligibles
   const eligibleLotteries = lotteries?.filter(lottery => lottery.is_active).slice(0, product?.tickets_offered || 0);
 
+  // Récupération du design sélectionné
+  const getSelectedDesignDetails = () => {
+    if (!selectedDesign || !designs) return null;
+    
+    return designs.find(design => design.id === selectedDesign);
+  };
+  
+  const selectedDesignDetails = getSelectedDesignDetails();
+
+  // Ajout au panier
   const handleAddToCart = () => {
+    if (!product) return;
+    
+    // Validation des données de personnalisation
     if (!selectedSize && product?.available_sizes.length > 0) {
       toast.error("Veuillez sélectionner une taille");
       return;
@@ -82,30 +122,48 @@ const ProductDetail = () => {
     }
 
     // Créer l'objet pour le panier
-    const cartItem = {
-      productId: product?.id,
-      name: product?.name,
-      price: product?.price,
+    const cartItem: CartItem = {
+      productId: product.id,
+      name: product.name,
+      price: product.price,
       quantity,
       color: selectedColor,
       size: selectedSize,
-      design: selectedDesign,
-      lotteries: selectedLotteries,
+      image_url: product.image_url,
+      customization: selectedDesign ? {
+        designId: selectedDesign,
+        designName: selectedDesignDetails?.name,
+        designUrl: selectedDesignDetails?.image_url,
+        printPosition: selectedPrintPosition,
+        printSize: selectedPrintSize,
+      } : undefined,
+      lotteries: selectedLotteries.length > 0 ? selectedLotteries : undefined,
     };
 
+    // Ajouter au panier
+    const newCart = [...cart, cartItem];
+    saveCart(newCart);
+    
     console.log("Produit ajouté au panier:", cartItem);
     toast.success("Produit ajouté au panier");
+    
+    // Redirection optionnelle vers le panier
+    // navigate('/cart');
   };
 
+  // Affichage/masquage du panneau de personnalisation
   const toggleCustomizationPanel = () => {
     setShowCustomizationPanel(!showCustomizationPanel);
   };
 
+  // Sélection d'un design
   const handleDesignSelect = (designId: string) => {
     setSelectedDesign(designId);
+    setCurrentDesignView('browse');
     toast.success("Design sélectionné");
   };
 
+  // Sélection d'une loterie
   const handleLotterySelect = (lotteryId: string) => {
     // Si la loterie est déjà sélectionnée, la désélectionner
     if (selectedLotteries.includes(lotteryId)) {
@@ -120,9 +178,60 @@ const ProductDetail = () => {
     }
   };
 
+  // Filtrage des designs par catégorie
   const filterDesignsByCategory = (category: string) => {
     if (!designs) return [];
     return designs.filter(design => design.category.toLowerCase() === category.toLowerCase());
+  };
+  
+  // Simulation de l'upload d'un design (dans une vraie application, cela ferait appel à une API)
+  const handleDesignUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Vérifications sur le type et la taille du fichier
+    if (!file.type.includes('image/')) {
+      toast.error("Veuillez sélectionner un fichier image");
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) { // 5MB max
+      toast.error("Le fichier est trop volumineux (maximum 5MB)");
+      return;
+    }
+    
+    // Simuler un upload avec un délai
+    toast.info("Upload en cours...");
+    
+    // Création d'une URL pour l'aperçu de l'image
+    const fileUrl = URL.createObjectURL(file);
+    setUploadedDesignUrl(fileUrl);
+    
+    setTimeout(() => {
+      // Dans une vraie application, nous recevrions l'URL depuis le serveur
+      setSelectedDesign('custom');
+      setCurrentDesignView('upload');
+      toast.success("Design uploadé avec succès");
+    }, 1500);
+  };
+
+  // Conversion d'un code couleur en nom
+  const getColorName = (colorCode: string) => {
+    const colorMap: Record<string, string> = {
+      'white': 'Blanc',
+      '#ffffff': 'Blanc',
+      'black': 'Noir',
+      '#000000': 'Noir',
+      'blue': 'Bleu',
+      '#0000ff': 'Bleu',
+      'red': 'Rouge',
+      '#ff0000': 'Rouge',
+      'gray': 'Gris',
+      '#808080': 'Gris',
+      'navy': 'Bleu marine',
+      '#000080': 'Bleu marine',
+    };
+    return colorMap[colorCode] || colorCode;
   };
 
   if (productLoading) {
@@ -149,24 +258,6 @@ const ProductDetail = () => {
     );
   }
 
-  const getColorName = (colorCode: string) => {
-    const colorMap: Record<string, string> = {
-      'white': 'Blanc',
-      '#ffffff': 'Blanc',
-      'black': 'Noir',
-      '#000000': 'Noir',
-      'blue': 'Bleu',
-      '#0000ff': 'Bleu',
-      'red': 'Rouge',
-      '#ff0000': 'Rouge',
-      'gray': 'Gris',
-      '#808080': 'Gris',
-      'navy': 'Bleu marine',
-      '#000080': 'Bleu marine',
-    };
-    return colorMap[colorCode] || colorCode;
-  };
-
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -174,35 +265,50 @@ const ProductDetail = () => {
       <main className="flex-grow mt-16 py-20">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            {/* Product Images */}
+            {/* Aperçu du produit */}
             <div>
               <Carousel className="w-full">
                 <CarouselContent>
                   <CarouselItem>
-                    <div className="aspect-square relative overflow-hidden rounded-xl">
-                      <img 
-                        src={product.image_url} 
-                        alt={product.name}
-                        className="w-full h-full object-cover" 
-                      />
-                      {selectedDesign && designs && (
-                        <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="aspect-square relative overflow-hidden rounded-xl bg-gradient-to-br from-black to-gray-800 flex items-center justify-center">
+                      {previewMode && selectedDesign && designs ? (
+                        <div className="relative w-full h-full">
+                          {/* Produit de base */}
                           <img 
-                            src={designs.find(d => d.id === selectedDesign)?.image_url || ''} 
-                            alt="Selected Design"
-                            className="w-1/2 h-1/2 object-contain opacity-80" 
+                            src={product.image_url} 
+                            alt={product.name}
+                            className="w-full h-full object-contain absolute inset-0 z-10" 
                           />
+                          
+                          {/* Design appliqué */}
+                          <div className="absolute inset-0 z-20 flex items-center justify-center">
+                            <img 
+                              src={currentDesignView === 'upload' ? uploadedDesignUrl! : designs.find(d => d.id === selectedDesign)?.image_url || ''}
+                              alt="Selected Design"
+                              className="w-1/2 h-1/2 object-contain" 
+                              style={{ 
+                                opacity: 0.85,
+                                transform: selectedPrintPosition === 'front' ? 'none' : 'scaleX(-1)'
+                              }}
+                            />
+                          </div>
                         </div>
+                      ) : (
+                        <img 
+                          src={product.image_url} 
+                          alt={product.name}
+                          className="w-full h-full object-contain" 
+                        />
                       )}
                     </div>
                   </CarouselItem>
                   {mockupData?.svg_back_url && (
                     <CarouselItem>
-                      <div className="aspect-square relative overflow-hidden rounded-xl">
+                      <div className="aspect-square relative overflow-hidden rounded-xl bg-gradient-to-br from-black to-gray-800 flex items-center justify-center">
                         <img 
                           src={mockupData.svg_back_url}
                           alt={`${product.name} - Vue arrière`}
-                          className="w-full h-full object-cover" 
+                          className="w-full h-full object-contain" 
                         />
                       </div>
                     </CarouselItem>
@@ -212,12 +318,22 @@ const ProductDetail = () => {
                 <CarouselNext className="-right-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 border-white/10" />
               </Carousel>
 
+              {/* Panneau de personnalisation */}
               {product.is_customizable && (
                 <div className="mt-8">
                   <GlassCard className="p-6">
-                    <h3 className="text-lg font-medium mb-3">Personnalisation</h3>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-medium">Personnalisation</h3>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setPreviewMode(!previewMode)}
+                      >
+                        {previewMode ? "Masquer l'aperçu" : "Voir l'aperçu"}
+                      </Button>
+                    </div>
                     <p className="text-white/70 mb-4">
-                      Ce produit est personnalisable. Vous pouvez ajouter des designs après l'avoir ajouté au panier ou utiliser notre éditeur ci-dessous.
+                      Ce produit est personnalisable. Vous pouvez ajouter des designs ou uploader votre propre image.
                     </p>
                     <Button 
                       className="bg-gradient-purple w-full"
@@ -229,93 +345,241 @@ const ProductDetail = () => {
                 </div>
               )}
 
+              {/* Éditeur de personnalisation */}
               {showCustomizationPanel && (
                 <div className="mt-6">
                   <GlassCard className="p-6">
-                    <Tabs defaultValue="animaux" value={designTab} onValueChange={setDesignTab}>
-                      <TabsList className="grid w-full grid-cols-2 mb-6">
-                        <TabsTrigger value="animaux">Animaux</TabsTrigger>
-                        <TabsTrigger value="abstrait">Abstrait</TabsTrigger>
-                      </TabsList>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-xl font-medium">Éditeur de design</h3>
                       
-                      {designsLoading ? (
-                        <div className="text-center py-4">Chargement des designs...</div>
-                      ) : (
-                        <>
-                          <TabsContent value="animaux" className="space-y-4">
-                            <h3 className="text-lg font-medium mb-2">Choisissez un visuel pour le recto</h3>
-                            <div className="grid grid-cols-3 gap-3">
-                              {filterDesignsByCategory('animaux').map(design => (
-                                <div 
-                                  key={design.id} 
-                                  className={`relative aspect-square rounded-md overflow-hidden cursor-pointer border ${
-                                    selectedDesign === design.id ? 'border-2 border-winshirt-purple' : 'border-white/20'
-                                  }`}
-                                  onClick={() => handleDesignSelect(design.id)}
-                                >
-                                  <img 
-                                    src={design.image_url} 
-                                    alt={design.name} 
-                                    className="w-full h-full object-cover"
-                                  />
-                                  {selectedDesign === design.id && (
-                                    <div className="absolute top-2 right-2 bg-winshirt-purple rounded-full w-5 h-5 flex items-center justify-center">
-                                      <Check className="w-3 h-3 text-white" />
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant={currentDesignView === 'browse' ? "default" : "outline"} 
+                          size="sm"
+                          onClick={() => setCurrentDesignView('browse')}
+                        >
+                          Designs
+                        </Button>
+                        <Button 
+                          variant={currentDesignView === 'upload' ? "default" : "outline"} 
+                          size="sm"
+                          onClick={() => setCurrentDesignView('upload')}
+                        >
+                          Upload
+                        </Button>
+                      </div>
+                    </div>
 
-                            <div className="mt-4">
-                              <Button variant="outline" className="w-full flex items-center justify-center gap-2">
-                                <Upload size={16} />
-                                Upload
+                    {currentDesignView === 'browse' && (
+                      <Tabs defaultValue="animaux" value={designTab} onValueChange={setDesignTab}>
+                        <TabsList className="grid w-full grid-cols-2 mb-6">
+                          <TabsTrigger value="animaux">Animaux</TabsTrigger>
+                          <TabsTrigger value="abstrait">Abstrait</TabsTrigger>
+                        </TabsList>
+                        
+                        {designsLoading ? (
+                          <div className="text-center py-4">Chargement des designs...</div>
+                        ) : (
+                          <>
+                            <TabsContent value="animaux" className="space-y-4">
+                              <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-medium">Choisissez un visuel</h3>
+                                <div className="flex space-x-2 items-center">
+                                  <span className="text-sm text-white/70">Position:</span>
+                                  <div className="flex border rounded-md overflow-hidden">
+                                    <Button 
+                                      variant={selectedPrintPosition === 'front' ? "default" : "ghost"} 
+                                      size="sm"
+                                      className="rounded-none"
+                                      onClick={() => setSelectedPrintPosition('front')}
+                                    >
+                                      Avant
+                                    </Button>
+                                    <Button 
+                                      variant={selectedPrintPosition === 'back' ? "default" : "ghost"} 
+                                      size="sm"
+                                      className="rounded-none"
+                                      onClick={() => setSelectedPrintPosition('back')}
+                                    >
+                                      Arrière
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-3">
+                                {filterDesignsByCategory('animaux').map(design => (
+                                  <div 
+                                    key={design.id} 
+                                    className={`relative aspect-square rounded-md overflow-hidden cursor-pointer border ${
+                                      selectedDesign === design.id ? 'border-2 border-winshirt-purple' : 'border-white/20'
+                                    }`}
+                                    onClick={() => handleDesignSelect(design.id)}
+                                  >
+                                    <img 
+                                      src={design.image_url} 
+                                      alt={design.name} 
+                                      className="w-full h-full object-cover"
+                                    />
+                                    {selectedDesign === design.id && (
+                                      <div className="absolute top-2 right-2 bg-winshirt-purple rounded-full w-5 h-5 flex items-center justify-center">
+                                        <Check className="w-3 h-3 text-white" />
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </TabsContent>
+                            
+                            <TabsContent value="abstrait" className="space-y-4">
+                              <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-medium">Choisissez un visuel</h3>
+                                <div className="flex space-x-2 items-center">
+                                  <span className="text-sm text-white/70">Position:</span>
+                                  <div className="flex border rounded-md overflow-hidden">
+                                    <Button 
+                                      variant={selectedPrintPosition === 'front' ? "default" : "ghost"} 
+                                      size="sm"
+                                      className="rounded-none"
+                                      onClick={() => setSelectedPrintPosition('front')}
+                                    >
+                                      Avant
+                                    </Button>
+                                    <Button 
+                                      variant={selectedPrintPosition === 'back' ? "default" : "ghost"} 
+                                      size="sm"
+                                      className="rounded-none"
+                                      onClick={() => setSelectedPrintPosition('back')}
+                                    >
+                                      Arrière
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-3 gap-3">
+                                {filterDesignsByCategory('abstrait').map(design => (
+                                  <div 
+                                    key={design.id} 
+                                    className={`relative aspect-square rounded-md overflow-hidden cursor-pointer border ${
+                                      selectedDesign === design.id ? 'border-2 border-winshirt-purple' : 'border-white/20'
+                                    }`}
+                                    onClick={() => handleDesignSelect(design.id)}
+                                  >
+                                    <img 
+                                      src={design.image_url} 
+                                      alt={design.name} 
+                                      className="w-full h-full object-cover"
+                                    />
+                                    {selectedDesign === design.id && (
+                                      <div className="absolute top-2 right-2 bg-winshirt-purple rounded-full w-5 h-5 flex items-center justify-center">
+                                        <Check className="w-3 h-3 text-white" />
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </TabsContent>
+                          </>
+                        )}
+                      </Tabs>
+                    )}
+
+                    {currentDesignView === 'upload' && (
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="font-medium">Uploader votre design</h3>
+                          <div className="flex space-x-2 items-center">
+                            <span className="text-sm text-white/70">Position:</span>
+                            <div className="flex border rounded-md overflow-hidden">
+                              <Button 
+                                variant={selectedPrintPosition === 'front' ? "default" : "ghost"} 
+                                size="sm"
+                                className="rounded-none"
+                                onClick={() => setSelectedPrintPosition('front')}
+                              >
+                                Avant
+                              </Button>
+                              <Button 
+                                variant={selectedPrintPosition === 'back' ? "default" : "ghost"} 
+                                size="sm"
+                                className="rounded-none"
+                                onClick={() => setSelectedPrintPosition('back')}
+                              >
+                                Arrière
                               </Button>
                             </div>
-                          </TabsContent>
-                          
-                          <TabsContent value="abstrait" className="space-y-4">
-                            <h3 className="text-lg font-medium mb-2">Choisissez un visuel pour le recto</h3>
-                            <div className="grid grid-cols-3 gap-3">
-                              {filterDesignsByCategory('abstrait').map(design => (
-                                <div 
-                                  key={design.id} 
-                                  className={`relative aspect-square rounded-md overflow-hidden cursor-pointer border ${
-                                    selectedDesign === design.id ? 'border-2 border-winshirt-purple' : 'border-white/20'
-                                  }`}
-                                  onClick={() => handleDesignSelect(design.id)}
-                                >
-                                  <img 
-                                    src={design.image_url} 
-                                    alt={design.name} 
-                                    className="w-full h-full object-cover"
-                                  />
-                                  {selectedDesign === design.id && (
-                                    <div className="absolute top-2 right-2 bg-winshirt-purple rounded-full w-5 h-5 flex items-center justify-center">
-                                      <Check className="w-3 h-3 text-white" />
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-
-                            <div className="mt-4">
-                              <Button variant="outline" className="w-full flex items-center justify-center gap-2">
-                                <Upload size={16} />
-                                Upload
+                          </div>
+                        </div>
+                        
+                        <div className={`border-2 border-dashed border-white/30 rounded-lg p-6 text-center ${uploadedDesignUrl ? 'bg-white/5' : ''}`}>
+                          {uploadedDesignUrl ? (
+                            <div className="space-y-4">
+                              <img 
+                                src={uploadedDesignUrl} 
+                                alt="Uploaded design" 
+                                className="mx-auto h-40 object-contain"
+                              />
+                              <Button 
+                                variant="outline" 
+                                className="w-full"
+                                onClick={() => {
+                                  setUploadedDesignUrl(null);
+                                  setSelectedDesign(null);
+                                }}
+                              >
+                                Supprimer
                               </Button>
                             </div>
-                          </TabsContent>
-                        </>
-                      )}
-                    </Tabs>
+                          ) : (
+                            <>
+                              <Image className="w-12 h-12 mx-auto mb-4 text-white/40" />
+                              <p className="mb-2 text-white/70">Cliquez pour choisir un fichier ou glissez-déposez</p>
+                              <p className="text-sm text-white/50 mb-4">PNG, JPG ou SVG (max. 5MB)</p>
+                              <input
+                                type="file"
+                                id="fileUpload"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleDesignUpload}
+                              />
+                              <Button 
+                                variant="outline" 
+                                className="w-full"
+                                onClick={() => document.getElementById('fileUpload')?.click()}
+                              >
+                                Sélectionner un fichier
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                        
+                        {uploadedDesignUrl && (
+                          <div className="pt-4">
+                            <h4 className="text-sm font-medium mb-2">Taille d'impression</h4>
+                            <Select 
+                              value={selectedPrintSize} 
+                              onValueChange={(val) => setSelectedPrintSize(val as 'a4')}
+                            >
+                              <SelectTrigger className="w-full bg-white/5">
+                                <SelectValue placeholder="Choisir une taille" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="a3">A3 - Grand</SelectItem>
+                                <SelectItem value="a4">A4 - Moyen</SelectItem>
+                                <SelectItem value="a5">A5 - Petit</SelectItem>
+                                <SelectItem value="a6">A6 - Très petit</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </GlassCard>
                 </div>
               )}
             </div>
 
-            {/* Product Info */}
+            {/* Information produit */}
             <div>
               <div className="flex flex-wrap gap-2 mb-3">
                 <Badge variant="secondary">{product.category}</Badge>
@@ -403,16 +667,16 @@ const ProductDetail = () => {
                 <h3 className="text-sm font-medium mb-2">Quantité</h3>
                 <div className="flex items-center">
                   <button
-                    className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-l-md border-y border-l border-white/20"
+                    className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-l-md border-y border-l border-white/20"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   >
                     -
                   </button>
-                  <div className="w-12 h-8 flex items-center justify-center bg-white/5 border-y border-white/20">
+                  <div className="w-14 h-10 flex items-center justify-center bg-white/5 border-y border-white/20 text-lg">
                     {quantity}
                   </div>
                   <button
-                    className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-r-md border-y border-r border-white/20"
+                    className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-r-md border-y border-r border-white/20"
                     onClick={() => setQuantity(quantity + 1)}
                   >
                     +
@@ -422,10 +686,10 @@ const ProductDetail = () => {
 
               {eligibleLotteries && eligibleLotteries.length > 0 && product.tickets_offered > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-sm font-medium mb-2">
-                    Choisissez vos loteries ({selectedLotteries.length}/{product.tickets_offered})
-                  </h3>
                   <GlassCard className="p-4">
+                    <h3 className="text-sm font-medium mb-2">
+                      Choisissez vos loteries ({selectedLotteries.length}/{product.tickets_offered})
+                    </h3>
                     <p className="text-white/70 mb-3">
                       Avec ce produit, participez aux loteries suivantes:
                     </p>
@@ -433,53 +697,55 @@ const ProductDetail = () => {
                     {lotteriesLoading ? (
                       <div className="text-center py-4">Chargement des loteries...</div>
                     ) : (
-                      eligibleLotteries.map((lottery, index) => (
-                        <div 
-                          key={lottery.id} 
-                          onClick={() => handleLotterySelect(lottery.id)}
-                          className={`flex items-center p-3 rounded-lg cursor-pointer mb-3 border ${
-                            selectedLotteries.includes(lottery.id) 
-                              ? 'border-winshirt-purple bg-white/10' 
-                              : 'border-white/10 bg-white/5 hover:bg-white/10'
-                          }`}
-                        >
-                          <div className="mr-2 flex items-center justify-center">
-                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                      <div className="space-y-3">
+                        {eligibleLotteries.map((lottery, index) => (
+                          <div 
+                            key={lottery.id} 
+                            onClick={() => handleLotterySelect(lottery.id)}
+                            className={`flex items-center p-3 rounded-lg cursor-pointer border ${
                               selectedLotteries.includes(lottery.id) 
-                                ? 'border-winshirt-purple bg-winshirt-purple' 
-                                : 'border-white/40'
-                            }`}>
-                              {selectedLotteries.includes(lottery.id) && (
-                                <Check className="w-3 h-3 text-white" />
-                              )}
+                                ? 'border-winshirt-purple bg-white/10' 
+                                : 'border-white/10 bg-white/5 hover:bg-white/10'
+                            }`}
+                          >
+                            <div className="mr-3 flex items-center justify-center">
+                              <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                                selectedLotteries.includes(lottery.id) 
+                                  ? 'border-winshirt-purple bg-winshirt-purple' 
+                                  : 'border-white/40'
+                              }`}>
+                                {selectedLotteries.includes(lottery.id) && (
+                                  <Check className="w-3 h-3 text-white" />
+                                )}
+                              </div>
                             </div>
-                          </div>
-                          
-                          <div className="w-12 h-12 rounded-md overflow-hidden mr-3">
-                            <img 
-                              src={lottery.image_url} 
-                              alt={lottery.title} 
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          
-                          <div className="flex-1">
-                            <h4 className="font-medium">
-                              Ticket {index+1}: {lottery.title}
-                            </h4>
-                            <p className="text-sm text-white/70">Valeur: {lottery.value.toFixed(2)} €</p>
-                            <div className="w-full bg-white/20 rounded-full h-1.5 mt-1">
-                              <div 
-                                className="bg-winshirt-blue h-1.5 rounded-full" 
-                                style={{ width: `${Math.min((lottery.participants / lottery.goal) * 100, 100)}%` }} 
+                            
+                            <div className="w-12 h-12 rounded-md overflow-hidden mr-3">
+                              <img 
+                                src={lottery.image_url} 
+                                alt={lottery.title} 
+                                className="w-full h-full object-cover"
                               />
                             </div>
-                            <p className="text-xs text-white/50 mt-1">
-                              {lottery.participants} / {lottery.goal} participants
-                            </p>
+                            
+                            <div className="flex-1">
+                              <h4 className="font-medium">
+                                Ticket {index+1}: {lottery.title}
+                              </h4>
+                              <p className="text-sm text-white/70">Valeur: {lottery.value.toFixed(2)} €</p>
+                              <div className="w-full bg-white/20 rounded-full h-1.5 mt-1">
+                                <div 
+                                  className="bg-winshirt-blue h-1.5 rounded-full" 
+                                  style={{ width: `${Math.min((lottery.participants / lottery.goal) * 100, 100)}%` }} 
+                                />
+                              </div>
+                              <p className="text-xs text-white/50 mt-1">
+                                {lottery.participants} / {lottery.goal} participants
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))
+                        ))}
+                      </div>
                     )}
                   </GlassCard>
                 </div>
@@ -493,6 +759,50 @@ const ProductDetail = () => {
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 Ajouter au panier
               </Button>
+
+              {/* Récapitulatif de personnalisation */}
+              {(selectedDesign || selectedColor || selectedSize) && (
+                <GlassCard className="p-4 mt-4">
+                  <h3 className="text-sm font-medium mb-2">Récapitulatif de personnalisation</h3>
+                  <ul className="space-y-2 text-white/80 text-sm">
+                    {selectedSize && (
+                      <li className="flex justify-between">
+                        <span>Taille:</span>
+                        <span className="font-medium">{selectedSize}</span>
+                      </li>
+                    )}
+                    {selectedColor && (
+                      <li className="flex justify-between items-center">
+                        <span>Couleur:</span>
+                        <div className="flex items-center">
+                          <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: selectedColor }}></div>
+                          <span className="font-medium">{getColorName(selectedColor)}</span>
+                        </div>
+                      </li>
+                    )}
+                    {selectedDesign && (
+                      <li className="flex justify-between">
+                        <span>Design:</span>
+                        <span className="font-medium">
+                          {currentDesignView === 'upload' ? 'Custom upload' : selectedDesignDetails?.name || 'Design'}
+                        </span>
+                      </li>
+                    )}
+                    {selectedDesign && (
+                      <li className="flex justify-between">
+                        <span>Position:</span>
+                        <span className="font-medium">{selectedPrintPosition === 'front' ? 'Avant' : 'Arrière'}</span>
+                      </li>
+                    )}
+                    {selectedLotteries.length > 0 && (
+                      <li className="flex justify-between">
+                        <span>Loteries:</span>
+                        <span className="font-medium">{selectedLotteries.length} sélectionnée(s)</span>
+                      </li>
+                    )}
+                  </ul>
+                </GlassCard>
+              )}
             </div>
           </div>
         </div>

@@ -80,3 +80,22 @@ export type Mockup = {
   created_at: string;
   updated_at: string;
 };
+
+export type CartItem = {
+  id?: string;
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  color?: string | null;
+  size?: string | null;
+  customization?: {
+    designId?: string | null;
+    designName?: string | null;
+    designUrl?: string | null;
+    printPosition?: 'front' | 'back';
+    printSize?: 'a3' | 'a4' | 'a5' | 'a6';
+  };
+  lotteries?: string[];
+  image_url?: string;
+};
