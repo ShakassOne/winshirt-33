@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -1305,7 +1304,7 @@ const ProductDetail = () => {
                                 <SelectItem 
                                   key={lottery.id}
                                   value={lottery.id}
-                                  disabled={selectedLotteryIds.includes(lottery.id) && !selectedLotteries[index]?.id !== lottery.id}
+                                  disabled={selectedLotteryIds.includes(lottery.id) && selectedLotteries[index]?.id !== lottery.id}
                                 >
                                   {lottery.title}
                                 </SelectItem>
