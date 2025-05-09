@@ -33,7 +33,13 @@ const AVAILABLE_FONTS = [
   { name: 'Times New Roman', value: 'Times New Roman, Times, serif' },
   { name: 'Courier New', value: 'Courier New, monospace' },
   { name: 'Impact', value: 'Impact, Charcoal, sans-serif' },
-  { name: 'Comic Sans MS', value: 'Comic Sans MS, cursive' }
+  { name: 'Comic Sans MS', value: 'Comic Sans MS, cursive' },
+  // Google Fonts
+  { name: 'Roboto', value: '"Roboto", sans-serif' },
+  { name: 'Open Sans', value: '"Open Sans", sans-serif' },
+  { name: 'Lato', value: '"Lato", sans-serif' },
+  { name: 'Montserrat', value: '"Montserrat", sans-serif' },
+  { name: 'Playfair Display', value: '"Playfair Display", serif' },
 ];
 
 const ProductDetail = () => {
@@ -186,7 +192,7 @@ const ProductDetail = () => {
   
   const selectedDesignDetails = getSelectedDesignDetails();
   
-  // Gestion du drag & drop pour repositionner le design
+  // Gestion du drag & drop pour repositionner le design (souris et touch)
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!previewContainerRef.current) return;
     
@@ -229,6 +235,56 @@ const ProductDetail = () => {
     setIsTextDragging(false);
   };
   
+  // Support tactile pour mobile
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!previewContainerRef.current) return;
+    
+    if (showTextEditor) {
+      setIsTextDragging(true);
+      setTextDragStart({
+        x: e.touches[0].clientX - textPosition.x,
+        y: e.touches[0].clientY - textPosition.y
+      });
+      setIsDragging(false);
+    } else {
+      setIsDragging(true);
+      setDragStart({
+        x: e.touches[0].clientX - designPosition.x,
+        y: e.touches[0].clientY - designPosition.y
+      });
+      setIsTextDragging(false);
+    }
+  };
+  
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.preventDefault(); // Empêcher le scroll pendant le déplacement
+    
+    if (isDragging) {
+      const newX = e.touches[0].clientX - dragStart.x;
+      const newY = e.touches[0].clientY - dragStart.y;
+      
+      setDesignPosition({
+        x: newX,
+        y: newY
+      });
+    }
+    
+    if (isTextDragging) {
+      const newX = e.touches[0].clientX - textDragStart.x;
+      const newY = e.touches[0].clientY - textDragStart.y;
+      
+      setTextPosition({
+        x: newX,
+        y: newY
+      });
+    }
+  };
+  
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setIsTextDragging(false);
+  };
+  
   // Gestion du drag & drop pour le texte
   const handleTextMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation(); // Empêcher la propagation pour éviter de déclencher aussi le drag du design
@@ -255,9 +311,9 @@ const ProductDetail = () => {
   
   const handleZoomOut = () => {
     if (showTextEditor) {
-      setTextScale(prev => Math.max(prev - 0.1, 0.5));
+      setTextScale(prev => Math.max(prev - 0.1, 0.2)); // Permettre une réduction plus importante
     } else {
-      setDesignScale(prev => Math.max(prev - 0.1, 0.5));
+      setDesignScale(prev => Math.max(prev - 0.1, 0.2)); // Permettre une réduction plus importante
     }
   };
   
@@ -529,6 +585,9 @@ const ProductDetail = () => {
                   onMouseMove={handleMouseMove}
                   onMouseUp={handleMouseUp}
                   onMouseLeave={handleMouseUp}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
                 >
                   {/* Produit de base */}
                   <img 
@@ -1138,6 +1197,62 @@ const ProductDetail = () => {
                     <span className="text-xl font-bold">{calculateTotalPrice().toFixed(2)} €</span>
                   </div>
                 </div>
+                
+                {/* Récapitulatif de personnalisation */}
+                {(selectedDesign || selectedColor || selectedSize || customText) && (
+                  <div className="md:hidden">
+                    <GlassCard className="p-4">
+                      <h3 className="text-sm font-medium mb-2">Récapitulatif</h3>
+                      <ul className="space-y-2 text-white/80 text-sm">
+                        {selectedSize && (
+                          <li className="flex justify-between">
+                            <span>Taille:</span>
+                            <span className="font-medium">{selectedSize}</span>
+                          </li>
+                        )}
+                        {selectedColor && (
+                          <li className="flex justify-between items-center">
+                            <span>Couleur:</span>
+                            <div className="flex items-center">
+                              <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: selectedColor }}></div>
+                              <span className="font-medium">{getColorName(selectedColor)}</span>
+                            </div>
+                          </li>
+                        )}
+                        {(selectedDesign || uploadedDesignUrl) && (
+                          <>
+                            <li className="flex justify-between">
+                              <span>Design:</span>
+                              <span className="font-medium">
+                                {currentDesignView === 'upload' ? 'Custom upload' : selectedDesignDetails?.name || 'Design'}
+                              </span>
+                            </li>
+                            <li className="flex justify-between">
+                              <span>Position:</span>
+                              <span className="font-medium">{selectedPrintPosition === 'front' ? 'Avant' : 'Arrière'}</span>
+                            </li>
+                            <li className="flex justify-between">
+                              <span>Taille d'impression:</span>
+                              <span className="font-medium">{selectedPrintSize.toUpperCase()}</span>
+                            </li>
+                          </>
+                        )}
+                        {customText && (
+                          <li className="flex justify-between">
+                            <span>Texte:</span>
+                            <span className="font-medium truncate ml-2 max-w-[150px]">{customText}</span>
+                          </li>
+                        )}
+                        {selectedLotteries.length > 0 && (
+                          <li className="flex justify-between">
+                            <span>Loteries:</span>
+                            <span className="font-medium">{selectedLotteries.length} sélectionnée(s)</span>
+                          </li>
+                        )}
+                      </ul>
+                    </GlassCard>
+                  </div>
+                )}
 
                 {eligibleLotteries && eligibleLotteries.length > 0 && product.tickets_offered > 0 && (
                   <div>
@@ -1199,62 +1314,6 @@ const ProductDetail = () => {
                           ))}
                         </div>
                       )}
-                    </GlassCard>
-                  </div>
-                )}
-                
-                {/* Récapitulatif de personnalisation */}
-                {(selectedDesign || selectedColor || selectedSize || customText) && (
-                  <div className="md:hidden">
-                    <GlassCard className="p-4">
-                      <h3 className="text-sm font-medium mb-2">Récapitulatif</h3>
-                      <ul className="space-y-2 text-white/80 text-sm">
-                        {selectedSize && (
-                          <li className="flex justify-between">
-                            <span>Taille:</span>
-                            <span className="font-medium">{selectedSize}</span>
-                          </li>
-                        )}
-                        {selectedColor && (
-                          <li className="flex justify-between items-center">
-                            <span>Couleur:</span>
-                            <div className="flex items-center">
-                              <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: selectedColor }}></div>
-                              <span className="font-medium">{getColorName(selectedColor)}</span>
-                            </div>
-                          </li>
-                        )}
-                        {(selectedDesign || uploadedDesignUrl) && (
-                          <>
-                            <li className="flex justify-between">
-                              <span>Design:</span>
-                              <span className="font-medium">
-                                {currentDesignView === 'upload' ? 'Custom upload' : selectedDesignDetails?.name || 'Design'}
-                              </span>
-                            </li>
-                            <li className="flex justify-between">
-                              <span>Position:</span>
-                              <span className="font-medium">{selectedPrintPosition === 'front' ? 'Avant' : 'Arrière'}</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <span>Taille d'impression:</span>
-                              <span className="font-medium">{selectedPrintSize.toUpperCase()}</span>
-                            </li>
-                          </>
-                        )}
-                        {customText && (
-                          <li className="flex justify-between">
-                            <span>Texte:</span>
-                            <span className="font-medium truncate ml-2 max-w-[150px]">{customText}</span>
-                          </li>
-                        )}
-                        {selectedLotteries.length > 0 && (
-                          <li className="flex justify-between">
-                            <span>Loteries:</span>
-                            <span className="font-medium">{selectedLotteries.length} sélectionnée(s)</span>
-                          </li>
-                        )}
-                      </ul>
                     </GlassCard>
                   </div>
                 )}
