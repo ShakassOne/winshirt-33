@@ -13,6 +13,7 @@ export const fetchFeaturedLotteries = async (): Promise<Lottery[]> => {
     throw error;
   }
 
+  console.log("Fetched lotteries:", data);
   return data || [];
 };
 
@@ -30,6 +31,7 @@ export const fetchProductsByCategory = async (category?: string): Promise<Produc
     throw error;
   }
 
+  console.log("Fetched products by category:", data);
   return data || [];
 };
 
@@ -45,6 +47,7 @@ export const fetchAllProducts = async (): Promise<Product[]> => {
     throw error;
   }
 
+  console.log("Fetched all products:", data);
   return data || [];
 };
 
@@ -59,6 +62,7 @@ export const fetchAllLotteries = async (): Promise<Lottery[]> => {
     throw error;
   }
 
+  console.log("Fetched all lotteries:", data);
   return data || [];
 };
 
@@ -74,6 +78,7 @@ export const fetchDesigns = async (): Promise<Design[]> => {
     throw error;
   }
 
+  console.log("Fetched designs:", data);
   return data || [];
 };
 
@@ -89,6 +94,7 @@ export const fetchProductById = async (id: string): Promise<Product | null> => {
     return null;
   }
 
+  console.log("Fetched product by id:", data);
   return data;
 };
 
@@ -104,5 +110,6 @@ export const fetchLotteryById = async (id: string): Promise<Lottery | null> => {
     return null;
   }
 
+  console.log("Fetched lottery by id:", data);
   return data;
 };

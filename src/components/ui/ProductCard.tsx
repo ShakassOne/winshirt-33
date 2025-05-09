@@ -50,7 +50,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-between items-center translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
           <Button size="sm" variant="secondary" className="flex items-center gap-1" asChild>
-            <Link to={`/cart/add/${id}`}>
+            <Link to={`/products/${id}`}>
               <ShoppingCart className="h-4 w-4" />
               <span className="hidden sm:inline-block">Ajouter</span>
             </Link>

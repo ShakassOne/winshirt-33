@@ -1,21 +1,25 @@
 
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { fetchProductById, fetchAllLotteries } from '@/services/api.service';
+import { fetchProductById, fetchAllLotteries, fetchDesigns } from '@/services/api.service';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Check } from 'lucide-react';
 import GlassCard from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/badge';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { toast } from 'sonner';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [showCustomizationPanel, setShowCustomizationPanel] = useState(false);
+  const [selectedDesign, setSelectedDesign] = useState<string | null>(null);
   
   const { data: product, isLoading: productLoading, error: productError } = useQuery({
     queryKey: ['product', id],
@@ -28,7 +32,36 @@ const ProductDetail = () => {
     queryFn: fetchAllLotteries,
   });
 
+  const { data: designs } = useQuery({
+    queryKey: ['designs'],
+    queryFn: fetchDesigns,
+    enabled: showCustomizationPanel,
+  });
+
   const eligibleLotteries = lotteries?.filter(lottery => lottery.is_active).slice(0, product?.tickets_offered || 0);
+
+  const handleAddToCart = () => {
+    if (!selectedSize && product?.available_sizes.length > 0) {
+      toast.error("Veuillez sélectionner une taille");
+      return;
+    }
+
+    if (!selectedColor && product?.available_colors.length > 0) {
+      toast.error("Veuillez sélectionner une couleur");
+      return;
+    }
+
+    toast.success("Produit ajouté au panier");
+  };
+
+  const toggleCustomizationPanel = () => {
+    setShowCustomizationPanel(!showCustomizationPanel);
+  };
+
+  const handleDesignSelect = (designId: string) => {
+    setSelectedDesign(designId);
+    toast.success("Design sélectionné");
+  };
 
   if (productLoading) {
     return (
@@ -84,6 +117,15 @@ const ProductDetail = () => {
                         alt={product.name}
                         className="w-full h-full object-cover" 
                       />
+                      {selectedDesign && designs && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <img 
+                            src={designs.find(d => d.id === selectedDesign)?.image_url || ''} 
+                            alt="Selected Design"
+                            className="w-1/2 h-1/2 object-contain opacity-80" 
+                          />
+                        </div>
+                      )}
                     </div>
                   </CarouselItem>
                   <CarouselItem>
@@ -103,11 +145,49 @@ const ProductDetail = () => {
                   <GlassCard className="p-6">
                     <h3 className="text-lg font-medium mb-3">Personnalisation</h3>
                     <p className="text-white/70 mb-4">
-                      Ce produit est personnalisable. Vous pourrez ajouter vos designs après l'avoir ajouté au panier.
+                      Ce produit est personnalisable. Vous pouvez ajouter des designs après l'avoir ajouté au panier ou utiliser notre éditeur ci-dessous.
                     </p>
-                    <Button className="bg-gradient-purple w-full">
-                      Personnaliser ce produit
+                    <Button 
+                      className="bg-gradient-purple w-full"
+                      onClick={toggleCustomizationPanel}
+                    >
+                      {showCustomizationPanel ? "Masquer l'éditeur" : "Personnaliser ce produit"}
                     </Button>
+                  </GlassCard>
+                </div>
+              )}
+
+              {showCustomizationPanel && (
+                <div className="mt-6">
+                  <GlassCard className="p-6">
+                    <h3 className="text-lg font-medium mb-3">Sélectionner un design</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                      {designs ? designs.map(design => (
+                        <div 
+                          key={design.id} 
+                          className={`relative aspect-square rounded-md overflow-hidden cursor-pointer ${
+                            selectedDesign === design.id ? 'ring-2 ring-winshirt-purple' : 'hover:opacity-80'
+                          }`}
+                          onClick={() => handleDesignSelect(design.id)}
+                        >
+                          <img 
+                            src={design.image_url} 
+                            alt={design.name} 
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity">
+                            <p className="text-white text-sm font-medium">{design.name}</p>
+                          </div>
+                          {selectedDesign === design.id && (
+                            <div className="absolute top-2 right-2 bg-winshirt-purple rounded-full w-5 h-5 flex items-center justify-center">
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                          )}
+                        </div>
+                      )) : (
+                        <p>Chargement des designs...</p>
+                      )}
+                    </div>
                   </GlassCard>
                 </div>
               )}
@@ -246,7 +326,11 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              <Button className="w-full bg-gradient-purple mb-3" size="lg">
+              <Button 
+                className="w-full bg-gradient-purple mb-3" 
+                size="lg"
+                onClick={handleAddToCart}
+              >
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 Ajouter au panier
               </Button>

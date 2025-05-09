@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,8 +34,8 @@ const Navbar = () => {
         
         <nav className="hidden md:flex items-center gap-8">
           <NavLink href="/">Accueil</NavLink>
-          <NavLink href="/shop">Shop</NavLink>
-          <NavLink href="/loteries">Loteries</NavLink>
+          <NavLink href="/products">Shop</NavLink>
+          <NavLink href="/lotteries">Loteries</NavLink>
           <NavLink href="/comment-ca-marche">Comment ça marche</NavLink>
           <NavLink href="/contact">Contact</NavLink>
         </nav>
@@ -61,7 +62,8 @@ const Navbar = () => {
 };
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
-  const isActive = window.location.pathname === href;
+  const location = useLocation();
+  const isActive = location.pathname === href;
   
   return (
     <Link 
