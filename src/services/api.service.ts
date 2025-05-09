@@ -1,4 +1,5 @@
-import { supabase } from "@/lib/supabase";
+
+import { supabase } from "@/integrations/supabase/client";
 import { Design, Lottery, Mockup, Product } from "@/types/supabase.types";
 
 const DESIGNS_TABLE = "designs";
@@ -29,7 +30,7 @@ export const fetchAllProducts = async () => {
 export const fetchProductById = async (id: string) => {
   try {
     const { data, error } = await supabase
-      .from<Product>('products')
+      .from('products')
       .select('*')
       .eq('id', id)
       .single();
@@ -108,7 +109,7 @@ export const updateProduct = async (productId: string, productData: any) => {
 export const fetchAllLotteries = async () => {
   try {
     const { data, error } = await supabase
-      .from<Lottery>('lotteries')
+      .from('lotteries')
       .select('*')
       .order('draw_date', { ascending: true });
     
@@ -123,10 +124,29 @@ export const fetchAllLotteries = async () => {
   }
 };
 
+export const fetchFeaturedLotteries = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('lotteries')
+      .select('*')
+      .eq('is_featured', true)
+      .order('draw_date', { ascending: true });
+    
+    if (error) {
+      throw new Error(error.message);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching featured lotteries:', error);
+    throw error;
+  }
+};
+
 export const fetchLotteryById = async (id: string) => {
   try {
     const { data, error } = await supabase
-      .from<Lottery>('lotteries')
+      .from('lotteries')
       .select('*')
       .eq('id', id)
       .single();
@@ -205,7 +225,7 @@ export const deleteLottery = async (lotteryId: string) => {
 export const fetchDesigns = async () => {
     try {
         const { data, error } = await supabase
-            .from<Design>(DESIGNS_TABLE)
+            .from(DESIGNS_TABLE)
             .select('*');
 
         if (error) {

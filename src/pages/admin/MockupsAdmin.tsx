@@ -44,7 +44,7 @@ const MockupsAdmin = () => {
     setShowMockupForm(false);
   };
 
-  const filteredMockups = mockups?.filter(mockup => {
+  const filteredMockups = mockups?.filter((mockup: Mockup) => {
     const matchesSearch = 
       mockup.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       mockup.category.toLowerCase().includes(searchTerm.toLowerCase());
@@ -54,7 +54,7 @@ const MockupsAdmin = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const categories = [...new Set(mockups?.map(mockup => mockup.category) || [])];
+  const categories = mockups ? [...new Set(mockups.map((mockup: Mockup) => mockup.category))] : [];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -110,7 +110,7 @@ const MockupsAdmin = () => {
                     Tous
                   </Button>
                   
-                  {categories.map((category) => (
+                  {categories.map((category: string) => (
                     <Button 
                       key={category} 
                       variant={activeCategory === category ? "default" : "outline"} 
@@ -151,7 +151,7 @@ const MockupsAdmin = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/10">
-                      {filteredMockups?.map((mockup) => (
+                      {filteredMockups?.map((mockup: Mockup) => (
                         <tr key={mockup.id} className="hover:bg-white/5">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="w-12 h-12 rounded overflow-hidden bg-white/10 flex items-center justify-center">
@@ -214,12 +214,14 @@ const MockupsAdmin = () => {
       
       <Footer />
       
-      <MockupForm 
-        isOpen={showMockupForm} 
-        onClose={handleCloseForm} 
-        onSuccess={handleCreateSuccess}
-        mockup={activeMockup}
-      />
+      {showMockupForm && (
+        <MockupForm 
+          isOpen={showMockupForm} 
+          onClose={handleCloseForm} 
+          onSuccess={handleCreateSuccess}
+          initialData={activeMockup}
+        />
+      )}
     </div>
   );
 };

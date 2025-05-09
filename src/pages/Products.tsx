@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import ProductCard from '@/components/ui/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Search, Filter } from 'lucide-react';
+import { Product } from '@/types/supabase.types';
 
 const Products = () => {
   const [category, setCategory] = useState<string | null>(null);
@@ -18,10 +19,10 @@ const Products = () => {
   });
 
   const categories = products 
-    ? [...new Set(products.map(product => product.category))] 
+    ? [...new Set(products.map((product: Product) => product.category))] 
     : [];
 
-  const filteredProducts = products?.filter(product => {
+  const filteredProducts = products?.filter((product: Product) => {
     const matchesCategory = category ? product.category === category : true;
     const matchesSearch = searchTerm 
       ? product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -70,7 +71,7 @@ const Products = () => {
                 >
                   Tous
                 </Button>
-                {categories.map((cat) => (
+                {categories.map((cat: string) => (
                   <Button
                     key={cat}
                     variant={category === cat ? "default" : "outline"}
@@ -102,7 +103,7 @@ const Products = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredProducts?.map(product => (
+                {filteredProducts?.map((product: Product) => (
                   <ProductCard 
                     key={product.id}
                     id={product.id}

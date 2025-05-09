@@ -13,12 +13,13 @@ import { Badge } from '@/components/ui/badge';
 import ProductForm from '@/components/admin/ProductForm';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
+import { Product } from '@/types/supabase.types';
 
 const ProductsAdmin = () => {
   const { toast: toastHook } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [showProductForm, setShowProductForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   
   const { data: products, isLoading, error, refetch } = useQuery({
@@ -34,7 +35,7 @@ const ProductsAdmin = () => {
     });
   };
 
-  const handleEditProduct = (product: any) => {
+  const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     setShowProductForm(true);
   };
@@ -51,7 +52,7 @@ const ProductsAdmin = () => {
     }
   };
 
-  const filteredProducts = products?.filter(product => {
+  const filteredProducts = products?.filter((product: Product) => {
     const matchesSearch = 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -62,7 +63,7 @@ const ProductsAdmin = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const categories = [...new Set(products?.map(product => product.category) || [])];
+  const categories = products ? [...new Set(products.map((product: Product) => product.category))] : [];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -121,7 +122,7 @@ const ProductsAdmin = () => {
                     Tous
                   </Button>
                   
-                  {categories.map((category) => (
+                  {categories.map((category: string) => (
                     <Button 
                       key={category} 
                       variant={activeCategory === category ? "default" : "outline"} 
@@ -162,7 +163,7 @@ const ProductsAdmin = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/10">
-                      {filteredProducts?.map((product) => (
+                      {filteredProducts?.map((product: Product) => (
                         <tr key={product.id} className="hover:bg-white/5">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="w-12 h-12 rounded overflow-hidden">
@@ -236,15 +237,17 @@ const ProductsAdmin = () => {
       
       <Footer />
       
-      <ProductForm 
-        isOpen={showProductForm} 
-        onClose={() => {
-          setShowProductForm(false);
-          setEditingProduct(null);
-        }} 
-        onSuccess={handleCreateSuccess}
-        product={editingProduct}
-      />
+      {showProductForm && (
+        <ProductForm 
+          isOpen={showProductForm} 
+          onClose={() => {
+            setShowProductForm(false);
+            setEditingProduct(null);
+          }} 
+          onSuccess={handleCreateSuccess}
+          initialData={editingProduct}
+        />
+      )}
     </div>
   );
 };

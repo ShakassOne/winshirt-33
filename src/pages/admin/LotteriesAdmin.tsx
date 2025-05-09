@@ -13,12 +13,13 @@ import { Badge } from '@/components/ui/badge';
 import LotteryForm from '@/components/admin/LotteryForm';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
+import { Lottery } from '@/types/supabase.types';
 
 const LotteriesAdmin = () => {
   const { toast: toastHook } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [showLotteryForm, setShowLotteryForm] = useState(false);
-  const [editingLottery, setEditingLottery] = useState<any>(null);
+  const [editingLottery, setEditingLottery] = useState<Lottery | null>(null);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   
   const { data: lotteries, isLoading, error, refetch } = useQuery({
@@ -34,7 +35,7 @@ const LotteriesAdmin = () => {
     });
   };
 
-  const handleEditLottery = (lottery: any) => {
+  const handleEditLottery = (lottery: Lottery) => {
     setEditingLottery(lottery);
     setShowLotteryForm(true);
   };
@@ -51,7 +52,7 @@ const LotteriesAdmin = () => {
     }
   };
 
-  const filteredLotteries = lotteries?.filter(lottery => {
+  const filteredLotteries = lotteries?.filter((lottery: Lottery) => {
     const matchesSearch = 
       lottery.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lottery.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -182,7 +183,7 @@ const LotteriesAdmin = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/10">
-                      {filteredLotteries?.map((lottery) => (
+                      {filteredLotteries?.map((lottery: Lottery) => (
                         <tr key={lottery.id} className="hover:bg-white/5">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="w-12 h-12 rounded overflow-hidden">
@@ -265,15 +266,17 @@ const LotteriesAdmin = () => {
       
       <Footer />
 
-      <LotteryForm
-        isOpen={showLotteryForm}
-        onClose={() => {
-          setShowLotteryForm(false);
-          setEditingLottery(null);
-        }}
-        onSuccess={handleCreateSuccess}
-        lottery={editingLottery}
-      />
+      {showLotteryForm && (
+        <LotteryForm
+          isOpen={showLotteryForm}
+          onClose={() => {
+            setShowLotteryForm(false);
+            setEditingLottery(null);
+          }}
+          onSuccess={handleCreateSuccess}
+          initialData={editingLottery}
+        />
+      )}
     </div>
   );
 };
