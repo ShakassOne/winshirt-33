@@ -11,11 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { isMobile } = useMobile();
+  const isMobile = useIsMobile();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -70,6 +70,12 @@ const Navbar = () => {
               className="text-white/70 hover:text-white transition-colors"
             >
               Admin
+            </Link>
+            <Link
+              to="/admin/mockups"
+              className="text-white/70 hover:text-white transition-colors"
+            >
+              Mockups
             </Link>
           </nav>
 
