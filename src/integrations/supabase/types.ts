@@ -123,6 +123,60 @@ export type Database = {
           },
         ]
       }
+      mockups: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          is_active: boolean
+          name: string
+          price_a3: number
+          price_a4: number
+          price_a5: number
+          price_a6: number
+          print_areas: Json
+          svg_back_url: string | null
+          svg_front_url: string
+          text_price_back: number
+          text_price_front: number
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          price_a3?: number
+          price_a4?: number
+          price_a5?: number
+          price_a6?: number
+          print_areas?: Json
+          svg_back_url?: string | null
+          svg_front_url: string
+          text_price_back?: number
+          text_price_front?: number
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_a3?: number
+          price_a4?: number
+          price_a5?: number
+          price_a6?: number
+          print_areas?: Json
+          svg_back_url?: string | null
+          svg_front_url?: string
+          text_price_back?: number
+          text_price_front?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string | null
@@ -210,6 +264,7 @@ export type Database = {
           image_url: string
           is_active: boolean | null
           is_customizable: boolean | null
+          mockup_id: string | null
           name: string
           price: number
           tickets_offered: number | null
@@ -226,6 +281,7 @@ export type Database = {
           image_url: string
           is_active?: boolean | null
           is_customizable?: boolean | null
+          mockup_id?: string | null
           name: string
           price: number
           tickets_offered?: number | null
@@ -242,12 +298,21 @@ export type Database = {
           image_url?: string
           is_active?: boolean | null
           is_customizable?: boolean | null
+          mockup_id?: string | null
           name?: string
           price?: number
           tickets_offered?: number | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_mockup_id_fkey"
+            columns: ["mockup_id"]
+            isOneToOne: false
+            referencedRelation: "mockups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

@@ -14,6 +14,7 @@ export type Product = {
   available_sizes: string[];
   tickets_offered: number;
   is_active: boolean;
+  mockup_id: string | null;
 };
 
 export type Lottery = {
@@ -50,4 +51,32 @@ export type Profile = {
   avatar_url: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type Mockup = {
+  id: string;
+  name: string;
+  category: string;
+  svg_front_url: string;
+  svg_back_url: string | null;
+  print_areas: PrintArea[];
+  price_a3: number;
+  price_a4: number;
+  price_a5: number;
+  price_a6: number;
+  text_price_front: number;
+  text_price_back: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PrintArea = {
+  id: string;
+  name: string;
+  side: 'front' | 'back';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 };

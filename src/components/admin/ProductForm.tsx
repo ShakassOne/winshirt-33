@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { createProduct } from '@/services/api.service';
+import { createProduct, fetchAllMockups } from '@/services/api.service';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { X, Plus } from 'lucide-react';
 import GlassCard from '../ui/GlassCard';
+import { useQuery } from '@tanstack/react-query';
 
 const productSchema = z.object({
   name: z.string().min(3, { message: 'Le nom doit contenir au moins 3 caractères' }),
@@ -21,7 +23,8 @@ const productSchema = z.object({
   category: z.string().min(1, { message: 'La catégorie est requise' }),
   is_customizable: z.boolean().default(false),
   is_active: z.boolean().default(true),
-  tickets_offered: z.number().int().min(0).default(0)
+  tickets_offered: z.number().int().min(0).default(0),
+  mockup_id: z.string().optional().nullable()
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -40,6 +43,12 @@ const ProductForm = ({ isOpen, onClose, onSuccess }: ProductFormProps) => {
   const [newColor, setNewColor] = useState('');
   const [newSize, setNewSize] = useState('');
 
+  const { data: mockups } = useQuery({
+    queryKey: ['mockups'],
+    queryFn: fetchAllMockups,
+    enabled: isOpen
+  });
+
   const defaultValues: Partial<ProductFormValues> = {
     name: '',
     description: '',
@@ -48,7 +57,8 @@ const ProductForm = ({ isOpen, onClose, onSuccess }: ProductFormProps) => {
     category: '',
     is_customizable: false,
     is_active: true,
-    tickets_offered: 0
+    tickets_offered: 0,
+    mockup_id: null
   };
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ProductFormValues>({
@@ -58,6 +68,17 @@ const ProductForm = ({ isOpen, onClose, onSuccess }: ProductFormProps) => {
 
   const isCustomizable = watch('is_customizable');
   const ticketsOffered = watch('tickets_offered');
+  const selectedCategory = watch('category');
+
+  useEffect(() => {
+    // Filtrer les mockups par catégorie sélectionnée
+    if (selectedCategory && mockups && mockups.length > 0) {
+      const matchingMockups = mockups.filter(mockup => mockup.category === selectedCategory);
+      if (matchingMockups.length === 1) {
+        setValue('mockup_id', matchingMockups[0].id);
+      }
+    }
+  }, [selectedCategory, mockups, setValue]);
 
   const addColor = () => {
     if (newColor && !colors.includes(newColor)) {
@@ -96,6 +117,7 @@ const ProductForm = ({ isOpen, onClose, onSuccess }: ProductFormProps) => {
         is_customizable: data.is_customizable,
         is_active: data.is_active,
         tickets_offered: data.tickets_offered,
+        mockup_id: data.mockup_id,
         color: colors.length > 0 ? colors[0] : null,
         available_colors: colors,
         available_sizes: sizes
@@ -157,6 +179,25 @@ const ProductForm = ({ isOpen, onClose, onSuccess }: ProductFormProps) => {
                 </select>
                 {errors.category && <p className="text-red-500 text-sm">{errors.category.message}</p>}
               </div>
+
+              {selectedCategory && mockups && mockups.filter(m => m.category === selectedCategory).length > 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="mockup_id">Mockup</Label>
+                  <select 
+                    id="mockup_id"
+                    {...register('mockup_id')}
+                    className="w-full rounded-md bg-background/10 border border-white/20 px-4 py-2"
+                  >
+                    <option value="">Sélectionnez un mockup</option>
+                    {mockups
+                      .filter(mockup => mockup.category === selectedCategory)
+                      .map(mockup => (
+                        <option key={mockup.id} value={mockup.id}>{mockup.name}</option>
+                      ))
+                    }
+                  </select>
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label htmlFor="price">Prix (€)</Label>

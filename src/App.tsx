@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/Dashboard";
 import ProductsAdmin from "./pages/admin/ProductsAdmin";
 import LotteriesAdmin from "./pages/admin/LotteriesAdmin";
+import MockupsAdmin from "./pages/admin/MockupsAdmin";
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -41,6 +42,7 @@ const App = () => (
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/products" element={<ProductsAdmin />} />
           <Route path="/admin/lotteries" element={<LotteriesAdmin />} />
+          <Route path="/admin/mockups" element={<MockupsAdmin />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { Product, Lottery, Design } from "@/types/supabase.types";
+import { Product, Lottery, Design, Mockup } from "@/types/supabase.types";
 
 export const fetchFeaturedLotteries = async (): Promise<Lottery[]> => {
   try {
@@ -199,6 +198,125 @@ export const createLottery = async (lottery: Omit<Lottery, 'id' | 'created_at' |
     return data;
   } catch (err) {
     console.error("Exception while creating lottery:", err);
+    throw err;
+  }
+};
+
+// Nouvelles fonctions pour les mockups
+export const fetchAllMockups = async (): Promise<Mockup[]> => {
+  try {
+    console.log("Fetching all mockups...");
+    const { data, error } = await supabase
+      .from("mockups")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching all mockups:", error);
+      throw error;
+    }
+
+    const mockups = data.map(mockup => ({
+      ...mockup,
+      print_areas: mockup.print_areas || []
+    }));
+
+    console.log(`Fetched ${mockups.length || 0} mockups:`, mockups);
+    return mockups || [];
+  } catch (err) {
+    console.error("Exception while fetching all mockups:", err);
+    throw err;
+  }
+};
+
+export const fetchMockupById = async (id: string): Promise<Mockup | null> => {
+  try {
+    console.log(`Fetching mockup with id: ${id}`);
+    const { data, error } = await supabase
+      .from("mockups")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching mockup:", error);
+      throw error;
+    }
+
+    const mockup = {
+      ...data,
+      print_areas: data.print_areas || []
+    };
+
+    console.log("Fetched mockup by id:", mockup);
+    return mockup;
+  } catch (err) {
+    console.error("Exception while fetching mockup by id:", err);
+    return null;
+  }
+};
+
+export const createMockup = async (mockup: Omit<Mockup, 'id' | 'created_at' | 'updated_at'>): Promise<Mockup> => {
+  try {
+    console.log("Creating new mockup:", mockup);
+    const { data, error } = await supabase
+      .from("mockups")
+      .insert([mockup])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating mockup:", error);
+      throw error;
+    }
+
+    console.log("Created mockup:", data);
+    return data;
+  } catch (err) {
+    console.error("Exception while creating mockup:", err);
+    throw err;
+  }
+};
+
+export const updateMockup = async (id: string, mockup: Partial<Mockup>): Promise<Mockup> => {
+  try {
+    console.log(`Updating mockup with id: ${id}`, mockup);
+    const { data, error } = await supabase
+      .from("mockups")
+      .update(mockup)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating mockup:", error);
+      throw error;
+    }
+
+    console.log("Updated mockup:", data);
+    return data;
+  } catch (err) {
+    console.error("Exception while updating mockup:", err);
+    throw err;
+  }
+};
+
+export const deleteMockup = async (id: string): Promise<void> => {
+  try {
+    console.log(`Deleting mockup with id: ${id}`);
+    const { error } = await supabase
+      .from("mockups")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error deleting mockup:", error);
+      throw error;
+    }
+
+    console.log("Deleted mockup with id:", id);
+  } catch (err) {
+    console.error("Exception while deleting mockup:", err);
     throw err;
   }
 };
