@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import GlassCard from '@/components/ui/GlassCard';
-import { ShoppingBag, Ticket, Award, ShoppingCart, Package, Users, Image } from 'lucide-react';
+import { ShoppingBag, Ticket, Award, ShoppingCart, Package, Users, Image, Palette } from 'lucide-react';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -30,6 +30,13 @@ const AdminDashboard = () => {
       icon: <Image className="h-8 w-8 text-green-500" />,
       route: '/admin/mockups',
       color: 'from-green-500/20 to-green-500/5'
+    },
+    {
+      title: 'Designs',
+      description: 'Gérez les visuels pour la personnalisation',
+      icon: <Palette className="h-8 w-8 text-indigo-500" />,
+      route: '/admin/designs',
+      color: 'from-indigo-500/20 to-indigo-500/5'
     },
     {
       title: 'Gagnants',

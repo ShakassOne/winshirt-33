@@ -226,7 +226,8 @@ export const fetchDesigns = async () => {
   try {
     const { data, error } = await supabase
         .from(DESIGNS_TABLE)
-        .select('*');
+        .select('*')
+        .order('name', { ascending: true });
 
     if (error) {
         throw new Error(error.message);
@@ -235,6 +236,82 @@ export const fetchDesigns = async () => {
     return data;
   } catch (error) {
     console.error("Error fetching designs:", error);
+    throw error;
+  }
+};
+
+export const fetchDesignById = async (id: string) => {
+  try {
+    const { data, error } = await supabase
+      .from(DESIGNS_TABLE)
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error fetching design by ID:', error);
+    throw error;
+  }
+};
+
+export const createDesign = async (designData: Omit<Design, 'id' | 'created_at' | 'updated_at'>) => {
+  try {
+    const { data, error } = await supabase
+      .from(DESIGNS_TABLE)
+      .insert([designData])
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error creating design:', error);
+    throw error;
+  }
+};
+
+export const updateDesign = async (id: string, designData: Partial<Design>) => {
+  try {
+    const { data, error } = await supabase
+      .from(DESIGNS_TABLE)
+      .update(designData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error updating design:', error);
+    throw error;
+  }
+};
+
+export const deleteDesign = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from(DESIGNS_TABLE)
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error deleting design:', error);
     throw error;
   }
 };
