@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -163,7 +164,7 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
       <DialogContent className="bg-black/50 backdrop-blur-xl border-white/20 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
-            {mockup ? 'Modifier le mockup' : 'Nouveau mockup'}
+            {initialData ? 'Modifier le mockup' : 'Nouveau mockup'}
           </DialogTitle>
         </DialogHeader>
         
@@ -485,8 +486,8 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting 
-                ? (mockup ? "Mise à jour en cours..." : "Création en cours...") 
-                : (mockup ? "Mettre à jour" : "Créer le mockup")
+                ? (initialData ? "Mise à jour en cours..." : "Création en cours...") 
+                : (initialData ? "Mettre à jour" : "Créer le mockup")
               }
             </Button>
           </DialogFooter>
