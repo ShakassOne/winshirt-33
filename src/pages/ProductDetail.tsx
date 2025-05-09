@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { fetchProductById, fetchAllLotteries, fetchDesigns } from '@/services/api.service';
+import { fetchProductById, fetchAllLotteries, fetchDesigns, fetchMockupById } from '@/services/api.service';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Check, Upload, Image } from 'lucide-react';
@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Mockup } from '@/types/supabase.types';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +26,7 @@ const ProductDetail = () => {
   const [selectedDesign, setSelectedDesign] = useState<string | null>(null);
   const [designTab, setDesignTab] = useState<string>('animaux');
   const [selectedLotteries, setSelectedLotteries] = useState<string[]>([]);
+  const [mockupData, setMockupData] = useState<Mockup | null>(null);
   
   const { data: product, isLoading: productLoading, error: productError } = useQuery({
     queryKey: ['product', id],
@@ -42,6 +44,23 @@ const ProductDetail = () => {
     queryFn: fetchDesigns,
     enabled: showCustomizationPanel,
   });
+
+  // Fetch mockup data if product has a mockup_id
+  useEffect(() => {
+    const fetchMockup = async () => {
+      if (product?.mockup_id) {
+        try {
+          const mockup = await fetchMockupById(product.mockup_id);
+          setMockupData(mockup);
+          console.log("Mockup data loaded:", mockup);
+        } catch (error) {
+          console.error("Error fetching mockup:", error);
+        }
+      }
+    };
+
+    fetchMockup();
+  }, [product]);
 
   const eligibleLotteries = lotteries?.filter(lottery => lottery.is_active).slice(0, product?.tickets_offered || 0);
 
@@ -62,6 +81,19 @@ const ProductDetail = () => {
       return;
     }
 
+    // Créer l'objet pour le panier
+    const cartItem = {
+      productId: product?.id,
+      name: product?.name,
+      price: product?.price,
+      quantity,
+      color: selectedColor,
+      size: selectedSize,
+      design: selectedDesign,
+      lotteries: selectedLotteries,
+    };
+
+    console.log("Produit ajouté au panier:", cartItem);
     toast.success("Produit ajouté au panier");
   };
 
@@ -164,13 +196,17 @@ const ProductDetail = () => {
                       )}
                     </div>
                   </CarouselItem>
-                  <CarouselItem>
-                    <div className="aspect-square relative overflow-hidden rounded-xl bg-white/5">
-                      <div className="absolute inset-0 flex items-center justify-center text-white/50">
-                        Vue arrière (à venir)
+                  {mockupData?.svg_back_url && (
+                    <CarouselItem>
+                      <div className="aspect-square relative overflow-hidden rounded-xl">
+                        <img 
+                          src={mockupData.svg_back_url}
+                          alt={`${product.name} - Vue arrière`}
+                          className="w-full h-full object-cover" 
+                        />
                       </div>
-                    </div>
-                  </CarouselItem>
+                    </CarouselItem>
+                  )}
                 </CarouselContent>
                 <CarouselPrevious className="-left-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 border-white/10" />
                 <CarouselNext className="-right-4 bg-white/10 backdrop-blur-sm hover:bg-white/20 border-white/10" />

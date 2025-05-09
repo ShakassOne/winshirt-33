@@ -1,105 +1,155 @@
 
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { X, Menu, ShoppingCart, ChevronDown, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useMobile } from "@/hooks/use-mobile";
 
 const Navbar = () => {
-  const [scrolled, setScrolled] = useState(false);
-  const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
+  const { isMobile } = useMobile();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const toggleMenu = () => {
+    setIsOpen(!isOpen);
+  };
 
   return (
-    <header className={cn(
-      'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-      scrolled ? 'bg-black/30 backdrop-blur-lg shadow-lg' : 'bg-transparent'
-    )}>
-      <div className="container mx-auto px-4 flex items-center justify-between h-16 md:h-20">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="text-xl md:text-2xl font-bold text-gradient">WinShirt</span>
-        </Link>
-        
-        <nav className="hidden md:flex items-center gap-8">
-          <NavLink to="/">Accueil</NavLink>
-          <NavLink to="/products">Shop</NavLink>
-          <NavLink to="/lotteries">Loteries</NavLink>
-          <NavLink to="/comment-ca-marche">Comment ça marche</NavLink>
-          <NavLink to="/contact">Contact</NavLink>
-        </nav>
-        
-        <div className="flex items-center gap-2 md:gap-4">
-          <Button variant="ghost" size="icon" className="relative">
-            <ShoppingCart className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-winshirt-purple text-xs font-bold">
-              0
-            </span>
-          </Button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-1">
-                <Settings size={16} />
-                <span className="hidden sm:inline">Admin</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link to="/admin">Dashboard</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/admin/products">Produits</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/admin/lotteries">Loteries</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          <Button size="sm">
-            Connexion
-          </Button>
+    <header className="fixed top-0 left-0 w-full z-50 bg-black/60 backdrop-blur-lg border-b border-white/10">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link to="/" className="flex-shrink-0">
+            <span className="text-xl font-bold text-gradient">WinShirt</span>
+          </Link>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden flex items-center">
+            <button
+              type="button"
+              onClick={toggleMenu}
+              className="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-white focus:outline-none"
+            >
+              {isOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex space-x-6">
+            <Link
+              to="/"
+              className="text-white/70 hover:text-white transition-colors"
+            >
+              Accueil
+            </Link>
+            <Link
+              to="/products"
+              className="text-white/70 hover:text-white transition-colors"
+            >
+              Produits
+            </Link>
+            <Link
+              to="/lotteries"
+              className="text-white/70 hover:text-white transition-colors"
+            >
+              Loteries
+            </Link>
+            <Link
+              to="/admin"
+              className="text-white/70 hover:text-white transition-colors"
+            >
+              Admin
+            </Link>
+          </nav>
+
+          {/* User Menu and Cart */}
+          <div className="hidden md:flex items-center space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-black/90 border-white/20">
+                <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuItem className="hover:bg-white/5">
+                  <Link to="/profile" className="flex w-full">Profil</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="hover:bg-white/5">
+                  <Link to="/orders" className="flex w-full">Mes commandes</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="hover:bg-white/5">
+                  <Link to="/admin" className="flex w-full">Administration</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="hover:bg-white/5">
+                  <Link to="/admin/mockups" className="flex w-full">Mockups Admin</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuItem className="hover:bg-white/5">
+                  Déconnexion
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button variant="ghost" size="icon">
+              <ShoppingCart className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
+
+        {/* Mobile Navigation */}
+        {isOpen && (
+          <div className="md:hidden py-4 space-y-2">
+            <Link
+              to="/"
+              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+              onClick={toggleMenu}
+            >
+              Accueil
+            </Link>
+            <Link
+              to="/products"
+              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+              onClick={toggleMenu}
+            >
+              Produits
+            </Link>
+            <Link
+              to="/lotteries"
+              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+              onClick={toggleMenu}
+            >
+              Loteries
+            </Link>
+            <Link
+              to="/admin"
+              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+              onClick={toggleMenu}
+            >
+              Admin
+            </Link>
+            <Link
+              to="/admin/mockups"
+              className="block text-white/70 hover:text-white px-3 py-2 rounded-md font-medium"
+              onClick={toggleMenu}
+            >
+              Gestion des mockups
+            </Link>
+          </div>
+        )}
       </div>
     </header>
-  );
-};
-
-const NavLink = ({ to, children }: { to: string; children: React.ReactNode }) => {
-  const location = useLocation();
-  const isActive = location.pathname === to;
-  
-  return (
-    <Link 
-      to={to} 
-      className={cn(
-        'relative py-2 text-sm font-medium transition-colors hover:text-white',
-        isActive ? 'text-white' : 'text-white/70'
-      )}
-    >
-      {children}
-      {isActive && (
-        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-winshirt-purple to-winshirt-blue" />
-      )}
-    </Link>
   );
 };
 
