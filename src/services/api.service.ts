@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { Product, Lottery, Design, Mockup } from "@/types/supabase.types";
+import { Product, Lottery, Design, Mockup, PrintArea } from "@/types/supabase.types";
 
 export const fetchFeaturedLotteries = async (): Promise<Lottery[]> => {
   try {
@@ -216,13 +216,14 @@ export const fetchAllMockups = async (): Promise<Mockup[]> => {
       throw error;
     }
 
+    // Ensure print_areas is properly converted to PrintArea[]
     const mockups = data.map(mockup => ({
       ...mockup,
-      print_areas: mockup.print_areas || []
-    }));
+      print_areas: Array.isArray(mockup.print_areas) ? mockup.print_areas : []
+    })) as Mockup[];
 
     console.log(`Fetched ${mockups.length || 0} mockups:`, mockups);
-    return mockups || [];
+    return mockups;
   } catch (err) {
     console.error("Exception while fetching all mockups:", err);
     throw err;
@@ -243,10 +244,11 @@ export const fetchMockupById = async (id: string): Promise<Mockup | null> => {
       throw error;
     }
 
+    // Ensure print_areas is properly converted to PrintArea[]
     const mockup = {
       ...data,
-      print_areas: data.print_areas || []
-    };
+      print_areas: Array.isArray(data.print_areas) ? data.print_areas : []
+    } as Mockup;
 
     console.log("Fetched mockup by id:", mockup);
     return mockup;
@@ -270,8 +272,14 @@ export const createMockup = async (mockup: Omit<Mockup, 'id' | 'created_at' | 'u
       throw error;
     }
 
-    console.log("Created mockup:", data);
-    return data;
+    // Ensure print_areas is properly converted to PrintArea[]
+    const createdMockup = {
+      ...data,
+      print_areas: Array.isArray(data.print_areas) ? data.print_areas : []
+    } as Mockup;
+
+    console.log("Created mockup:", createdMockup);
+    return createdMockup;
   } catch (err) {
     console.error("Exception while creating mockup:", err);
     throw err;
@@ -293,8 +301,14 @@ export const updateMockup = async (id: string, mockup: Partial<Mockup>): Promise
       throw error;
     }
 
-    console.log("Updated mockup:", data);
-    return data;
+    // Ensure print_areas is properly converted to PrintArea[]
+    const updatedMockup = {
+      ...data,
+      print_areas: Array.isArray(data.print_areas) ? data.print_areas : []
+    } as Mockup;
+
+    console.log("Updated mockup:", updatedMockup);
+    return updatedMockup;
   } catch (err) {
     console.error("Exception while updating mockup:", err);
     throw err;

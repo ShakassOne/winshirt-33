@@ -53,6 +53,16 @@ export type Profile = {
   updated_at: string;
 };
 
+export type PrintArea = {
+  id: string;
+  name: string;
+  side: 'front' | 'back';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 export type Mockup = {
   id: string;
   name: string;
@@ -69,14 +79,4 @@ export type Mockup = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-};
-
-export type PrintArea = {
-  id: string;
-  name: string;
-  side: 'front' | 'back';
-  x: number;
-  y: number;
-  width: number;
-  height: number;
 };

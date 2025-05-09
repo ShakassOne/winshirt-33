@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -119,10 +118,20 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
     try {
       setIsSubmitting(true);
       
-      const mockupData = {
-        ...data,
+      // Make sure all required fields are provided
+      const mockupData: Omit<Mockup, 'id' | 'created_at' | 'updated_at'> = {
+        name: data.name,
+        category: data.category,
+        svg_front_url: data.svg_front_url,
         svg_back_url: data.svg_back_url || null,
-        print_areas: printAreas
+        print_areas: printAreas,
+        price_a3: data.price_a3,
+        price_a4: data.price_a4,
+        price_a5: data.price_a5,
+        price_a6: data.price_a6,
+        text_price_front: data.text_price_front,
+        text_price_back: data.text_price_back,
+        is_active: data.is_active
       };
       
       if (mockup) {
