@@ -16,9 +16,12 @@ import {
   Image as ImageIcon,
   Bold,
   Italic,
-  Underline
+  Underline,
+  Upload,
+  UsersRound,
+  Target
 } from 'lucide-react';
-import { fetchProductById, fetchAllLotteries, fetchDesigns } from '@/services/api.service';
+import { fetchProductById, fetchAllLotteries, fetchDesigns, fetchMockupById } from '@/services/api.service';
 import { Design, Lottery, CartItem } from '@/types/supabase.types';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -50,6 +53,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Slider } from "@/components/ui/slider";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -111,13 +122,55 @@ const googleFonts = [
   { value: 'Righteous', label: 'Righteous' },
   { value: 'Philosopher', label: 'Philosopher' },
   { value: 'Kanit', label: 'Kanit' },
-  { value: 'Russo One', label: 'Russo One' }
+  { value: 'Russo One', label: 'Russo One' },
+  { value: 'Archivo', label: 'Archivo' },
+  { value: 'Arvo', label: 'Arvo' },
+  { value: 'Bitter', label: 'Bitter' },
+  { value: 'Cairo', label: 'Cairo' },
+  { value: 'Cormorant Garamond', label: 'Cormorant Garamond' },
+  { value: 'Didact Gothic', label: 'Didact Gothic' },
+  { value: 'EB Garamond', label: 'EB Garamond' },
+  { value: 'Fredoka One', label: 'Fredoka One' },
+  { value: 'Gloria Hallelujah', label: 'Gloria Hallelujah' },
+  { value: 'Hind', label: 'Hind' },
+  { value: 'IBM Plex Sans', label: 'IBM Plex Sans' },
+  { value: 'Inter', label: 'Inter' },
+  { value: 'Kalam', label: 'Kalam' },
+  { value: 'Lora', label: 'Lora' },
+  { value: 'Maven Pro', label: 'Maven Pro' },
+  { value: 'Neucha', label: 'Neucha' },
+  { value: 'Overpass', label: 'Overpass' },
+  { value: 'Patrick Hand', label: 'Patrick Hand' },
+  { value: 'Quattrocento Sans', label: 'Quattrocento Sans' },
+  { value: 'Roboto Condensed', label: 'Roboto Condensed' },
+  { value: 'Roboto Mono', label: 'Roboto Mono' },
+  { value: 'Roboto Slab', label: 'Roboto Slab' },
+  { value: 'Signika', label: 'Signika' },
+  { value: 'Teko', label: 'Teko' },
+  { value: 'Ubuntu Condensed', label: 'Ubuntu Condensed' },
+  { value: 'Varela Round', label: 'Varela Round' },
+  { value: 'Acme', label: 'Acme' },
+  { value: 'Alegreya', label: 'Alegreya' },
+  { value: 'Anton', label: 'Anton' },
+  { value: 'Asap', label: 'Asap' },
+  { value: 'Assistant', label: 'Assistant' },
+  { value: 'Baloo 2', label: 'Baloo 2' },
+  { value: 'Bangers', label: 'Bangers' },
+  { value: 'BioRhyme', label: 'BioRhyme' },
+  { value: 'Catamaran', label: 'Catamaran' },
+  { value: 'Coda', label: 'Coda' },
+  { value: 'Courgette', label: 'Courgette' },
+  { value: 'Cousine', label: 'Cousine' },
+  { value: 'DM Sans', label: 'DM Sans' },
+  { value: 'Dosis', label: 'Dosis' },
+  { value: 'Fira Code', label: 'Fira Code' }
 ];
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const isMobile = useIsMobile();
   const productCanvasRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -135,9 +188,9 @@ const ProductDetail = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [pageScrollLocked, setPageScrollLocked] = useState(false);
+  const [currentViewSide, setCurrentViewSide] = useState<'front' | 'back'>('front');
   
-  // État pour le texte personnalisé
-  const [textEnabled, setTextEnabled] = useState(false);
+  // État pour le texte personnalisé - texte toujours activé par défaut
   const [textContent, setTextContent] = useState('');
   const [textFont, setTextFont] = useState('Roboto');
   const [textColor, setTextColor] = useState('#ffffff');
@@ -158,11 +211,19 @@ const ProductDetail = () => {
 
   // État pour les loteries
   const [selectedLotteryIds, setSelectedLotteryIds] = useState<string[]>([]);
+  const [selectedLottery, setSelectedLottery] = useState<Lottery | null>(null);
+  const [lotteryDropdownOpen, setLotteryDropdownOpen] = useState(false);
   
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
     queryFn: () => fetchProductById(id!),
     enabled: !!id,
+  });
+
+  const { data: mockup, isLoading: isLoadingMockup } = useQuery({
+    queryKey: ['mockup', product?.mockup_id],
+    queryFn: () => fetchMockupById(product?.mockup_id!),
+    enabled: !!product?.mockup_id,
   });
 
   const { data: lotteries = [] } = useQuery({
@@ -186,9 +247,16 @@ const ProductDetail = () => {
     }
   }, [product]);
 
+  // Activation automatique du texte lors du changement d'onglet
+  useEffect(() => {
+    if (selectedTab === 'text' && !textContent) {
+      setTextContent('');
+    }
+  }, [selectedTab]);
+
   // Verrouiller le défilement de la page pendant la personnalisation
   useEffect(() => {
-    if (pageScrollLocked) {
+    if (pageScrollLocked || isDragging || isDraggingText) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'auto';
@@ -197,7 +265,7 @@ const ProductDetail = () => {
     return () => {
       document.body.style.overflow = 'auto';
     };
-  }, [pageScrollLocked]);
+  }, [pageScrollLocked, isDragging, isDraggingText]);
 
   const handleQuantityChange = (type: 'increase' | 'decrease') => {
     if (type === 'increase') {
@@ -227,14 +295,10 @@ const ProductDetail = () => {
     }));
   };
 
-  const handleLotteryToggle = (lotteryId: string) => {
-    setSelectedLotteryIds(prev => {
-      if (prev.includes(lotteryId)) {
-        return prev.filter(id => id !== lotteryId);
-      } else {
-        return [...prev, lotteryId];
-      }
-    });
+  const handleLotteryToggle = (lottery: Lottery) => {
+    setSelectedLottery(lottery);
+    setSelectedLotteryIds([lottery.id]);
+    setLotteryDropdownOpen(false);
   };
 
   const handleMouseDown = (event: React.MouseEvent | React.TouchEvent, isText: boolean = false) => {
@@ -307,6 +371,31 @@ const ProductDetail = () => {
     setPageScrollLocked(false);
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    
+    if (file) {
+      const reader = new FileReader();
+      
+      reader.onloadend = () => {
+        const design: Design = {
+          id: `custom-${Date.now()}`,
+          name: 'Mon design personnalisé',
+          image_url: reader.result as string,
+          category: 'custom',
+          is_active: true
+        };
+        
+        setSelectedDesign(design);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      };
+      
+      reader.readAsDataURL(file);
+    }
+  };
+
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
@@ -326,17 +415,22 @@ const ProductDetail = () => {
     
     let price = product.price * quantity;
     
-    // Ajout du prix du design personnalisé si sélectionné
-    if (selectedDesign) {
-      price += (currentPrintSize === 'A3' ? 15 : 
-               currentPrintSize === 'A4' ? 10 : 
-               currentPrintSize === 'A5' ? 8 : 5);
-    }
+    // Prix du design - différent selon la position et la taille
+    const frontDesignPrice = selectedDesign && currentPrintPosition === 'front' ? 
+      (currentPrintSize === 'A3' ? 15 : 
+       currentPrintSize === 'A4' ? 10 : 
+       currentPrintSize === 'A5' ? 8 : 5) : 0;
     
-    // Ajout du prix du texte personnalisé si activé
-    if (textEnabled && textContent) {
-      price += 3; // Prix fixe pour le texte personnalisé
-    }
+    const backDesignPrice = selectedDesign && currentPrintPosition === 'back' ? 
+      (currentPrintSize === 'A3' ? 15 : 
+       currentPrintSize === 'A4' ? 10 : 
+       currentPrintSize === 'A5' ? 8 : 5) : 0;
+    
+    // Prix du texte - différent selon la position  
+    const frontTextPrice = textContent && textPosition === 'front' ? (mockup?.text_price_front || 3) : 0;
+    const backTextPrice = textContent && textPosition === 'back' ? (mockup?.text_price_back || 3) : 0;
+    
+    price += frontDesignPrice + backDesignPrice + frontTextPrice + backTextPrice;
     
     return price;
   };
@@ -379,7 +473,7 @@ const ProductDetail = () => {
         transform: designTransform
       };
 
-      if (textEnabled && textContent.trim()) {
+      if (textContent.trim()) {
         cartItem.customization.text = {
           content: textContent,
           font: textFont,
@@ -421,7 +515,6 @@ const ProductDetail = () => {
     );
   }
 
-  const productImage = product.image_url;
   const activeLotteries = lotteries.filter(lottery => lottery.is_active);
 
   // Prévenir le défilement de la page pendant la personnalisation sur mobile
@@ -429,6 +522,13 @@ const ProductDetail = () => {
     if (isDragging || isDraggingText) {
       e.preventDefault();
     }
+  };
+
+  const getProductImage = () => {
+    if (mockup) {
+      return currentViewSide === 'front' ? mockup.svg_front_url : (mockup.svg_back_url || product.image_url);
+    }
+    return product.image_url;
   };
 
   return (
@@ -453,13 +553,40 @@ const ProductDetail = () => {
               onTouchMove={handleTouchMove}
             >
               <img 
-                src={productImage} 
+                src={getProductImage()} 
                 alt={product.name}
                 className="w-full h-full object-contain"
               />
+
+              {/* Boutons pour basculer entre le recto et le verso (uniquement si mockup disponible) */}
+              {mockup && mockup.svg_back_url && (
+                <div className="absolute top-2 right-2">
+                  <ToggleGroup 
+                    type="single" 
+                    value={currentViewSide}
+                    onValueChange={(value) => value && setCurrentViewSide(value as 'front' | 'back')}
+                    className="bg-black/40 backdrop-blur-sm rounded-lg"
+                  >
+                    <ToggleGroupItem 
+                      value="front" 
+                      className="text-xs data-[state=on]:bg-winshirt-purple/70"
+                      aria-label="Voir le recto"
+                    >
+                      Avant
+                    </ToggleGroupItem>
+                    <ToggleGroupItem 
+                      value="back" 
+                      className="text-xs data-[state=on]:bg-winshirt-purple/70"
+                      aria-label="Voir le verso"
+                    >
+                      Arrière
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+              )}
               
-              {/* Design superposé - toujours visible */}
-              {selectedDesign && (
+              {/* Design superposé - visible uniquement sur le côté correspondant */}
+              {selectedDesign && currentPrintPosition === currentViewSide && (
                 <div 
                   className="absolute cursor-move select-none"
                   style={{ 
@@ -481,8 +608,8 @@ const ProductDetail = () => {
                 </div>
               )}
               
-              {/* Texte superposé - toujours visible */}
-              {textEnabled && textContent && (
+              {/* Texte superposé - visible uniquement sur le côté correspondant */}
+              {textContent && textPosition === currentViewSide && (
                 <div 
                   className="absolute cursor-move select-none"
                   style={{ 
@@ -573,7 +700,7 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Options de personnalisation - maintenant avant les loteries */}
+              {/* Options de personnalisation - maintenant AVANT les loteries */}
               {product.is_customizable && (
                 <div className="bg-black/20 rounded-lg p-4 mb-6">
                   <h3 className="text-lg font-semibold mb-4">Personnalisation</h3>
@@ -593,13 +720,30 @@ const ProductDetail = () => {
                     <TabsContent value="design" className="space-y-4">
                       <div className="flex justify-between items-center mb-4">
                         <h4 className="font-medium">Ajouter un design</h4>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setDesignDialogOpen(true)}
-                          disabled={!product.is_customizable}
-                        >
-                          {selectedDesign ? 'Changer' : 'Sélectionner'}
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setDesignDialogOpen(true)}
+                            disabled={!product.is_customizable}
+                          >
+                            {selectedDesign ? 'Changer' : 'Sélectionner'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={!product.is_customizable}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Importer
+                          </Button>
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleFileUpload}
+                          />
+                        </div>
                       </div>
                       
                       {selectedDesign && (
@@ -611,7 +755,12 @@ const ProductDetail = () => {
                                 <ToggleGroup 
                                   type="single" 
                                   value={currentPrintPosition}
-                                  onValueChange={(value) => value && setCurrentPrintPosition(value as 'front' | 'back')}
+                                  onValueChange={(value) => {
+                                    if (value) {
+                                      setCurrentPrintPosition(value as 'front' | 'back');
+                                      setCurrentViewSide(value as 'front' | 'back');
+                                    }
+                                  }}
                                   className="justify-start"
                                 >
                                   <ToggleGroupItem value="front">Avant</ToggleGroupItem>
@@ -658,7 +807,7 @@ const ProductDetail = () => {
                                 </span>
                               </div>
                               <Slider
-                                min={0.02}
+                                min={0.01}
                                 max={2}
                                 step={0.01}
                                 value={[designTransform.scale]}
@@ -711,241 +860,231 @@ const ProductDetail = () => {
                     </TabsContent>
                     
                     <TabsContent value="text" className="space-y-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-medium">Ajouter du texte</h4>
-                        <div className="flex items-center space-x-2">
-                          <Label htmlFor="text-toggle">Activer</Label>
-                          <Switch 
-                            id="text-toggle" 
-                            checked={textEnabled}
-                            onCheckedChange={setTextEnabled}
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="text-content" className="mb-2 block">Votre texte</Label>
+                          <Input
+                            id="text-content"
+                            placeholder="Entrez votre texte ici"
+                            value={textContent}
+                            onChange={(e) => setTextContent(e.target.value)}
+                            className="border-winshirt-purple focus:border-winshirt-blue"
                           />
                         </div>
-                      </div>
-                      
-                      {textEnabled && (
-                        <>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="text-content" className="mb-2 block">Votre texte</Label>
-                              <Input
-                                id="text-content"
-                                placeholder="Entrez votre texte ici"
-                                value={textContent}
-                                onChange={(e) => setTextContent(e.target.value)}
-                              />
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-4 mb-4">
-                              <div>
-                                <Label className="mb-2 block">Position</Label>
-                                <ToggleGroup 
-                                  type="single" 
-                                  value={textPosition}
-                                  onValueChange={(value) => value && setTextPosition(value as 'front' | 'back')}
-                                  className="justify-start"
-                                >
-                                  <ToggleGroupItem value="front">Avant</ToggleGroupItem>
-                                  <ToggleGroupItem value="back">Arrière</ToggleGroupItem>
-                                </ToggleGroup>
-                              </div>
-                              
-                              <div>
-                                <Label className="mb-2 block">Style</Label>
-                                <div className="flex space-x-2">
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className={textStyles.bold ? "bg-winshirt-purple/20" : ""}
-                                    onClick={() => setTextStyles({...textStyles, bold: !textStyles.bold})}
-                                  >
-                                    <Bold className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className={textStyles.italic ? "bg-winshirt-purple/20" : ""}
-                                    onClick={() => setTextStyles({...textStyles, italic: !textStyles.italic})}
-                                  >
-                                    <Italic className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className={textStyles.underline ? "bg-winshirt-purple/20" : ""}
-                                    onClick={() => setTextStyles({...textStyles, underline: !textStyles.underline})}
-                                  >
-                                    <Underline className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div>
-                              <Label className="mb-2 block">Police</Label>
-                              <Select value={textFont} onValueChange={setTextFont}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Choisir une police" />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-[300px]">
-                                  <SelectGroup>
-                                    {googleFonts.map((font) => (
-                                      <SelectItem
-                                        key={font.value}
-                                        value={font.value}
-                                        style={{ fontFamily: font.value }}
-                                      >
-                                        {font.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            
-                            <div>
-                              <div className="flex justify-between items-center mb-2">
-                                <Label className="block">Couleur</Label>
-                                <div
-                                  className="w-6 h-6 rounded cursor-pointer border"
-                                  style={{ backgroundColor: textColor }}
-                                  onClick={() => setTextShowColorPicker(!textShowColorPicker)}
-                                />
-                              </div>
-                              
-                              {textShowColorPicker && (
-                                <div className="relative z-10">
-                                  <div 
-                                    className="fixed inset-0" 
-                                    onClick={() => setTextShowColorPicker(false)}
-                                  />
-                                  <div className="absolute right-0 p-2 bg-black/80 rounded-lg shadow-lg">
-                                    <HexColorPicker 
-                                      color={textColor} 
-                                      onChange={setTextColor} 
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                            
-                            <div className="space-y-4">
-                              <div>
-                                <div className="flex justify-between mb-1">
-                                  <Label>Échelle</Label>
-                                  <span className="text-sm text-white/60">
-                                    {(textTransform.scale * 100).toFixed(0)}%
-                                  </span>
-                                </div>
-                                <Slider
-                                  min={0.05}
-                                  max={3}
-                                  step={0.01}
-                                  value={[textTransform.scale]}
-                                  onValueChange={([value]) => handleTextTransformChange('scale', value)}
-                                />
-                              </div>
-                              
-                              <div>
-                                <div className="flex justify-between mb-1">
-                                  <Label>Rotation</Label>
-                                  <span className="text-sm text-white/60">
-                                    {textTransform.rotation}°
-                                  </span>
-                                </div>
-                                <Slider
-                                  min={0}
-                                  max={359}
-                                  step={1}
-                                  value={[textTransform.rotation]}
-                                  onValueChange={([value]) => handleTextTransformChange('rotation', value)}
-                                />
-                              </div>
-                              
-                              <div className="flex justify-center">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => {
-                                    setTextTransform({
-                                      position: { x: 0, y: 0 },
-                                      scale: 1,
-                                      rotation: 0
-                                    });
-                                  }}
-                                >
-                                  <RotateCw className="h-4 w-4 mr-2" />
-                                  Réinitialiser
-                                </Button>
-                              </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <Label className="mb-2 block">Position</Label>
+                            <ToggleGroup 
+                              type="single" 
+                              value={textPosition}
+                              onValueChange={(value) => {
+                                if (value) {
+                                  setTextPosition(value as 'front' | 'back');
+                                  setCurrentViewSide(value as 'front' | 'back');
+                                }
+                              }}
+                              className="justify-start"
+                            >
+                              <ToggleGroupItem value="front">Avant</ToggleGroupItem>
+                              <ToggleGroupItem value="back">Arrière</ToggleGroupItem>
+                            </ToggleGroup>
+                          </div>
+                          
+                          <div>
+                            <Label className="mb-2 block">Style</Label>
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className={textStyles.bold ? "bg-winshirt-purple/20" : ""}
+                                onClick={() => setTextStyles({...textStyles, bold: !textStyles.bold})}
+                              >
+                                <Bold className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className={textStyles.italic ? "bg-winshirt-purple/20" : ""}
+                                onClick={() => setTextStyles({...textStyles, italic: !textStyles.italic})}
+                              >
+                                <Italic className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className={textStyles.underline ? "bg-winshirt-purple/20" : ""}
+                                onClick={() => setTextStyles({...textStyles, underline: !textStyles.underline})}
+                              >
+                                <Underline className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
-                        </>
-                      )}
-                      
-                      {!textEnabled && (
-                        <div className="text-center py-8 text-white/60">
-                          <Type className="h-12 w-12 mx-auto mb-2 opacity-40" />
-                          <p>Activez le texte pour ajouter vos propres mots</p>
                         </div>
-                      )}
+                        
+                        <div>
+                          <Label className="mb-2 block">Police</Label>
+                          <Select value={textFont} onValueChange={setTextFont}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Choisir une police" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[300px]">
+                              <SelectGroup>
+                                {googleFonts.map((font) => (
+                                  <SelectItem
+                                    key={font.value}
+                                    value={font.value}
+                                    style={{ fontFamily: font.value }}
+                                  >
+                                    {font.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <Label className="block">Couleur</Label>
+                            <div
+                              className="w-6 h-6 rounded cursor-pointer border"
+                              style={{ backgroundColor: textColor }}
+                              onClick={() => setTextShowColorPicker(!textShowColorPicker)}
+                            />
+                          </div>
+                          
+                          {textShowColorPicker && (
+                            <div className="relative z-10">
+                              <div 
+                                className="fixed inset-0" 
+                                onClick={() => setTextShowColorPicker(false)}
+                              />
+                              <div className="absolute right-0 p-2 bg-black/80 rounded-lg shadow-lg">
+                                <HexColorPicker 
+                                  color={textColor} 
+                                  onChange={setTextColor} 
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <Label>Échelle</Label>
+                              <span className="text-sm text-white/60">
+                                {(textTransform.scale * 100).toFixed(0)}%
+                              </span>
+                            </div>
+                            <Slider
+                              min={0.01}
+                              max={3}
+                              step={0.01}
+                              value={[textTransform.scale]}
+                              onValueChange={([value]) => handleTextTransformChange('scale', value)}
+                            />
+                          </div>
+                          
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <Label>Rotation</Label>
+                              <span className="text-sm text-white/60">
+                                {textTransform.rotation}°
+                              </span>
+                            </div>
+                            <Slider
+                              min={0}
+                              max={359}
+                              step={1}
+                              value={[textTransform.rotation]}
+                              onValueChange={([value]) => handleTextTransformChange('rotation', value)}
+                            />
+                          </div>
+                          
+                          <div className="flex justify-center">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                setTextTransform({
+                                  position: { x: 0, y: 0 },
+                                  scale: 1,
+                                  rotation: 0
+                                });
+                              }}
+                            >
+                              <RotateCw className="h-4 w-4 mr-2" />
+                              Réinitialiser
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </TabsContent>
                   </Tabs>
                 </div>
               )}
               
-              {/* Loteries disponibles - Maintenant APRÈS la personnalisation */}
+              {/* Loteries disponibles - avec menu déroulant */}
               {product.tickets_offered > 0 && activeLotteries.length > 0 && (
                 <div className="bg-black/20 rounded-lg p-4 mb-6">
                   <h3 className="text-lg font-semibold mb-2">
                     Participer à des loteries ({product.tickets_offered} ticket{product.tickets_offered > 1 ? 's' : ''} inclus)
                   </h3>
                   <p className="text-sm text-white/70 mb-4">
-                    Choisissez les loteries auxquelles vous souhaitez participer avec ce produit
+                    Choisissez la loterie à laquelle vous souhaitez participer avec ce produit
                   </p>
                   
-                  <div className="space-y-2">
-                    {activeLotteries.map(lottery => (
-                      <div 
-                        key={lottery.id} 
-                        className={`p-3 rounded-lg cursor-pointer border ${
-                          selectedLotteryIds.includes(lottery.id) 
-                            ? 'border-winshirt-purple bg-winshirt-purple/10' 
-                            : 'border-white/10 hover:border-white/20'
-                        }`}
-                        onClick={() => handleLotteryToggle(lottery.id)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 rounded overflow-hidden">
-                              <img 
-                                src={lottery.image_url} 
-                                alt={lottery.title} 
-                                className="h-full w-full object-cover"
-                              />
+                  <DropdownMenu open={lotteryDropdownOpen} onOpenChange={setLotteryDropdownOpen}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between">
+                        {selectedLottery ? selectedLottery.title : "Sélectionner une loterie"}
+                        <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-full max-h-[300px] overflow-auto">
+                      <DropdownMenuLabel>Loteries disponibles</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {activeLotteries.map(lottery => (
+                        <DropdownMenuItem 
+                          key={lottery.id}
+                          onClick={() => handleLotteryToggle(lottery)}
+                          className="cursor-pointer"
+                        >
+                          {lottery.title}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  
+                  {selectedLottery && (
+                    <div className="mt-4 p-3 rounded-lg border border-white/10 bg-black/10">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0 h-14 w-14 rounded overflow-hidden">
+                          <img 
+                            src={selectedLottery.image_url} 
+                            alt={selectedLottery.title} 
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-grow">
+                          <p className="font-medium">{selectedLottery.title}</p>
+                          <p className="text-xs text-white/60">{selectedLottery.description.substring(0, 80)}...</p>
+                          <div className="flex items-center mt-1 space-x-4 text-xs text-white/80">
+                            <div className="flex items-center">
+                              <Target className="h-3 w-3 mr-1" />
+                              <span>Objectif: {selectedLottery.goal}</span>
                             </div>
-                            <div className="ml-3">
-                              <p className="font-medium">{lottery.title}</p>
-                              <p className="text-xs text-white/60">Valeur: {lottery.value}€</p>
+                            <div className="flex items-center">
+                              <UsersRound className="h-3 w-3 mr-1" />
+                              <span>Participants: {selectedLottery.participants}</span>
                             </div>
-                          </div>
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                            selectedLotteryIds.includes(lottery.id) 
-                              ? 'bg-winshirt-purple text-white' 
-                              : 'bg-white/10'
-                          }`}>
-                            {selectedLotteryIds.includes(lottery.id) && <Check className="h-4 w-4" />}
                           </div>
                         </div>
                       </div>
-                    ))}
-                    
-                    {selectedLotteryIds.length > product.tickets_offered && (
-                      <div className="mt-2 text-sm text-red-400">
-                        Attention : Vous avez sélectionné plus de loteries que le nombre de tickets inclus.
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
               
