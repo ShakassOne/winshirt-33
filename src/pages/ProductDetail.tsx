@@ -1,1338 +1,994 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { 
+  ShoppingCart, 
+  ChevronDown, 
+  ChevronUp, 
+  Check, 
+  ArrowLeft,
+  RotateCw,
+  Minus,
+  Plus,
+  Type,
+  Image as ImageIcon,
+  Bold,
+  Italic,
+  Underline
+} from 'lucide-react';
+import { fetchProductById, fetchAllLotteries, fetchDesigns } from '@/services/api.service';
+import { Design, Lottery, CartItem } from '@/types/supabase.types';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { fetchProductById, fetchAllLotteries, fetchDesigns, fetchMockupById } from '@/services/api.service';
-import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Check, Upload, Image, Circle, ArrowLeft, ArrowRight, Move, ZoomIn, ZoomOut, RotateCw, Type, Bold, Italic, Underline, TextCursor } from 'lucide-react';
-import GlassCard from '@/components/ui/GlassCard';
 import { Badge } from '@/components/ui/badge';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { toast } from 'sonner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CartItem, Design, Mockup } from '@/types/supabase.types';
-import { Slider } from '@/components/ui/slider';
+import { Card } from '@/components/ui/card';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/components/ui/toggle-group";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { HexColorPicker } from 'react-colorful';
+import { useMobile } from '@/hooks/use-mobile';
 
-// Prix par taille d'impression
-const PRINT_SIZES_PRICES = {
-  'a6': 5.00,
-  'a5': 8.00,
-  'a4': 10.00,
-  'a3': 15.00
-};
-
-// Familles de polices disponibles
-const AVAILABLE_FONTS = [
-  { name: 'Arial', value: 'Arial, sans-serif' },
-  { name: 'Helvetica', value: 'Helvetica, Arial, sans-serif' },
-  { name: 'Georgia', value: 'Georgia, serif' },
-  { name: 'Times New Roman', value: 'Times New Roman, Times, serif' },
-  { name: 'Courier New', value: 'Courier New, monospace' },
-  { name: 'Impact', value: 'Impact, Charcoal, sans-serif' },
-  { name: 'Comic Sans MS', value: 'Comic Sans MS, cursive' },
-  // Google Fonts
-  { name: 'Roboto', value: '"Roboto", sans-serif' },
-  { name: 'Open Sans', value: '"Open Sans", sans-serif' },
-  { name: 'Lato', value: '"Lato", sans-serif' },
-  { name: 'Montserrat', value: '"Montserrat", sans-serif' },
-  { name: 'Playfair Display', value: '"Playfair Display", serif' },
+// Définition des polices Google Fonts
+const googleFonts = [
+  { value: 'Roboto', label: 'Roboto' },
+  { value: 'Open Sans', label: 'Open Sans' },
+  { value: 'Lato', label: 'Lato' },
+  { value: 'Montserrat', label: 'Montserrat' },
+  { value: 'Playfair Display', label: 'Playfair Display' },
+  { value: 'Raleway', label: 'Raleway' },
+  { value: 'Nunito', label: 'Nunito' },
+  { value: 'Oswald', label: 'Oswald' },
+  { value: 'Source Sans Pro', label: 'Source Sans Pro' },
+  { value: 'PT Sans', label: 'PT Sans' },
+  { value: 'Poppins', label: 'Poppins' },
+  { value: 'Ubuntu', label: 'Ubuntu' },
+  { value: 'Merriweather', label: 'Merriweather' },
+  { value: 'Noto Sans', label: 'Noto Sans' },
+  { value: 'Fira Sans', label: 'Fira Sans' },
+  { value: 'Quicksand', label: 'Quicksand' },
+  { value: 'Dancing Script', label: 'Dancing Script' },
+  { value: 'Pacifico', label: 'Pacifico' },
+  { value: 'Shadows Into Light', label: 'Shadows Into Light' },
+  { value: 'Lobster', label: 'Lobster' },
+  { value: 'Caveat', label: 'Caveat' },
+  { value: 'Comfortaa', label: 'Comfortaa' },
+  { value: 'Indie Flower', label: 'Indie Flower' },
+  { value: 'Sacramento', label: 'Sacramento' },
+  { value: 'Architects Daughter', label: 'Architects Daughter' },
+  { value: 'Permanent Marker', label: 'Permanent Marker' },
+  { value: 'Satisfy', label: 'Satisfy' },
+  { value: 'Amatic SC', label: 'Amatic SC' },
+  { value: 'Pathway Gothic One', label: 'Pathway Gothic One' }
 ];
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const isMobile = useMobile();
+  const productCanvasRef = useRef<HTMLDivElement>(null);
   const [quantity, setQuantity] = useState(1);
-  const [showCustomizationPanel, setShowCustomizationPanel] = useState(false);
-  const [selectedDesign, setSelectedDesign] = useState<string | null>(null);
-  const [designTab, setDesignTab] = useState<string>('animaux');
-  const [selectedLotteries, setSelectedLotteries] = useState<string[]>([]);
-  const [mockupData, setMockupData] = useState<Mockup | null>(null);
-  const [selectedPrintPosition, setSelectedPrintPosition] = useState<'front' | 'back'>('front');
-  const [selectedPrintSize, setSelectedPrintSize] = useState<'a4'>('a4');
-  const [currentDesignView, setCurrentDesignView] = useState<'browse' | 'upload' | 'text'>('browse');
-  const [uploadedDesignUrl, setUploadedDesignUrl] = useState<string | null>(null);
-  const [previewMode, setPreviewMode] = useState<boolean>(true);
-  const [cart, setCart] = useState<CartItem[]>([]);
-  
-  // État pour la manipulation du design
-  const [designPosition, setDesignPosition] = useState({ x: 0, y: 0 });
-  const [designScale, setDesignScale] = useState(1);
-  const [designRotation, setDesignRotation] = useState(0);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedTab, setSelectedTab] = useState('general');
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [designDialogOpen, setDesignDialogOpen] = useState(false);
+  const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
+  const [currentPrintPosition, setCurrentPrintPosition] = useState<'front' | 'back'>('front');
+  const [currentPrintSize, setCurrentPrintSize] = useState<string>('A4');
+  const [designTransform, setDesignTransform] = useState({
+    position: { x: 0, y: 0 },
+    scale: 1,
+    rotation: 0
+  });
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [customizationPrice, setCustomizationPrice] = useState(0);
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [pageScrollLocked, setPageScrollLocked] = useState(false);
   
-  // Nouvel état pour la personnalisation du texte
-  const [customText, setCustomText] = useState('');
-  const [textFont, setTextFont] = useState<string>(AVAILABLE_FONTS[0].value);
-  const [textColor, setTextColor] = useState<string>('#ffffff');
-  const [textPosition, setTextPosition] = useState({ x: 0, y: 0 });
-  const [textScale, setTextScale] = useState(1);
-  const [textRotation, setTextRotation] = useState(0);
-  const [isTextDragging, setIsTextDragging] = useState(false);
-  const [textDragStart, setTextDragStart] = useState({ x: 0, y: 0 });
-  const [showTextEditor, setShowTextEditor] = useState(false);
-  const [textCustomizationPrice, setTextCustomizationPrice] = useState(0);
-  const [textBold, setTextBold] = useState(false);
-  const [textItalic, setTextItalic] = useState(false);
-  const [textUnderline, setTextUnderline] = useState(false);
+  // État pour le texte personnalisé
+  const [textEnabled, setTextEnabled] = useState(false);
+  const [textContent, setTextContent] = useState('');
+  const [textFont, setTextFont] = useState('Roboto');
+  const [textColor, setTextColor] = useState('#ffffff');
+  const [textShowColorPicker, setTextShowColorPicker] = useState(false);
+  const [textTransform, setTextTransform] = useState({
+    position: { x: 0, y: 0 },
+    scale: 1,
+    rotation: 0
+  });
+  const [textPosition, setTextPosition] = useState<'front' | 'back'>('front');
+  const [isDraggingText, setIsDraggingText] = useState(false);
+  const [startPosText, setStartPosText] = useState({ x: 0, y: 0 });
+  const [textStyles, setTextStyles] = useState({
+    bold: false,
+    italic: false,
+    underline: false
+  });
+
+  // État pour les loteries
+  const [selectedLotteryIds, setSelectedLotteryIds] = useState<string[]>([]);
   
-  // Référence à la div contenant l'aperçu pour manipulation
-  const previewContainerRef = useRef<HTMLDivElement>(null);
-  
-  // Calcul du prix total incluant personnalisation
-  const calculateTotalPrice = () => {
-    if (!product) return 0;
-    
-    let basePrice = product.price * quantity;
-    
-    // Ajouter le prix de personnalisation si un design est sélectionné
-    if ((selectedDesign || uploadedDesignUrl) && selectedPrintSize) {
-      basePrice += PRINT_SIZES_PRICES[selectedPrintSize as keyof typeof PRINT_SIZES_PRICES] * quantity;
-    }
-    
-    // Ajouter le prix de personnalisation du texte si un texte est entré
-    if (customText && mockupData) {
-      const textPrice = selectedPrintPosition === 'front' 
-        ? mockupData.text_price_front 
-        : mockupData.text_price_back;
-      basePrice += textPrice * quantity;
-    }
-    
-    return basePrice;
-  };
-  
-  // Chargement du produit
-  const { data: product, isLoading: productLoading, error: productError } = useQuery({
+  const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
-    queryFn: () => fetchProductById(id as string),
+    queryFn: () => fetchProductById(id!),
     enabled: !!id,
   });
 
-  // Chargement des loteries
-  const { data: lotteries, isLoading: lotteriesLoading } = useQuery({
+  const { data: lotteries = [] } = useQuery({
     queryKey: ['lotteries'],
     queryFn: fetchAllLotteries,
   });
 
-  // Chargement des designs
-  const { data: designs, isLoading: designsLoading } = useQuery({
+  const { data: designs = [] } = useQuery({
     queryKey: ['designs'],
     queryFn: fetchDesigns,
-    enabled: showCustomizationPanel,
   });
 
-  // Récupération du mockup si le produit en a un
   useEffect(() => {
-    const fetchMockup = async () => {
-      if (product?.mockup_id) {
-        try {
-          const mockup = await fetchMockupById(product.mockup_id);
-          setMockupData(mockup);
-          console.log("Mockup data loaded:", mockup);
-        } catch (error) {
-          console.error("Error fetching mockup:", error);
-        }
+    if (product) {
+      if (product.available_colors && product.available_colors.length > 0) {
+        setSelectedColor(product.available_colors[0]);
       }
-    };
-
-    fetchMockup();
+      if (product.available_sizes && product.available_sizes.length > 0) {
+        setSelectedSize(product.available_sizes[0]);
+      }
+    }
   }, [product]);
 
-  // Récupération du panier depuis localStorage
+  // Verrouiller le défilement de la page pendant la personnalisation
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        setCart(JSON.parse(savedCart));
-      } catch (e) {
-        console.error("Error parsing cart from localStorage:", e);
+    if (pageScrollLocked) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [pageScrollLocked]);
+
+  // Rendez-vous visible lorsqu'on change d'onglet
+  useEffect(() => {
+    // Toujours garder le design visible, même lorsqu'on passe à l'onglet texte
+  }, [selectedTab]);
+
+  const handleQuantityChange = (type: 'increase' | 'decrease') => {
+    if (type === 'increase') {
+      setQuantity(prev => prev + 1);
+    } else if (type === 'decrease' && quantity > 1) {
+      setQuantity(prev => prev - 1);
+    }
+  };
+
+  const handleDesignSelect = (design: Design) => {
+    setSelectedDesign(design);
+    setDesignDialogOpen(false);
+    setPageScrollLocked(true);
+  };
+
+  const handleDesignTransformChange = (property: keyof typeof designTransform, value: any) => {
+    setDesignTransform(prev => ({
+      ...prev,
+      [property]: value
+    }));
+  };
+
+  const handleTextTransformChange = (property: keyof typeof textTransform, value: any) => {
+    setTextTransform(prev => ({
+      ...prev,
+      [property]: value
+    }));
+  };
+
+  const handleLotteryToggle = (lotteryId: string) => {
+    setSelectedLotteryIds(prev => {
+      if (prev.includes(lotteryId)) {
+        return prev.filter(id => id !== lotteryId);
+      } else {
+        return [...prev, lotteryId];
       }
-    }
-  }, []);
-  
-  // Mettre à jour le prix de personnalisation quand la taille change
-  useEffect(() => {
-    if (selectedPrintSize) {
-      setCustomizationPrice(PRINT_SIZES_PRICES[selectedPrintSize as keyof typeof PRINT_SIZES_PRICES]);
-    }
-  }, [selectedPrintSize]);
-  
-  // Mettre à jour le prix du texte lorsque le mockup change
-  useEffect(() => {
-    if (mockupData && customText) {
-      const textPrice = selectedPrintPosition === 'front' 
-        ? mockupData.text_price_front 
-        : mockupData.text_price_back;
-      setTextCustomizationPrice(textPrice);
-    }
-  }, [mockupData, selectedPrintPosition, customText]);
-
-  // Sauvegarde du panier dans localStorage
-  const saveCart = (newCart: CartItem[]) => {
-    localStorage.setItem('cart', JSON.stringify(newCart));
-    setCart(newCart);
-  };
-
-  // Filtrage des loteries éligibles
-  const eligibleLotteries = lotteries?.filter(lottery => lottery.is_active).slice(0, product?.tickets_offered || 0);
-
-  // Récupération du design sélectionné
-  const getSelectedDesignDetails = () => {
-    if (!selectedDesign || !designs) return null;
-    
-    return designs.find(design => design.id === selectedDesign);
-  };
-  
-  const selectedDesignDetails = getSelectedDesignDetails();
-  
-  // Gestion du drag & drop pour repositionner le design (souris et touch)
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!previewContainerRef.current) return;
-    
-    setIsDragging(true);
-    setDragStart({
-      x: e.clientX - designPosition.x,
-      y: e.clientY - designPosition.y
     });
-    
-    // Arrêter le drag du texte pour éviter les conflits
-    setIsTextDragging(false);
   };
-  
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging && !isTextDragging) return;
+
+  const handleMouseDown = (event: React.MouseEvent | React.TouchEvent, isText: boolean = false) => {
+    event.preventDefault();
     
-    if (isDragging) {
-      const newX = e.clientX - dragStart.x;
-      const newY = e.clientY - dragStart.y;
-      
-      setDesignPosition({
-        x: newX,
-        y: newY
-      });
+    let clientX: number, clientY: number;
+    
+    if ('touches' in event) {
+      clientX = event.touches[0].clientX;
+      clientY = event.touches[0].clientY;
+    } else {
+      clientX = event.clientX;
+      clientY = event.clientY;
     }
-    
-    if (isTextDragging) {
-      const newX = e.clientX - textDragStart.x;
-      const newY = e.clientY - textDragStart.y;
-      
-      setTextPosition({
-        x: newX,
-        y: newY
-      });
-    }
-  };
-  
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    setIsTextDragging(false);
-  };
-  
-  // Support tactile pour mobile
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!previewContainerRef.current) return;
-    
-    if (showTextEditor) {
-      setIsTextDragging(true);
-      setTextDragStart({
-        x: e.touches[0].clientX - textPosition.x,
-        y: e.touches[0].clientY - textPosition.y
-      });
-      setIsDragging(false);
+
+    if (isText) {
+      setIsDraggingText(true);
+      setStartPosText({ x: clientX, y: clientY });
     } else {
       setIsDragging(true);
-      setDragStart({
-        x: e.touches[0].clientX - designPosition.x,
-        y: e.touches[0].clientY - designPosition.y
-      });
-      setIsTextDragging(false);
-    }
-  };
-  
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    e.preventDefault(); // Empêcher le scroll pendant le déplacement
-    
-    if (isDragging) {
-      const newX = e.touches[0].clientX - dragStart.x;
-      const newY = e.touches[0].clientY - dragStart.y;
-      
-      setDesignPosition({
-        x: newX,
-        y: newY
-      });
+      setStartPos({ x: clientX, y: clientY });
     }
     
-    if (isTextDragging) {
-      const newX = e.touches[0].clientX - textDragStart.x;
-      const newY = e.touches[0].clientY - textDragStart.y;
-      
-      setTextPosition({
-        x: newX,
-        y: newY
-      });
-    }
-  };
-  
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-    setIsTextDragging(false);
-  };
-  
-  // Gestion du drag & drop pour le texte
-  const handleTextMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation(); // Empêcher la propagation pour éviter de déclencher aussi le drag du design
-    
-    if (!previewContainerRef.current) return;
-    
-    setIsTextDragging(true);
-    setTextDragStart({
-      x: e.clientX - textPosition.x,
-      y: e.clientY - textPosition.y
-    });
-    
-    // Arrêter le drag du design pour éviter les conflits
-    setIsDragging(false);
-  };
-  
-  const handleZoomIn = () => {
-    if (showTextEditor) {
-      setTextScale(prev => Math.min(prev + 0.1, 2));
-    } else {
-      setDesignScale(prev => Math.min(prev + 0.1, 2));
-    }
-  };
-  
-  const handleZoomOut = () => {
-    if (showTextEditor) {
-      setTextScale(prev => Math.max(prev - 0.1, 0.2)); // Permettre une réduction plus importante
-    } else {
-      setDesignScale(prev => Math.max(prev - 0.1, 0.2)); // Permettre une réduction plus importante
-    }
-  };
-  
-  const handleRotate = () => {
-    if (showTextEditor) {
-      setTextRotation(prev => prev + 15);
-    } else {
-      setDesignRotation(prev => prev + 15);
-    }
-  };
-  
-  const resetDesignTransform = () => {
-    if (showTextEditor) {
-      setTextPosition({ x: 0, y: 0 });
-      setTextScale(1);
-      setTextRotation(0);
-    } else {
-      setDesignPosition({ x: 0, y: 0 });
-      setDesignScale(1);
-      setDesignRotation(0);
-    }
-  };
-  
-  // Toggle pour le mode d'édition du texte
-  const toggleTextEditor = () => {
-    setShowTextEditor(!showTextEditor);
-    if (!showTextEditor) {
-      setCurrentDesignView('text');
-    }
-  };
-  
-  // Toggle pour le style du texte
-  const toggleTextBold = () => {
-    setTextBold(!textBold);
-  };
-  
-  const toggleTextItalic = () => {
-    setTextItalic(!textItalic);
-  };
-  
-  const toggleTextUnderline = () => {
-    setTextUnderline(!textUnderline);
+    setPageScrollLocked(true);
   };
 
-  // Ajout au panier
+  const handleMouseMove = (event: MouseEvent | TouchEvent) => {
+    let clientX: number, clientY: number;
+    
+    if ('touches' in event) {
+      clientX = event.touches[0].clientX;
+      clientY = event.touches[0].clientY;
+    } else {
+      clientX = event.clientX;
+      clientY = event.clientY;
+    }
+
+    if (isDragging) {
+      const deltaX = clientX - startPos.x;
+      const deltaY = clientY - startPos.y;
+      
+      setDesignTransform(prev => ({
+        ...prev,
+        position: {
+          x: prev.position.x + deltaX,
+          y: prev.position.y + deltaY
+        }
+      }));
+      
+      setStartPos({ x: clientX, y: clientY });
+    } else if (isDraggingText) {
+      const deltaX = clientX - startPosText.x;
+      const deltaY = clientY - startPosText.y;
+      
+      setTextTransform(prev => ({
+        ...prev,
+        position: {
+          x: prev.position.x + deltaX,
+          y: prev.position.y + deltaY
+        }
+      }));
+      
+      setStartPosText({ x: clientX, y: clientY });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setIsDraggingText(false);
+    setPageScrollLocked(false);
+  };
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleMouseMove);
+    window.addEventListener('touchend', handleMouseUp);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleMouseMove);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [isDragging, startPos, isDraggingText, startPosText]);
+
+  const calculatePrice = () => {
+    if (!product) return 0;
+    
+    let price = product.price * quantity;
+    
+    // Ajout du prix du design personnalisé si sélectionné
+    if (selectedDesign) {
+      price += (currentPrintSize === 'A3' ? 15 : 
+               currentPrintSize === 'A4' ? 10 : 
+               currentPrintSize === 'A5' ? 8 : 5);
+    }
+    
+    // Ajout du prix du texte personnalisé si activé
+    if (textEnabled && textContent) {
+      price += 3; // Prix fixe pour le texte personnalisé
+    }
+    
+    return price;
+  };
+
+  const getColorHexCode = (colorName: string) => {
+    // Convertir les noms de couleurs en codes hex
+    const colorMap: {[key: string]: string} = {
+      'white': '#ffffff',
+      'black': '#000000',
+      'red': '#ff0000',
+      'blue': '#0000ff',
+      'gray': '#808080',
+      'navy': '#000080',
+    };
+    
+    return colorName.startsWith('#') ? colorName : (colorMap[colorName.toLowerCase()] || '#000000');
+  };
+
   const handleAddToCart = () => {
     if (!product) return;
-    
-    // Validation des données de personnalisation
-    if (!selectedSize && product?.available_sizes.length > 0) {
-      toast.error("Veuillez sélectionner une taille");
-      return;
-    }
 
-    if (!selectedColor && product?.available_colors.length > 0) {
-      toast.error("Veuillez sélectionner une couleur");
-      return;
-    }
-
-    // Vérifier si des loteries sont sélectionnées quand le produit offre des tickets
-    if (product?.tickets_offered && product.tickets_offered > 0 && selectedLotteries.length === 0) {
-      toast.error("Veuillez sélectionner au moins une loterie");
-      return;
-    }
-
-    // Calculer le prix total avec la personnalisation
-    const totalPrice = calculateTotalPrice();
-
-    // Créer l'objet pour le panier
     const cartItem: CartItem = {
       productId: product.id,
       name: product.name,
-      price: totalPrice / quantity, // Prix unitaire incluant personnalisation
-      quantity,
+      price: calculatePrice(),
+      quantity: quantity,
       color: selectedColor,
       size: selectedSize,
       image_url: product.image_url,
-      customization: (selectedDesign || uploadedDesignUrl || customText) ? {
-        designId: selectedDesign || 'custom',
-        designName: selectedDesignDetails?.name || 'Design personnalisé',
-        designUrl: currentDesignView === 'upload' ? uploadedDesignUrl! : selectedDesignDetails?.image_url || '',
-        printPosition: selectedPrintPosition,
-        printSize: selectedPrintSize,
-        transform: {
-          position: designPosition,
-          scale: designScale,
-          rotation: designRotation
-        },
-        // Ajouter les informations du texte si présent
-        text: customText ? {
-          content: customText,
+      lotteries: selectedLotteryIds.length > 0 ? selectedLotteryIds : undefined
+    };
+
+    if (selectedDesign) {
+      cartItem.customization = {
+        designId: selectedDesign.id,
+        designName: selectedDesign.name,
+        designUrl: selectedDesign.image_url,
+        printPosition: currentPrintPosition,
+        printSize: currentPrintSize,
+        transform: designTransform
+      };
+
+      if (textEnabled && textContent.trim()) {
+        cartItem.customization.text = {
+          content: textContent,
           font: textFont,
           color: textColor,
-          printPosition: selectedPrintPosition,
-          transform: {
-            position: textPosition,
-            scale: textScale,
-            rotation: textRotation
-          }
-        } : undefined
-      } : undefined,
-      lotteries: selectedLotteries.length > 0 ? selectedLotteries : undefined,
-    };
-
-    // Ajouter au panier
-    const newCart = [...cart, cartItem];
-    saveCart(newCart);
-    
-    console.log("Produit ajouté au panier:", cartItem);
-    toast.success("Produit ajouté au panier");
-    
-    // Redirection optionnelle vers le panier
-    // navigate('/cart');
-  };
-
-  // Affichage/masquage du panneau de personnalisation
-  const toggleCustomizationPanel = () => {
-    setShowCustomizationPanel(!showCustomizationPanel);
-  };
-
-  // Sélection d'un design
-  const handleDesignSelect = (designId: string) => {
-    setSelectedDesign(designId);
-    setCurrentDesignView('browse');
-    resetDesignTransform();
-    toast.success("Design sélectionné");
-  };
-
-  // Sélection d'une loterie
-  const handleLotterySelect = (lotteryId: string) => {
-    // Si la loterie est déjà sélectionnée, la désélectionner
-    if (selectedLotteries.includes(lotteryId)) {
-      setSelectedLotteries(selectedLotteries.filter(id => id !== lotteryId));
-    } else {
-      // Vérifier si on a atteint le nombre max de tickets/loteries
-      if (selectedLotteries.length < (product?.tickets_offered || 0)) {
-        setSelectedLotteries([...selectedLotteries, lotteryId]);
-      } else {
-        toast.error(`Vous ne pouvez sélectionner que ${product?.tickets_offered} loterie(s)`);
+          printPosition: textPosition,
+          transform: textTransform
+        };
       }
     }
+
+    // Ajouter l'élément au panier (localStorage pour l'instant)
+    const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
+    localStorage.setItem('cart', JSON.stringify([...existingCart, cartItem]));
+    
+    toast.success('Produit ajouté au panier !');
   };
 
-  // Filtrage des designs par catégorie
-  const filterDesignsByCategory = (category: string) => {
-    if (!designs) return [];
-    return designs.filter(design => design.category.toLowerCase() === category.toLowerCase());
-  };
-  
-  // Simulation de l'upload d'un design (dans une vraie application, cela ferait appel à une API)
-  const handleDesignUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    // Vérifications sur le type et la taille du fichier
-    if (!file.type.includes('image/')) {
-      toast.error("Veuillez sélectionner un fichier image");
-      return;
-    }
-    
-    if (file.size > 5 * 1024 * 1024) { // 5MB max
-      toast.error("Le fichier est trop volumineux (maximum 5MB)");
-      return;
-    }
-    
-    // Simuler un upload avec un délai
-    toast.info("Upload en cours...");
-    
-    // Création d'une URL pour l'aperçu de l'image
-    const fileUrl = URL.createObjectURL(file);
-    setUploadedDesignUrl(fileUrl);
-    
-    setTimeout(() => {
-      // Dans une vraie application, nous recevrions l'URL depuis le serveur
-      setSelectedDesign('custom');
-      setCurrentDesignView('upload');
-      resetDesignTransform();
-      toast.success("Design uploadé avec succès");
-    }, 1500);
-  };
-
-  // Conversion d'un code couleur en nom
-  const getColorName = (colorCode: string) => {
-    const colorMap: Record<string, string> = {
-      'white': 'Blanc',
-      '#ffffff': 'Blanc',
-      'black': 'Noir',
-      '#000000': 'Noir',
-      'blue': 'Bleu',
-      '#0000ff': 'Bleu',
-      'red': 'Rouge',
-      '#ff0000': 'Rouge',
-      'gray': 'Gris',
-      '#808080': 'Gris',
-      'navy': 'Bleu marine',
-      '#000080': 'Bleu marine',
-    };
-    return colorMap[colorCode] || colorCode;
-  };
-
-  if (productLoading) {
+  if (isLoading || !product) {
     return (
-      <div className="flex flex-col min-h-screen">
+      <div className="min-h-screen flex flex-col">
         <Navbar />
-        <main className="flex-grow mt-16 flex items-center justify-center">
-          <p>Chargement du produit...</p>
-        </main>
+        <div className="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
+          <div className="animate-pulse flex space-x-4">
+            <div className="rounded-full bg-slate-700 h-10 w-10"></div>
+            <div className="flex-1 space-y-6 py-1">
+              <div className="h-2 bg-slate-700 rounded"></div>
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="h-2 bg-slate-700 rounded col-span-2"></div>
+                  <div className="h-2 bg-slate-700 rounded col-span-1"></div>
+                </div>
+                <div className="h-2 bg-slate-700 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
         <Footer />
       </div>
     );
   }
 
-  if (productError || !product) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
-        <main className="flex-grow mt-16 flex items-center justify-center">
-          <p>Produit non trouvé ou une erreur est survenue.</p>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+  const productImage = product.image_url;
+  const activeLotteries = lotteries.filter(lottery => lottery.is_active);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      
-      <main className="flex-grow mt-16 py-12">
-        <div className="container mx-auto px-4">
-          {/* En-tête du produit - Visible sur mobile uniquement */}
-          <div className="md:hidden mb-6">
-            <div className="flex flex-wrap gap-2 mb-3">
-              <Badge variant="secondary">{product.category}</Badge>
-              {product.is_customizable && (
-                <Badge className="bg-winshirt-purple">Personnalisable</Badge>
+
+      <main className="flex-grow container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <Link to="/products" className="flex items-center text-sm text-winshirt-purple hover:text-winshirt-blue transition-colors">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Retour aux produits
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Image et visualisation du produit */}
+          <div className="relative">
+            <div 
+              ref={productCanvasRef}
+              className="relative bg-black/30 rounded-lg overflow-hidden shadow-xl aspect-square flex justify-center items-center"
+              style={{ touchAction: isDragging || isDraggingText ? 'none' : 'auto' }}
+            >
+              <img 
+                src={productImage} 
+                alt={product.name}
+                className="w-full h-full object-contain"
+              />
+              
+              {/* Design superposé */}
+              {selectedDesign && (
+                <div 
+                  className="absolute cursor-move select-none"
+                  style={{ 
+                    transform: `translate(${designTransform.position.x}px, ${designTransform.position.y}px) 
+                               rotate(${designTransform.rotation}deg) 
+                               scale(${designTransform.scale})`,
+                    transformOrigin: 'center',
+                    display: (currentPrintPosition === selectedTab || selectedTab === 'design') ? 'block' : 'none'
+                  }}
+                  onMouseDown={(e) => handleMouseDown(e)}
+                  onTouchStart={(e) => handleMouseDown(e)}
+                >
+                  <img 
+                    src={selectedDesign.image_url} 
+                    alt={selectedDesign.name}
+                    className="max-w-[200px] max-h-[200px] w-auto h-auto"
+                    draggable={false}
+                  />
+                </div>
               )}
-              {product.tickets_offered > 0 && (
-                <Badge className="bg-winshirt-blue">
-                  {product.tickets_offered} {product.tickets_offered > 1 ? 'tickets' : 'ticket'}
-                </Badge>
-              )}
-            </div>
-            <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-            <div className="flex items-center mb-4">
-              <span className="text-xl font-bold">{product.price.toFixed(2)} €</span>
-              {((selectedDesign || uploadedDesignUrl) && customizationPrice > 0) && (
-                <span className="ml-2 text-sm text-white/70">
-                  + {customizationPrice.toFixed(2)} € (personnalisation)
-                </span>
-              )}
-              {(customText && textCustomizationPrice > 0) && (
-                <span className="ml-2 text-sm text-white/70">
-                  + {textCustomizationPrice.toFixed(2)} € (texte)
-                </span>
+              
+              {/* Texte superposé */}
+              {textEnabled && textContent && (
+                <div 
+                  className="absolute cursor-move select-none"
+                  style={{ 
+                    transform: `translate(${textTransform.position.x}px, ${textTransform.position.y}px) 
+                               rotate(${textTransform.rotation}deg) 
+                               scale(${textTransform.scale})`,
+                    transformOrigin: 'center',
+                    fontFamily: textFont,
+                    color: textColor,
+                    fontWeight: textStyles.bold ? 'bold' : 'normal',
+                    fontStyle: textStyles.italic ? 'italic' : 'normal',
+                    textDecoration: textStyles.underline ? 'underline' : 'none',
+                    fontSize: '24px',
+                    textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
+                    display: (textPosition === selectedTab || selectedTab === 'text') ? 'block' : 'none'
+                  }}
+                  onMouseDown={(e) => handleMouseDown(e, true)}
+                  onTouchStart={(e) => handleMouseDown(e, true)}
+                >
+                  {textContent}
+                </div>
               )}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Section gauche: Aperçu du produit et personnalisation */}
-            <div>
-              {/* Aperçu du produit */}
-              <div className="bg-gradient-to-br from-black to-gray-800 rounded-xl p-4">
-                <div
-                  ref={previewContainerRef}
-                  className={`relative aspect-square overflow-hidden rounded-lg flex items-center justify-center bg-black/50 ${isDragging || isTextDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                >
-                  {/* Produit de base */}
-                  <img 
-                    src={product.image_url} 
-                    alt={product.name}
-                    className="w-full h-full object-contain" 
-                  />
-                  
-                  {/* Design appliqué */}
-                  {previewMode && (selectedDesign || uploadedDesignUrl) && (
-                    <div 
-                      className="absolute inset-0 flex items-center justify-center"
-                      style={{
-                        pointerEvents: isDragging ? 'none' : 'auto'
-                      }}
-                    >
-                      <img 
-                        src={currentDesignView === 'upload' ? uploadedDesignUrl! : designs?.find(d => d.id === selectedDesign)?.image_url || ''}
-                        alt="Selected Design"
-                        className="object-contain transition-transform duration-200"
-                        style={{ 
-                          opacity: 0.9,
-                          maxWidth: '60%',
-                          maxHeight: '60%',
-                          transform: `translate(${designPosition.x}px, ${designPosition.y}px) scale(${designScale}) rotate(${designRotation}deg)`,
-                          transformOrigin: 'center center'
-                        }}
-                      />
-                    </div>
-                  )}
-                  
-                  {/* Texte personnalisé */}
-                  {previewMode && customText && (
-                    <div 
-                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                      style={{
-                        pointerEvents: isTextDragging ? 'none' : 'auto'
-                      }}
-                      onMouseDown={handleTextMouseDown}
-                      onClick={() => setShowTextEditor(true)}
-                    >
-                      <div 
-                        className={`text-center p-2 rounded inline-block cursor-move pointer-events-auto ${
-                          showTextEditor ? 'ring-2 ring-winshirt-purple' : ''
-                        }`}
-                        style={{ 
-                          fontFamily: textFont,
-                          color: textColor,
-                          fontWeight: textBold ? 'bold' : 'normal',
-                          fontStyle: textItalic ? 'italic' : 'normal',
-                          textDecoration: textUnderline ? 'underline' : 'none',
-                          transform: `translate(${textPosition.x}px, ${textPosition.y}px) scale(${textScale}) rotate(${textRotation}deg)`,
-                          transformOrigin: 'center center',
-                          textShadow: '1px 1px 3px rgba(0,0,0,0.3)',
-                          maxWidth: '80%',
-                          fontSize: '24px'
-                        }}
-                      >
-                        {customText}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Contrôles de manipulation */}
-                <div className="flex justify-between mt-4">
-                  <div className="flex items-center">
-                    {/* Mode d'édition actif */}
-                    {(selectedDesign || uploadedDesignUrl || customText) && (
-                      <div className="flex items-center mr-3 bg-black/30 px-2 py-1 rounded text-sm">
-                        <span className="mr-1">Mode:</span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className={`px-2 ${!showTextEditor ? 'bg-white/10' : ''}`}
-                          onClick={() => setShowTextEditor(false)}
-                        >
-                          <Image className="h-4 w-4 mr-1" />
-                          Design
-                        </Button>
-                        {customText && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className={`px-2 ${showTextEditor ? 'bg-white/10' : ''}`}
-                            onClick={() => setShowTextEditor(true)}
-                          >
-                            <TextCursor className="h-4 w-4 mr-1" />
-                            Texte
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Contrôles de l'élément actif (design ou texte) */}
-                  {(selectedDesign || uploadedDesignUrl || customText) && (
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={handleZoomIn}
-                        className="bg-black/30 hover:bg-black/50"
-                      >
-                        <ZoomIn className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={handleZoomOut}
-                        className="bg-black/30 hover:bg-black/50"
-                      >
-                        <ZoomOut className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={handleRotate}
-                        className="bg-black/30 hover:bg-black/50"
-                      >
-                        <RotateCw className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={resetDesignTransform}
-                        className="bg-black/30 hover:bg-black/50 text-xs"
-                      >
-                        Réinitialiser
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Contrôles supplémentaires pour le texte (quand mode texte actif) */}
-                {showTextEditor && customText && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={toggleTextBold}
-                      className={`bg-black/30 hover:bg-black/50 ${textBold ? 'bg-white/20' : ''}`}
-                    >
-                      <Bold className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={toggleTextItalic}
-                      className={`bg-black/30 hover:bg-black/50 ${textItalic ? 'bg-white/20' : ''}`}
-                    >
-                      <Italic className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={toggleTextUnderline}
-                      className={`bg-black/30 hover:bg-black/50 ${textUnderline ? 'bg-white/20' : ''}`}
-                    >
-                      <Underline className="h-4 w-4" />
-                    </Button>
-                    
-                    <Select value={textFont} onValueChange={setTextFont}>
-                      <SelectTrigger className="h-8 bg-black/30 border-white/20 text-xs">
-                        <SelectValue placeholder="Police" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {AVAILABLE_FONTS.map((font) => (
-                          <SelectItem key={font.value} value={font.value} style={{fontFamily: font.value}}>
-                            {font.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    
-                    <input
-                      type="color"
-                      value={textColor}
-                      onChange={(e) => setTextColor(e.target.value)}
-                      className="w-8 h-8 rounded cursor-pointer bg-transparent"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Position du design (avant/arrière) */}
+          {/* Informations du produit et options */}
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">{product.name}</h1>
+            
+            <div className="flex items-center gap-2 mb-4">
+              <Badge className="bg-gradient-to-r from-winshirt-purple to-winshirt-blue text-white">
+                {product.category}
+              </Badge>
+              
               {product.is_customizable && (
-                <div className="flex justify-center mt-4">
-                  <div className="inline-flex border rounded-md overflow-hidden">
-                    <Button 
-                      variant={selectedPrintPosition === 'front' ? "default" : "ghost"} 
-                      size="sm"
-                      className="rounded-none"
-                      onClick={() => setSelectedPrintPosition('front')}
-                    >
-                      Avant
-                    </Button>
-                    <Button 
-                      variant={selectedPrintPosition === 'back' ? "default" : "ghost"} 
-                      size="sm"
-                      className="rounded-none"
-                      onClick={() => setSelectedPrintPosition('back')}
-                    >
-                      Arrière
-                    </Button>
+                <Badge variant="outline" className="bg-white/5">
+                  Personnalisable
+                </Badge>
+              )}
+            </div>
+            
+            <p className="text-white/70 mb-6">{product.description}</p>
+            
+            <div className="text-2xl font-bold mb-6">
+              {calculatePrice().toFixed(2)} €
+            </div>
+
+            {/* Options du produit */}
+            <div className="space-y-6">
+              {/* Couleurs disponibles */}
+              {product.available_colors && product.available_colors.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Couleur</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.available_colors.map((color) => (
+                      <div
+                        key={color}
+                        className={`w-8 h-8 rounded-full cursor-pointer border-2 ${
+                          selectedColor === color ? 'border-winshirt-purple' : 'border-transparent'
+                        }`}
+                        style={{ backgroundColor: getColorHexCode(color) }}
+                        onClick={() => setSelectedColor(color)}
+                      />
+                    ))}
                   </div>
                 </div>
               )}
-              
-              {/* Personnalisation - Mode compact */}
+
+              {/* Tailles disponibles */}
+              {product.available_sizes && product.available_sizes.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Taille</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.available_sizes.map((size) => (
+                      <div
+                        key={size}
+                        className={`px-3 py-1 rounded cursor-pointer ${
+                          selectedSize === size
+                            ? 'bg-winshirt-purple text-white'
+                            : 'bg-black/20 hover:bg-black/30'
+                        }`}
+                        onClick={() => setSelectedSize(size)}
+                      >
+                        {size}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Options de personnalisation */}
               {product.is_customizable && (
-                <div className="mt-6">
-                  <Tabs defaultValue={showCustomizationPanel ? "designs" : "info"} className="w-full">
-                    <TabsList className="grid w-full grid-cols-4 mb-4">
-                      <TabsTrigger value="info">Infos</TabsTrigger>
-                      <TabsTrigger 
-                        value="designs" 
-                        onClick={() => {
-                          setShowCustomizationPanel(true);
-                          setCurrentDesignView('browse');
-                        }}
-                      >
-                        Designs
+                <div className="bg-black/20 rounded-lg p-4 mb-6">
+                  <h3 className="text-lg font-semibold mb-4">Personnalisation</h3>
+                  
+                  <Tabs defaultValue="design" onValueChange={setSelectedTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 mb-4">
+                      <TabsTrigger value="design">
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        Design
                       </TabsTrigger>
-                      <TabsTrigger 
-                        value="upload"
-                        onClick={() => {
-                          setShowCustomizationPanel(true);
-                          setCurrentDesignView('upload');
-                        }}
-                      >
-                        Upload
-                      </TabsTrigger>
-                      <TabsTrigger 
-                        value="text"
-                        onClick={() => {
-                          setShowCustomizationPanel(true);
-                          setCurrentDesignView('text');
-                        }}
-                      >
+                      <TabsTrigger value="text">
+                        <Type className="h-4 w-4 mr-2" />
                         Texte
                       </TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="info">
-                      <GlassCard className="p-4">
-                        <h3 className="text-lg font-medium mb-2">{product.name}</h3>
-                        <p className="text-white/70 mb-4">{product.description}</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex">
-                            {Array(5).fill(0).map((_, i) => (
-                              <svg
-                                key={i}
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5 text-yellow-400 fill-yellow-400"
-                                viewBox="0 0 20 20"
-                              >
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                              </svg>
-                            ))}
-                            <span className="ml-2 text-sm text-white/70">(12 avis)</span>
-                          </div>
-                        </div>
-                      </GlassCard>
-                    </TabsContent>
-                    
-                    <TabsContent value="designs">
-                      <GlassCard className="p-4">
-                        <Tabs defaultValue="animaux" value={designTab} onValueChange={setDesignTab}>
-                          <TabsList className="grid w-full grid-cols-2 mb-4">
-                            <TabsTrigger value="animaux">Animaux</TabsTrigger>
-                            <TabsTrigger value="abstrait">Abstrait</TabsTrigger>
-                          </TabsList>
-                          
-                          {designsLoading ? (
-                            <div className="text-center py-4">Chargement des designs...</div>
-                          ) : (
-                            <>
-                              <TabsContent value="animaux">
-                                <div className="grid grid-cols-3 gap-3">
-                                  {filterDesignsByCategory('animaux').map(design => (
-                                    <div 
-                                      key={design.id} 
-                                      className={`relative aspect-square rounded-md overflow-hidden cursor-pointer border ${
-                                        selectedDesign === design.id ? 'border-2 border-winshirt-purple' : 'border-white/20'
-                                      }`}
-                                      onClick={() => handleDesignSelect(design.id)}
-                                    >
-                                      <img 
-                                        src={design.image_url} 
-                                        alt={design.name} 
-                                        className="w-full h-full object-cover"
-                                      />
-                                      {selectedDesign === design.id && (
-                                        <div className="absolute top-2 right-2 bg-winshirt-purple rounded-full w-5 h-5 flex items-center justify-center">
-                                          <Check className="w-3 h-3 text-white" />
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              </TabsContent>
-                              
-                              <TabsContent value="abstrait">
-                                <div className="grid grid-cols-3 gap-3">
-                                  {filterDesignsByCategory('abstrait').map(design => (
-                                    <div 
-                                      key={design.id} 
-                                      className={`relative aspect-square rounded-md overflow-hidden cursor-pointer border ${
-                                        selectedDesign === design.id ? 'border-2 border-winshirt-purple' : 'border-white/20'
-                                      }`}
-                                      onClick={() => handleDesignSelect(design.id)}
-                                    >
-                                      <img 
-                                        src={design.image_url} 
-                                        alt={design.name} 
-                                        className="w-full h-full object-cover"
-                                      />
-                                      {selectedDesign === design.id && (
-                                        <div className="absolute top-2 right-2 bg-winshirt-purple rounded-full w-5 h-5 flex items-center justify-center">
-                                          <Check className="w-3 h-3 text-white" />
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              </TabsContent>
-                            </>
-                          )}
-                        </Tabs>
-                      </GlassCard>
-                    </TabsContent>
-                    
-                    <TabsContent value="upload">
-                      <GlassCard className="p-4">
-                        <div className="space-y-4">
-                          <div className={`border-2 border-dashed border-white/30 rounded-lg p-6 text-center ${uploadedDesignUrl ? 'bg-white/5' : ''}`}>
-                            {uploadedDesignUrl ? (
-                              <div className="space-y-4">
-                                <img 
-                                  src={uploadedDesignUrl} 
-                                  alt="Uploaded design" 
-                                  className="mx-auto h-40 object-contain"
-                                />
-                                <Button 
-                                  variant="outline" 
-                                  className="w-full"
-                                  onClick={() => {
-                                    setUploadedDesignUrl(null);
-                                    setSelectedDesign(null);
-                                  }}
+                    <TabsContent value="design" className="space-y-4">
+                      <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-medium">Ajouter un design</h4>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setDesignDialogOpen(true)}
+                          disabled={!product.is_customizable}
+                        >
+                          {selectedDesign ? 'Changer' : 'Sélectionner'}
+                        </Button>
+                      </div>
+                      
+                      {selectedDesign && (
+                        <>
+                          <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <div className="mb-4">
+                                <Label className="mb-2 block">Position</Label>
+                                <ToggleGroup 
+                                  type="single" 
+                                  value={currentPrintPosition}
+                                  onValueChange={(value) => value && setCurrentPrintPosition(value as 'front' | 'back')}
+                                  className="justify-start"
                                 >
-                                  Supprimer
-                                </Button>
+                                  <ToggleGroupItem value="front">Avant</ToggleGroupItem>
+                                  <ToggleGroupItem value="back">Arrière</ToggleGroupItem>
+                                </ToggleGroup>
                               </div>
-                            ) : (
-                              <>
-                                <Image className="w-12 h-12 mx-auto mb-4 text-white/40" />
-                                <p className="mb-2 text-white/70">Cliquez pour choisir un fichier ou glissez-déposez</p>
-                                <p className="text-sm text-white/50 mb-4">PNG, JPG ou SVG (max. 5MB)</p>
-                                <input
-                                  type="file"
-                                  id="fileUpload"
-                                  className="hidden"
-                                  accept="image/*"
-                                  onChange={handleDesignUpload}
-                                />
-                                <Button 
-                                  variant="outline" 
-                                  className="w-full"
-                                  onClick={() => document.getElementById('fileUpload')?.click()}
+                              
+                              <div className="mb-4">
+                                <Label className="mb-2 block">Taille d'impression</Label>
+                                <Select
+                                  value={currentPrintSize}
+                                  onValueChange={setCurrentPrintSize}
                                 >
-                                  Sélectionner un fichier
-                                </Button>
-                              </>
-                            )}
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Sélectionner une taille" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      <SelectItem value="A3">A3 (Grand) - 15€</SelectItem>
+                                      <SelectItem value="A4">A4 (Moyen) - 10€</SelectItem>
+                                      <SelectItem value="A5">A5 (Petit) - 8€</SelectItem>
+                                      <SelectItem value="A6">A6 (Très petit) - 5€</SelectItem>
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-black/10 rounded p-4 flex items-center justify-center">
+                              <img 
+                                src={selectedDesign.image_url} 
+                                alt={selectedDesign.name}
+                                className="max-w-full max-h-[100px] object-contain"
+                              />
+                            </div>
                           </div>
                           
-                          {uploadedDesignUrl && (
-                            <div className="pt-4">
-                              <h4 className="text-sm font-medium mb-2">Taille d'impression</h4>
-                              <Select 
-                                value={selectedPrintSize} 
-                                onValueChange={(val) => setSelectedPrintSize(val as 'a4')}
+                          <div className="space-y-4">
+                            <div>
+                              <div className="flex justify-between mb-1">
+                                <Label>Échelle</Label>
+                                <span className="text-sm text-white/60">
+                                  {(designTransform.scale * 100).toFixed(0)}%
+                                </span>
+                              </div>
+                              <Slider
+                                min={0.05}
+                                max={2}
+                                step={0.01}
+                                value={[designTransform.scale]}
+                                onValueChange={([value]) => handleDesignTransformChange('scale', value)}
+                              />
+                            </div>
+                            
+                            <div>
+                              <div className="flex justify-between mb-1">
+                                <Label>Rotation</Label>
+                                <span className="text-sm text-white/60">
+                                  {designTransform.rotation}°
+                                </span>
+                              </div>
+                              <Slider
+                                min={0}
+                                max={359}
+                                step={1}
+                                value={[designTransform.rotation]}
+                                onValueChange={([value]) => handleDesignTransformChange('rotation', value)}
+                              />
+                            </div>
+                            
+                            <div className="flex justify-center">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setDesignTransform({
+                                    position: { x: 0, y: 0 },
+                                    scale: 1,
+                                    rotation: 0
+                                  });
+                                }}
                               >
-                                <SelectTrigger className="w-full bg-white/5">
-                                  <SelectValue placeholder="Choisir une taille" />
+                                <RotateCw className="h-4 w-4 mr-2" />
+                                Réinitialiser
+                              </Button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                      
+                      {!selectedDesign && (
+                        <div className="text-center py-8 text-white/60">
+                          <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-40" />
+                          <p>Sélectionnez un design pour le personnaliser</p>
+                        </div>
+                      )}
+                    </TabsContent>
+                    
+                    <TabsContent value="text" className="space-y-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-medium">Ajouter du texte</h4>
+                        <div className="flex items-center space-x-2">
+                          <Label htmlFor="text-toggle">Activer</Label>
+                          <Switch 
+                            id="text-toggle" 
+                            checked={textEnabled}
+                            onCheckedChange={setTextEnabled}
+                          />
+                        </div>
+                      </div>
+                      
+                      {textEnabled && (
+                        <>
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="text-content" className="mb-2 block">Votre texte</Label>
+                              <Input
+                                id="text-content"
+                                placeholder="Entrez votre texte ici"
+                                value={textContent}
+                                onChange={(e) => setTextContent(e.target.value)}
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                              <div>
+                                <Label className="mb-2 block">Position</Label>
+                                <ToggleGroup 
+                                  type="single" 
+                                  value={textPosition}
+                                  onValueChange={(value) => value && setTextPosition(value as 'front' | 'back')}
+                                  className="justify-start"
+                                >
+                                  <ToggleGroupItem value="front">Avant</ToggleGroupItem>
+                                  <ToggleGroupItem value="back">Arrière</ToggleGroupItem>
+                                </ToggleGroup>
+                              </div>
+                              
+                              <div>
+                                <Label className="mb-2 block">Style</Label>
+                                <div className="flex space-x-2">
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className={textStyles.bold ? "bg-winshirt-purple/20" : ""}
+                                    onClick={() => setTextStyles({...textStyles, bold: !textStyles.bold})}
+                                  >
+                                    <Bold className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className={textStyles.italic ? "bg-winshirt-purple/20" : ""}
+                                    onClick={() => setTextStyles({...textStyles, italic: !textStyles.italic})}
+                                  >
+                                    <Italic className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className={textStyles.underline ? "bg-winshirt-purple/20" : ""}
+                                    onClick={() => setTextStyles({...textStyles, underline: !textStyles.underline})}
+                                  >
+                                    <Underline className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <Label className="mb-2 block">Police</Label>
+                              <Select value={textFont} onValueChange={setTextFont}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Choisir une police" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="a3">A3 - Grand (+15.00€)</SelectItem>
-                                  <SelectItem value="a4">A4 - Moyen (+10.00€)</SelectItem>
-                                  <SelectItem value="a5">A5 - Petit (+8.00€)</SelectItem>
-                                  <SelectItem value="a6">A6 - Très petit (+5.00€)</SelectItem>
+                                  <SelectGroup>
+                                    {googleFonts.map((font) => (
+                                      <SelectItem
+                                        key={font.value}
+                                        value={font.value}
+                                        style={{ fontFamily: font.value }}
+                                      >
+                                        {font.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
                                 </SelectContent>
                               </Select>
                             </div>
-                          )}
-                        </div>
-                      </GlassCard>
-                    </TabsContent>
-                    
-                    {/* Nouvel onglet pour la personnalisation du texte */}
-                    <TabsContent value="text">
-                      <GlassCard className="p-4">
-                        <div className="space-y-4">
-                          <div>
-                            <label htmlFor="customText" className="block text-sm font-medium mb-2">
-                              Votre texte personnalisé
-                            </label>
-                            <Input 
-                              id="customText" 
-                              placeholder="Saisissez votre texte..." 
-                              value={customText}
-                              onChange={(e) => setCustomText(e.target.value)}
-                              className="w-full bg-white/5 border-white/20"
-                            />
-                          </div>
-                          
-                          {customText && (
-                            <>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Police</label>
-                                  <Select value={textFont} onValueChange={setTextFont}>
-                                    <SelectTrigger className="w-full bg-white/5">
-                                      <SelectValue placeholder="Choisir une police" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {AVAILABLE_FONTS.map((font) => (
-                                        <SelectItem key={font.value} value={font.value} style={{fontFamily: font.value}}>
-                                          {font.name}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                
-                                <div>
-                                  <label className="block text-sm font-medium mb-2">Couleur</label>
-                                  <div className="flex items-center gap-2">
-                                    <input
-                                      type="color"
-                                      value={textColor}
-                                      onChange={(e) => setTextColor(e.target.value)}
-                                      className="w-10 h-10 rounded cursor-pointer bg-transparent"
-                                    />
-                                    <span style={{ color: textColor }}>{textColor}</span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div>
-                                <label className="block text-sm font-medium mb-2">Style</label>
-                                <div className="flex gap-2">
-                                  <Button 
-                                    onClick={toggleTextBold}
-                                    variant={textBold ? "default" : "outline"}
-                                    size="sm"
-                                  >
-                                    <Bold className="h-4 w-4 mr-1" />
-                                    Gras
-                                  </Button>
-                                  <Button 
-                                    onClick={toggleTextItalic}
-                                    variant={textItalic ? "default" : "outline"}
-                                    size="sm"
-                                  >
-                                    <Italic className="h-4 w-4 mr-1" />
-                                    Italique
-                                  </Button>
-                                  <Button 
-                                    onClick={toggleTextUnderline}
-                                    variant={textUnderline ? "default" : "outline"}
-                                    size="sm"
-                                  >
-                                    <Underline className="h-4 w-4 mr-1" />
-                                    Souligné
-                                  </Button>
-                                </div>
+                            
+                            <div>
+                              <div className="flex justify-between items-center mb-2">
+                                <Label className="block">Couleur</Label>
+                                <div
+                                  className="w-6 h-6 rounded cursor-pointer border"
+                                  style={{ backgroundColor: textColor }}
+                                  onClick={() => setTextShowColorPicker(!textShowColorPicker)}
+                                />
                               </div>
                               
-                              {mockupData && (
-                                <div className="pt-2">
-                                  <p className="text-sm font-medium">
-                                    Prix de l'impression texte: +{
-                                      (selectedPrintPosition === 'front' 
-                                        ? mockupData.text_price_front 
-                                        : mockupData.text_price_back).toFixed(2)
-                                    }€
-                                  </p>
+                              {textShowColorPicker && (
+                                <div className="relative z-10">
+                                  <div 
+                                    className="fixed inset-0" 
+                                    onClick={() => setTextShowColorPicker(false)}
+                                  />
+                                  <div className="absolute right-0 p-2 bg-black/80 rounded-lg shadow-lg">
+                                    <HexColorPicker 
+                                      color={textColor} 
+                                      onChange={setTextColor} 
+                                    />
+                                  </div>
                                 </div>
                               )}
-                            </>
-                          )}
+                            </div>
+                            
+                            <div className="space-y-4">
+                              <div>
+                                <div className="flex justify-between mb-1">
+                                  <Label>Échelle</Label>
+                                  <span className="text-sm text-white/60">
+                                    {(textTransform.scale * 100).toFixed(0)}%
+                                  </span>
+                                </div>
+                                <Slider
+                                  min={0.1}
+                                  max={3}
+                                  step={0.01}
+                                  value={[textTransform.scale]}
+                                  onValueChange={([value]) => handleTextTransformChange('scale', value)}
+                                />
+                              </div>
+                              
+                              <div>
+                                <div className="flex justify-between mb-1">
+                                  <Label>Rotation</Label>
+                                  <span className="text-sm text-white/60">
+                                    {textTransform.rotation}°
+                                  </span>
+                                </div>
+                                <Slider
+                                  min={0}
+                                  max={359}
+                                  step={1}
+                                  value={[textTransform.rotation]}
+                                  onValueChange={([value]) => handleTextTransformChange('rotation', value)}
+                                />
+                              </div>
+                              
+                              <div className="flex justify-center">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setTextTransform({
+                                      position: { x: 0, y: 0 },
+                                      scale: 1,
+                                      rotation: 0
+                                    });
+                                  }}
+                                >
+                                  <RotateCw className="h-4 w-4 mr-2" />
+                                  Réinitialiser
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                      
+                      {!textEnabled && (
+                        <div className="text-center py-8 text-white/60">
+                          <Type className="h-12 w-12 mx-auto mb-2 opacity-40" />
+                          <p>Activez le texte pour ajouter vos propres mots</p>
                         </div>
-                      </GlassCard>
+                      )}
                     </TabsContent>
                   </Tabs>
                 </div>
               )}
-            </div>
-
-            {/* Section droite: Information produit et options */}
-            <div>
-              {/* En-tête du produit - Masqué sur mobile */}
-              <div className="hidden md:block">
-                <div className="flex flex-wrap gap-2 mb-3">
-                  <Badge variant="secondary">{product.category}</Badge>
-                  {product.is_customizable && (
-                    <Badge className="bg-winshirt-purple">Personnalisable</Badge>
-                  )}
-                  {product.tickets_offered > 0 && (
-                    <Badge className="bg-winshirt-blue">
-                      {product.tickets_offered} {product.tickets_offered > 1 ? 'tickets' : 'ticket'}
-                    </Badge>
-                  )}
-                </div>
-                <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-                
-                <div className="flex items-center mb-6">
-                  <span className="text-2xl font-bold">{calculateTotalPrice().toFixed(2)} €</span>
-                  {((selectedDesign || uploadedDesignUrl) && customizationPrice > 0) && (
-                    <span className="ml-2 text-sm text-white/70">
-                      (inclus design: +{customizationPrice.toFixed(2)} €)
-                    </span>
-                  )}
-                  {(customText && textCustomizationPrice > 0) && (
-                    <span className="ml-2 text-sm text-white/70">
-                      (inclus texte: +{textCustomizationPrice.toFixed(2)} €)
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                {product.available_sizes.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-medium mb-2">Taille</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {product.available_sizes.map((size) => (
-                        <button
-                          key={size}
-                          className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                            selectedSize === size
-                              ? 'bg-winshirt-purple border-winshirt-purple text-white'
-                              : 'border border-white/20 bg-white/5 hover:bg-white/10'
-                          }`}
-                          onClick={() => setSelectedSize(size)}
-                        >
-                          {size}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {product.available_colors.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-medium mb-2">Couleur</h3>
-                    <div className="flex flex-wrap gap-3">
-                      {product.available_colors.map((color) => (
-                        <button
-                          key={color}
-                          className={`w-8 h-8 rounded-full relative ${
-                            selectedColor === color ? 'ring-2 ring-winshirt-blue ring-offset-2 ring-offset-black' : ''
-                          }`}
-                          style={{ backgroundColor: color }}
-                          onClick={() => setSelectedColor(color)}
-                          title={getColorName(color)}
-                        >
-                          {selectedColor === color && (
-                            <span className="absolute inset-0 flex items-center justify-center">
-                              <Check className="w-4 h-4 text-white drop-shadow-md" />
-                            </span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <h3 className="text-sm font-medium mb-2">Quantité</h3>
-                  <div className="flex items-center">
-                    <button
-                      className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-l-md border-y border-l border-white/20"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    >
-                      -
-                    </button>
-                    <div className="w-14 h-10 flex items-center justify-center bg-white/5 border-y border-white/20 text-lg">
-                      {quantity}
-                    </div>
-                    <button
-                      className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-r-md border-y border-r border-white/20"
-                      onClick={() => setQuantity(quantity + 1)}
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                {/* Affichage mobile du total */}
-                <div className="md:hidden">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold">Total:</span>
-                    <span className="text-xl font-bold">{calculateTotalPrice().toFixed(2)} €</span>
-                  </div>
-                </div>
-                
-                {/* Récapitulatif de personnalisation */}
-                {(selectedDesign || selectedColor || selectedSize || customText) && (
-                  <div className="md:hidden">
-                    <GlassCard className="p-4">
-                      <h3 className="text-sm font-medium mb-2">Récapitulatif</h3>
-                      <ul className="space-y-2 text-white/80 text-sm">
-                        {selectedSize && (
-                          <li className="flex justify-between">
-                            <span>Taille:</span>
-                            <span className="font-medium">{selectedSize}</span>
-                          </li>
-                        )}
-                        {selectedColor && (
-                          <li className="flex justify-between items-center">
-                            <span>Couleur:</span>
-                            <div className="flex items-center">
-                              <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: selectedColor }}></div>
-                              <span className="font-medium">{getColorName(selectedColor)}</span>
+              
+              {/* Loteries disponibles - Maintenant sous la personnalisation */}
+              {product.tickets_offered > 0 && activeLotteries.length > 0 && (
+                <div className="bg-black/20 rounded-lg p-4 mb-6">
+                  <h3 className="text-lg font-semibold mb-2">
+                    Participer à des loteries ({product.tickets_offered} ticket{product.tickets_offered > 1 ? 's' : ''} inclus)
+                  </h3>
+                  <p className="text-sm text-white/70 mb-4">
+                    Choisissez les loteries auxquelles vous souhaitez participer avec ce produit
+                  </p>
+                  
+                  <div className="space-y-2">
+                    {activeLotteries.map(lottery => (
+                      <div 
+                        key={lottery.id} 
+                        className={`p-3 rounded-lg cursor-pointer border ${
+                          selectedLotteryIds.includes(lottery.id) 
+                            ? 'border-winshirt-purple bg-winshirt-purple/10' 
+                            : 'border-white/10 hover:border-white/20'
+                        }`}
+                        onClick={() => handleLotteryToggle(lottery.id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10 rounded overflow-hidden">
+                              <img 
+                                src={lottery.image_url} 
+                                alt={lottery.title} 
+                                className="h-full w-full object-cover"
+                              />
                             </div>
-                          </li>
-                        )}
-                        {(selectedDesign || uploadedDesignUrl) && (
-                          <>
-                            <li className="flex justify-between">
-                              <span>Design:</span>
-                              <span className="font-medium">
-                                {currentDesignView === 'upload' ? 'Custom upload' : selectedDesignDetails?.name || 'Design'}
-                              </span>
-                            </li>
-                            <li className="flex justify-between">
-                              <span>Position:</span>
-                              <span className="font-medium">{selectedPrintPosition === 'front' ? 'Avant' : 'Arrière'}</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <span>Taille d'impression:</span>
-                              <span className="font-medium">{selectedPrintSize.toUpperCase()}</span>
-                            </li>
-                          </>
-                        )}
-                        {customText && (
-                          <li className="flex justify-between">
-                            <span>Texte:</span>
-                            <span className="font-medium truncate ml-2 max-w-[150px]">{customText}</span>
-                          </li>
-                        )}
-                        {selectedLotteries.length > 0 && (
-                          <li className="flex justify-between">
-                            <span>Loteries:</span>
-                            <span className="font-medium">{selectedLotteries.length} sélectionnée(s)</span>
-                          </li>
-                        )}
-                      </ul>
-                    </GlassCard>
-                  </div>
-                )}
-
-                {eligibleLotteries && eligibleLotteries.length > 0 && product.tickets_offered > 0 && (
-                  <div>
-                    <GlassCard className="p-4">
-                      <h3 className="text-sm font-medium mb-2">
-                        Choisissez vos loteries ({selectedLotteries.length}/{product.tickets_offered})
-                      </h3>
-                      
-                      {lotteriesLoading ? (
-                        <div className="text-center py-4">Chargement des loteries...</div>
-                      ) : (
-                        <div className="space-y-3">
-                          {eligibleLotteries.map((lottery, index) => (
-                            <div 
-                              key={lottery.id} 
-                              onClick={() => handleLotterySelect(lottery.id)}
-                              className={`flex items-center p-3 rounded-lg cursor-pointer border ${
-                                selectedLotteries.includes(lottery.id) 
-                                  ? 'border-winshirt-purple bg-white/10' 
-                                  : 'border-white/10 bg-white/5 hover:bg-white/10'
-                              }`}
-                            >
-                              <div className="mr-3 flex items-center justify-center">
-                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                                  selectedLotteries.includes(lottery.id) 
-                                    ? 'border-winshirt-purple bg-winshirt-purple' 
-                                    : 'border-white/40'
-                                }`}>
-                                  {selectedLotteries.includes(lottery.id) && (
-                                    <Check className="w-3 h-3 text-white" />
-                                  )}
-                                </div>
-                              </div>
-                              
-                              <div className="w-12 h-12 rounded-md overflow-hidden mr-3">
-                                <img 
-                                  src={lottery.image_url} 
-                                  alt={lottery.title} 
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                              
-                              <div className="flex-1">
-                                <h4 className="font-medium">
-                                  Ticket {index+1}: {lottery.title}
-                                </h4>
-                                <p className="text-sm text-white/70">Valeur: {lottery.value.toFixed(2)} €</p>
-                                <div className="w-full bg-white/20 rounded-full h-1.5 mt-1">
-                                  <div 
-                                    className="bg-winshirt-blue h-1.5 rounded-full" 
-                                    style={{ width: `${Math.min((lottery.participants / lottery.goal) * 100, 100)}%` }} 
-                                  />
-                                </div>
-                                <p className="text-xs text-white/50 mt-1">
-                                  {lottery.participants} / {lottery.goal} participants
-                                </p>
-                              </div>
+                            <div className="ml-3">
+                              <p className="font-medium">{lottery.title}</p>
+                              <p className="text-xs text-white/60">Valeur: {lottery.value}€</p>
                             </div>
-                          ))}
+                          </div>
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                            selectedLotteryIds.includes(lottery.id) 
+                              ? 'bg-winshirt-purple text-white' 
+                              : 'bg-white/10'
+                          }`}>
+                            {selectedLotteryIds.includes(lottery.id) && <Check className="h-4 w-4" />}
+                          </div>
                         </div>
-                      )}
-                    </GlassCard>
+                      </div>
+                    ))}
+                    
+                    {selectedLotteryIds.length > product.tickets_offered && (
+                      <div className="mt-2 text-sm text-red-400">
+                        Attention : Vous avez sélectionné plus de loteries que le nombre de tickets inclus.
+                      </div>
+                    )}
                   </div>
-                )}
-
+                </div>
+              )}
+              
+              {/* Quantité et bouton d'ajout au panier */}
+              <div className="flex flex-col space-y-4">
+                <div className="flex items-center">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => handleQuantityChange('decrease')}
+                    disabled={quantity <= 1}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="mx-4 w-8 text-center">{quantity}</span>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => handleQuantityChange('increase')}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                
                 <Button 
-                  className="w-full bg-gradient-purple"
-                  size="lg"
+                  className="w-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90"
                   onClick={handleAddToCart}
                 >
-                  <ShoppingCart className="mr-2 h-5 w-5" />
-                  Ajouter au panier • {calculateTotalPrice().toFixed(2)} €
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Ajouter au panier - {calculatePrice().toFixed(2)} €
                 </Button>
               </div>
             </div>
           </div>
         </div>
       </main>
-      
+
       <Footer />
+
+      {/* Dialog pour sélectionner un design */}
+      <Dialog open={designDialogOpen} onOpenChange={setDesignDialogOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Sélectionner un design</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+            {designs
+              .filter(design => design.is_active !== false)
+              .map((design) => (
+                <Card 
+                  key={design.id} 
+                  className="overflow-hidden cursor-pointer hover:border-winshirt-purple/50 transition-all hover:-translate-y-1"
+                  onClick={() => handleDesignSelect(design)}
+                >
+                  <div className="aspect-square bg-black/20 flex items-center justify-center p-2">
+                    <img 
+                      src={design.image_url} 
+                      alt={design.name}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                  <div className="p-2 bg-black/10">
+                    <p className="truncate text-sm font-medium">{design.name}</p>
+                    <p className="text-xs text-white/60 capitalize">{design.category}</p>
+                  </div>
+                </Card>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
