@@ -4,8 +4,10 @@ import { cn } from '@/lib/utils';
 import GlassCard from './GlassCard';
 import { ShoppingCart, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 interface ProductCardProps {
+  id: string;
   name: string;
   category: string;
   price: number;
@@ -17,6 +19,7 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
+  id,
   name,
   category,
   price,
@@ -46,20 +49,28 @@ const ProductCard: React.FC<ProductCardProps> = ({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-between items-center translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-          <Button size="sm" variant="secondary" className="flex items-center gap-1">
-            <ShoppingCart className="h-4 w-4" />
-            <span className="hidden sm:inline-block">Ajouter</span>
+          <Button size="sm" variant="secondary" className="flex items-center gap-1" asChild>
+            <Link to={`/cart/add/${id}`}>
+              <ShoppingCart className="h-4 w-4" />
+              <span className="hidden sm:inline-block">Ajouter</span>
+            </Link>
           </Button>
-          <Button size="sm" variant="outline" className="flex items-center gap-1">
-            <Eye className="h-4 w-4" />
-            <span className="hidden sm:inline-block">Détails</span>
+          <Button size="sm" variant="outline" className="flex items-center gap-1" asChild>
+            <Link to={`/products/${id}`}>
+              <Eye className="h-4 w-4" />
+              <span className="hidden sm:inline-block">Détails</span>
+            </Link>
           </Button>
         </div>
       </div>
       
       <div className="p-4">
         <p className="text-sm text-muted-foreground">{category}</p>
-        <h3 className="font-medium mt-1">{name}</h3>
+        <h3 className="font-medium mt-1">
+          <Link to={`/products/${id}`} className="hover:text-winshirt-blue transition-colors">
+            {name}
+          </Link>
+        </h3>
         
         <div className="mt-2 flex justify-between items-center">
           <p className="font-bold text-lg">{price.toFixed(2)} €</p>

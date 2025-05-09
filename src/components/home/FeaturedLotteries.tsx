@@ -1,60 +1,24 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import LotteryCard from '../ui/LotteryCard';
 import { cn } from '@/lib/utils';
+import { Lottery } from '@/types/supabase.types';
+import { fetchFeaturedLotteries } from '@/services/api.service';
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
 interface FeaturedLotteriesProps {
   className?: string;
 }
 
-// Sample lottery data
-const LOTTERIES = [
-  {
-    id: 1,
-    title: 'iPhone 15 Pro Max Ultra Light',
-    value: 1299,
-    image: 'https://images.unsplash.com/photo-1672906674870-b564eb5586de?q=80&w=2080&auto=format&fit=crop',
-    participants: 200,
-    goal: 280,
-    isActive: true,
-    isFeatured: true,
-    drawDate: new Date('2026-05-15')
-  },
-  {
-    id: 2,
-    title: 'VTT Électrique Audi',
-    value: 4900,
-    image: 'https://images.unsplash.com/photo-1571068316344-75bc76f77890?q=80&w=2070&auto=format&fit=crop',
-    participants: 120,
-    goal: 300,
-    isActive: true,
-    drawDate: new Date('2026-06-20')
-  },
-  {
-    id: 3,
-    title: 'Pack PS5 Astro Bot',
-    value: 500,
-    image: 'https://images.unsplash.com/photo-1621259182978-fbf93132d53d?q=80&w=2072&auto=format&fit=crop',
-    participants: 180,
-    goal: 200,
-    isActive: true,
-    drawDate: new Date('2026-04-30')
-  },
-  {
-    id: 4,
-    title: 'Montre Ulysse Nardin',
-    value: 15900,
-    image: 'https://images.unsplash.com/photo-1612817159949-195b6eb9e31a?q=80&w=2070&auto=format&fit=crop',
-    participants: 4990,
-    goal: 5000,
-    isActive: true,
-    drawDate: new Date('2026-07-10')
-  }
-];
-
 const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const { data: lotteries, isLoading, error } = useQuery({
+    queryKey: ['featuredLotteries'],
+    queryFn: fetchFeaturedLotteries,
+  });
 
   const handleScroll = (direction: 'left' | 'right') => {
     if (!scrollContainerRef.current) return;
@@ -68,6 +32,30 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
       container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
+
+  if (isLoading) {
+    return (
+      <section className={cn('py-20', className)}>
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p>Chargement des loteries...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className={cn('py-20', className)}>
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p>Une erreur est survenue lors du chargement des loteries.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className={cn('py-20', className)}>
@@ -100,23 +88,46 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
             className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-none"
             style={{ gridAutoFlow: 'column', gridAutoColumns: '300px' }}
           >
-            {LOTTERIES.map((lottery) => (
+            {lotteries?.map((lottery) => (
               <div key={lottery.id} className="snap-start">
-                <LotteryCard {...lottery} />
+                <LotteryCard 
+                  id={lottery.id}
+                  title={lottery.title}
+                  image={lottery.image_url}
+                  value={lottery.value}
+                  participants={lottery.participants}
+                  goal={lottery.goal}
+                  isActive={lottery.is_active}
+                  isFeatured={lottery.is_featured}
+                  drawDate={new Date(lottery.draw_date)}
+                />
               </div>
             ))}
           </div>
         </div>
         
         <div className="md:hidden grid grid-cols-1 gap-6">
-          {LOTTERIES.slice(0, 2).map((lottery) => (
-            <LotteryCard key={lottery.id} {...lottery} />
+          {lotteries?.slice(0, 2).map((lottery) => (
+            <LotteryCard 
+              key={lottery.id}
+              id={lottery.id}
+              title={lottery.title}
+              image={lottery.image_url}
+              value={lottery.value}
+              participants={lottery.participants}
+              goal={lottery.goal}
+              isActive={lottery.is_active}
+              isFeatured={lottery.is_featured}
+              drawDate={new Date(lottery.draw_date)}
+            />
           ))}
         </div>
         
         <div className="text-center mt-10">
-          <Button className="bg-gradient-purple hover:opacity-90">
-            Voir toutes les loteries
+          <Button className="bg-gradient-purple hover:opacity-90" asChild>
+            <Link to="/lotteries">
+              Voir toutes les loteries
+            </Link>
           </Button>
         </div>
       </div>

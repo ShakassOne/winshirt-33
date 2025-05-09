@@ -3,55 +3,44 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import ProductCard from '../ui/ProductCard';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { fetchAllProducts } from '@/services/api.service';
 
 interface ProductShowcaseProps {
   className?: string;
 }
 
-// Sample product data
-const PRODUCTS = [
-  {
-    id: 1,
-    name: 'T-Shirt 3D Personnalisable',
-    category: 'T-shirt',
-    price: 19.00,
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=2080&auto=format&fit=crop',
-    rating: 5,
-    isCustomizable: true,
-    tickets: 2,
-    color: 'white'
-  },
-  {
-    id: 2,
-    name: 'T-Shirt Kratos',
-    category: 'T-shirt',
-    price: 19.00,
-    image: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?q=80&w=2070&auto=format&fit=crop',
-    rating: 5
-  },
-  {
-    id: 3,
-    name: 'Sweat Shirt',
-    category: 'Sweatshirt',
-    price: 39.00,
-    image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=2187&auto=format&fit=crop',
-    rating: 5,
-    isCustomizable: true,
-    tickets: 1
-  },
-  {
-    id: 4,
-    name: 'Casquette Personnalisable',
-    category: 'Casquette',
-    price: 19.00,
-    image: 'https://images.unsplash.com/photo-1521369909029-2afed882baee?q=80&w=2070&auto=format&fit=crop',
-    rating: 4,
-    isCustomizable: true,
-    tickets: 1
-  }
-];
-
 const ProductShowcase: React.FC<ProductShowcaseProps> = ({ className }) => {
+  const { data: products, isLoading, error } = useQuery({
+    queryKey: ['products'],
+    queryFn: fetchAllProducts,
+  });
+
+  if (isLoading) {
+    return (
+      <section className={cn('py-20', className)}>
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p>Chargement des produits...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className={cn('py-20', className)}>
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <p>Une erreur est survenue lors du chargement des produits.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className={cn('py-20', className)}>
       <div className="container mx-auto px-4">
@@ -63,14 +52,27 @@ const ProductShowcase: React.FC<ProductShowcaseProps> = ({ className }) => {
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {PRODUCTS.map((product) => (
-            <ProductCard key={product.id} {...product} />
+          {products?.slice(0, 4).map((product) => (
+            <ProductCard 
+              key={product.id}
+              id={product.id}
+              name={product.name}
+              category={product.category}
+              price={product.price}
+              image={product.image_url}
+              rating={5}
+              isCustomizable={product.is_customizable}
+              tickets={product.tickets_offered}
+              color={product.color || undefined}
+            />
           ))}
         </div>
         
         <div className="text-center mt-10">
-          <Button className="bg-gradient-purple hover:opacity-90">
-            Voir tous les produits
+          <Button className="bg-gradient-purple hover:opacity-90" asChild>
+            <Link to="/products">
+              Voir tous les produits
+            </Link>
           </Button>
         </div>
       </div>

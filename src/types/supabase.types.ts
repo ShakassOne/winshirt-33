@@ -1,0 +1,53 @@
+
+export type Product = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: string;
+  category: string;
+  is_customizable: boolean;
+  created_at: string;
+  updated_at: string;
+  color: string | null;
+  available_colors: string[];
+  available_sizes: string[];
+  tickets_offered: number;
+  is_active: boolean;
+};
+
+export type Lottery = {
+  id: string;
+  title: string;
+  description: string;
+  image_url: string;
+  value: number;
+  participants: number;
+  goal: number;
+  is_active: boolean;
+  is_featured: boolean;
+  draw_date: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Design = {
+  id: string;
+  name: string;
+  image_url: string;
+  category: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Profile = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  address: string | null;
+  phone: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
