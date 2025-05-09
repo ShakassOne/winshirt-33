@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { fetchAllProducts } from '@/services/api.service';
+import { fetchAllProducts, deleteProduct } from '@/services/api.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import GlassCard from '@/components/ui/GlassCard';
@@ -12,11 +12,13 @@ import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import ProductForm from '@/components/admin/ProductForm';
 import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 const ProductsAdmin = () => {
-  const { toast } = useToast();
+  const { toast: toastHook } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [showProductForm, setShowProductForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   
   const { data: products, isLoading, error, refetch } = useQuery({
@@ -26,10 +28,27 @@ const ProductsAdmin = () => {
 
   const handleCreateSuccess = () => {
     refetch();
-    toast({
+    toastHook({
       title: "Produit créé",
       description: "Le nouveau produit a été ajouté avec succès",
     });
+  };
+
+  const handleEditProduct = (product: any) => {
+    setEditingProduct(product);
+    setShowProductForm(true);
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
+      try {
+        await deleteProduct(productId);
+        toast.success('Produit supprimé avec succès');
+        refetch();
+      } catch (error) {
+        toast.error('Erreur lors de la suppression du produit');
+      }
+    }
   };
 
   const filteredProducts = products?.filter(product => {
@@ -66,7 +85,10 @@ const ProductsAdmin = () => {
               <Button 
                 className="bg-gradient-purple mt-4 md:mt-0" 
                 size="lg"
-                onClick={() => setShowProductForm(true)}
+                onClick={() => {
+                  setEditingProduct(null);
+                  setShowProductForm(true);
+                }}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Nouveau produit
@@ -184,10 +206,19 @@ const ProductsAdmin = () => {
                                   <Eye className="h-4 w-4" />
                                 </Link>
                               </Button>
-                              <Button variant="ghost" size="icon">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleEditProduct(product)}
+                              >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="text-red-500 hover:text-red-600"
+                                onClick={() => handleDeleteProduct(product.id)}
+                              >
                                 <Trash className="h-4 w-4" />
                               </Button>
                             </div>
@@ -207,8 +238,12 @@ const ProductsAdmin = () => {
       
       <ProductForm 
         isOpen={showProductForm} 
-        onClose={() => setShowProductForm(false)} 
+        onClose={() => {
+          setShowProductForm(false);
+          setEditingProduct(null);
+        }} 
         onSuccess={handleCreateSuccess}
+        product={editingProduct}
       />
     </div>
   );

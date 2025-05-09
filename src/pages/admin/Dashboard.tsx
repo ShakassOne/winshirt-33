@@ -1,76 +1,100 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Package, Ticket, Shirt, User } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import GlassCard from '@/components/ui/GlassCard';
+import { ShoppingBag, Ticket, Award, ShoppingCart, Package, Users, Image } from 'lucide-react';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-
-  const adminMenuItems = [
+  
+  const adminModules = [
     {
-      title: 'Gestion des produits',
-      description: 'Ajoutez, modifiez et supprimez les produits de votre boutique',
-      icon: <Package className="w-8 h-8 text-winshirt-blue" />,
-      to: '/admin/products'
+      title: 'Produits',
+      description: 'Gérez les produits de votre boutique',
+      icon: <ShoppingBag className="h-8 w-8 text-winshirt-blue" />,
+      route: '/admin/products',
+      color: 'from-winshirt-blue/20 to-winshirt-blue/5'
     },
     {
-      title: 'Gestion des loteries',
-      description: 'Gérez les loteries et les tickets offerts',
-      icon: <Ticket className="w-8 h-8 text-winshirt-purple" />,
-      to: '/admin/lotteries'
+      title: 'Loteries',
+      description: 'Gérez les loteries et leurs participants',
+      icon: <Ticket className="h-8 w-8 text-winshirt-purple" />,
+      route: '/admin/lotteries',
+      color: 'from-winshirt-purple/20 to-winshirt-purple/5'
     },
     {
-      title: 'Gestion des mockups',
-      description: 'Créez et gérez les templates de personnalisation',
-      icon: <Shirt className="w-8 h-8 text-winshirt-blue" />,
-      to: '/admin/mockups'
+      title: 'Mockups',
+      description: 'Gérez les mockups et zones d\'impression',
+      icon: <Image className="h-8 w-8 text-green-500" />,
+      route: '/admin/mockups',
+      color: 'from-green-500/20 to-green-500/5'
     },
     {
-      title: 'Gestion des utilisateurs',
-      description: 'Gérez les comptes utilisateurs et leurs informations',
-      icon: <User className="w-8 h-8 text-winshirt-purple" />,
-      to: '#'
+      title: 'Gagnants',
+      description: 'Gérez les gagnants des loteries',
+      icon: <Award className="h-8 w-8 text-yellow-500" />,
+      route: '/admin/winners',
+      color: 'from-yellow-500/20 to-yellow-500/5'
+    },
+    {
+      title: 'Commandes',
+      description: 'Gérez les commandes et expéditions',
+      icon: <ShoppingCart className="h-8 w-8 text-rose-500" />,
+      route: '/admin/orders',
+      color: 'from-rose-500/20 to-rose-500/5'
+    },
+    {
+      title: 'Stock',
+      description: 'Gérez le stock de produits',
+      icon: <Package className="h-8 w-8 text-cyan-500" />,
+      route: '/admin/inventory',
+      color: 'from-cyan-500/20 to-cyan-500/5'
+    },
+    {
+      title: 'Utilisateurs',
+      description: 'Gérez les utilisateurs et les droits',
+      icon: <Users className="h-8 w-8 text-amber-500" />,
+      route: '/admin/users',
+      color: 'from-amber-500/20 to-amber-500/5'
     }
   ];
-
+  
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       
-      <main className="flex-grow mt-16 py-16">
-        <section className="relative py-12 bg-gradient-to-b from-winshirt-blue/20 to-transparent mb-8">
+      <main className="flex-grow mt-16 pb-20">
+        {/* Header Section */}
+        <section className="relative py-16 bg-gradient-to-b from-winshirt-blue/20 to-transparent">
           <div className="container mx-auto px-4">
             <h1 className="text-3xl md:text-4xl font-bold">
-              Tableau de bord <span className="text-gradient">administrateur</span>
+              Tableau de bord <span className="text-gradient">Administration</span>
             </h1>
             <p className="text-white/70 mt-2">
-              Gérez votre boutique en ligne, vos produits et vos loteries
+              Gérez tous les aspects de votre boutique en ligne
             </p>
           </div>
         </section>
-
-        <section>
+        
+        {/* Admin Modules Grid */}
+        <section className="py-10">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {adminMenuItems.map((item) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {adminModules.map((module, index) => (
                 <GlassCard 
-                  key={item.title}
-                  className="p-6 hover:bg-white/5 transition-colors cursor-pointer"
-                  onClick={() => navigate(item.to)}
+                  key={index}
+                  className={`p-6 cursor-pointer hover:scale-[1.02] transition-transform bg-gradient-to-br ${module.color}`}
+                  onClick={() => navigate(module.route)}
                 >
                   <div className="flex items-start gap-4">
-                    <div className="bg-white/10 p-3 rounded-xl">
-                      {item.icon}
+                    <div className="bg-black/30 p-3 rounded-xl">
+                      {module.icon}
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-medium">{item.title}</h3>
-                      <p className="text-white/70 mt-1">{item.description}</p>
-                    </div>
-                    <div className="self-center">
-                      <ArrowRight className="w-5 h-5 text-white/50" />
+                    <div>
+                      <h2 className="text-xl font-semibold mb-1">{module.title}</h2>
+                      <p className="text-white/70">{module.description}</p>
                     </div>
                   </div>
                 </GlassCard>

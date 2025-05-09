@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { fetchAllLotteries } from '@/services/api.service';
+import { fetchAllLotteries, deleteLottery } from '@/services/api.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import GlassCard from '@/components/ui/GlassCard';
@@ -12,11 +12,13 @@ import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import LotteryForm from '@/components/admin/LotteryForm';
 import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 const LotteriesAdmin = () => {
-  const { toast } = useToast();
+  const { toast: toastHook } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [showLotteryForm, setShowLotteryForm] = useState(false);
+  const [editingLottery, setEditingLottery] = useState<any>(null);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   
   const { data: lotteries, isLoading, error, refetch } = useQuery({
@@ -26,10 +28,27 @@ const LotteriesAdmin = () => {
 
   const handleCreateSuccess = () => {
     refetch();
-    toast({
+    toastHook({
       title: "Loterie créée",
       description: "La nouvelle loterie a été ajoutée avec succès",
     });
+  };
+
+  const handleEditLottery = (lottery: any) => {
+    setEditingLottery(lottery);
+    setShowLotteryForm(true);
+  };
+
+  const handleDeleteLottery = async (lotteryId: string) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette loterie ?')) {
+      try {
+        await deleteLottery(lotteryId);
+        toast.success('Loterie supprimée avec succès');
+        refetch();
+      } catch (error) {
+        toast.error('Erreur lors de la suppression de la loterie');
+      }
+    }
   };
 
   const filteredLotteries = lotteries?.filter(lottery => {
@@ -76,7 +95,10 @@ const LotteriesAdmin = () => {
               <Button 
                 className="bg-gradient-purple mt-4 md:mt-0" 
                 size="lg"
-                onClick={() => setShowLotteryForm(true)}
+                onClick={() => {
+                  setEditingLottery(null);
+                  setShowLotteryForm(true);
+                }}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Nouvelle loterie
@@ -210,13 +232,22 @@ const LotteriesAdmin = () => {
                                   <Eye className="h-4 w-4" />
                                 </Link>
                               </Button>
-                              <Button variant="ghost" size="icon">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleEditLottery(lottery)}
+                              >
                                 <Edit className="h-4 w-4" />
                               </Button>
                               <Button variant="ghost" size="icon">
                                 <Award className="h-4 w-4 text-yellow-500" />
                               </Button>
-                              <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="text-red-500 hover:text-red-600"
+                                onClick={() => handleDeleteLottery(lottery.id)}
+                              >
                                 <Trash className="h-4 w-4" />
                               </Button>
                             </div>
@@ -236,8 +267,12 @@ const LotteriesAdmin = () => {
 
       <LotteryForm
         isOpen={showLotteryForm}
-        onClose={() => setShowLotteryForm(false)}
+        onClose={() => {
+          setShowLotteryForm(false);
+          setEditingLottery(null);
+        }}
         onSuccess={handleCreateSuccess}
+        lottery={editingLottery}
       />
     </div>
   );

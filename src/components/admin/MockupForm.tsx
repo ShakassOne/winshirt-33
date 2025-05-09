@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,25 +8,24 @@ import { createMockup, updateMockup } from '@/services/api.service';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { X, Plus, Upload } from 'lucide-react';
-import GlassCard from '../ui/GlassCard';
-import { PrintArea, Mockup } from '@/types/supabase.types';
+import { X, Plus, Trash } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Mockup, PrintArea } from '@/types/supabase.types';
 
 const mockupSchema = z.object({
   name: z.string().min(3, { message: 'Le nom doit contenir au moins 3 caractères' }),
   category: z.string().min(1, { message: 'La catégorie est requise' }),
-  svg_front_url: z.string().url({ message: 'URL SVG recto invalide' }),
-  svg_back_url: z.string().url({ message: 'URL SVG verso invalide' }).optional().or(z.literal('')),
+  svg_front_url: z.string().url({ message: 'URL SVG avant invalide' }),
+  svg_back_url: z.string().url({ message: 'URL SVG arrière invalide' }).optional(),
   price_a3: z.number().min(0, { message: 'Le prix doit être positif' }),
   price_a4: z.number().min(0, { message: 'Le prix doit être positif' }),
   price_a5: z.number().min(0, { message: 'Le prix doit être positif' }),
   price_a6: z.number().min(0, { message: 'Le prix doit être positif' }),
   text_price_front: z.number().min(0, { message: 'Le prix doit être positif' }),
   text_price_back: z.number().min(0, { message: 'Le prix doit être positif' }),
-  is_active: z.boolean().default(true)
+  is_active: z.boolean().default(true),
 });
 
 type MockupFormValues = z.infer<typeof mockupSchema>;
@@ -41,14 +41,7 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [printAreas, setPrintAreas] = useState<PrintArea[]>([]);
-  const [newArea, setNewArea] = useState<Partial<PrintArea>>({
-    name: '',
-    side: 'front',
-    x: 0,
-    y: 0,
-    width: 100,
-    height: 100
-  });
+  const [activeTab, setActiveTab] = useState<string>('front');
 
   const defaultValues: Partial<MockupFormValues> = {
     name: '',
@@ -61,10 +54,10 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
     price_a6: 5,
     text_price_front: 3,
     text_price_back: 3,
-    is_active: true
+    is_active: true,
   };
 
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<MockupFormValues>({
+  const { register, handleSubmit, reset, formState: { errors }, setValue } = useForm<MockupFormValues>({
     resolver: zodResolver(mockupSchema),
     defaultValues
   });
@@ -82,6 +75,7 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
       setValue('text_price_front', mockup.text_price_front);
       setValue('text_price_back', mockup.text_price_back);
       setValue('is_active', mockup.is_active);
+
       setPrintAreas(mockup.print_areas || []);
     } else {
       reset(defaultValues);
@@ -89,56 +83,55 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
     }
   }, [mockup, setValue, reset]);
 
-  const addPrintArea = () => {
-    if (newArea.name && newArea.side) {
-      const newId = `area_${Date.now()}`;
-      setPrintAreas([...printAreas, { ...newArea as PrintArea, id: newId }]);
-      setNewArea({
-        name: '',
-        side: 'front',
-        x: 0,
-        y: 0,
-        width: 100,
-        height: 100
-      });
-    } else {
-      toast({
-        title: "Erreur",
-        description: "Le nom et le côté sont requis pour la zone d'impression",
-        variant: "destructive"
-      });
-    }
+  const addPrintArea = (side: 'front' | 'back') => {
+    const newArea: PrintArea = {
+      id: `${Date.now()}`,
+      side,
+      x: 100,
+      y: 100,
+      width: 200,
+      height: 200,
+      name: `Zone ${side === 'front' ? 'avant' : 'arrière'} ${printAreas.filter(a => a.side === side).length + 1}`
+    };
+
+    setPrintAreas([...printAreas, newArea]);
   };
 
-  const removePrintArea = (id: string) => {
-    setPrintAreas(printAreas.filter(area => area.id !== id));
+  const removePrintArea = (areaId: string) => {
+    setPrintAreas(printAreas.filter(area => area.id !== areaId));
+  };
+
+  const updatePrintArea = (areaId: string, field: keyof PrintArea, value: any) => {
+    setPrintAreas(areas => areas.map(area => 
+      area.id === areaId ? { ...area, [field]: value } : area
+    ));
   };
 
   const onSubmit = async (data: MockupFormValues) => {
     try {
       setIsSubmitting(true);
-      
-      // Make sure all required fields are provided
-      const mockupData: Omit<Mockup, 'id' | 'created_at' | 'updated_at'> = {
+
+      // Ensure required fields are present
+      const mockupData = {
         name: data.name,
         category: data.category,
         svg_front_url: data.svg_front_url,
-        svg_back_url: data.svg_back_url || null,
-        print_areas: printAreas,
+        svg_back_url: data.svg_back_url || '',
         price_a3: data.price_a3,
         price_a4: data.price_a4,
         price_a5: data.price_a5,
         price_a6: data.price_a6,
         text_price_front: data.text_price_front,
         text_price_back: data.text_price_back,
-        is_active: data.is_active
+        is_active: data.is_active,
+        print_areas: printAreas
       };
-      
+
       if (mockup) {
         await updateMockup(mockup.id, mockupData);
         toast({
           title: "Succès",
-          description: "Le mockup a été modifié avec succès",
+          description: "Le mockup a été mis à jour avec succès",
           variant: "default"
         });
       } else {
@@ -149,16 +142,16 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
           variant: "default"
         });
       }
-      
+
       reset(defaultValues);
       setPrintAreas([]);
       if (onSuccess) onSuccess();
       onClose();
     } catch (error) {
-      console.error("Erreur lors de la création/modification du mockup:", error);
+      console.error("Erreur:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur s'est produite lors de la création/modification du mockup",
+        description: "Une erreur s'est produite",
         variant: "destructive"
       });
     } finally {
@@ -170,11 +163,14 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-black/50 backdrop-blur-xl border-white/20 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">{mockup ? 'Modifier le mockup' : 'Nouveau mockup'}</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">
+            {mockup ? 'Modifier le mockup' : 'Nouveau mockup'}
+          </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 py-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Première colonne */}
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nom du mockup</Label>
@@ -199,13 +195,13 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="svg_front_url">URL du SVG recto</Label>
+                <Label htmlFor="svg_front_url">URL SVG avant</Label>
                 <Input id="svg_front_url" {...register('svg_front_url')} />
                 {errors.svg_front_url && <p className="text-red-500 text-sm">{errors.svg_front_url.message}</p>}
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="svg_back_url">URL du SVG verso (optionnel)</Label>
+                <Label htmlFor="svg_back_url">URL SVG arrière (optionnel)</Label>
                 <Input id="svg_back_url" {...register('svg_back_url')} />
                 {errors.svg_back_url && <p className="text-red-500 text-sm">{errors.svg_back_url.message}</p>}
               </div>
@@ -214,19 +210,19 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
                 <div className="flex items-center space-x-2">
                   <Switch 
                     id="is_active" 
+                    defaultChecked
                     {...register('is_active')} 
-                    onCheckedChange={(checked) => setValue('is_active', checked)}
-                    checked={watch('is_active')}
                   />
                   <Label htmlFor="is_active">Mockup actif</Label>
                 </div>
               </div>
             </div>
             
+            {/* Deuxième colonne */}
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="price_a3">Prix A3 (€)</Label>
+                  <Label htmlFor="price_a3">Prix A3</Label>
                   <Input 
                     id="price_a3" 
                     type="number" 
@@ -237,7 +233,7 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="price_a4">Prix A4 (€)</Label>
+                  <Label htmlFor="price_a4">Prix A4</Label>
                   <Input 
                     id="price_a4" 
                     type="number" 
@@ -248,7 +244,7 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="price_a5">Prix A5 (€)</Label>
+                  <Label htmlFor="price_a5">Prix A5</Label>
                   <Input 
                     id="price_a5" 
                     type="number" 
@@ -259,7 +255,7 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="price_a6">Prix A6 (€)</Label>
+                  <Label htmlFor="price_a6">Prix A6</Label>
                   <Input 
                     id="price_a6" 
                     type="number" 
@@ -268,9 +264,11 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
                   />
                   {errors.price_a6 && <p className="text-red-500 text-sm">{errors.price_a6.message}</p>}
                 </div>
-                
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="text_price_front">Prix texte recto (€)</Label>
+                  <Label htmlFor="text_price_front">Prix texte avant</Label>
                   <Input 
                     id="text_price_front" 
                     type="number" 
@@ -281,7 +279,7 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="text_price_back">Prix texte verso (€)</Label>
+                  <Label htmlFor="text_price_back">Prix texte arrière</Label>
                   <Input 
                     id="text_price_back" 
                     type="number" 
@@ -293,104 +291,193 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
               </div>
             </div>
           </div>
-
+          
+          {/* Zones d'impression */}
           <div className="space-y-4">
-            <h3 className="font-medium text-lg">Zones d'impression</h3>
-            <GlassCard className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Nom de la zone</Label>
-                  <Input 
-                    value={newArea.name} 
-                    onChange={(e) => setNewArea({ ...newArea, name: e.target.value })}
-                    placeholder="ex: Devant centre"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Côté</Label>
-                  <select 
-                    value={newArea.side as string}
-                    onChange={(e) => setNewArea({ ...newArea, side: e.target.value as 'front' | 'back' })}
-                    className="w-full rounded-md bg-background/10 border border-white/20 px-4 py-2"
-                  >
-                    <option value="front">Recto</option>
-                    <option value="back">Verso</option>
-                  </select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Position X</Label>
-                  <Input 
-                    type="number"
-                    value={newArea.x} 
-                    onChange={(e) => setNewArea({ ...newArea, x: Number(e.target.value) })}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Position Y</Label>
-                  <Input 
-                    type="number"
-                    value={newArea.y} 
-                    onChange={(e) => setNewArea({ ...newArea, y: Number(e.target.value) })}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Largeur</Label>
-                  <Input 
-                    type="number"
-                    value={newArea.width} 
-                    onChange={(e) => setNewArea({ ...newArea, width: Number(e.target.value) })}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Hauteur</Label>
-                  <Input 
-                    type="number"
-                    value={newArea.height} 
-                    onChange={(e) => setNewArea({ ...newArea, height: Number(e.target.value) })}
-                  />
-                </div>
-              </div>
+            <h3 className="text-lg font-medium">Zones d'impression</h3>
+            
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid grid-cols-2">
+                <TabsTrigger value="front">Avant</TabsTrigger>
+                <TabsTrigger value="back">Arrière</TabsTrigger>
+              </TabsList>
               
-              <Button type="button" onClick={addPrintArea} className="mt-4 w-full">
-                <Plus className="mr-2 h-4 w-4" />
-                Ajouter cette zone d'impression
-              </Button>
-              
-              <div className="mt-4 space-y-2">
-                <h4 className="font-medium">Zones d'impression définies</h4>
-                {printAreas.length === 0 ? (
-                  <p className="text-white/50 text-sm">Aucune zone d'impression définie</p>
+              <TabsContent value="front" className="space-y-4 mt-4">
+                <Button 
+                  type="button" 
+                  onClick={() => addPrintArea('front')}
+                  variant="outline"
+                  className="flex items-center"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Ajouter une zone avant
+                </Button>
+                
+                {printAreas.filter(area => area.side === 'front').length === 0 ? (
+                  <p className="text-sm text-white/60">Aucune zone d'impression définie pour l'avant</p>
                 ) : (
-                  <div className="space-y-2">
-                    {printAreas.map((area) => (
-                      <div key={area.id} className="flex items-center justify-between bg-white/5 p-2 rounded-md">
-                        <div>
-                          <span className="font-medium">{area.name}</span>
-                          <span className="text-sm text-white/70 ml-2">({area.side === 'front' ? 'Recto' : 'Verso'})</span>
-                          <span className="text-xs text-white/50 block">
-                            Position: {area.x},{area.y} - Taille: {area.width}x{area.height}
-                          </span>
+                  <div className="space-y-3">
+                    {printAreas.filter(area => area.side === 'front').map((area, index) => (
+                      <div key={area.id} className="bg-white/10 p-4 rounded-md">
+                        <div className="flex justify-between items-center mb-3">
+                          <h4>Zone {index + 1}</h4>
+                          <Button 
+                            type="button"
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-500 hover:text-red-700"
+                            onClick={() => removePrintArea(area.id)}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon"
-                          className="text-red-500 hover:text-red-600"
-                          onClick={() => removePrintArea(area.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label htmlFor={`area-name-${area.id}`}>Nom</Label>
+                            <Input 
+                              id={`area-name-${area.id}`} 
+                              value={area.name} 
+                              onChange={(e) => updatePrintArea(area.id, 'name', e.target.value)}
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <Label htmlFor={`area-x-${area.id}`}>X</Label>
+                              <Input 
+                                id={`area-x-${area.id}`} 
+                                type="number" 
+                                value={area.x} 
+                                onChange={(e) => updatePrintArea(area.id, 'x', Number(e.target.value))}
+                              />
+                            </div>
+                            
+                            <div className="space-y-1">
+                              <Label htmlFor={`area-y-${area.id}`}>Y</Label>
+                              <Input 
+                                id={`area-y-${area.id}`} 
+                                type="number" 
+                                value={area.y} 
+                                onChange={(e) => updatePrintArea(area.id, 'y', Number(e.target.value))}
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <Label htmlFor={`area-width-${area.id}`}>Largeur</Label>
+                            <Input 
+                              id={`area-width-${area.id}`} 
+                              type="number" 
+                              value={area.width} 
+                              onChange={(e) => updatePrintArea(area.id, 'width', Number(e.target.value))}
+                            />
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <Label htmlFor={`area-height-${area.id}`}>Hauteur</Label>
+                            <Input 
+                              id={`area-height-${area.id}`} 
+                              type="number" 
+                              value={area.height} 
+                              onChange={(e) => updatePrintArea(area.id, 'height', Number(e.target.value))}
+                            />
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
                 )}
-              </div>
-            </GlassCard>
+              </TabsContent>
+              
+              <TabsContent value="back" className="space-y-4 mt-4">
+                <Button 
+                  type="button" 
+                  onClick={() => addPrintArea('back')}
+                  variant="outline"
+                  className="flex items-center"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Ajouter une zone arrière
+                </Button>
+                
+                {printAreas.filter(area => area.side === 'back').length === 0 ? (
+                  <p className="text-sm text-white/60">Aucune zone d'impression définie pour l'arrière</p>
+                ) : (
+                  <div className="space-y-3">
+                    {printAreas.filter(area => area.side === 'back').map((area, index) => (
+                      <div key={area.id} className="bg-white/10 p-4 rounded-md">
+                        <div className="flex justify-between items-center mb-3">
+                          <h4>Zone {index + 1}</h4>
+                          <Button 
+                            type="button"
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-500 hover:text-red-700"
+                            onClick={() => removePrintArea(area.id)}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label htmlFor={`area-name-${area.id}`}>Nom</Label>
+                            <Input 
+                              id={`area-name-${area.id}`} 
+                              value={area.name} 
+                              onChange={(e) => updatePrintArea(area.id, 'name', e.target.value)}
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <Label htmlFor={`area-x-${area.id}`}>X</Label>
+                              <Input 
+                                id={`area-x-${area.id}`} 
+                                type="number" 
+                                value={area.x} 
+                                onChange={(e) => updatePrintArea(area.id, 'x', Number(e.target.value))}
+                              />
+                            </div>
+                            
+                            <div className="space-y-1">
+                              <Label htmlFor={`area-y-${area.id}`}>Y</Label>
+                              <Input 
+                                id={`area-y-${area.id}`} 
+                                type="number" 
+                                value={area.y} 
+                                onChange={(e) => updatePrintArea(area.id, 'y', Number(e.target.value))}
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <Label htmlFor={`area-width-${area.id}`}>Largeur</Label>
+                            <Input 
+                              id={`area-width-${area.id}`} 
+                              type="number" 
+                              value={area.width} 
+                              onChange={(e) => updatePrintArea(area.id, 'width', Number(e.target.value))}
+                            />
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <Label htmlFor={`area-height-${area.id}`}>Hauteur</Label>
+                            <Input 
+                              id={`area-height-${area.id}`} 
+                              type="number" 
+                              value={area.height} 
+                              onChange={(e) => updatePrintArea(area.id, 'height', Number(e.target.value))}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
           
           <DialogFooter>
@@ -398,7 +485,10 @@ const MockupForm = ({ isOpen, onClose, onSuccess, mockup }: MockupFormProps) => 
               Annuler
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "En cours..." : mockup ? "Mettre à jour" : "Créer le mockup"}
+              {isSubmitting 
+                ? (mockup ? "Mise à jour en cours..." : "Création en cours...") 
+                : (mockup ? "Mettre à jour" : "Créer le mockup")
+              }
             </Button>
           </DialogFooter>
         </form>

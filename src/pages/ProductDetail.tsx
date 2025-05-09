@@ -34,12 +34,12 @@ const ProductDetail = () => {
     enabled: !!id,
   });
 
-  const { data: lotteries } = useQuery({
+  const { data: lotteries, isLoading: lotteriesLoading } = useQuery({
     queryKey: ['lotteries'],
     queryFn: fetchAllLotteries,
   });
 
-  const { data: designs } = useQuery({
+  const { data: designs, isLoading: designsLoading } = useQuery({
     queryKey: ['designs'],
     queryFn: fetchDesigns,
     enabled: showCustomizationPanel,
@@ -238,71 +238,77 @@ const ProductDetail = () => {
                         <TabsTrigger value="abstrait">Abstrait</TabsTrigger>
                       </TabsList>
                       
-                      <TabsContent value="animaux" className="space-y-4">
-                        <h3 className="text-lg font-medium mb-2">Choisissez un visuel pour le recto</h3>
-                        <div className="grid grid-cols-3 gap-3">
-                          {filterDesignsByCategory('animaux').map(design => (
-                            <div 
-                              key={design.id} 
-                              className={`relative aspect-square rounded-md overflow-hidden cursor-pointer border ${
-                                selectedDesign === design.id ? 'border-2 border-winshirt-purple' : 'border-white/20'
-                              }`}
-                              onClick={() => handleDesignSelect(design.id)}
-                            >
-                              <img 
-                                src={design.image_url} 
-                                alt={design.name} 
-                                className="w-full h-full object-cover"
-                              />
-                              {selectedDesign === design.id && (
-                                <div className="absolute top-2 right-2 bg-winshirt-purple rounded-full w-5 h-5 flex items-center justify-center">
-                                  <Check className="w-3 h-3 text-white" />
+                      {designsLoading ? (
+                        <div className="text-center py-4">Chargement des designs...</div>
+                      ) : (
+                        <>
+                          <TabsContent value="animaux" className="space-y-4">
+                            <h3 className="text-lg font-medium mb-2">Choisissez un visuel pour le recto</h3>
+                            <div className="grid grid-cols-3 gap-3">
+                              {filterDesignsByCategory('animaux').map(design => (
+                                <div 
+                                  key={design.id} 
+                                  className={`relative aspect-square rounded-md overflow-hidden cursor-pointer border ${
+                                    selectedDesign === design.id ? 'border-2 border-winshirt-purple' : 'border-white/20'
+                                  }`}
+                                  onClick={() => handleDesignSelect(design.id)}
+                                >
+                                  <img 
+                                    src={design.image_url} 
+                                    alt={design.name} 
+                                    className="w-full h-full object-cover"
+                                  />
+                                  {selectedDesign === design.id && (
+                                    <div className="absolute top-2 right-2 bg-winshirt-purple rounded-full w-5 h-5 flex items-center justify-center">
+                                      <Check className="w-3 h-3 text-white" />
+                                    </div>
+                                  )}
                                 </div>
-                              )}
+                              ))}
                             </div>
-                          ))}
-                        </div>
 
-                        <div className="mt-4">
-                          <Button variant="outline" className="w-full flex items-center justify-center gap-2">
-                            <Upload size={16} />
-                            Upload
-                          </Button>
-                        </div>
-                      </TabsContent>
-                      
-                      <TabsContent value="abstrait" className="space-y-4">
-                        <h3 className="text-lg font-medium mb-2">Choisissez un visuel pour le recto</h3>
-                        <div className="grid grid-cols-3 gap-3">
-                          {filterDesignsByCategory('abstrait').map(design => (
-                            <div 
-                              key={design.id} 
-                              className={`relative aspect-square rounded-md overflow-hidden cursor-pointer border ${
-                                selectedDesign === design.id ? 'border-2 border-winshirt-purple' : 'border-white/20'
-                              }`}
-                              onClick={() => handleDesignSelect(design.id)}
-                            >
-                              <img 
-                                src={design.image_url} 
-                                alt={design.name} 
-                                className="w-full h-full object-cover"
-                              />
-                              {selectedDesign === design.id && (
-                                <div className="absolute top-2 right-2 bg-winshirt-purple rounded-full w-5 h-5 flex items-center justify-center">
-                                  <Check className="w-3 h-3 text-white" />
+                            <div className="mt-4">
+                              <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+                                <Upload size={16} />
+                                Upload
+                              </Button>
+                            </div>
+                          </TabsContent>
+                          
+                          <TabsContent value="abstrait" className="space-y-4">
+                            <h3 className="text-lg font-medium mb-2">Choisissez un visuel pour le recto</h3>
+                            <div className="grid grid-cols-3 gap-3">
+                              {filterDesignsByCategory('abstrait').map(design => (
+                                <div 
+                                  key={design.id} 
+                                  className={`relative aspect-square rounded-md overflow-hidden cursor-pointer border ${
+                                    selectedDesign === design.id ? 'border-2 border-winshirt-purple' : 'border-white/20'
+                                  }`}
+                                  onClick={() => handleDesignSelect(design.id)}
+                                >
+                                  <img 
+                                    src={design.image_url} 
+                                    alt={design.name} 
+                                    className="w-full h-full object-cover"
+                                  />
+                                  {selectedDesign === design.id && (
+                                    <div className="absolute top-2 right-2 bg-winshirt-purple rounded-full w-5 h-5 flex items-center justify-center">
+                                      <Check className="w-3 h-3 text-white" />
+                                    </div>
+                                  )}
                                 </div>
-                              )}
+                              ))}
                             </div>
-                          ))}
-                        </div>
 
-                        <div className="mt-4">
-                          <Button variant="outline" className="w-full flex items-center justify-center gap-2">
-                            <Upload size={16} />
-                            Upload
-                          </Button>
-                        </div>
-                      </TabsContent>
+                            <div className="mt-4">
+                              <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+                                <Upload size={16} />
+                                Upload
+                              </Button>
+                            </div>
+                          </TabsContent>
+                        </>
+                      )}
                     </Tabs>
                   </GlassCard>
                 </div>
@@ -424,53 +430,57 @@ const ProductDetail = () => {
                       Avec ce produit, participez aux loteries suivantes:
                     </p>
                     
-                    {eligibleLotteries.map((lottery, index) => (
-                      <div 
-                        key={lottery.id} 
-                        onClick={() => handleLotterySelect(lottery.id)}
-                        className={`flex items-center p-3 rounded-lg cursor-pointer mb-3 border ${
-                          selectedLotteries.includes(lottery.id) 
-                            ? 'border-winshirt-purple bg-white/10' 
-                            : 'border-white/10 bg-white/5 hover:bg-white/10'
-                        }`}
-                      >
-                        <div className="mr-2 flex items-center justify-center">
-                          <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                    {lotteriesLoading ? (
+                      <div className="text-center py-4">Chargement des loteries...</div>
+                    ) : (
+                      eligibleLotteries.map((lottery, index) => (
+                        <div 
+                          key={lottery.id} 
+                          onClick={() => handleLotterySelect(lottery.id)}
+                          className={`flex items-center p-3 rounded-lg cursor-pointer mb-3 border ${
                             selectedLotteries.includes(lottery.id) 
-                              ? 'border-winshirt-purple bg-winshirt-purple' 
-                              : 'border-white/40'
-                          }`}>
-                            {selectedLotteries.includes(lottery.id) && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
+                              ? 'border-winshirt-purple bg-white/10' 
+                              : 'border-white/10 bg-white/5 hover:bg-white/10'
+                          }`}
+                        >
+                          <div className="mr-2 flex items-center justify-center">
+                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                              selectedLotteries.includes(lottery.id) 
+                                ? 'border-winshirt-purple bg-winshirt-purple' 
+                                : 'border-white/40'
+                            }`}>
+                              {selectedLotteries.includes(lottery.id) && (
+                                <Check className="w-3 h-3 text-white" />
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        
-                        <div className="w-12 h-12 rounded-md overflow-hidden mr-3">
-                          <img 
-                            src={lottery.image_url} 
-                            alt={lottery.title} 
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        
-                        <div className="flex-1">
-                          <h4 className="font-medium">
-                            Ticket {index+1}: {lottery.title}
-                          </h4>
-                          <p className="text-sm text-white/70">Valeur: {lottery.value.toFixed(2)} €</p>
-                          <div className="w-full bg-white/20 rounded-full h-1.5 mt-1">
-                            <div 
-                              className="bg-winshirt-blue h-1.5 rounded-full" 
-                              style={{ width: `${Math.min((lottery.participants / lottery.goal) * 100, 100)}%` }} 
+                          
+                          <div className="w-12 h-12 rounded-md overflow-hidden mr-3">
+                            <img 
+                              src={lottery.image_url} 
+                              alt={lottery.title} 
+                              className="w-full h-full object-cover"
                             />
                           </div>
-                          <p className="text-xs text-white/50 mt-1">
-                            {lottery.participants} / {lottery.goal} participants
-                          </p>
+                          
+                          <div className="flex-1">
+                            <h4 className="font-medium">
+                              Ticket {index+1}: {lottery.title}
+                            </h4>
+                            <p className="text-sm text-white/70">Valeur: {lottery.value.toFixed(2)} €</p>
+                            <div className="w-full bg-white/20 rounded-full h-1.5 mt-1">
+                              <div 
+                                className="bg-winshirt-blue h-1.5 rounded-full" 
+                                style={{ width: `${Math.min((lottery.participants / lottery.goal) * 100, 100)}%` }} 
+                              />
+                            </div>
+                            <p className="text-xs text-white/50 mt-1">
+                              {lottery.participants} / {lottery.goal} participants
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </GlassCard>
                 </div>
               )}
