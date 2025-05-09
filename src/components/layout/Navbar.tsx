@@ -33,11 +33,11 @@ const Navbar = () => {
         </Link>
         
         <nav className="hidden md:flex items-center gap-8">
-          <NavLink href="/">Accueil</NavLink>
-          <NavLink href="/products">Shop</NavLink>
-          <NavLink href="/lotteries">Loteries</NavLink>
-          <NavLink href="/comment-ca-marche">Comment ça marche</NavLink>
-          <NavLink href="/contact">Contact</NavLink>
+          <NavLink to="/">Accueil</NavLink>
+          <NavLink to="/products">Shop</NavLink>
+          <NavLink to="/lotteries">Loteries</NavLink>
+          <NavLink to="/comment-ca-marche">Comment ça marche</NavLink>
+          <NavLink to="/contact">Contact</NavLink>
         </nav>
         
         <div className="flex items-center gap-2 md:gap-4">
@@ -61,13 +61,13 @@ const Navbar = () => {
   );
 };
 
-const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
+const NavLink = ({ to, children }: { to: string; children: React.ReactNode }) => {
   const location = useLocation();
-  const isActive = location.pathname === href;
+  const isActive = location.pathname === to;
   
   return (
     <Link 
-      to={href} 
+      to={to} 
       className={cn(
         'relative py-2 text-sm font-medium transition-colors hover:text-white',
         isActive ? 'text-white' : 'text-white/70'

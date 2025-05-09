@@ -10,8 +10,19 @@ import Lotteries from "./pages/Lotteries";
 import ProductDetail from "./pages/ProductDetail";
 import LotteryDetail from "./pages/LotteryDetail";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/admin/Dashboard";
+import ProductsAdmin from "./pages/admin/ProductsAdmin";
+import LotteriesAdmin from "./pages/admin/LotteriesAdmin";
 
-const queryClient = new QueryClient();
+// Create a client for React Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30000,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -25,6 +36,12 @@ const App = () => (
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/lotteries" element={<Lotteries />} />
           <Route path="/lotteries/:id" element={<LotteryDetail />} />
+          
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/products" element={<ProductsAdmin />} />
+          <Route path="/admin/lotteries" element={<LotteriesAdmin />} />
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
