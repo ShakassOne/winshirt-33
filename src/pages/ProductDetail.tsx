@@ -532,7 +532,8 @@ const ProductDetail = () => {
       color: selectedColor,
       size: selectedSize,
       image_url: product.image_url,
-      lotteries: selectedLotteryIds.length > 0 ? selectedLotteryIds : undefined
+      lotteries: selectedLotteryIds.length > 0 ? selectedLotteryIds : undefined,
+      customization: undefined
     };
 
     // Customization object that includes both front and back designs and text
@@ -737,7 +738,7 @@ const ProductDetail = () => {
                   textContentBack={textContentBack}
                   setTextContentBack={setTextContentBack}
                   textFontFront={textFontFront}
-                  setTextFontFront={textFontFront}
+                  setTextFontFront={setTextFontFront}
                   textFontBack={textFontBack}
                   setTextFontBack={setTextFontBack}
                   textColorFront={textColorFront}
