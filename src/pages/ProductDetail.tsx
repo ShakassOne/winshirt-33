@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -23,162 +24,18 @@ import {
   X
 } from 'lucide-react';
 import { fetchProductById, fetchAllLotteries, fetchAllDesigns, fetchMockupById } from '@/services/api.service';
-import { Design, Lottery, CartItem } from '@/types/supabase.types';
-import { MockupColor } from '@/types/mockup.types';
+import { Design, Lottery } from '@/types/supabase.types';
+import { MockupWithColors, MockupColor } from '@/types/mockup.types';
+import ProductImageSection from '@/components/product/ProductImageSection';
+import ProductOrderSection from '@/components/product/ProductOrderSection';
+import CustomizationPanel from '@/components/product/CustomizationPanel';
+import DesignGalleryDialog from '@/components/product/DesignGalleryDialog';
+import TextCustomizationTools from '@/components/product/TextCustomizationTools';
+import DesignCustomizationTools from '@/components/product/DesignCustomizationTools';
+import LotterySelector from '@/components/product/LotterySelector';
+import ProductDescription from '@/components/product/ProductDescription';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription
-} from '@/components/ui/dialog';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Slider } from "@/components/ui/slider";
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { HexColorPicker } from 'react-colorful';
-import { useIsMobile } from '@/hooks/use-mobile';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-
-// Définition des polices Google Fonts
-const googleFonts = [
-  { value: 'Roboto', label: 'Roboto' },
-  { value: 'Open Sans', label: 'Open Sans' },
-  { value: 'Lato', label: 'Lato' },
-  { value: 'Montserrat', label: 'Montserrat' },
-  { value: 'Playfair Display', label: 'Playfair Display' },
-  { value: 'Raleway', label: 'Raleway' },
-  { value: 'Nunito', label: 'Nunito' },
-  { value: 'Oswald', label: 'Oswald' },
-  { value: 'Source Sans Pro', label: 'Source Sans Pro' },
-  { value: 'PT Sans', label: 'PT Sans' },
-  { value: 'Poppins', label: 'Poppins' },
-  { value: 'Ubuntu', label: 'Ubuntu' },
-  { value: 'Merriweather', label: 'Merriweather' },
-  { value: 'Noto Sans', label: 'Noto Sans' },
-  { value: 'Fira Sans', label: 'Fira Sans' },
-  { value: 'Quicksand', label: 'Quicksand' },
-  { value: 'Dancing Script', label: 'Dancing Script' },
-  { value: 'Pacifico', label: 'Pacifico' },
-  { value: 'Shadows Into Light', label: 'Shadows Into Light' },
-  { value: 'Lobster', label: 'Lobster' },
-  { value: 'Caveat', label: 'Caveat' },
-  { value: 'Comfortaa', label: 'Comfortaa' },
-  { value: 'Indie Flower', label: 'Indie Flower' },
-  { value: 'Sacramento', label: 'Sacramento' },
-  { value: 'Architects Daughter', label: 'Architects Daughter' },
-  { value: 'Permanent Marker', label: 'Permanent Marker' },
-  { value: 'Satisfy', label: 'Satisfy' },
-  { value: 'Amatic SC', label: 'Amatic SC' },
-  { value: 'Pathway Gothic One', label: 'Pathway Gothic One' },
-  { value: 'Abel', label: 'Abel' },
-  { value: 'Barlow', label: 'Barlow' },
-  { value: 'Cabin', label: 'Cabin' },
-  { value: 'Crimson Text', label: 'Crimson Text' },
-  { value: 'Exo 2', label: 'Exo 2' },
-  { value: 'Fjalla One', label: 'Fjalla One' },
-  { value: 'Josefin Sans', label: 'Josefin Sans' },
-  { value: 'Karla', label: 'Karla' },
-  { value: 'Libre Baskerville', label: 'Libre Baskerville' },
-  { value: 'Muli', label: 'Muli' },
-  { value: 'Noto Serif', label: 'Noto Serif' },
-  { value: 'Oxygen', label: 'Oxygen' },
-  { value: 'Prompt', label: 'Prompt' },
-  { value: 'Rubik', label: 'Rubik' },
-  { value: 'Space Mono', label: 'Space Mono' },
-  { value: 'Work Sans', label: 'Work Sans' },
-  { value: 'Yanone Kaffeesatz', label: 'Yanone Kaffeesatz' },
-  { value: 'Bree Serif', label: 'Bree Serif' },
-  { value: 'Crete Round', label: 'Crete Round' },
-  { value: 'Abril Fatface', label: 'Abril Fatface' },
-  { value: 'Righteous', label: 'Righteous' },
-  { value: 'Philosopher', label: 'Philosopher' },
-  { value: 'Kanit', label: 'Kanit' },
-  { value: 'Russo One', label: 'Russo One' },
-  { value: 'Archivo', label: 'Archivo' },
-  { value: 'Arvo', label: 'Arvo' },
-  { value: 'Bitter', label: 'Bitter' },
-  { value: 'Cairo', label: 'Cairo' },
-  { value: 'Cormorant Garamond', label: 'Cormorant Garamond' },
-  { value: 'Didact Gothic', label: 'Didact Gothic' },
-  { value: 'EB Garamond', label: 'EB Garamond' },
-  { value: 'Fredoka One', label: 'Fredoka One' },
-  { value: 'Gloria Hallelujah', label: 'Gloria Hallelujah' },
-  { value: 'Hind', label: 'Hind' },
-  { value: 'IBM Plex Sans', label: 'IBM Plex Sans' },
-  { value: 'Inter', label: 'Inter' },
-  { value: 'Kalam', label: 'Kalam' },
-  { value: 'Lora', label: 'Lora' },
-  { value: 'Maven Pro', label: 'Maven Pro' },
-  { value: 'Neucha', label: 'Neucha' },
-  { value: 'Overpass', label: 'Overpass' },
-  { value: 'Patrick Hand', label: 'Patrick Hand' },
-  { value: 'Quattrocento Sans', label: 'Quattrocento Sans' },
-  { value: 'Roboto Condensed', label: 'Roboto Condensed' },
-  { value: 'Roboto Mono', label: 'Roboto Mono' },
-  { value: 'Roboto Slab', label: 'Roboto Slab' },
-  { value: 'Signika', label: 'Signika' },
-  { value: 'Teko', label: 'Teko' },
-  { value: 'Ubuntu Condensed', label: 'Ubuntu Condensed' },
-  { value: 'Varela Round', label: 'Varela Round' },
-  { value: 'Acme', label: 'Acme' },
-  { value: 'Alegreya', label: 'Alegreya' },
-  { value: 'Anton', label: 'Anton' },
-  { value: 'Asap', label: 'Asap' },
-  { value: 'Assistant', label: 'Assistant' },
-  { value: 'Baloo 2', label: 'Baloo 2' },
-  { value: 'Bangers', label: 'Bangers' },
-  { value: 'BioRhyme', label: 'BioRhyme' },
-  { value: 'Catamaran', label: 'Catamaran' },
-  { value: 'Coda', label: 'Coda' },
-  { value: 'Courgette', label: 'Courgette' },
-  { value: 'Cousine', label: 'Cousine' },
-  { value: 'DM Sans', label: 'DM Sans' },
-  { value: 'Dosis', label: 'Dosis' },
-  { value: 'Fira Code', label: 'Fira Code' }
-];
 
 // Add this function before the ProductDetail component
 const getContrastColor = (hexColor: string): string => {
@@ -199,26 +56,19 @@ const getContrastColor = (hexColor: string): string => {
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const isMobile = useIsMobile();
-  const productCanvasRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [quantity, setQuantity] = useState(1);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [selectedTab, setSelectedTab] = useState('design');
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [designDialogOpen, setDesignDialogOpen] = useState(false);
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
-  const [pageScrollLocked, setPageScrollLocked] = useState(false);
   const [currentViewSide, setCurrentViewSide] = useState<'front' | 'back'>('front');
   const [customizationMode, setCustomizationMode] = useState(false);
   const [selectedMockupColor, setSelectedMockupColor] = useState<MockupColor | null>(null);
-  
-  // État pour les designs - maintenant séparés par côté (recto/verso)
+  const [designDialogOpen, setDesignDialogOpen] = useState(false);
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
+  const [pageScrollLocked, setPageScrollLocked] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+
+  // Designs state
   const [selectedDesignFront, setSelectedDesignFront] = useState<Design | null>(null);
   const [selectedDesignBack, setSelectedDesignBack] = useState<Design | null>(null);
-  
-  // État pour les transformations des designs - séparés par côté
   const [designTransformFront, setDesignTransformFront] = useState({
     position: { x: 0, y: 0 },
     scale: 1,
@@ -229,12 +79,10 @@ const ProductDetail = () => {
     scale: 1,
     rotation: 0
   });
-  
-  // État pour les tailles d'impression - séparées par côté
   const [printSizeFront, setPrintSizeFront] = useState<string>('A4');
   const [printSizeBack, setPrintSizeBack] = useState<string>('A4');
 
-  // État pour le texte - séparé par côté
+  // Text state
   const [textContentFront, setTextContentFront] = useState('');
   const [textContentBack, setTextContentBack] = useState('');
   const [textFontFront, setTextFontFront] = useState('Roboto');
@@ -243,7 +91,6 @@ const ProductDetail = () => {
   const [textColorBack, setTextColorBack] = useState('#ffffff');
   const [textShowColorPickerFront, setTextShowColorPickerFront] = useState(false);
   const [textShowColorPickerBack, setTextShowColorPickerBack] = useState(false);
-  
   const [textTransformFront, setTextTransformFront] = useState({
     position: { x: 0, y: 0 },
     scale: 1,
@@ -254,7 +101,6 @@ const ProductDetail = () => {
     scale: 1,
     rotation: 0
   });
-  
   const [textStylesFront, setTextStylesFront] = useState({
     bold: false,
     italic: false,
@@ -266,7 +112,7 @@ const ProductDetail = () => {
     underline: false
   });
 
-  // États pour le drag & drop
+  // Drag & drop state
   const [isDragging, setIsDragging] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [isDraggingText, setIsDraggingText] = useState(false);
@@ -274,9 +120,12 @@ const ProductDetail = () => {
   const [activeDesignSide, setActiveDesignSide] = useState<'front' | 'back'>('front');
   const [activeTextSide, setActiveTextSide] = useState<'front' | 'back'>('front');
   
-  // États pour les loteries - support pour plusieurs loteries
+  // Lottery state
   const [selectedLotteryIds, setSelectedLotteryIds] = useState<string[]>([]);
   const [selectedLotteries, setSelectedLotteries] = useState<Lottery[]>([]);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const productCanvasRef = useRef<HTMLDivElement>(null);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -357,117 +206,45 @@ const ProductDetail = () => {
     }
   }, [product, lotteries, selectedLotteries.length]);
 
-  const handleQuantityChange = (type: 'increase' | 'decrease') => {
-    if (type === 'increase') {
-      setQuantity(prev => prev + 1);
-    } else if (type === 'decrease' && quantity > 1) {
-      setQuantity(prev => prev - 1);
-    }
-  };
-
-  const handleDesignSelect = (design: Design) => {
+  useEffect(() => {
     if (currentViewSide === 'front') {
-      setSelectedDesignFront(design);
       setActiveDesignSide('front');
+      setActiveTextSide('front');
     } else {
-      setSelectedDesignBack(design);
       setActiveDesignSide('back');
+      setActiveTextSide('back');
     }
-    setDesignDialogOpen(false);
-    setPageScrollLocked(true);
-  };
+  }, [currentViewSide]);
 
-  const handleDesignTransformChange = (property: keyof typeof designTransformFront, value: any) => {
-    if (activeDesignSide === 'front') {
-      setDesignTransformFront(prev => ({
-        ...prev,
-        [property]: value
-      }));
-    } else {
-      setDesignTransformBack(prev => ({
-        ...prev,
-        [property]: value
-      }));
-    }
-  };
-
-  const handleTextTransformChange = (property: keyof typeof textTransformFront, value: any) => {
-    if (activeTextSide === 'front') {
-      setTextTransformFront(prev => ({
-        ...prev,
-        [property]: value
-      }));
-    } else {
-      setTextTransformBack(prev => ({
-        ...prev,
-        [property]: value
-      }));
-    }
-  };
-
-  // Fix handleLotteryToggle function to handle selecting, deselecting and changing lotteries
-  const handleLotteryToggle = (lottery: Lottery, index: number) => {
-    // Créer une copie des tableaux de loteries sélectionnées
-    const updatedLotteries = [...selectedLotteries];
-    const updatedLotteryIds = [...selectedLotteryIds];
+  useEffect(() => {
+    const preventScroll = (e: TouchEvent) => {
+      if (isDragging || isDraggingText) {
+        e.preventDefault();
+      }
+    };
     
-    // Vérifier si la loterie est déjà sélectionnée
-    const existingIndex = updatedLotteries.findIndex(l => l?.id === lottery.id);
+    document.addEventListener('touchmove', preventScroll, { passive: false });
     
-    // Si la loterie est déjà sélectionnée
-    if (existingIndex !== -1) {
-      // Supprimer la loterie actuelle
-      updatedLotteries.splice(existingIndex, 1);
-      const idIndex = updatedLotteryIds.indexOf(lottery.id);
-      if (idIndex !== -1) {
-        updatedLotteryIds.splice(idIndex, 1);
-      }
-      
-      // Si l'utilisateur a cliqué sur une loterie différente, l'ajouter
-      if (index !== existingIndex) {
-        // S'assurer que le tableau est assez grand
-        while (updatedLotteries.length <= index) {
-          updatedLotteries.push(null as unknown as Lottery);
-        }
-        
-        updatedLotteries[index] = lottery;
-        updatedLotteryIds.push(lottery.id);
-      }
-    } else {
-      // La loterie n'est pas encore sélectionnée
-      
-      // Vérifier si on a déjà atteint le nombre maximum de loteries
-      if (updatedLotteries.length >= (product?.tickets_offered || 0) && 
-          !(index < updatedLotteries.length && updatedLotteries[index])) {
-        toast.error(`Vous ne pouvez sélectionner que ${product?.tickets_offered} loterie(s) maximum pour ce produit.`);
-        return;
-      }
-      
-      // S'assurer que le tableau est assez grand
-      while (updatedLotteries.length <= index) {
-        updatedLotteries.push(null as unknown as Lottery);
-      }
-      
-      // Si une loterie est déjà à cet index, supprimer son ID
-      if (updatedLotteries[index]) {
-        const oldIdIndex = updatedLotteryIds.indexOf(updatedLotteries[index].id);
-        if (oldIdIndex !== -1) {
-          updatedLotteryIds.splice(oldIdIndex, 1);
-        }
-      }
-      
-      // Ajouter la nouvelle loterie
-      updatedLotteries[index] = lottery;
-      updatedLotteryIds.push(lottery.id);
-    }
-    
-    // Filtrer les entrées nulles et mettre à jour l'état
-    const filteredLotteries = updatedLotteries.filter(l => l !== null);
-    setSelectedLotteries(filteredLotteries);
-    setSelectedLotteryIds(filteredLotteries.map(l => l.id));
-  };
+    return () => {
+      document.removeEventListener('touchmove', preventScroll);
+    };
+  }, [isDragging, isDraggingText]);
 
-  // Define these mouse handling functions outside useEffect
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleMouseMove, { passive: false });
+    window.addEventListener('touchend', handleMouseUp);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleMouseMove);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [isDragging, startPos, isDraggingText, startPosText]);
+
+  // Mouse event handlers
   const handleMouseDown = (event: React.MouseEvent | React.TouchEvent, isText: boolean = false) => {
     event.preventDefault();
     
@@ -558,6 +335,116 @@ const ProductDetail = () => {
     setPageScrollLocked(false);
   };
 
+  // Product interactions
+  const handleQuantityChange = (type: 'increase' | 'decrease') => {
+    if (type === 'increase') {
+      setQuantity(prev => prev + 1);
+    } else if (type === 'decrease' && quantity > 1) {
+      setQuantity(prev => prev - 1);
+    }
+  };
+
+  const handleDesignSelect = (design: Design) => {
+    if (currentViewSide === 'front') {
+      setSelectedDesignFront(design);
+      setActiveDesignSide('front');
+    } else {
+      setSelectedDesignBack(design);
+      setActiveDesignSide('back');
+    }
+    setDesignDialogOpen(false);
+    setPageScrollLocked(true);
+  };
+
+  const handleDesignTransformChange = (property: keyof typeof designTransformFront, value: any) => {
+    if (activeDesignSide === 'front') {
+      setDesignTransformFront(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    } else {
+      setDesignTransformBack(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    }
+  };
+
+  const handleTextTransformChange = (property: keyof typeof textTransformFront, value: any) => {
+    if (activeTextSide === 'front') {
+      setTextTransformFront(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    } else {
+      setTextTransformBack(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    }
+  };
+
+  const handleLotteryToggle = (lottery: Lottery, index: number) => {
+    // Créer une copie des tableaux de loteries sélectionnées
+    const updatedLotteries = [...selectedLotteries];
+    const updatedLotteryIds = [...selectedLotteryIds];
+    
+    // Vérifier si la loterie est déjà sélectionnée
+    const existingIndex = updatedLotteries.findIndex(l => l?.id === lottery.id);
+    
+    // Si la loterie est déjà sélectionnée
+    if (existingIndex !== -1) {
+      // Supprimer la loterie actuelle
+      updatedLotteries.splice(existingIndex, 1);
+      const idIndex = updatedLotteryIds.indexOf(lottery.id);
+      if (idIndex !== -1) {
+        updatedLotteryIds.splice(idIndex, 1);
+      }
+      
+      // Si l'utilisateur a cliqué sur une loterie différente, l'ajouter
+      if (index !== existingIndex) {
+        // S'assurer que le tableau est assez grand
+        while (updatedLotteries.length <= index) {
+          updatedLotteries.push(null as unknown as Lottery);
+        }
+        
+        updatedLotteries[index] = lottery;
+        updatedLotteryIds.push(lottery.id);
+      }
+    } else {
+      // La loterie n'est pas encore sélectionnée
+      
+      // Vérifier si on a déjà atteint le nombre maximum de loteries
+      if (updatedLotteries.length >= (product?.tickets_offered || 0) && 
+          !(index < updatedLotteries.length && updatedLotteries[index])) {
+        toast.error(`Vous ne pouvez sélectionner que ${product?.tickets_offered} loterie(s) maximum pour ce produit.`);
+        return;
+      }
+      
+      // S'assurer que le tableau est assez grand
+      while (updatedLotteries.length <= index) {
+        updatedLotteries.push(null as unknown as Lottery);
+      }
+      
+      // Si une loterie est déjà à cet index, supprimer son ID
+      if (updatedLotteries[index]) {
+        const oldIdIndex = updatedLotteryIds.indexOf(updatedLotteries[index].id);
+        if (oldIdIndex !== -1) {
+          updatedLotteryIds.splice(oldIdIndex, 1);
+        }
+      }
+      
+      // Ajouter la nouvelle loterie
+      updatedLotteries[index] = lottery;
+      updatedLotteryIds.push(lottery.id);
+    }
+    
+    // Filtrer les entrées nulles et mettre à jour l'état
+    const filteredLotteries = updatedLotteries.filter(l => l !== null);
+    setSelectedLotteries(filteredLotteries);
+    setSelectedLotteryIds(filteredLotteries.map(l => l.id));
+  };
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     
@@ -637,7 +524,7 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     if (!product) return;
 
-    const cartItem: CartItem = {
+    const cartItem = {
       productId: product.id,
       name: product.name,
       price: calculatePrice(),
@@ -751,44 +638,6 @@ const ProductDetail = () => {
     return currentViewSide === 'front' ? textStylesFront : textStylesBack;
   };
 
-  useEffect(() => {
-    const preventScroll = (e: TouchEvent) => {
-      if (isDragging || isDraggingText) {
-        e.preventDefault();
-      }
-    };
-    
-    document.addEventListener('touchmove', preventScroll, { passive: false });
-    
-    return () => {
-      document.removeEventListener('touchmove', preventScroll);
-    };
-  }, [isDragging, isDraggingText]);
-
-  useEffect(() => {
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    window.addEventListener('touchmove', handleMouseMove, { passive: false });
-    window.addEventListener('touchend', handleMouseUp);
-    
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('touchmove', handleMouseMove);
-      window.removeEventListener('touchend', handleMouseUp);
-    };
-  }, [isDragging, startPos, isDraggingText, startPosText]);
-
-  useEffect(() => {
-    if (currentViewSide === 'front') {
-      setActiveDesignSide('front');
-      setActiveTextSide('front');
-    } else {
-      setActiveDesignSide('back');
-      setActiveTextSide('back');
-    }
-  }, [currentViewSide]);
-
   if (isLoading || !product) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -824,3 +673,238 @@ const ProductDetail = () => {
           {/* Bouton retour */}
           <Link to="/products" className="flex items-center gap-2 font-medium mb-8">
             <ArrowLeft className="h-5 w-5" />
+            Retour aux produits
+          </Link>
+
+          {/* Product display */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Left column - Product Image */}
+            <ProductImageSection 
+              product={product}
+              mockup={mockup}
+              customizationMode={customizationMode}
+              currentViewSide={currentViewSide}
+              setCurrentViewSide={setCurrentViewSide}
+              selectedMockupColor={selectedMockupColor}
+              getProductImage={getProductImage}
+              selectedDesignFront={selectedDesignFront}
+              selectedDesignBack={selectedDesignBack}
+              designTransformFront={designTransformFront}
+              designTransformBack={designTransformBack}
+              textContentFront={textContentFront}
+              textContentBack={textContentBack}
+              textTransformFront={textTransformFront}
+              textTransformBack={textTransformBack}
+              textFontFront={textFontFront}
+              textFontBack={textFontBack}
+              textColorFront={textColorFront}
+              textColorBack={textColorBack}
+              textStylesFront={textStylesFront}
+              textStylesBack={textStylesBack}
+              handleMouseDown={handleMouseDown}
+              productCanvasRef={productCanvasRef}
+              isDragging={isDragging}
+              isDraggingText={isDraggingText}
+            />
+            
+            {/* Right column - Product Info */}
+            <div className="space-y-6">
+              {/* Product info */}
+              <div>
+                <h1 className="text-3xl font-bold">{product.name}</h1>
+                <p className="text-xl font-semibold mt-2">
+                  {calculatePrice().toFixed(2)}€
+                </p>
+
+                {product.is_new && (
+                  <Badge className="mt-2 bg-green-500 hover:bg-green-600">Nouveau</Badge>
+                )}
+              </div>
+              
+              {/* Product customization */}
+              {product.is_customizable && (
+                <CustomizationPanel 
+                  customizationMode={customizationMode}
+                  setCustomizationMode={setCustomizationMode}
+                  currentViewSide={currentViewSide}
+                  setDesignDialogOpen={setDesignDialogOpen}
+                  handleFileUpload={handleFileUpload}
+                  fileInputRef={fileInputRef}
+                  selectedDesignFront={selectedDesignFront}
+                  selectedDesignBack={selectedDesignBack}
+                  textContentFront={textContentFront}
+                  setTextContentFront={setTextContentFront}
+                  textContentBack={textContentBack}
+                  setTextContentBack={setTextContentBack}
+                  textFontFront={textFontFront}
+                  setTextFontFront={setTextFontFront}
+                  textFontBack={textFontBack}
+                  setTextFontBack={setTextFontBack}
+                  textColorFront={textColorFront}
+                  setTextColorFront={setTextColorFront}
+                  textColorBack={textColorBack}
+                  setTextColorBack={setTextColorBack}
+                  textShowColorPickerFront={textShowColorPickerFront}
+                  setTextShowColorPickerFront={setTextShowColorPickerFront}
+                  textShowColorPickerBack={textShowColorPickerBack}
+                  setTextShowColorPickerBack={setTextShowColorPickerBack}
+                  textStylesFront={textStylesFront}
+                  setTextStylesFront={setTextStylesFront}
+                  textStylesBack={textStylesBack}
+                  setTextStylesBack={setTextStylesBack}
+                  designTransformFront={designTransformFront}
+                  designTransformBack={designTransformBack}
+                  textTransformFront={textTransformFront}
+                  textTransformBack={textTransformBack}
+                  handleDesignTransformChange={handleDesignTransformChange}
+                  handleTextTransformChange={handleTextTransformChange}
+                  printSizeFront={printSizeFront}
+                  setPrintSizeFront={setPrintSizeFront}
+                  printSizeBack={printSizeBack}
+                  setPrintSizeBack={setPrintSizeBack}
+                  activeDesignSide={activeDesignSide}
+                  activeTextSide={activeTextSide}
+                  setActiveDesignSide={setActiveDesignSide}
+                  setActiveTextSide={setActiveTextSide}
+                  getCurrentDesign={getCurrentDesign}
+                  getCurrentDesignTransform={getCurrentDesignTransform}
+                  getCurrentTextContent={getCurrentTextContent}
+                  getCurrentTextTransform={getCurrentTextTransform}
+                  getCurrentTextFont={getCurrentTextFont}
+                  getCurrentTextColor={getCurrentTextColor}
+                  getCurrentTextStyles={getCurrentTextStyles}
+                />
+              )}
+
+              {/* Color selection */}
+              {product.available_colors && product.available_colors.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Couleur</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.available_colors.map((color) => (
+                      <button
+                        key={color}
+                        className={`w-8 h-8 rounded-full border-2 ${
+                          selectedColor === color
+                            ? 'border-black'
+                            : 'border-gray-300'
+                        }`}
+                        style={{
+                          backgroundColor: getColorHexCode(color),
+                        }}
+                        onClick={() => setSelectedColor(color)}
+                        aria-label={`Couleur: ${color}`}
+                      >
+                        {selectedColor === color && (
+                          <Check
+                            className="w-4 h-4 mx-auto text-white"
+                            style={{
+                              color: getContrastColor(getColorHexCode(color)),
+                            }}
+                          />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Mockup colors */}
+              {customizationMode && mockup?.colors && mockup.colors.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Couleur du produit</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {mockup.colors.map((mockupColor) => (
+                      <button
+                        key={mockupColor.id || mockupColor.name}
+                        className={`w-10 h-10 rounded-full border-2 ${
+                          selectedMockupColor?.color_code === mockupColor.color_code
+                            ? 'border-black'
+                            : 'border-gray-300'
+                        }`}
+                        style={{
+                          backgroundColor: mockupColor.hex_code,
+                        }}
+                        onClick={() => setSelectedMockupColor(mockupColor)}
+                        aria-label={`Couleur: ${mockupColor.name}`}
+                      >
+                        {selectedMockupColor?.color_code === mockupColor.color_code && (
+                          <Check
+                            className="w-5 h-5 mx-auto"
+                            style={{
+                              color: getContrastColor(mockupColor.hex_code),
+                            }}
+                          />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Size selection */}
+              {product.available_sizes && product.available_sizes.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Taille</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.available_sizes.map((size) => (
+                      <button
+                        key={size}
+                        className={`px-4 py-2 rounded border ${
+                          selectedSize === size
+                            ? 'bg-black text-white'
+                            : 'border-gray-300'
+                        }`}
+                        onClick={() => setSelectedSize(size)}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Quantity and Add to cart */}
+              <ProductOrderSection
+                quantity={quantity}
+                handleQuantityChange={handleQuantityChange}
+                handleAddToCart={handleAddToCart}
+              />
+
+              {/* Lottery tickets */}
+              {product.tickets_offered && product.tickets_offered > 0 && (
+                <LotterySelector
+                  product={product}
+                  activeLotteries={activeLotteries}
+                  selectedLotteries={selectedLotteries}
+                  handleLotteryToggle={handleLotteryToggle}
+                />
+              )}
+              
+              {/* Product description */}
+              <ProductDescription 
+                product={product}
+              />
+            </div>
+          </div>
+        </div>
+      </main>
+      
+      {/* Design gallery dialog */}
+      <DesignGalleryDialog
+        isOpen={designDialogOpen}
+        setIsOpen={setDesignDialogOpen}
+        designs={filteredDesigns}
+        uniqueCategories={uniqueCategories}
+        selectedCategoryFilter={selectedCategoryFilter}
+        setSelectedCategoryFilter={setSelectedCategoryFilter}
+        handleDesignSelect={handleDesignSelect}
+        isLoading={isLoadingDesigns}
+      />
+      
+      <Footer />
+    </div>
+  );
+};
+
+export default ProductDetail;
