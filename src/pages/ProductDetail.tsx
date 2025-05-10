@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -24,7 +23,7 @@ import {
   X
 } from 'lucide-react';
 import { fetchProductById, fetchAllLotteries, fetchAllDesigns, fetchMockupById } from '@/services/api.service';
-import { Design, Lottery } from '@/types/supabase.types';
+import { Product, Design, Lottery } from '@/types/supabase.types';
 import { MockupWithColors, MockupColor } from '@/types/mockup.types';
 import ProductImageSection from '@/components/product/ProductImageSection';
 import ProductOrderSection from '@/components/product/ProductOrderSection';
@@ -36,6 +35,7 @@ import LotterySelector from '@/components/product/LotterySelector';
 import ProductDescription from '@/components/product/ProductDescription';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import { Badge } from '@/components/ui/badge';
 
 // Add this function before the ProductDetail component
 const getContrastColor = (hexColor: string): string => {
@@ -738,7 +738,7 @@ const ProductDetail = () => {
                   setTextContentBack={setTextContentBack}
                   textFontFront={textFontFront}
                   setTextFontFront={setTextFontFront}
-                  textFontBack={textFontBack}
+                  textFontBack={setTextFontBack}
                   setTextFontBack={setTextFontBack}
                   textColorFront={textColorFront}
                   setTextColorFront={setTextColorFront}
