@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -9,7 +10,12 @@ import { MockupColor } from '@/types/mockup.types';
 // Helper function moved from ProductDetail
 export const getContrastColor = (hexColor: string): string => {
   // Remove the # if it exists
-  const hex = hexColor.replace('#', '');
+  const hex = hexColor ? hexColor.replace('#', '') : '';
+  
+  // If no hex color is provided or it's invalid, return a default color
+  if (!hex || hex.length < 6) {
+    return '#000000'; // Default to black text
+  }
   
   // Parse the hex string to RGB values
   const r = parseInt(hex.substring(0, 2), 16);
