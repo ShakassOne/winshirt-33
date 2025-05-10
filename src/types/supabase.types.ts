@@ -45,6 +45,7 @@ export interface Mockup {
   created_at?: string;
   updated_at?: string;
   colors?: MockupColor[]; // Add colors property for mockup color variants
+  has_back_side?: boolean; // Adding has_back_side property
 }
 
 // Product
@@ -64,8 +65,8 @@ export interface Product {
   mockup_id?: string;
   created_at?: string;
   updated_at?: string;
-  is_new?: boolean; // Added this property
-  details?: string; // Added this property
+  is_new?: boolean;
+  details?: string;
 }
 
 // Lottery
@@ -82,7 +83,7 @@ export interface Lottery {
   is_featured?: boolean;
   created_at?: string;
   updated_at?: string;
-  color?: string; // Added this property
+  color?: string;
   name?: string; // Added this property for compatibility
 }
 
