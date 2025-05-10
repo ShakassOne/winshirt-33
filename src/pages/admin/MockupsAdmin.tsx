@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import MockupForm from '@/components/admin/MockupForm';
 import { useToast } from '@/hooks/use-toast';
 import { Mockup } from '@/types/supabase.types';
+import { UploadButton } from '@/components/ui/upload-button';
 
 const MockupsAdmin = () => {
   const { toast } = useToast();

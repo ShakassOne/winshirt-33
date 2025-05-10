@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import LotteryCard from '@/components/ui/LotteryCard';
 import { Button } from '@/components/ui/button';
 import { Search, Filter } from 'lucide-react';
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 
 const Lotteries = () => {
   const [filterActive, setFilterActive] = useState<boolean | null>(null);
@@ -25,12 +26,50 @@ const Lotteries = () => {
       : true;
     return matchesStatus && matchesSearch;
   });
+  
+  // Get featured lotteries for the slider
+  const featuredLotteries = lotteries?.filter(lottery => lottery.is_featured) || [];
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       
       <main className="flex-grow mt-16 pb-20">
+        {/* Featured Lotteries Slider */}
+        {featuredLotteries.length > 0 && (
+          <section className="py-12 bg-gradient-to-b from-winshirt-blue/10 to-transparent relative">
+            <div className="container mx-auto px-4">
+              <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
+                Loteries en <span className="text-gradient">Vedette</span>
+              </h2>
+              
+              <Carousel className="w-full">
+                <CarouselContent>
+                  {featuredLotteries.map(lottery => (
+                    <CarouselItem key={lottery.id} className="md:basis-1/2 lg:basis-1/3">
+                      <div className="p-1">
+                        <LotteryCard
+                          id={lottery.id}
+                          title={lottery.title}
+                          image={lottery.image_url}
+                          value={lottery.value}
+                          participants={lottery.participants}
+                          goal={lottery.goal}
+                          isActive={lottery.is_active}
+                          isFeatured={lottery.is_featured}
+                          drawDate={new Date(lottery.draw_date)}
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-1" />
+                <CarouselNext className="right-1" />
+              </Carousel>
+            </div>
+          </section>
+        )}
+
         {/* Hero Section */}
         <section className="relative py-20 bg-gradient-to-b from-winshirt-purple/20 to-transparent">
           <div className="container mx-auto px-4">
