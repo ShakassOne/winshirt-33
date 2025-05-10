@@ -823,5 +823,6 @@ const ProductDetail = () => {
                   ref={productCanvasRef} 
                   className="w-full h-full relative"
                 >
-                  {/* This is the fixed comment that was previously unterminated */}
-                  {/* Product
+                  {/* Product image container */}
+                  <img
+                    src={getProductImage()}
