@@ -39,7 +39,7 @@ export function UploadButton({
     setIsUploading(true);
     try {
       const url = await uploadFileToStorage(file, targetFolder);
-      onUpload(typeof url === 'string' ? url : url.toString());
+      onUpload(url);
       toast({
         title: "Téléchargement réussi",
         description: "Le fichier a été téléchargé avec succès",

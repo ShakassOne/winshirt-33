@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Product, Lottery, Mockup } from "@/types/supabase.types";
 import { MockupWithColors, MockupColor } from "@/types/mockup.types";
@@ -190,6 +191,18 @@ export const fetchMockupById = async (id: string): Promise<MockupWithColors> => 
     throw error;
   }
 
+  // Process the print_areas from JSON to array
+  let printAreas: any[] = [];
+  if (data.print_areas) {
+    try {
+      printAreas = Array.isArray(data.print_areas) 
+        ? data.print_areas 
+        : (typeof data.print_areas === 'string' ? JSON.parse(data.print_areas) : []);
+    } catch (e) {
+      console.error("Error parsing mockup print_areas:", e);
+    }
+  }
+
   // Ensure colors property is an array
   let colors: MockupColor[] = [];
   if (data.colors) {
@@ -204,8 +217,9 @@ export const fetchMockupById = async (id: string): Promise<MockupWithColors> => 
   
   return {
     ...data,
+    print_areas: printAreas,
     colors: Array.isArray(colors) ? colors : []
-  };
+  } as MockupWithColors;
 };
 
 export const createMockup = async (mockupData: Partial<MockupWithColors>) => {

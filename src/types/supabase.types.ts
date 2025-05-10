@@ -1,3 +1,4 @@
+
 // Design
 export interface Design {
   id: string;
@@ -39,7 +40,7 @@ export interface Mockup {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
-  colors?: any[]; // Add colors property for mockup color variants
+  colors?: MockupColor[]; // Add colors property for mockup color variants
 }
 
 // Product
