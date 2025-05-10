@@ -1,239 +1,260 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Eye, EyeOff } from 'lucide-react';
-import { toast } from 'sonner';
-
-import { fetchAllDesigns as fetchDesigns, createDesign, updateDesign, deleteDesign } from '@/services/api.service';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
+import {
+  fetchAllDesigns as fetchDesigns, createDesign, updateDesign, deleteDesign
+} from '@/services/api.service';
 import { Design } from '@/types/supabase.types';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import DesignForm from '@/components/admin/DesignForm';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Plus, Pencil, Trash } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { UploadButton } from '@/components/ui/upload-button';
 
 const DesignsAdmin = () => {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
-  const [selectedDesign, setSelectedDesign] = React.useState<Design | null>(null);
-
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
+  const [name, setName] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [category, setCategory] = useState('');
+  const [isActive, setIsActive] = useState(true);
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: designs = [], isLoading, error } = useQuery({
+  const { data: designs, isLoading, error } = useQuery({
     queryKey: ['designs'],
     queryFn: fetchDesigns,
   });
 
-  const createMutation = useMutation({
-    mutationFn: createDesign,
+  const createDesignMutation = useMutation(createDesign, {
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['designs'] });
-      toast.success('Design créé avec succès!');
-      setIsCreateDialogOpen(false);
+      queryClient.invalidateQueries(['designs']);
+      closeDialog();
+      toast({
+        title: "Succès",
+        description: "Le design a été créé avec succès",
+        variant: "default"
+      });
     },
-    onError: (error: any) => {
-      toast.error(`Erreur lors de la création: ${error.message}`);
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (data: { id: string; designData: any }) => 
-      updateDesign(data.id, data.designData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['designs'] });
-      toast.success('Design mis à jour avec succès!');
-      setIsEditDialogOpen(false);
-      setSelectedDesign(null);
-    },
-    onError: (error: any) => {
-      toast.error(`Erreur lors de la mise à jour: ${error.message}`);
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteDesign(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['designs'] });
-      toast.success('Design supprimé avec succès!');
-      setIsEditDialogOpen(false);
-      setSelectedDesign(null);
-    },
-    onError: (error: any) => {
-      toast.error(`Erreur lors de la suppression: ${error.message}`);
-    },
-  });
-
-  const handleCreate = (data: any) => {
-    createMutation.mutate(data);
-  };
-
-  const handleUpdate = (data: any) => {
-    if (selectedDesign) {
-      updateMutation.mutate({ id: selectedDesign.id, designData: data });
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de la création du design",
+        variant: "destructive"
+      });
     }
-  };
+  });
 
-  const handleDelete = () => {
-    if (selectedDesign) {
-      deleteMutation.mutate(selectedDesign.id);
+  const updateDesignMutation = useMutation(
+    (designData: { id: string; data: any }) => updateDesign(designData.id, designData.data),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['designs']);
+        closeDialog();
+        toast({
+          title: "Succès",
+          description: "Le design a été mis à jour avec succès",
+          variant: "default"
+        });
+      },
+      onError: () => {
+        toast({
+          title: "Erreur",
+          description: "Une erreur s'est produite lors de la mise à jour du design",
+          variant: "destructive"
+        });
+      }
     }
+  );
+
+  const deleteDesignMutation = useMutation(deleteDesign, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['designs']);
+      toast({
+        title: "Succès",
+        description: "Le design a été supprimé avec succès",
+        variant: "default"
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de la suppression du design",
+        variant: "destructive"
+      });
+    }
+  });
+
+  useEffect(() => {
+    if (selectedDesign) {
+      setName(selectedDesign.name);
+      setImageUrl(selectedDesign.image_url);
+      setCategory(selectedDesign.category);
+      setIsActive(selectedDesign.is_active !== false);
+    }
+  }, [selectedDesign]);
+
+  const openDialog = () => {
+    setIsDialogOpen(true);
   };
 
-  const handleEditClick = (design: Design) => {
+  const closeDialog = () => {
+    setIsDialogOpen(false);
+    setIsEditing(false);
+    setSelectedDesign(null);
+    setName('');
+    setImageUrl('');
+    setCategory('');
+    setIsActive(true);
+  };
+
+  const handleCreate = () => {
+    setIsEditing(false);
+    setSelectedDesign(null);
+    openDialog();
+  };
+
+  const handleEdit = (design: Design) => {
+    setIsEditing(true);
     setSelectedDesign(design);
-    setIsEditDialogOpen(true);
+    openDialog();
   };
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <div className="flex-grow flex items-center justify-center">
-          <div className="text-center p-4">
-            <h2 className="text-2xl font-semibold mb-2">Erreur</h2>
-            <p className="mb-4 text-muted-foreground">
-              Une erreur s'est produite lors du chargement des designs.
-            </p>
-            <Button onClick={() => window.location.reload()}>Réessayer</Button>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+  const handleDelete = async (id: string) => {
+    await deleteDesignMutation.mutateAsync(id);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const designData = {
+      name,
+      image_url: imageUrl,
+      category,
+      is_active: isActive,
+    };
+
+    if (isEditing && selectedDesign) {
+      await updateDesignMutation.mutateAsync({ id: selectedDesign.id, data: designData });
+    } else {
+      await createDesignMutation.mutateAsync(designData);
+    }
+  };
+
+  const handleImageUpload = (url: string) => {
+    setImageUrl(url);
+  };
+
+  if (isLoading) return <div>Chargement des designs...</div>;
+  if (error) return <div>Une erreur est survenue lors du chargement des designs.</div>;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
-      <main className="flex-grow mt-16 pb-20">
-        <section className="relative py-8 bg-gradient-to-b from-winshirt-blue/20 to-transparent">
-          <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center mb-8">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold">
-                  Gestion des <span className="text-gradient">Designs</span>
-                </h1>
-                <p className="text-white/70 mt-2">
-                  Créez et gérez les designs pour la personnalisation des produits
-                </p>
-              </div>
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter un design
+    <div className="container mx-auto py-8">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Gestion des Designs</h1>
+        <Button onClick={handleCreate}>
+          <Plus className="mr-2 h-4 w-4" />
+          Nouveau Design
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {designs?.map((design) => (
+          <div key={design.id} className="relative bg-white/5 rounded-lg shadow-md p-4">
+            <img src={design.image_url} alt={design.name} className="w-full h-32 object-contain mb-4" />
+            <h3 className="text-lg font-semibold mb-2">{design.name}</h3>
+            <p className="text-sm text-gray-500 mb-2">Catégorie: {design.category}</p>
+            <div className="flex items-center justify-between">
+              <Switch
+                id={`design-active-${design.id}`}
+                checked={design.is_active !== false}
+                onCheckedChange={(checked) => {
+                  updateDesignMutation.mutate({
+                    id: design.id,
+                    data: { is_active: checked },
+                  });
+                }}
+              />
+              <Label htmlFor={`design-active-${design.id}`} className="text-sm">
+                {design.is_active !== false ? 'Actif' : 'Inactif'}
+              </Label>
+            </div>
+            <div className="absolute top-2 right-2 flex gap-2">
+              <Button variant="outline" size="icon" onClick={() => handleEdit(design)}>
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button variant="destructive" size="icon" onClick={() => handleDelete(design.id)}>
+                <Trash className="h-4 w-4" />
               </Button>
             </div>
-            
-            <div className="bg-black/30 p-4 rounded-lg shadow-lg">
-              {isLoading ? (
-                <div className="flex justify-center p-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-winshirt-blue"></div>
-                </div>
-              ) : designs.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="mb-4 text-white/70">Aucun design trouvé.</p>
-                  <Button onClick={() => setIsCreateDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Créer votre premier design
-                  </Button>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead style={{ width: '120px' }}>Image</TableHead>
-                      <TableHead>Nom</TableHead>
-                      <TableHead>Catégorie</TableHead>
-                      <TableHead>Statut</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {designs.map((design) => (
-                      <TableRow key={design.id}>
-                        <TableCell>
-                          <div className="h-12 w-12 rounded overflow-hidden bg-gray-800">
-                            <img 
-                              src={design.image_url} 
-                              alt={design.name} 
-                              className="h-full w-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = '/placeholder.svg';
-                              }}
-                            />
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-medium">{design.name}</TableCell>
-                        <TableCell>{design.category}</TableCell>
-                        <TableCell>
-                          {design.is_active ? (
-                            <Badge className="bg-green-500/20 text-green-500 hover:bg-green-500/30">
-                              <Eye className="h-3 w-3 mr-1" />
-                              Actif
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-gray-500/20 text-gray-400 hover:bg-gray-500/30">
-                              <EyeOff className="h-3 w-3 mr-1" />
-                              Inactif
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => handleEditClick(design)}
-                          >
-                            <Pencil className="h-4 w-4 mr-2" />
-                            Modifier
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </div>
           </div>
-        </section>
-      </main>
+        ))}
+      </div>
 
-      <Footer />
-
-      {/* Create Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-3xl">
+      <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
+        <DialogContent className="bg-black/50 backdrop-blur-xl border-white/20 text-white max-w-md">
           <DialogHeader>
-            <DialogTitle>Créer un nouveau design</DialogTitle>
+            <DialogTitle>{isEditing ? 'Modifier Design' : 'Nouveau Design'}</DialogTitle>
           </DialogHeader>
-          <DesignForm 
-            onSubmit={handleCreate} 
-            isSubmitting={createMutation.isPending} 
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Modifier le design</DialogTitle>
-          </DialogHeader>
-          <DesignForm 
-            initialData={selectedDesign}
-            onSubmit={handleUpdate}
-            onDelete={handleDelete}
-            isSubmitting={updateMutation.isPending || deleteMutation.isPending}
-          />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="name">Nom</Label>
+              <Input
+                type="text"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="imageUrl">URL de l'image</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  id="imageUrl"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  required
+                  className="flex-1"
+                />
+                <UploadButton
+                  onUpload={handleImageUpload}
+                  variant="outline"
+                  targetFolder="designs"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="category">Catégorie</Label>
+              <Input
+                type="text"
+                id="category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="is_active"
+                  checked={isActive}
+                  onCheckedChange={setIsActive}
+                />
+                <Label htmlFor="is_active">Design actif</Label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit">
+                {isEditing ? 'Mettre à jour' : 'Créer'}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -19,10 +20,11 @@ import {
   Upload,
   UsersRound,
   Target,
-  Filter
+  PenTool
 } from 'lucide-react';
-import { fetchProductById, fetchAllLotteries, fetchDesigns, fetchMockupById } from '@/services/api.service';
+import { fetchProductById, fetchAllLotteries, fetchAllDesigns, fetchMockupById } from '@/services/api.service';
 import { Design, Lottery, CartItem } from '@/types/supabase.types';
+import { MockupColor } from '@/types/mockup.types';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -67,6 +69,17 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { HexColorPicker } from 'react-colorful';
 import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 // Définition des polices Google Fonts
 const googleFonts = [
@@ -180,6 +193,8 @@ const ProductDetail = () => {
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [pageScrollLocked, setPageScrollLocked] = useState(false);
   const [currentViewSide, setCurrentViewSide] = useState<'front' | 'back'>('front');
+  const [customizationMode, setCustomizationMode] = useState(false);
+  const [selectedMockupColor, setSelectedMockupColor] = useState<MockupColor | null>(null);
   
   // État pour les designs - maintenant séparés par côté (recto/verso)
   const [selectedDesignFront, setSelectedDesignFront] = useState<Design | null>(null);
@@ -264,15 +279,17 @@ const ProductDetail = () => {
 
   const { data: designs = [], isLoading: isLoadingDesigns } = useQuery({
     queryKey: ['designs'],
-    queryFn: fetchDesigns,
+    queryFn: fetchAllDesigns,
   });
 
   const uniqueCategories = React.useMemo(() => {
+    if (!designs) return ['all'];
     const categories = designs.map(design => design.category);
     return ['all', ...new Set(categories)];
   }, [designs]);
   
   const filteredDesigns = React.useMemo(() => {
+    if (!designs) return [];
     if (selectedCategoryFilter === 'all') {
       return designs.filter(design => design.is_active !== false);
     } else {
@@ -292,6 +309,13 @@ const ProductDetail = () => {
       }
     }
   }, [product]);
+  
+  // Effet pour initialiser la couleur du mockup par défaut
+  useEffect(() => {
+    if (mockup?.colors && mockup.colors.length > 0) {
+      setSelectedMockupColor(mockup.colors[0]);
+    }
+  }, [mockup]);
 
   // Verrouiller le défilement de la page pendant la personnalisation
   useEffect(() => {
@@ -316,7 +340,7 @@ const ProductDetail = () => {
         setSelectedLotteryIds([activeLotteries[0].id]);
       }
     }
-  }, [product, lotteries]);
+  }, [product, lotteries, selectedLotteries.length]);
 
   const handleQuantityChange = (type: 'increase' | 'decrease') => {
     if (type === 'increase') {
@@ -558,25 +582,27 @@ const ProductDetail = () => {
     
     let price = product.price * quantity;
     
-    // Prix du design front
-    const frontDesignPrice = selectedDesignFront ? 
-      (printSizeFront === 'A3' ? 15 : 
-       printSizeFront === 'A4' ? 10 : 
-       printSizeFront === 'A5' ? 8 : 5) : 0;
-    
-    // Prix du design back
-    const backDesignPrice = selectedDesignBack ? 
-      (printSizeBack === 'A3' ? 15 : 
-       printSizeBack === 'A4' ? 10 : 
-       printSizeBack === 'A5' ? 8 : 5) : 0;
-    
-    // Prix du texte front
-    const frontTextPrice = textContentFront ? (mockup?.text_price_front || 3) : 0;
-    
-    // Prix du texte back
-    const backTextPrice = textContentBack ? (mockup?.text_price_back || 3) : 0;
-    
-    price += frontDesignPrice + backDesignPrice + frontTextPrice + backTextPrice;
+    if (customizationMode) {
+      // Prix du design front
+      const frontDesignPrice = selectedDesignFront ? 
+        (printSizeFront === 'A3' ? mockup?.price_a3 || 15 : 
+         printSizeFront === 'A4' ? mockup?.price_a4 || 10 : 
+         printSizeFront === 'A5' ? mockup?.price_a5 || 8 : mockup?.price_a6 || 5) : 0;
+      
+      // Prix du design back
+      const backDesignPrice = selectedDesignBack ? 
+        (printSizeBack === 'A3' ? mockup?.price_a3 || 15 : 
+         printSizeBack === 'A4' ? mockup?.price_a4 || 10 : 
+         printSizeBack === 'A5' ? mockup?.price_a5 || 8 : mockup?.price_a6 || 5) : 0;
+      
+      // Prix du texte front
+      const frontTextPrice = textContentFront ? (mockup?.text_price_front || 3) : 0;
+      
+      // Prix du texte back
+      const backTextPrice = textContentBack ? (mockup?.text_price_back || 3) : 0;
+      
+      price += frontDesignPrice + backDesignPrice + frontTextPrice + backTextPrice;
+    }
     
     return price;
   };
@@ -610,51 +636,53 @@ const ProductDetail = () => {
     };
 
     // Customization object that includes both front and back designs and text
-    const customization: any = {};
-    
-    if (selectedDesignFront) {
-      customization.frontDesign = {
-        designId: selectedDesignFront.id,
-        designName: selectedDesignFront.name,
-        designUrl: selectedDesignFront.image_url,
-        printSize: printSizeFront,
-        transform: designTransformFront
-      };
-    }
+    if (customizationMode) {
+      const customization: any = {};
+      
+      if (selectedDesignFront) {
+        customization.frontDesign = {
+          designId: selectedDesignFront.id,
+          designName: selectedDesignFront.name,
+          designUrl: selectedDesignFront.image_url,
+          printSize: printSizeFront,
+          transform: designTransformFront
+        };
+      }
 
-    if (selectedDesignBack) {
-      customization.backDesign = {
-        designId: selectedDesignBack.id,
-        designName: selectedDesignBack.name,
-        designUrl: selectedDesignBack.image_url,
-        printSize: printSizeBack,
-        transform: designTransformBack
-      };
-    }
+      if (selectedDesignBack) {
+        customization.backDesign = {
+          designId: selectedDesignBack.id,
+          designName: selectedDesignBack.name,
+          designUrl: selectedDesignBack.image_url,
+          printSize: printSizeBack,
+          transform: designTransformBack
+        };
+      }
 
-    if (textContentFront.trim()) {
-      customization.frontText = {
-        content: textContentFront,
-        font: textFontFront,
-        color: textColorFront,
-        transform: textTransformFront,
-        styles: textStylesFront
-      };
-    }
+      if (textContentFront.trim()) {
+        customization.frontText = {
+          content: textContentFront,
+          font: textFontFront,
+          color: textColorFront,
+          transform: textTransformFront,
+          styles: textStylesFront
+        };
+      }
 
-    if (textContentBack.trim()) {
-      customization.backText = {
-        content: textContentBack,
-        font: textFontBack,
-        color: textColorBack,
-        transform: textTransformBack,
-        styles: textStylesBack
-      };
-    }
+      if (textContentBack.trim()) {
+        customization.backText = {
+          content: textContentBack,
+          font: textFontBack,
+          color: textColorBack,
+          transform: textTransformBack,
+          styles: textStylesBack
+        };
+      }
 
-    // Only add customization if there's at least one design or text
-    if (Object.keys(customization).length > 0) {
-      cartItem.customization = customization;
+      // Only add customization if there's at least one design or text
+      if (Object.keys(customization).length > 0) {
+        cartItem.customization = customization;
+      }
     }
 
     // Ajouter l'élément au panier (localStorage pour l'instant)
@@ -662,6 +690,53 @@ const ProductDetail = () => {
     localStorage.setItem('cart', JSON.stringify([...existingCart, cartItem]));
     
     toast.success('Produit ajouté au panier !');
+  };
+  
+  // Fonction pour obtenir l'image à afficher en fonction du mode et de la couleur sélectionnée
+  const getProductImage = () => {
+    if (!customizationMode) {
+      return product?.image_url;
+    }
+    
+    if (selectedMockupColor) {
+      return currentViewSide === 'front' 
+        ? selectedMockupColor.front_image_url 
+        : (selectedMockupColor.back_image_url || product?.image_url);
+    } else if (mockup) {
+      return currentViewSide === 'front' 
+        ? mockup.svg_front_url 
+        : (mockup.svg_back_url || product?.image_url);
+    }
+    
+    return product?.image_url;
+  };
+
+  const getCurrentDesign = () => {
+    return currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack;
+  };
+  
+  const getCurrentDesignTransform = () => {
+    return currentViewSide === 'front' ? designTransformFront : designTransformBack;
+  };
+  
+  const getCurrentTextContent = () => {
+    return currentViewSide === 'front' ? textContentFront : textContentBack;
+  };
+  
+  const getCurrentTextTransform = () => {
+    return currentViewSide === 'front' ? textTransformFront : textTransformBack;
+  };
+  
+  const getCurrentTextFont = () => {
+    return currentViewSide === 'front' ? textFontFront : textFontBack;
+  };
+  
+  const getCurrentTextColor = () => {
+    return currentViewSide === 'front' ? textColorFront : textColorBack;
+  };
+  
+  const getCurrentTextStyles = () => {
+    return currentViewSide === 'front' ? textStylesFront : textStylesBack;
   };
 
   if (isLoading || !product) {
@@ -697,41 +772,6 @@ const ProductDetail = () => {
     }
   };
 
-  const getProductImage = () => {
-    if (mockup) {
-      return currentViewSide === 'front' ? mockup.svg_front_url : (mockup.svg_back_url || product.image_url);
-    }
-    return product.image_url;
-  };
-
-  const getCurrentDesign = () => {
-    return currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack;
-  };
-  
-  const getCurrentDesignTransform = () => {
-    return currentViewSide === 'front' ? designTransformFront : designTransformBack;
-  };
-  
-  const getCurrentTextContent = () => {
-    return currentViewSide === 'front' ? textContentFront : textContentBack;
-  };
-  
-  const getCurrentTextTransform = () => {
-    return currentViewSide === 'front' ? textTransformFront : textTransformBack;
-  };
-  
-  const getCurrentTextFont = () => {
-    return currentViewSide === 'front' ? textFontFront : textFontBack;
-  };
-  
-  const getCurrentTextColor = () => {
-    return currentViewSide === 'front' ? textColorFront : textColorBack;
-  };
-  
-  const getCurrentTextStyles = () => {
-    return currentViewSide === 'front' ? textStylesFront : textStylesBack;
-  };
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -760,7 +800,7 @@ const ProductDetail = () => {
               />
 
               {/* Design superposé - maintenant séparé par côté */}
-              {getCurrentDesign() && (
+              {customizationMode && getCurrentDesign() && (
                 <div 
                   className="absolute cursor-move select-none"
                   style={{ 
@@ -783,7 +823,7 @@ const ProductDetail = () => {
               )}
               
               {/* Texte superposé - maintenant séparé par côté */}
-              {getCurrentTextContent() && (
+              {customizationMode && getCurrentTextContent() && (
                 <div 
                   className="absolute cursor-move select-none"
                   style={{ 
@@ -809,7 +849,7 @@ const ProductDetail = () => {
             </div>
 
             {/* Boutons pour basculer entre le recto et le verso déplacés en dessous de l'image */}
-            {mockup && mockup.svg_back_url && (
+            {customizationMode && mockup && mockup.svg_back_url && (
               <div className="flex justify-center mt-4">
                 <ToggleGroup 
                   type="single" 
@@ -901,197 +941,230 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Options de personnalisation - avant les loteries */}
+              {/* Personnalisation accordéon */}
               {product.is_customizable && (
-                <div className="bg-black/20 rounded-lg p-4 mb-6">
-                  <h3 className="text-lg font-semibold mb-4">Personnalisation</h3>
-                  
-                  <Tabs defaultValue="design" onValueChange={setSelectedTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 mb-4">
-                      <TabsTrigger value="design">
-                        <ImageIcon className="h-4 w-4 mr-2" />
-                        Design
-                      </TabsTrigger>
-                      <TabsTrigger value="text">
-                        <Type className="h-4 w-4 mr-2" />
-                        Texte
-                      </TabsTrigger>
-                    </TabsList>
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="customization" className="border-b-0">
+                    <AccordionTrigger 
+                      className="py-3 px-4 bg-gradient-to-r from-winshirt-purple/30 to-winshirt-blue/30 rounded-lg hover:no-underline" 
+                      onClick={() => setCustomizationMode(prevState => !prevState)}
+                    >
+                      <span className="flex items-center">
+                        <PenTool className="mr-2 h-4 w-4" />
+                        <span>{customizationMode ? "Masquer" : "Commencer à"} la personnalisation</span>
+                      </span>
+                    </AccordionTrigger>
                     
-                    <TabsContent value="design" className="space-y-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <h4 className="font-medium">Ajouter un design</h4>
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            onClick={() => setDesignDialogOpen(true)}
-                            disabled={!product.is_customizable}
-                          >
-                            {currentViewSide === 'front' ? 
-                              (selectedDesignFront ? 'Changer' : 'Sélectionner') : 
-                              (selectedDesignBack ? 'Changer' : 'Sélectionner')
-                            }
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={!product.is_customizable}
-                          >
-                            <Upload className="h-4 w-4 mr-2" />
-                            Importer
-                          </Button>
-                          <input
-                            type="file"
-                            ref={fileInputRef}
-                            className="hidden"
-                            accept="image/*"
-                            onChange={handleFileUpload}
-                          />
-                        </div>
-                      </div>
-                      
-                      {getCurrentDesign() && (
-                        <>
-                          <div className="grid grid-cols-2 gap-4 mb-4">
-                            <div className="mb-4">
-                              <Label className="mb-2 block">Taille d'impression</Label>
-                              <Select
-                                value={currentViewSide === 'front' ? printSizeFront : printSizeBack}
-                                onValueChange={(value) => {
-                                  if (currentViewSide === 'front') {
-                                    setPrintSizeFront(value);
-                                  } else {
-                                    setPrintSizeBack(value);
-                                  }
-                                }}
+                    <AccordionContent className="pt-4">
+                      {mockup?.colors && mockup.colors.length > 0 && (
+                        <div className="mb-6">
+                          <h3 className="text-sm font-medium mb-3">Couleur du produit</h3>
+                          <div className="flex flex-wrap gap-3">
+                            {mockup.colors.map((color, index) => (
+                              <div
+                                key={index}
+                                className={`relative flex flex-col items-center gap-1 cursor-pointer`}
+                                onClick={() => setSelectedMockupColor(color)}
                               >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Sélectionner une taille" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectGroup>
-                                    <SelectItem value="A3">A3 (Grand) - 15€</SelectItem>
-                                    <SelectItem value="A4">A4 (Moyen) - 10€</SelectItem>
-                                    <SelectItem value="A5">A5 (Petit) - 8€</SelectItem>
-                                    <SelectItem value="A6">A6 (Très petit) - 5€</SelectItem>
-                                  </SelectGroup>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            
-                            <div className="bg-black/10 rounded p-4 flex items-center justify-center">
-                              <img 
-                                src={getCurrentDesign()!.image_url} 
-                                alt={getCurrentDesign()!.name}
-                                className="max-w-full max-h-[100px] object-contain"
+                                <div 
+                                  className={`w-10 h-10 rounded-full border-2 ${
+                                    selectedMockupColor === color ? 'border-winshirt-purple' : 'border-gray-600'
+                                  }`} 
+                                  style={{ backgroundColor: color.color_code }}
+                                >
+                                  {selectedMockupColor === color && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <Check className="text-white h-4 w-4 drop-shadow-[0_0_2px_rgba(0,0,0,0.5)]" />
+                                    </div>
+                                  )}
+                                </div>
+                                <span className="text-xs truncate max-w-[80px] text-center">{color.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <Tabs defaultValue="design" value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 mb-4">
+                          <TabsTrigger value="design">
+                            <ImageIcon className="h-4 w-4 mr-2" />
+                            Design
+                          </TabsTrigger>
+                          <TabsTrigger value="text">
+                            <Type className="h-4 w-4 mr-2" />
+                            Texte
+                          </TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="design" className="space-y-4">
+                          <div className="flex justify-between items-center mb-4">
+                            <h4 className="font-medium">Ajouter un design</h4>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                onClick={() => setDesignDialogOpen(true)}
+                              >
+                                {currentViewSide === 'front' ? 
+                                  (selectedDesignFront ? 'Changer' : 'Sélectionner') : 
+                                  (selectedDesignBack ? 'Changer' : 'Sélectionner')
+                                }
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => fileInputRef.current?.click()}
+                              >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Importer
+                              </Button>
+                              <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleFileUpload}
                               />
                             </div>
                           </div>
                           
-                          <div className="space-y-4">
-                            <div>
-                              <div className="flex justify-between mb-1">
-                                <Label>Échelle</Label>
-                                <span className="text-sm text-white/60">
-                                  {(getCurrentDesignTransform().scale * 100).toFixed(0)}%
-                                </span>
+                          {/* Paramètres de design après sélection */}
+                          {getCurrentDesign() && (
+                            <div className="space-y-4 p-4 bg-white/5 rounded-lg">
+                              <div>
+                                <Label className="mb-2 block">Taille d'impression</Label>
+                                <div className="flex gap-2">
+                                  {['A3', 'A4', 'A5', 'A6'].map((size) => (
+                                    <Button
+                                      key={size}
+                                      variant="outline"
+                                      size="sm"
+                                      className={`${
+                                        (currentViewSide === 'front' ? printSizeFront : printSizeBack) === size
+                                          ? 'bg-winshirt-purple'
+                                          : ''
+                                      }`}
+                                      onClick={() => {
+                                        if (currentViewSide === 'front') {
+                                          setPrintSizeFront(size);
+                                        } else {
+                                          setPrintSizeBack(size);
+                                        }
+                                      }}
+                                    >
+                                      {size}
+                                    </Button>
+                                  ))}
+                                </div>
                               </div>
-                              <Slider
-                                min={0.01}
-                                max={2}
-                                step={0.01}
-                                value={[getCurrentDesignTransform().scale]}
-                                onValueChange={([value]) => handleDesignTransformChange('scale', value)}
-                              />
-                            </div>
-                            
-                            <div>
-                              <div className="flex justify-between mb-1">
-                                <Label>Rotation</Label>
-                                <span className="text-sm text-white/60">
-                                  {getCurrentDesignTransform().rotation}°
-                                </span>
-                              </div>
-                              <Slider
-                                min={0}
-                                max={359}
-                                step={1}
-                                value={[getCurrentDesignTransform().rotation]}
-                                onValueChange={([value]) => handleDesignTransformChange('rotation', value)}
-                              />
-                            </div>
-                            
-                            <div className="flex justify-center">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => {
-                                  if (currentViewSide === 'front') {
-                                    setDesignTransformFront({
-                                      position: { x: 0, y: 0 },
-                                      scale: 1,
-                                      rotation: 0
-                                    });
-                                  } else {
-                                    setDesignTransformBack({
-                                      position: { x: 0, y: 0 },
-                                      scale: 1,
-                                      rotation: 0
-                                    });
+                              
+                              <div className="space-y-2">
+                                <Label>Échelle ({Math.round(getCurrentDesignTransform().scale * 100)}%)</Label>
+                                <Slider
+                                  value={[getCurrentDesignTransform().scale * 100]}
+                                  min={50}
+                                  max={200}
+                                  step={5}
+                                  onValueChange={(value) =>
+                                    handleDesignTransformChange('scale', value[0] / 100)
                                   }
-                                }}
-                              >
-                                <RotateCw className="h-4 w-4 mr-2" />
-                                Réinitialiser
-                              </Button>
+                                  className="flex-1"
+                                />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label>Rotation ({getCurrentDesignTransform().rotation}°)</Label>
+                                <div className="flex gap-2 items-center">
+                                  <Slider
+                                    value={[getCurrentDesignTransform().rotation + 180]}
+                                    min={0}
+                                    max={360}
+                                    step={5}
+                                    onValueChange={(value) =>
+                                      handleDesignTransformChange('rotation', value[0] - 180)
+                                    }
+                                    className="flex-1"
+                                  />
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() =>
+                                      handleDesignTransformChange('rotation', 0)
+                                    }
+                                  >
+                                    <RotateCw className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </>
-                      )}
-                      
-                      {!getCurrentDesign() && (
-                        <div className="text-center py-8 text-white/60">
-                          <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-40" />
-                          <p>Sélectionnez un design pour le personnaliser</p>
-                        </div>
-                      )}
-                    </TabsContent>
-                    
-                    <TabsContent value="text" className="space-y-4">
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="text-content" className="mb-2 block">Votre texte</Label>
-                          <Input
-                            id="text-content"
-                            placeholder="Entrez votre texte ici"
-                            value={currentViewSide === 'front' ? textContentFront : textContentBack}
-                            onChange={(e) => {
-                              if (currentViewSide === 'front') {
-                                setTextContentFront(e.target.value);
-                              } else {
-                                setTextContentBack(e.target.value);
-                              }
-                            }}
-                            className="border-winshirt-purple focus:border-winshirt-blue"
-                          />
-                        </div>
+                          )}
+                        </TabsContent>
                         
-                        <div className="grid grid-cols-1 gap-4 mb-4">
-                          <div>
-                            <Label className="mb-2 block">Style</Label>
-                            <div className="flex space-x-2">
+                        <TabsContent value="text" className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="textContent">Texte</Label>
+                            <Input
+                              id="textContent"
+                              value={getCurrentTextContent()}
+                              onChange={(e) => {
+                                if (currentViewSide === 'front') {
+                                  setTextContentFront(e.target.value);
+                                } else {
+                                  setTextContentBack(e.target.value);
+                                }
+                              }}
+                              placeholder="Entrez votre texte ici..."
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="textFont">Police</Label>
+                            <Select
+                              value={getCurrentTextFont()}
+                              onValueChange={(value) => {
+                                if (currentViewSide === 'front') {
+                                  setTextFontFront(value);
+                                } else {
+                                  setTextFontBack(value);
+                                }
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Choisir une police" />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-[300px]">
+                                <SelectGroup>
+                                  {googleFonts.map((font) => (
+                                    <SelectItem key={font.value} value={font.value}>
+                                      {font.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>Style de texte</Label>
+                            <div className="flex gap-2">
                               <Button
                                 variant="outline"
                                 size="icon"
-                                className={currentViewSide === 'front' ? 
-                                  (textStylesFront.bold ? "bg-winshirt-purple/20" : "") :
-                                  (textStylesBack.bold ? "bg-winshirt-purple/20" : "")
+                                className={
+                                  getCurrentTextStyles().bold
+                                    ? 'bg-winshirt-purple/40'
+                                    : ''
                                 }
                                 onClick={() => {
                                   if (currentViewSide === 'front') {
-                                    setTextStylesFront({...textStylesFront, bold: !textStylesFront.bold});
+                                    setTextStylesFront({
+                                      ...textStylesFront,
+                                      bold: !textStylesFront.bold,
+                                    });
                                   } else {
-                                    setTextStylesBack({...textStylesBack, bold: !textStylesBack.bold});
+                                    setTextStylesBack({
+                                      ...textStylesBack,
+                                      bold: !textStylesBack.bold,
+                                    });
                                   }
                                 }}
                               >
@@ -1100,15 +1173,22 @@ const ProductDetail = () => {
                               <Button
                                 variant="outline"
                                 size="icon"
-                                className={currentViewSide === 'front' ? 
-                                  (textStylesFront.italic ? "bg-winshirt-purple/20" : "") :
-                                  (textStylesBack.italic ? "bg-winshirt-purple/20" : "")
+                                className={
+                                  getCurrentTextStyles().italic
+                                    ? 'bg-winshirt-purple/40'
+                                    : ''
                                 }
                                 onClick={() => {
                                   if (currentViewSide === 'front') {
-                                    setTextStylesFront({...textStylesFront, italic: !textStylesFront.italic});
+                                    setTextStylesFront({
+                                      ...textStylesFront,
+                                      italic: !textStylesFront.italic,
+                                    });
                                   } else {
-                                    setTextStylesBack({...textStylesBack, italic: !textStylesBack.italic});
+                                    setTextStylesBack({
+                                      ...textStylesBack,
+                                      italic: !textStylesBack.italic,
+                                    });
                                   }
                                 }}
                               >
@@ -1117,15 +1197,22 @@ const ProductDetail = () => {
                               <Button
                                 variant="outline"
                                 size="icon"
-                                className={currentViewSide === 'front' ? 
-                                  (textStylesFront.underline ? "bg-winshirt-purple/20" : "") :
-                                  (textStylesBack.underline ? "bg-winshirt-purple/20" : "")
+                                className={
+                                  getCurrentTextStyles().underline
+                                    ? 'bg-winshirt-purple/40'
+                                    : ''
                                 }
                                 onClick={() => {
                                   if (currentViewSide === 'front') {
-                                    setTextStylesFront({...textStylesFront, underline: !textStylesFront.underline});
+                                    setTextStylesFront({
+                                      ...textStylesFront,
+                                      underline: !textStylesFront.underline,
+                                    });
                                   } else {
-                                    setTextStylesBack({...textStylesBack, underline: !textStylesBack.underline});
+                                    setTextStylesBack({
+                                      ...textStylesBack,
+                                      underline: !textStylesBack.underline,
+                                    });
                                   }
                                 }}
                               >
@@ -1133,68 +1220,39 @@ const ProductDetail = () => {
                               </Button>
                             </div>
                           </div>
-                        </div>
-                        
-                        <div>
-                          <Label className="mb-2 block">Police</Label>
-                          <Select value={getCurrentTextFont()} onValueChange={(value) => {
-                            if (currentViewSide === 'front') {
-                              setTextFontFront(value);
-                            } else {
-                              setTextFontBack(value);
-                            }
-                          }}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Choisir une police" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-[300px]">
-                              <SelectGroup>
-                                {googleFonts.map((font) => (
-                                  <SelectItem
-                                    key={font.value}
-                                    value={font.value}
-                                    style={{ fontFamily: font.value }}
-                                  >
-                                    {font.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        
-                        <div>
-                          <div className="flex justify-between items-center mb-2">
-                            <Label className="block">Couleur</Label>
-                            <div
-                              className="w-6 h-6 rounded cursor-pointer border"
-                              style={{ backgroundColor: currentViewSide === 'front' ? textColorFront : textColorBack }}
-                              onClick={() => {
-                                if (currentViewSide === 'front') {
-                                  setTextShowColorPickerFront(!textShowColorPickerFront);
-                                } else {
-                                  setTextShowColorPickerBack(!textShowColorPickerBack);
-                                }
-                              }}
-                            />
-                          </div>
                           
-                          {((currentViewSide === 'front' && textShowColorPickerFront) || 
-                            (currentViewSide === 'back' && textShowColorPickerBack)) && (
-                            <div className="relative z-10">
-                              <div 
-                                className="fixed inset-0" 
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <Label>Couleur</Label>
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => {
                                   if (currentViewSide === 'front') {
-                                    setTextShowColorPickerFront(false);
-                                  } else {
+                                    setTextShowColorPickerFront(!textShowColorPickerFront);
                                     setTextShowColorPickerBack(false);
+                                  } else {
+                                    setTextShowColorPickerBack(!textShowColorPickerBack);
+                                    setTextShowColorPickerFront(false);
                                   }
                                 }}
-                              />
-                              <div className="absolute right-0 p-2 bg-black/80 rounded-lg shadow-lg">
-                                <HexColorPicker 
-                                  color={currentViewSide === 'front' ? textColorFront : textColorBack}
+                              >
+                                <div
+                                  className="w-4 h-4 mr-2 rounded"
+                                  style={{ backgroundColor: getCurrentTextColor() }}
+                                ></div>
+                                {currentViewSide === 'front' ? 
+                                  (textShowColorPickerFront ? 'Fermer' : 'Choisir') : 
+                                  (textShowColorPickerBack ? 'Fermer' : 'Choisir')
+                                }
+                              </Button>
+                            </div>
+                            
+                            {((currentViewSide === 'front' && textShowColorPickerFront) ||
+                              (currentViewSide === 'back' && textShowColorPickerBack)) && (
+                              <div className="mt-2">
+                                <HexColorPicker
+                                  color={getCurrentTextColor()}
                                   onChange={(color) => {
                                     if (currentViewSide === 'front') {
                                       setTextColorFront(color);
@@ -1202,262 +1260,218 @@ const ProductDetail = () => {
                                       setTextColorBack(color);
                                     }
                                   }}
+                                  className="w-full"
                                 />
                               </div>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="space-y-4">
-                          <div>
-                            <div className="flex justify-between mb-1">
-                              <Label>Échelle</Label>
-                              <span className="text-sm text-white/60">
-                                {(getCurrentTextTransform().scale * 100).toFixed(0)}%
-                              </span>
-                            </div>
+                            )}
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>Échelle ({Math.round(getCurrentTextTransform().scale * 100)}%)</Label>
                             <Slider
-                              min={0.01}
-                              max={3}
-                              step={0.01}
-                              value={[getCurrentTextTransform().scale]}
-                              onValueChange={([value]) => handleTextTransformChange('scale', value)}
+                              value={[getCurrentTextTransform().scale * 100]}
+                              min={50}
+                              max={200}
+                              step={5}
+                              onValueChange={(value) =>
+                                handleTextTransformChange('scale', value[0] / 100)
+                              }
+                              className="flex-1"
                             />
                           </div>
                           
-                          <div>
-                            <div className="flex justify-between mb-1">
-                              <Label>Rotation</Label>
-                              <span className="text-sm text-white/60">
-                                {getCurrentTextTransform().rotation}°
-                              </span>
-                            </div>
-                            <Slider
-                              min={0}
-                              max={359}
-                              step={1}
-                              value={[getCurrentTextTransform().rotation]}
-                              onValueChange={([value]) => handleTextTransformChange('rotation', value)}
-                            />
-                          </div>
-                          
-                          <div className="flex justify-center">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                if (currentViewSide === 'front') {
-                                  setTextTransformFront({
-                                    position: { x: 0, y: 0 },
-                                    scale: 1,
-                                    rotation: 0
-                                  });
-                                } else {
-                                  setTextTransformBack({
-                                    position: { x: 0, y: 0 },
-                                    scale: 1,
-                                    rotation: 0
-                                  });
+                          <div className="space-y-2">
+                            <Label>Rotation ({getCurrentTextTransform().rotation}°)</Label>
+                            <div className="flex gap-2 items-center">
+                              <Slider
+                                value={[getCurrentTextTransform().rotation + 180]}
+                                min={0}
+                                max={360}
+                                step={5}
+                                onValueChange={(value) =>
+                                  handleTextTransformChange('rotation', value[0] - 180)
                                 }
-                              }}
-                            >
-                              <RotateCw className="h-4 w-4 mr-2" />
-                              Réinitialiser
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </div>
-              )}
-              
-              {/* Loteries disponibles - avec liste déroulante par ticket */}
-              {product.tickets_offered > 0 && activeLotteries.length > 0 && (
-                <div className="bg-black/20 rounded-lg p-4 mb-6">
-                  <h3 className="text-lg font-semibold mb-2">
-                    Participer à des loteries ({product.tickets_offered} ticket{product.tickets_offered > 1 ? 's' : ''} inclus)
-                  </h3>
-                  <p className="text-sm text-white/70 mb-4">
-                    Choisissez la/les loterie(s) à laquelle vous souhaitez participer avec ce produit
-                  </p>
-                  
-                  <div className="space-y-3">
-                    {Array.from({ length: Math.min(product.tickets_offered, 10) }).map((_, index) => (
-                      <div key={index} className="mb-4">
-                        <Label className="mb-2 block text-sm">Ticket {index + 1}</Label>
-                        <Select
-                          value={selectedLotteries[index]?.id || ''}
-                          onValueChange={(value) => {
-                            const selectedLottery = activeLotteries.find(l => l.id === value);
-                            if (selectedLottery) {
-                              handleLotteryToggle(selectedLottery, index);
-                            }
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Sélectionner une loterie" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              {activeLotteries.map(lottery => (
-                                <SelectItem 
-                                  key={lottery.id}
-                                  value={lottery.id}
-                                  disabled={selectedLotteryIds.includes(lottery.id) && selectedLotteries[index]?.id !== lottery.id}
-                                >
-                                  {lottery.title}
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Afficher les loteries sélectionnées */}
-                  {selectedLotteries.length > 0 && (
-                    <div className="mt-4 space-y-3">
-                      <h4 className="text-sm font-medium">Loteries sélectionnées:</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {selectedLotteries.map(lottery => (
-                          <div key={lottery.id} className="p-3 rounded-lg border border-white/10 bg-black/10">
-                            <div className="flex items-start space-x-3">
-                              <div className="flex-shrink-0 h-12 w-12 rounded overflow-hidden">
-                                <img 
-                                  src={lottery.image_url} 
-                                  alt={lottery.title} 
-                                  className="h-full w-full object-cover"
-                                />
-                              </div>
-                              <div className="flex-grow">
-                                <p className="font-medium text-sm">{lottery.title}</p>
-                                <div className="flex items-center mt-1 space-x-4 text-xs text-white/80">
-                                  <div className="flex items-center">
-                                    <Target className="h-3 w-3 mr-1" />
-                                    <span>Objectif: {lottery.goal}</span>
-                                  </div>
-                                  <div className="flex items-center">
-                                    <UsersRound className="h-3 w-3 mr-1" />
-                                    <span>Participants: {lottery.participants}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-6 w-6 -mt-1 -mr-1" 
-                                onClick={() => handleLotteryToggle(lottery, selectedLotteries.indexOf(lottery))}
+                                className="flex-1"
+                              />
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() =>
+                                  handleTextTransformChange('rotation', 0)
+                                }
                               >
-                                <ChevronUp className="h-4 w-4" />
+                                <RotateCw className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>
-                        ))}
-                      </div>
+                        </TabsContent>
+                      </Tabs>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              )}
+
+              {/* Dialog pour sélection de design */}
+              <Dialog open={designDialogOpen} onOpenChange={setDesignDialogOpen}>
+                <DialogContent className="bg-black/70 backdrop-blur-lg border-white/20 max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Sélectionner un design</DialogTitle>
+                  </DialogHeader>
+                  
+                  <div className="mt-4">
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {uniqueCategories.map((category) => (
+                        <Button
+                          key={category}
+                          variant="outline"
+                          size="sm"
+                          className={selectedCategoryFilter === category ? "bg-winshirt-purple" : ""}
+                          onClick={() => setSelectedCategoryFilter(category)}
+                        >
+                          {category === 'all' ? 'Tous' : category}
+                        </Button>
+                      ))}
                     </div>
-                  )}
+                    
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {filteredDesigns.map((design) => (
+                        <Card
+                          key={design.id}
+                          className="bg-black/40 overflow-hidden cursor-pointer transition-all hover:scale-[1.02] border-white/10 hover:border-winshirt-purple/30"
+                          onClick={() => handleDesignSelect(design)}
+                        >
+                          <div className="aspect-square overflow-hidden bg-gray-900/40">
+                            <img
+                              src={design.image_url}
+                              alt={design.name}
+                              className="object-contain w-full h-full p-2"
+                            />
+                          </div>
+                          <div className="p-2">
+                            <p className="text-xs truncate">{design.name}</p>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                    
+                    {filteredDesigns.length === 0 && (
+                      <div className="text-center py-8 text-white/50">
+                        {isLoadingDesigns ? "Chargement..." : "Aucun design trouvé dans cette catégorie."}
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* Loteries disponibles */}
+              {product.tickets_offered > 0 && activeLotteries.length > 0 && (
+                <div className="space-y-4 p-4 bg-white/5 border border-white/10 rounded-lg">
+                  <h3 className="flex items-center text-lg font-medium">
+                    <UsersRound className="h-5 w-5 mr-2 text-winshirt-purple" />
+                    Participez à {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}
+                  </h3>
+                  
+                  <p className="text-sm text-white/70">
+                    Ce produit vous permet de participer à {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}.
+                    Sélectionnez {product.tickets_offered > 1 ? 'celles qui vous intéressent' : 'celle qui vous intéresse'}.
+                  </p>
+                  
+                  <div className="space-y-3">
+                    {Array.from({ length: product.tickets_offered }).map((_, index) => (
+                      <div key={index} className="relative">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                              {selectedLotteries[index] ? (
+                                <div className="flex items-center justify-between w-full">
+                                  <div className="flex items-center">
+                                    <Target className="h-4 w-4 mr-2 text-winshirt-purple" />
+                                    <span>{selectedLotteries[index].title}</span>
+                                  </div>
+                                  <Badge variant="secondary" className="ml-2">
+                                    {new Intl.NumberFormat('fr-FR', {
+                                      style: 'currency',
+                                      currency: 'EUR',
+                                      maximumFractionDigits: 0
+                                    }).format(selectedLotteries[index].value)}
+                                  </Badge>
+                                </div>
+                              ) : (
+                                <>
+                                  <Target className="h-4 w-4 mr-2 text-winshirt-purple" />
+                                  <span>Choisir une loterie</span>
+                                </>
+                              )}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-[280px]">
+                            <DropdownMenuLabel>Loteries disponibles</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <div className="max-h-[200px] overflow-y-auto">
+                              {activeLotteries.map((lottery) => {
+                                const isSelected = selectedLotteryIds.includes(lottery.id);
+                                return (
+                                  <DropdownMenuItem
+                                    key={lottery.id}
+                                    className={`flex justify-between cursor-pointer ${isSelected ? 'bg-winshirt-purple/20' : ''}`}
+                                    onClick={() => handleLotteryToggle(lottery, index)}
+                                  >
+                                    <span>{lottery.title}</span>
+                                    {isSelected && <Check className="h-4 w-4" />}
+                                  </DropdownMenuItem>
+                                );
+                              })}
+                            </div>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
-              
-              {/* Quantité et bouton d'ajout au panier */}
-              <div className="flex flex-col space-y-4">
-                <div className="flex items-center">
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={() => handleQuantityChange('decrease')}
-                    disabled={quantity <= 1}
+
+              {/* Quantité et ajout au panier */}
+              <div>
+                <div className="flex flex-wrap gap-4 items-center">
+                  <div className="flex items-center rounded-md overflow-hidden">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleQuantityChange('decrease')}
+                      disabled={quantity <= 1}
+                      className="rounded-r-none"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <div className="w-12 py-2 text-center bg-white/5 border-y border-input">
+                      {quantity}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleQuantityChange('increase')}
+                      className="rounded-l-none"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <Button
+                    size="lg"
+                    className="flex-1 bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90"
+                    onClick={handleAddToCart}
                   >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="mx-4 w-8 text-center">{quantity}</span>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={() => handleQuantityChange('increase')}
-                  >
-                    <Plus className="h-4 w-4" />
+                    <ShoppingCart className="h-5 w-5 mr-2" />
+                    Ajouter au panier
                   </Button>
                 </div>
-                
-                <Button 
-                  className="w-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90"
-                  onClick={handleAddToCart}
-                >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Ajouter au panier - {calculatePrice().toFixed(2)} €
-                </Button>
               </div>
             </div>
           </div>
         </div>
       </main>
-
+      
       <Footer />
-
-      {/* Dialog pour sélectionner un design avec filtre par catégorie */}
-      <Dialog open={designDialogOpen} onOpenChange={setDesignDialogOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Sélectionner un design</DialogTitle>
-          </DialogHeader>
-          
-          {/* Filtres par catégorie */}
-          <div className="flex items-center justify-between pb-4 border-b mb-4">
-            <div className="flex gap-2 items-center">
-              <Filter className="h-4 w-4" />
-              <span className="text-sm font-medium">Filtrer par catégorie:</span>
-            </div>
-            <Select
-              value={selectedCategoryFilter}
-              onValueChange={setSelectedCategoryFilter}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Toutes catégories" />
-              </SelectTrigger>
-              <SelectContent>
-                {uniqueCategories.map(category => (
-                  <SelectItem key={category} value={category}>
-                    {category === 'all' ? 'Toutes catégories' : 
-                     category.charAt(0).toUpperCase() + category.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {/* Liste des designs filtrés */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-            {filteredDesigns.map((design) => (
-              <Card 
-                key={design.id} 
-                className="overflow-hidden cursor-pointer hover:border-winshirt-purple/50 transition-all hover:-translate-y-1"
-                onClick={() => handleDesignSelect(design)}
-              >
-                <div className="aspect-square bg-black/20 flex items-center justify-center p-2">
-                  <img 
-                    src={design.image_url} 
-                    alt={design.name}
-                    className="max-w-full max-h-full object-contain"
-                  />
-                </div>
-                <div className="p-2 bg-black/10">
-                  <p className="truncate text-sm font-medium">{design.name}</p>
-                  <p className="text-xs text-white/60 capitalize">{design.category}</p>
-                </div>
-              </Card>
-            ))}
-          </div>
-          
-          {filteredDesigns.length === 0 && (
-            <div className="text-center py-8 text-white/60">
-              <p>Aucun design trouvé dans cette catégorie</p>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
