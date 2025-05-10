@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -821,4 +822,597 @@ const ProductDetail = () => {
                 </div>
               )}
               
-              {/* Texte superposé - maintenant sépar
+              {/* Texte superposé - maintenant séparé par côté */}
+              {customizationMode && getCurrentTextContent().trim() && (
+                <div 
+                  className="absolute cursor-move select-none"
+                  style={{ 
+                    transform: `translate(${getCurrentTextTransform().position.x}px, ${getCurrentTextTransform().position.y}px) 
+                               rotate(${getCurrentTextTransform().rotation}deg) 
+                               scale(${getCurrentTextTransform().scale})`,
+                    transformOrigin: 'center',
+                    zIndex: 20
+                  }}
+                  onMouseDown={(e) => handleMouseDown(e, true)}
+                  onTouchStart={(e) => handleMouseDown(e, true)}
+                >
+                  <p 
+                    style={{ 
+                      color: getCurrentTextColor(), 
+                      fontFamily: getCurrentTextFont(),
+                      fontWeight: getCurrentTextStyles().bold ? 'bold' : 'normal',
+                      fontStyle: getCurrentTextStyles().italic ? 'italic' : 'normal',
+                      textDecoration: getCurrentTextStyles().underline ? 'underline' : 'none',
+                      fontSize: '24px',
+                      maxWidth: '300px',
+                      textAlign: 'center',
+                      wordBreak: 'break-word',
+                      textShadow: '0 0 2px rgba(0,0,0,0.5)'
+                    }}
+                    className="p-2 rounded"
+                  >
+                    {getCurrentTextContent()}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Contrôles de personnalisation */}
+            {customizationMode && (
+              <div className="mt-4 bg-white/5 p-4 rounded-lg border border-white/10">
+                <div className="flex justify-between mb-4">
+                  <Button
+                    variant="outline" 
+                    size="sm"
+                    className={`${currentViewSide === 'front' ? 'bg-white/20' : ''}`}
+                    onClick={() => setCurrentViewSide('front')}
+                  >
+                    Face avant
+                  </Button>
+                  <Button
+                    variant="outline" 
+                    size="sm"
+                    className={`${currentViewSide === 'back' ? 'bg-white/20' : ''}`}
+                    onClick={() => setCurrentViewSide('back')}
+                  >
+                    Face arrière
+                  </Button>
+                </div>
+
+                <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+                  <TabsList className="grid grid-cols-2">
+                    <TabsTrigger value="design">Design</TabsTrigger>
+                    <TabsTrigger value="text">Texte</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="design" className="mt-4">
+                    {getCurrentDesign() ? (
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <div className="flex flex-col">
+                            <h3 className="font-medium mb-2">Design actuel</h3>
+                            <p className="text-sm text-white/70">{getCurrentDesign()?.name}</p>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setDesignDialogOpen(true)}
+                            >
+                              Changer
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => {
+                                if (currentViewSide === 'front') {
+                                  setSelectedDesignFront(null);
+                                } else {
+                                  setSelectedDesignBack(null);
+                                }
+                              }}
+                            >
+                              Supprimer
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Taille d'impression</h4>
+                          <Select 
+                            value={currentViewSide === 'front' ? printSizeFront : printSizeBack}
+                            onValueChange={(value) => {
+                              if (currentViewSide === 'front') {
+                                setPrintSizeFront(value);
+                              } else {
+                                setPrintSizeBack(value);
+                              }
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sélectionnez une taille" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectItem value="A3">A3 - Grand (+{mockup?.price_a3 || 15}€)</SelectItem>
+                                <SelectItem value="A4">A4 - Moyen (+{mockup?.price_a4 || 10}€)</SelectItem>
+                                <SelectItem value="A5">A5 - Petit (+{mockup?.price_a5 || 8}€)</SelectItem>
+                                <SelectItem value="A6">A6 - Mini (+{mockup?.price_a6 || 5}€)</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Échelle</h4>
+                          <Slider 
+                            value={[getCurrentDesignTransform().scale]}
+                            min={0.2}
+                            max={2}
+                            step={0.1}
+                            onValueChange={(value) => handleDesignTransformChange('scale', value[0])}
+                          />
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Rotation</h4>
+                          <Slider 
+                            value={[getCurrentDesignTransform().rotation]}
+                            min={-180}
+                            max={180}
+                            step={5}
+                            onValueChange={(value) => handleDesignTransformChange('rotation', value[0])}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-6 text-center">
+                        <div className="mb-4 p-2 bg-white/5 rounded-full">
+                          <ImageIcon className="h-8 w-8 text-white/50" />
+                        </div>
+                        <h3 className="font-medium mb-2">Aucun design sélectionné</h3>
+                        <p className="text-sm text-white/70">Ajoutez un design à votre produit</p>
+                        <div className="flex mt-4 gap-2">
+                          <Button
+                            onClick={() => setDesignDialogOpen(true)}
+                            variant="outline"
+                            size="sm"
+                          >
+                            Sélectionner un design
+                          </Button>
+                          <div className="relative">
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/*"
+                              onChange={handleFileUpload}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                            >
+                              <Upload className="h-4 w-4 mr-1" />
+                              Télécharger
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </TabsContent>
+                  
+                  <TabsContent value="text" className="mt-4">
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="text-content">Texte</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input 
+                            id="text-content"
+                            value={getCurrentTextContent()}
+                            onChange={(e) => {
+                              if (currentViewSide === 'front') {
+                                setTextContentFront(e.target.value);
+                              } else {
+                                setTextContentBack(e.target.value);
+                              }
+                            }}
+                            placeholder="Saisissez votre texte..."
+                          />
+                        </div>
+                      </div>
+                      
+                      {(currentViewSide === 'front' ? textContentFront : textContentBack) ? (
+                        <>
+                          <div>
+                            <Label htmlFor="font-select">Police</Label>
+                            <Select 
+                              value={getCurrentTextFont()}
+                              onValueChange={(value) => {
+                                if (currentViewSide === 'front') {
+                                  setTextFontFront(value);
+                                } else {
+                                  setTextFontBack(value);
+                                }
+                              }}
+                            >
+                              <SelectTrigger id="font-select">
+                                <SelectValue placeholder="Choisir une police" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {googleFonts.map(font => (
+                                  <SelectItem key={font.value} value={font.value}>
+                                    {font.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <Label>Style du texte</Label>
+                            <div className="flex gap-2 mt-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className={`${getCurrentTextStyles().bold ? 'bg-white/20' : ''}`}
+                                onClick={() => {
+                                  if (currentViewSide === 'front') {
+                                    setTextStylesFront(prev => ({ ...prev, bold: !prev.bold }));
+                                  } else {
+                                    setTextStylesBack(prev => ({ ...prev, bold: !prev.bold }));
+                                  }
+                                }}
+                              >
+                                <Bold className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className={`${getCurrentTextStyles().italic ? 'bg-white/20' : ''}`}
+                                onClick={() => {
+                                  if (currentViewSide === 'front') {
+                                    setTextStylesFront(prev => ({ ...prev, italic: !prev.italic }));
+                                  } else {
+                                    setTextStylesBack(prev => ({ ...prev, italic: !prev.italic }));
+                                  }
+                                }}
+                              >
+                                <Italic className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className={`${getCurrentTextStyles().underline ? 'bg-white/20' : ''}`}
+                                onClick={() => {
+                                  if (currentViewSide === 'front') {
+                                    setTextStylesFront(prev => ({ ...prev, underline: !prev.underline }));
+                                  } else {
+                                    setTextStylesBack(prev => ({ ...prev, underline: !prev.underline }));
+                                  }
+                                }}
+                              >
+                                <Underline className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="flex justify-between items-center">
+                              <Label>Couleur</Label>
+                              <div 
+                                className="w-8 h-8 rounded-full border cursor-pointer"
+                                style={{ backgroundColor: getCurrentTextColor() }}
+                                onClick={() => {
+                                  if (currentViewSide === 'front') {
+                                    setTextShowColorPickerFront(prev => !prev);
+                                    setTextShowColorPickerBack(false);
+                                  } else {
+                                    setTextShowColorPickerBack(prev => !prev);
+                                    setTextShowColorPickerFront(false);
+                                  }
+                                }}
+                              />
+                            </div>
+                            
+                            {(currentViewSide === 'front' ? textShowColorPickerFront : textShowColorPickerBack) && (
+                              <div className="mt-2 p-2 bg-white/5 rounded-lg border border-white/10">
+                                <HexColorPicker
+                                  color={getCurrentTextColor()}
+                                  onChange={(color) => {
+                                    if (currentViewSide === 'front') {
+                                      setTextColorFront(color);
+                                    } else {
+                                      setTextColorBack(color);
+                                    }
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          <div>
+                            <h4 className="text-sm font-medium mb-2">Échelle</h4>
+                            <Slider 
+                              value={[getCurrentTextTransform().scale]}
+                              min={0.5}
+                              max={2}
+                              step={0.1}
+                              onValueChange={(value) => handleTextTransformChange('scale', value[0])}
+                            />
+                          </div>
+
+                          <div>
+                            <h4 className="text-sm font-medium mb-2">Rotation</h4>
+                            <Slider 
+                              value={[getCurrentTextTransform().rotation]}
+                              min={-180}
+                              max={180}
+                              step={5}
+                              onValueChange={(value) => handleTextTransformChange('rotation', value[0])}
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-4 text-center">
+                          <div className="mb-2 p-2 bg-white/5 rounded-full">
+                            <Type className="h-6 w-6 text-white/50" />
+                          </div>
+                          <p className="text-sm text-white/70">
+                            Ajoutez du texte à votre design en utilisant le champ ci-dessus
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
+
+            {/* Choix des couleurs */}
+            {customizationMode && mockup?.colors && mockup.colors.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-sm font-medium mb-2">Couleur du produit</h3>
+                <div className="flex flex-wrap gap-2">
+                  {mockup.colors.map(color => (
+                    <div 
+                      key={color.name} 
+                      className={`w-8 h-8 rounded-full cursor-pointer border-2 ${selectedMockupColor?.name === color.name ? 'border-winshirt-purple' : 'border-transparent'}`}
+                      style={{ backgroundColor: color.color_code }}
+                      onClick={() => setSelectedMockupColor(color)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Informations du produit */}
+          <div>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold mb-1">{product.name}</h1>
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="outline">{product.category}</Badge>
+                {product.tickets_offered && product.tickets_offered > 0 && (
+                  <Badge variant="secondary">
+                    <Target className="h-3 w-3 mr-1" />
+                    {product.tickets_offered} {product.tickets_offered > 1 ? 'tickets' : 'ticket'}
+                  </Badge>
+                )}
+              </div>
+
+              <p className="text-lg font-semibold mb-2">{calculatePrice()}€</p>
+              
+              <div className="text-sm text-white/70">
+                <p>{product.description}</p>
+              </div>
+            </div>
+
+            {/* Options de personnalisation */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold">Personnalisation</h2>
+                <Switch 
+                  checked={customizationMode}
+                  onCheckedChange={setCustomizationMode}
+                />
+              </div>
+              
+              <div className="text-sm text-white/70 mb-4">
+                {customizationMode ? 
+                  "Personnalisez votre produit en ajoutant des designs et du texte." : 
+                  "Activez la personnalisation pour ajouter vos designs et textes."}
+              </div>
+            </div>
+
+            {/* Options de couleurs */}
+            {product.available_colors && product.available_colors.length > 0 && (
+              <div className="mb-6">
+                <h2 className="font-semibold mb-2">Couleur</h2>
+                <div className="flex flex-wrap gap-2">
+                  {product.available_colors.map(color => (
+                    <div 
+                      key={color}
+                      className={`w-8 h-8 rounded-full cursor-pointer border-2 ${selectedColor === color ? 'border-winshirt-purple' : 'border-transparent'}`}
+                      style={{ backgroundColor: getColorHexCode(color) }}
+                      onClick={() => setSelectedColor(color)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Options de tailles */}
+            {product.available_sizes && product.available_sizes.length > 0 && (
+              <div className="mb-6">
+                <h2 className="font-semibold mb-2">Taille</h2>
+                <div className="flex flex-wrap gap-2">
+                  {product.available_sizes.map(size => (
+                    <Button
+                      key={size}
+                      variant="outline"
+                      className={`min-w-[40px] ${selectedSize === size ? 'bg-white/20' : ''}`}
+                      onClick={() => setSelectedSize(size)}
+                    >
+                      {size}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sélection de loteries */}
+            {product.tickets_offered && product.tickets_offered > 0 && activeLotteries.length > 0 && (
+              <div className="mb-6">
+                <h2 className="font-semibold mb-2">
+                  Loteries ({selectedLotteries.length}/{product.tickets_offered})
+                </h2>
+                
+                <div className="bg-white/5 rounded-lg border border-white/10 divide-y divide-white/10">
+                  {Array.from({ length: product.tickets_offered }).map((_, index) => {
+                    // Trouver si une loterie est déjà sélectionnée à cet index
+                    const selectedLotteryForSlot = selectedLotteries[index];
+                    
+                    return (
+                      <div key={index} className="p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <UsersRound className="h-5 w-5 mr-2 text-winshirt-purple" />
+                            <span>
+                              Ticket #{index + 1}
+                            </span>
+                          </div>
+                          
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                {selectedLotteryForSlot ? (
+                                  <>
+                                    <span className="truncate max-w-[150px]">
+                                      {selectedLotteryForSlot.title}
+                                    </span>
+                                    <ChevronDown className="ml-1 h-4 w-4" />
+                                  </>
+                                ) : (
+                                  <>
+                                    Sélectionner
+                                    <ChevronDown className="ml-1 h-4 w-4" />
+                                  </>
+                                )}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                              <DropdownMenuLabel>Loteries disponibles</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              {activeLotteries.map(lottery => (
+                                <DropdownMenuItem 
+                                  key={lottery.id}
+                                  className="flex items-center justify-between cursor-pointer"
+                                  onClick={() => handleLotteryToggle(lottery, index)}
+                                >
+                                  <div className="flex flex-col">
+                                    <span>{lottery.title}</span>
+                                    <span className="text-xs text-white/50">
+                                      {lottery.value}€ - {lottery.participants} participants
+                                    </span>
+                                  </div>
+                                  {selectedLotteryForSlot?.id === lottery.id && (
+                                    <Check className="h-4 w-4" />
+                                  )}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Quantité et ajout au panier */}
+            <div className="mb-6">
+              <h2 className="font-semibold mb-2">Quantité</h2>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => handleQuantityChange('decrease')}
+                  disabled={quantity <= 1}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                
+                <span className="w-8 text-center">{quantity}</span>
+                
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => handleQuantityChange('increase')}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            <Button 
+              onClick={handleAddToCart}
+              className="w-full"
+            >
+              <ShoppingCart className="h-5 w-5 mr-2" />
+              Ajouter au panier - {calculatePrice()}€
+            </Button>
+          </div>
+        </div>
+      </main>
+
+      {/* Dialog pour sélectionner un design */}
+      <Dialog open={designDialogOpen} onOpenChange={setDesignDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Sélectionnez un design</DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex flex-wrap gap-2 mb-4">
+            {uniqueCategories.map(category => (
+              <Button
+                key={category}
+                variant="outline"
+                size="sm"
+                className={selectedCategoryFilter === category ? 'bg-white/20' : ''}
+                onClick={() => setSelectedCategoryFilter(category)}
+              >
+                {category === 'all' ? 'Tous' : category}
+              </Button>
+            ))}
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {filteredDesigns.map(design => (
+              <Card 
+                key={design.id} 
+                className="overflow-hidden cursor-pointer hover:ring-2 hover:ring-white/20 transition-all"
+                onClick={() => handleDesignSelect(design)}
+              >
+                <div className="aspect-square bg-black/30 flex items-center justify-center p-2">
+                  <img 
+                    src={design.image_url} 
+                    alt={design.name}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+                <div className="p-2 text-center">
+                  <p className="text-sm truncate">{design.name}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default ProductDetail;
