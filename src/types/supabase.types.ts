@@ -65,8 +65,8 @@ export interface Product {
   mockup_id?: string;
   created_at?: string;
   updated_at?: string;
-  is_new?: boolean;
-  details?: string;
+  is_new?: boolean; // Add is_new property
+  details?: string; // Add details property
 }
 
 // Lottery
