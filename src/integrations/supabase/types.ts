@@ -126,6 +126,7 @@ export type Database = {
       mockups: {
         Row: {
           category: string
+          colors: Json | null
           created_at: string | null
           id: string
           is_active: boolean
@@ -143,6 +144,7 @@ export type Database = {
         }
         Insert: {
           category: string
+          colors?: Json | null
           created_at?: string | null
           id?: string
           is_active?: boolean
@@ -160,6 +162,7 @@ export type Database = {
         }
         Update: {
           category?: string
+          colors?: Json | null
           created_at?: string | null
           id?: string
           is_active?: boolean

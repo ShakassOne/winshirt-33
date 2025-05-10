@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { X, Plus, Trash } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Mockup, PrintArea } from '@/types/supabase.types';
@@ -254,6 +255,12 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
           <DialogTitle className="text-2xl font-bold">
             {initialData ? 'Modifier le mockup' : 'Nouveau mockup'}
           </DialogTitle>
+          <DialogDescription className="text-white/70">
+            {initialData 
+              ? 'Modifiez les détails, les zones d\'impression et les variantes de couleur du mockup.'
+              : 'Créez un nouveau mockup avec ses zones d\'impression et ses variantes de couleur.'
+            }
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 py-4">
