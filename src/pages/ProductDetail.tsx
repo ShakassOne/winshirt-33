@@ -823,7 +823,7 @@ const ProductDetail = () => {
               )}
               
               {/* Texte superposé - maintenant séparé par côté */}
-              {customizationMode && getCurrentTextContent().trim() && (
+              {customizationMode && getCurrentTextContent() && (
                 <div 
                   className="absolute cursor-move select-none"
                   style={{ 
@@ -831,201 +831,294 @@ const ProductDetail = () => {
                                rotate(${getCurrentTextTransform().rotation}deg) 
                                scale(${getCurrentTextTransform().scale})`,
                     transformOrigin: 'center',
+                    fontFamily: getCurrentTextFont(),
+                    color: getCurrentTextColor(),
+                    fontWeight: getCurrentTextStyles().bold ? 'bold' : 'normal',
+                    fontStyle: getCurrentTextStyles().italic ? 'italic' : 'normal',
+                    textDecoration: getCurrentTextStyles().underline ? 'underline' : 'none',
+                    fontSize: '24px',
+                    textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
                     zIndex: 20
                   }}
                   onMouseDown={(e) => handleMouseDown(e, true)}
                   onTouchStart={(e) => handleMouseDown(e, true)}
                 >
-                  <p 
-                    style={{ 
-                      color: getCurrentTextColor(), 
-                      fontFamily: getCurrentTextFont(),
-                      fontWeight: getCurrentTextStyles().bold ? 'bold' : 'normal',
-                      fontStyle: getCurrentTextStyles().italic ? 'italic' : 'normal',
-                      textDecoration: getCurrentTextStyles().underline ? 'underline' : 'none',
-                      fontSize: '24px',
-                      maxWidth: '300px',
-                      textAlign: 'center',
-                      wordBreak: 'break-word',
-                      textShadow: '0 0 2px rgba(0,0,0,0.5)'
-                    }}
-                    className="p-2 rounded"
-                  >
-                    {getCurrentTextContent()}
-                  </p>
+                  {getCurrentTextContent()}
                 </div>
               )}
             </div>
 
-            {/* Contrôles de personnalisation */}
-            {customizationMode && (
-              <div className="mt-4 bg-white/5 p-4 rounded-lg border border-white/10">
-                <div className="flex justify-between mb-4">
-                  <Button
-                    variant="outline" 
-                    size="sm"
-                    className={`${currentViewSide === 'front' ? 'bg-white/20' : ''}`}
-                    onClick={() => setCurrentViewSide('front')}
+            {/* Boutons pour basculer entre le recto et le verso déplacés en dessous de l'image */}
+            {customizationMode && mockup && mockup.svg_back_url && (
+              <div className="flex justify-center mt-4">
+                <ToggleGroup 
+                  type="single" 
+                  value={currentViewSide}
+                  onValueChange={(value) => value && setCurrentViewSide(value as 'front' | 'back')}
+                  className="bg-black/40 backdrop-blur-sm rounded-lg"
+                >
+                  <ToggleGroupItem 
+                    value="front" 
+                    className="text-sm data-[state=on]:bg-winshirt-purple/70"
+                    aria-label="Voir le recto"
                   >
-                    Face avant
-                  </Button>
-                  <Button
-                    variant="outline" 
-                    size="sm"
-                    className={`${currentViewSide === 'back' ? 'bg-white/20' : ''}`}
-                    onClick={() => setCurrentViewSide('back')}
+                    Avant
+                  </ToggleGroupItem>
+                  <ToggleGroupItem 
+                    value="back" 
+                    className="text-sm data-[state=on]:bg-winshirt-purple/70"
+                    aria-label="Voir le verso"
                   >
-                    Face arrière
-                  </Button>
-                </div>
+                    Arrière
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+            )}
+          </div>
 
-                <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-                  <TabsList className="grid grid-cols-2">
-                    <TabsTrigger value="design">Design</TabsTrigger>
-                    <TabsTrigger value="text">Texte</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="design" className="mt-4">
-                    {getCurrentDesign() ? (
-                      <div className="space-y-4">
-                        <div className="flex justify-between">
-                          <div className="flex flex-col">
-                            <h3 className="font-medium mb-2">Design actuel</h3>
-                            <p className="text-sm text-white/70">{getCurrentDesign()?.name}</p>
+          {/* Informations du produit et options */}
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">{product.name}</h1>
+            
+            <div className="flex items-center gap-2 mb-4">
+              <Badge className="bg-gradient-to-r from-winshirt-purple to-winshirt-blue text-white">
+                {product.category}
+              </Badge>
+              
+              {product.is_customizable && (
+                <Badge variant="outline" className="bg-white/5">
+                  Personnalisable
+                </Badge>
+              )}
+            </div>
+            
+            <p className="text-white/70 mb-6">{product.description}</p>
+            
+            <div className="text-2xl font-bold mb-6">
+              {calculatePrice().toFixed(2)} €
+            </div>
+
+            {/* Options du produit */}
+            <div className="space-y-6">
+              {/* Couleurs disponibles */}
+              {product.available_colors && product.available_colors.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Couleur</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.available_colors.map((color) => (
+                      <div
+                        key={color}
+                        className={`w-8 h-8 rounded-full cursor-pointer border-2 ${
+                          selectedColor === color ? 'border-winshirt-purple' : 'border-transparent'
+                        }`}
+                        style={{ backgroundColor: getColorHexCode(color) }}
+                        onClick={() => setSelectedColor(color)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tailles disponibles */}
+              {product.available_sizes && product.available_sizes.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Taille</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.available_sizes.map((size) => (
+                      <div
+                        key={size}
+                        className={`px-3 py-1 rounded cursor-pointer ${
+                          selectedSize === size
+                            ? 'bg-winshirt-purple text-white'
+                            : 'bg-black/20 hover:bg-black/30'
+                        }`}
+                        onClick={() => setSelectedSize(size)}
+                      >
+                        {size}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Personnalisation accordéon */}
+              {product.is_customizable && (
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="customization" className="border-b-0">
+                    <AccordionTrigger 
+                      className="py-3 px-4 bg-gradient-to-r from-winshirt-purple/30 to-winshirt-blue/30 rounded-lg hover:no-underline" 
+                      onClick={() => setCustomizationMode(prevState => !prevState)}
+                    >
+                      <span className="flex items-center">
+                        <PenTool className="mr-2 h-4 w-4" />
+                        <span>{customizationMode ? "Masquer" : "Commencer à"} la personnalisation</span>
+                      </span>
+                    </AccordionTrigger>
+                    
+                    <AccordionContent className="pt-4">
+                      {mockup?.colors && mockup.colors.length > 0 && (
+                        <div className="mb-6">
+                          <h3 className="text-sm font-medium mb-3">Couleur du produit</h3>
+                          <div className="flex flex-wrap gap-3">
+                            {mockup.colors.map((color, index) => (
+                              <div
+                                key={index}
+                                className={`relative flex flex-col items-center gap-1 cursor-pointer`}
+                                onClick={() => setSelectedMockupColor(color)}
+                              >
+                                <div 
+                                  className={`w-10 h-10 rounded-full border-2 ${
+                                    selectedMockupColor === color ? 'border-winshirt-purple' : 'border-gray-600'
+                                  }`} 
+                                  style={{ backgroundColor: color.color_code }}
+                                >
+                                  {selectedMockupColor === color && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <Check className="text-white h-4 w-4 drop-shadow-[0_0_2px_rgba(0,0,0,0.5)]" />
+                                    </div>
+                                  )}
+                                </div>
+                                <span className="text-xs truncate max-w-[80px] text-center">{color.name}</span>
+                              </div>
+                            ))}
                           </div>
-                          <div className="flex space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setDesignDialogOpen(true)}
-                            >
-                              Changer
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => {
+                        </div>
+                      )}
+                      
+                      <Tabs defaultValue="design" value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 mb-4">
+                          <TabsTrigger value="design">
+                            <ImageIcon className="h-4 w-4 mr-2" />
+                            Design
+                          </TabsTrigger>
+                          <TabsTrigger value="text">
+                            <Type className="h-4 w-4 mr-2" />
+                            Texte
+                          </TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="design" className="space-y-4">
+                          <div className="flex justify-between items-center mb-4">
+                            <h4 className="font-medium">Ajouter un design</h4>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                onClick={() => setDesignDialogOpen(true)}
+                              >
+                                {currentViewSide === 'front' ? 
+                                  (selectedDesignFront ? 'Changer' : 'Sélectionner') : 
+                                  (selectedDesignBack ? 'Changer' : 'Sélectionner')
+                                }
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => fileInputRef.current?.click()}
+                              >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Importer
+                              </Button>
+                              <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleFileUpload}
+                              />
+                            </div>
+                          </div>
+                          
+                          {/* Paramètres de design après sélection */}
+                          {getCurrentDesign() && (
+                            <div className="space-y-4 p-4 bg-white/5 rounded-lg">
+                              <div>
+                                <Label className="mb-2 block">Taille d'impression</Label>
+                                <div className="flex gap-2">
+                                  {['A3', 'A4', 'A5', 'A6'].map((size) => (
+                                    <Button
+                                      key={size}
+                                      variant="outline"
+                                      size="sm"
+                                      className={`${
+                                        (currentViewSide === 'front' ? printSizeFront : printSizeBack) === size
+                                          ? 'bg-winshirt-purple'
+                                          : ''
+                                      }`}
+                                      onClick={() => {
+                                        if (currentViewSide === 'front') {
+                                          setPrintSizeFront(size);
+                                        } else {
+                                          setPrintSizeBack(size);
+                                        }
+                                      }}
+                                    >
+                                      {size}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label>Échelle ({Math.round(getCurrentDesignTransform().scale * 100)}%)</Label>
+                                <Slider
+                                  value={[getCurrentDesignTransform().scale * 100]}
+                                  min={50}
+                                  max={200}
+                                  step={5}
+                                  onValueChange={(value) =>
+                                    handleDesignTransformChange('scale', value[0] / 100)
+                                  }
+                                  className="flex-1"
+                                />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label>Rotation ({getCurrentDesignTransform().rotation}°)</Label>
+                                <div className="flex gap-2 items-center">
+                                  <Slider
+                                    value={[getCurrentDesignTransform().rotation + 180]}
+                                    min={0}
+                                    max={360}
+                                    step={5}
+                                    onValueChange={(value) =>
+                                      handleDesignTransformChange('rotation', value[0] - 180)
+                                    }
+                                    className="flex-1"
+                                  />
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() =>
+                                      handleDesignTransformChange('rotation', 0)
+                                    }
+                                  >
+                                    <RotateCw className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </TabsContent>
+                        
+                        <TabsContent value="text" className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="textContent">Texte</Label>
+                            <Input
+                              id="textContent"
+                              value={getCurrentTextContent()}
+                              onChange={(e) => {
                                 if (currentViewSide === 'front') {
-                                  setSelectedDesignFront(null);
+                                  setTextContentFront(e.target.value);
                                 } else {
-                                  setSelectedDesignBack(null);
+                                  setTextContentBack(e.target.value);
                                 }
                               }}
-                            >
-                              Supprimer
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div>
-                          <h4 className="text-sm font-medium mb-2">Taille d'impression</h4>
-                          <Select 
-                            value={currentViewSide === 'front' ? printSizeFront : printSizeBack}
-                            onValueChange={(value) => {
-                              if (currentViewSide === 'front') {
-                                setPrintSizeFront(value);
-                              } else {
-                                setPrintSizeBack(value);
-                              }
-                            }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Sélectionnez une taille" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectItem value="A3">A3 - Grand (+{mockup?.price_a3 || 15}€)</SelectItem>
-                                <SelectItem value="A4">A4 - Moyen (+{mockup?.price_a4 || 10}€)</SelectItem>
-                                <SelectItem value="A5">A5 - Petit (+{mockup?.price_a5 || 8}€)</SelectItem>
-                                <SelectItem value="A6">A6 - Mini (+{mockup?.price_a6 || 5}€)</SelectItem>
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <h4 className="text-sm font-medium mb-2">Échelle</h4>
-                          <Slider 
-                            value={[getCurrentDesignTransform().scale]}
-                            min={0.2}
-                            max={2}
-                            step={0.1}
-                            onValueChange={(value) => handleDesignTransformChange('scale', value[0])}
-                          />
-                        </div>
-
-                        <div>
-                          <h4 className="text-sm font-medium mb-2">Rotation</h4>
-                          <Slider 
-                            value={[getCurrentDesignTransform().rotation]}
-                            min={-180}
-                            max={180}
-                            step={5}
-                            onValueChange={(value) => handleDesignTransformChange('rotation', value[0])}
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-6 text-center">
-                        <div className="mb-4 p-2 bg-white/5 rounded-full">
-                          <ImageIcon className="h-8 w-8 text-white/50" />
-                        </div>
-                        <h3 className="font-medium mb-2">Aucun design sélectionné</h3>
-                        <p className="text-sm text-white/70">Ajoutez un design à votre produit</p>
-                        <div className="flex mt-4 gap-2">
-                          <Button
-                            onClick={() => setDesignDialogOpen(true)}
-                            variant="outline"
-                            size="sm"
-                          >
-                            Sélectionner un design
-                          </Button>
-                          <div className="relative">
-                            <input
-                              ref={fileInputRef}
-                              type="file"
-                              accept="image/*"
-                              onChange={handleFileUpload}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              placeholder="Entrez votre texte ici..."
                             />
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                            >
-                              <Upload className="h-4 w-4 mr-1" />
-                              Télécharger
-                            </Button>
                           </div>
-                        </div>
-                      </div>
-                    )}
-                  </TabsContent>
-                  
-                  <TabsContent value="text" className="mt-4">
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="text-content">Texte</Label>
-                        <div className="flex gap-2 mt-1">
-                          <Input 
-                            id="text-content"
-                            value={getCurrentTextContent()}
-                            onChange={(e) => {
-                              if (currentViewSide === 'front') {
-                                setTextContentFront(e.target.value);
-                              } else {
-                                setTextContentBack(e.target.value);
-                              }
-                            }}
-                            placeholder="Saisissez votre texte..."
-                          />
-                        </div>
-                      </div>
-                      
-                      {(currentViewSide === 'front' ? textContentFront : textContentBack) ? (
-                        <>
-                          <div>
-                            <Label htmlFor="font-select">Police</Label>
-                            <Select 
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="textFont">Police</Label>
+                            <Select
                               value={getCurrentTextFont()}
                               onValueChange={(value) => {
                                 if (currentViewSide === 'front') {
@@ -1035,31 +1128,43 @@ const ProductDetail = () => {
                                 }
                               }}
                             >
-                              <SelectTrigger id="font-select">
+                              <SelectTrigger>
                                 <SelectValue placeholder="Choisir une police" />
                               </SelectTrigger>
-                              <SelectContent>
-                                {googleFonts.map(font => (
-                                  <SelectItem key={font.value} value={font.value}>
-                                    {font.label}
-                                  </SelectItem>
-                                ))}
+                              <SelectContent className="max-h-[300px]">
+                                <SelectGroup>
+                                  {googleFonts.map((font) => (
+                                    <SelectItem key={font.value} value={font.value}>
+                                      {font.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
                               </SelectContent>
                             </Select>
                           </div>
-
-                          <div>
-                            <Label>Style du texte</Label>
-                            <div className="flex gap-2 mt-1">
+                          
+                          <div className="space-y-2">
+                            <Label>Style de texte</Label>
+                            <div className="flex gap-2">
                               <Button
                                 variant="outline"
-                                size="sm"
-                                className={`${getCurrentTextStyles().bold ? 'bg-white/20' : ''}`}
+                                size="icon"
+                                className={
+                                  getCurrentTextStyles().bold
+                                    ? 'bg-winshirt-purple/40'
+                                    : ''
+                                }
                                 onClick={() => {
                                   if (currentViewSide === 'front') {
-                                    setTextStylesFront(prev => ({ ...prev, bold: !prev.bold }));
+                                    setTextStylesFront({
+                                      ...textStylesFront,
+                                      bold: !textStylesFront.bold,
+                                    });
                                   } else {
-                                    setTextStylesBack(prev => ({ ...prev, bold: !prev.bold }));
+                                    setTextStylesBack({
+                                      ...textStylesBack,
+                                      bold: !textStylesBack.bold,
+                                    });
                                   }
                                 }}
                               >
@@ -1067,13 +1172,23 @@ const ProductDetail = () => {
                               </Button>
                               <Button
                                 variant="outline"
-                                size="sm"
-                                className={`${getCurrentTextStyles().italic ? 'bg-white/20' : ''}`}
+                                size="icon"
+                                className={
+                                  getCurrentTextStyles().italic
+                                    ? 'bg-winshirt-purple/40'
+                                    : ''
+                                }
                                 onClick={() => {
                                   if (currentViewSide === 'front') {
-                                    setTextStylesFront(prev => ({ ...prev, italic: !prev.italic }));
+                                    setTextStylesFront({
+                                      ...textStylesFront,
+                                      italic: !textStylesFront.italic,
+                                    });
                                   } else {
-                                    setTextStylesBack(prev => ({ ...prev, italic: !prev.italic }));
+                                    setTextStylesBack({
+                                      ...textStylesBack,
+                                      italic: !textStylesBack.italic,
+                                    });
                                   }
                                 }}
                               >
@@ -1081,13 +1196,23 @@ const ProductDetail = () => {
                               </Button>
                               <Button
                                 variant="outline"
-                                size="sm"
-                                className={`${getCurrentTextStyles().underline ? 'bg-white/20' : ''}`}
+                                size="icon"
+                                className={
+                                  getCurrentTextStyles().underline
+                                    ? 'bg-winshirt-purple/40'
+                                    : ''
+                                }
                                 onClick={() => {
                                   if (currentViewSide === 'front') {
-                                    setTextStylesFront(prev => ({ ...prev, underline: !prev.underline }));
+                                    setTextStylesFront({
+                                      ...textStylesFront,
+                                      underline: !textStylesFront.underline,
+                                    });
                                   } else {
-                                    setTextStylesBack(prev => ({ ...prev, underline: !prev.underline }));
+                                    setTextStylesBack({
+                                      ...textStylesBack,
+                                      underline: !textStylesBack.underline,
+                                    });
                                   }
                                 }}
                               >
@@ -1095,27 +1220,37 @@ const ProductDetail = () => {
                               </Button>
                             </div>
                           </div>
-
-                          <div>
+                          
+                          <div className="space-y-2">
                             <div className="flex justify-between items-center">
                               <Label>Couleur</Label>
-                              <div 
-                                className="w-8 h-8 rounded-full border cursor-pointer"
-                                style={{ backgroundColor: getCurrentTextColor() }}
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => {
                                   if (currentViewSide === 'front') {
-                                    setTextShowColorPickerFront(prev => !prev);
+                                    setTextShowColorPickerFront(!textShowColorPickerFront);
                                     setTextShowColorPickerBack(false);
                                   } else {
-                                    setTextShowColorPickerBack(prev => !prev);
+                                    setTextShowColorPickerBack(!textShowColorPickerBack);
                                     setTextShowColorPickerFront(false);
                                   }
                                 }}
-                              />
+                              >
+                                <div
+                                  className="w-4 h-4 mr-2 rounded"
+                                  style={{ backgroundColor: getCurrentTextColor() }}
+                                ></div>
+                                {currentViewSide === 'front' ? 
+                                  (textShowColorPickerFront ? 'Fermer' : 'Choisir') : 
+                                  (textShowColorPickerBack ? 'Fermer' : 'Choisir')
+                                }
+                              </Button>
                             </div>
                             
-                            {(currentViewSide === 'front' ? textShowColorPickerFront : textShowColorPickerBack) && (
-                              <div className="mt-2 p-2 bg-white/5 rounded-lg border border-white/10">
+                            {((currentViewSide === 'front' && textShowColorPickerFront) ||
+                              (currentViewSide === 'back' && textShowColorPickerBack)) && (
+                              <div className="mt-2">
                                 <HexColorPicker
                                   color={getCurrentTextColor()}
                                   onChange={(color) => {
@@ -1125,291 +1260,217 @@ const ProductDetail = () => {
                                       setTextColorBack(color);
                                     }
                                   }}
+                                  className="w-full"
                                 />
                               </div>
                             )}
                           </div>
-
-                          <div>
-                            <h4 className="text-sm font-medium mb-2">Échelle</h4>
-                            <Slider 
-                              value={[getCurrentTextTransform().scale]}
-                              min={0.5}
-                              max={2}
-                              step={0.1}
-                              onValueChange={(value) => handleTextTransformChange('scale', value[0])}
-                            />
-                          </div>
-
-                          <div>
-                            <h4 className="text-sm font-medium mb-2">Rotation</h4>
-                            <Slider 
-                              value={[getCurrentTextTransform().rotation]}
-                              min={-180}
-                              max={180}
+                          
+                          <div className="space-y-2">
+                            <Label>Échelle ({Math.round(getCurrentTextTransform().scale * 100)}%)</Label>
+                            <Slider
+                              value={[getCurrentTextTransform().scale * 100]}
+                              min={50}
+                              max={200}
                               step={5}
-                              onValueChange={(value) => handleTextTransformChange('rotation', value[0])}
+                              onValueChange={(value) =>
+                                handleTextTransformChange('scale', value[0] / 100)
+                              }
+                              className="flex-1"
                             />
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center py-4 text-center">
-                          <div className="mb-2 p-2 bg-white/5 rounded-full">
-                            <Type className="h-6 w-6 text-white/50" />
-                          </div>
-                          <p className="text-sm text-white/70">
-                            Ajoutez du texte à votre design en utilisant le champ ci-dessus
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            )}
-
-            {/* Choix des couleurs */}
-            {customizationMode && mockup?.colors && mockup.colors.length > 0 && (
-              <div className="mt-4">
-                <h3 className="text-sm font-medium mb-2">Couleur du produit</h3>
-                <div className="flex flex-wrap gap-2">
-                  {mockup.colors.map(color => (
-                    <div 
-                      key={color.name} 
-                      className={`w-8 h-8 rounded-full cursor-pointer border-2 ${selectedMockupColor?.name === color.name ? 'border-winshirt-purple' : 'border-transparent'}`}
-                      style={{ backgroundColor: color.color_code }}
-                      onClick={() => setSelectedMockupColor(color)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Informations du produit */}
-          <div>
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold mb-1">{product.name}</h1>
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline">{product.category}</Badge>
-                {product.tickets_offered && product.tickets_offered > 0 && (
-                  <Badge variant="secondary">
-                    <Target className="h-3 w-3 mr-1" />
-                    {product.tickets_offered} {product.tickets_offered > 1 ? 'tickets' : 'ticket'}
-                  </Badge>
-                )}
-              </div>
-
-              <p className="text-lg font-semibold mb-2">{calculatePrice()}€</p>
-              
-              <div className="text-sm text-white/70">
-                <p>{product.description}</p>
-              </div>
-            </div>
-
-            {/* Options de personnalisation */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">Personnalisation</h2>
-                <Switch 
-                  checked={customizationMode}
-                  onCheckedChange={setCustomizationMode}
-                />
-              </div>
-              
-              <div className="text-sm text-white/70 mb-4">
-                {customizationMode ? 
-                  "Personnalisez votre produit en ajoutant des designs et du texte." : 
-                  "Activez la personnalisation pour ajouter vos designs et textes."}
-              </div>
-            </div>
-
-            {/* Options de couleurs */}
-            {product.available_colors && product.available_colors.length > 0 && (
-              <div className="mb-6">
-                <h2 className="font-semibold mb-2">Couleur</h2>
-                <div className="flex flex-wrap gap-2">
-                  {product.available_colors.map(color => (
-                    <div 
-                      key={color}
-                      className={`w-8 h-8 rounded-full cursor-pointer border-2 ${selectedColor === color ? 'border-winshirt-purple' : 'border-transparent'}`}
-                      style={{ backgroundColor: getColorHexCode(color) }}
-                      onClick={() => setSelectedColor(color)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Options de tailles */}
-            {product.available_sizes && product.available_sizes.length > 0 && (
-              <div className="mb-6">
-                <h2 className="font-semibold mb-2">Taille</h2>
-                <div className="flex flex-wrap gap-2">
-                  {product.available_sizes.map(size => (
-                    <Button
-                      key={size}
-                      variant="outline"
-                      className={`min-w-[40px] ${selectedSize === size ? 'bg-white/20' : ''}`}
-                      onClick={() => setSelectedSize(size)}
-                    >
-                      {size}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Sélection de loteries */}
-            {product.tickets_offered && product.tickets_offered > 0 && activeLotteries.length > 0 && (
-              <div className="mb-6">
-                <h2 className="font-semibold mb-2">
-                  Loteries ({selectedLotteries.length}/{product.tickets_offered})
-                </h2>
-                
-                <div className="bg-white/5 rounded-lg border border-white/10 divide-y divide-white/10">
-                  {Array.from({ length: product.tickets_offered }).map((_, index) => {
-                    // Trouver si une loterie est déjà sélectionnée à cet index
-                    const selectedLotteryForSlot = selectedLotteries[index];
-                    
-                    return (
-                      <div key={index} className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <UsersRound className="h-5 w-5 mr-2 text-winshirt-purple" />
-                            <span>
-                              Ticket #{index + 1}
-                            </span>
                           </div>
                           
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                {selectedLotteryForSlot ? (
-                                  <>
-                                    <span className="truncate max-w-[150px]">
-                                      {selectedLotteryForSlot.title}
-                                    </span>
-                                    <ChevronDown className="ml-1 h-4 w-4" />
-                                  </>
-                                ) : (
-                                  <>
-                                    Sélectionner
-                                    <ChevronDown className="ml-1 h-4 w-4" />
-                                  </>
-                                )}
+                          <div className="space-y-2">
+                            <Label>Rotation ({getCurrentTextTransform().rotation}°)</Label>
+                            <div className="flex gap-2 items-center">
+                              <Slider
+                                value={[getCurrentTextTransform().rotation + 180]}
+                                min={0}
+                                max={360}
+                                step={5}
+                                onValueChange={(value) =>
+                                  handleTextTransformChange('rotation', value[0] - 180)
+                                }
+                                className="flex-1"
+                              />
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() =>
+                                  handleTextTransformChange('rotation', 0)
+                                }
+                              >
+                                <RotateCw className="h-4 w-4" />
                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                              <DropdownMenuLabel>Loteries disponibles</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              {activeLotteries.map(lottery => (
-                                <DropdownMenuItem 
-                                  key={lottery.id}
-                                  className="flex items-center justify-between cursor-pointer"
-                                  onClick={() => handleLotteryToggle(lottery, index)}
-                                >
-                                  <div className="flex flex-col">
-                                    <span>{lottery.title}</span>
-                                    <span className="text-xs text-white/50">
-                                      {lottery.value}€ - {lottery.participants} participants
-                                    </span>
-                                  </div>
-                                  {selectedLotteryForSlot?.id === lottery.id && (
-                                    <Check className="h-4 w-4" />
-                                  )}
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
+                            </div>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              )}
+
+              {/* Dialog pour sélection de design */}
+              <Dialog open={designDialogOpen} onOpenChange={setDesignDialogOpen}>
+                <DialogContent className="bg-black/70 backdrop-blur-lg border-white/20 max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Sélectionner un design</DialogTitle>
+                  </DialogHeader>
+                  
+                  <div className="mt-4">
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {uniqueCategories.map((category) => (
+                        <Button
+                          key={category}
+                          variant="outline"
+                          size="sm"
+                          className={selectedCategoryFilter === category ? "bg-winshirt-purple" : ""}
+                          onClick={() => setSelectedCategoryFilter(category)}
+                        >
+                          {category === 'all' ? 'Tous' : category}
+                        </Button>
+                      ))}
+                    </div>
+                    
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {filteredDesigns.map((design) => (
+                        <Card
+                          key={design.id}
+                          className="bg-black/40 overflow-hidden cursor-pointer transition-all hover:scale-[1.02] border-white/10 hover:border-winshirt-purple/30"
+                          onClick={() => handleDesignSelect(design)}
+                        >
+                          <div className="aspect-square overflow-hidden bg-gray-900/40">
+                            <img
+                              src={design.image_url}
+                              alt={design.name}
+                              className="object-contain w-full h-full p-2"
+                            />
+                          </div>
+                          <div className="p-2">
+                            <p className="text-xs truncate">{design.name}</p>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                    
+                    {filteredDesigns.length === 0 && (
+                      <div className="text-center py-8 text-white/50">
+                        {isLoadingDesigns ? "Chargement..." : "Aucun design trouvé dans cette catégorie."}
                       </div>
-                    );
-                  })}
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* Loteries disponibles */}
+              {product.tickets_offered > 0 && activeLotteries.length > 0 && (
+                <div className="space-y-4 p-4 bg-white/5 border border-white/10 rounded-lg">
+                  <h3 className="flex items-center text-lg font-medium">
+                    <UsersRound className="h-5 w-5 mr-2 text-winshirt-purple" />
+                    Participez à {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}
+                  </h3>
+                  
+                  <p className="text-sm text-white/70">
+                    Ce produit vous permet de participer à {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}.
+                    Sélectionnez {product.tickets_offered > 1 ? 'celles qui vous intéressent' : 'celle qui vous intéresse'}.
+                  </p>
+                  
+                  <div className="space-y-3">
+                    {Array.from({ length: product.tickets_offered }).map((_, index) => (
+                      <div key={index} className="relative">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                              {selectedLotteries[index] ? (
+                                <div className="flex items-center justify-between w-full">
+                                  <div className="flex items-center">
+                                    <Target className="h-4 w-4 mr-2 text-winshirt-purple" />
+                                    <span>{selectedLotteries[index].title}</span>
+                                  </div>
+                                  <Badge variant="secondary" className="ml-2">
+                                    {new Intl.NumberFormat('fr-FR', {
+                                      style: 'currency',
+                                      currency: 'EUR',
+                                      maximumFractionDigits: 0
+                                    }).format(selectedLotteries[index].value)}
+                                  </Badge>
+                                </div>
+                              ) : (
+                                <>
+                                  <Target className="h-4 w-4 mr-2 text-winshirt-purple" />
+                                  <span>Choisir une loterie</span>
+                                </>
+                              )}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-[280px]">
+                            <DropdownMenuLabel>Loteries disponibles</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <div className="max-h-[200px] overflow-y-auto">
+                              {activeLotteries.map((lottery) => {
+                                const isSelected = selectedLotteryIds.includes(lottery.id);
+                                return (
+                                  <DropdownMenuItem
+                                    key={lottery.id}
+                                    className={`flex justify-between cursor-pointer ${isSelected ? 'bg-winshirt-purple/20' : ''}`}
+                                    onClick={() => handleLotteryToggle(lottery, index)}
+                                  >
+                                    <span>{lottery.title}</span>
+                                    {isSelected && <Check className="h-4 w-4" />}
+                                  </DropdownMenuItem>
+                                );
+                              })}
+                            </div>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Quantité et ajout au panier */}
+              <div>
+                <div className="flex flex-wrap gap-4 items-center">
+                  <div className="flex items-center rounded-md overflow-hidden">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleQuantityChange('decrease')}
+                      disabled={quantity <= 1}
+                      className="rounded-r-none"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <div className="w-12 py-2 text-center bg-white/5 border-y border-input">
+                      {quantity}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleQuantityChange('increase')}
+                      className="rounded-l-none"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <Button
+                    size="lg"
+                    className="flex-1 bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90"
+                    onClick={handleAddToCart}
+                  >
+                    <ShoppingCart className="h-5 w-5 mr-2" />
+                    Ajouter au panier
+                  </Button>
                 </div>
               </div>
-            )}
-
-            {/* Quantité et ajout au panier */}
-            <div className="mb-6">
-              <h2 className="font-semibold mb-2">Quantité</h2>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={() => handleQuantityChange('decrease')}
-                  disabled={quantity <= 1}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                
-                <span className="w-8 text-center">{quantity}</span>
-                
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={() => handleQuantityChange('increase')}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
-            
-            <Button 
-              onClick={handleAddToCart}
-              className="w-full"
-            >
-              <ShoppingCart className="h-5 w-5 mr-2" />
-              Ajouter au panier - {calculatePrice()}€
-            </Button>
           </div>
         </div>
       </main>
-
-      {/* Dialog pour sélectionner un design */}
-      <Dialog open={designDialogOpen} onOpenChange={setDesignDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Sélectionnez un design</DialogTitle>
-          </DialogHeader>
-          
-          <div className="flex flex-wrap gap-2 mb-4">
-            {uniqueCategories.map(category => (
-              <Button
-                key={category}
-                variant="outline"
-                size="sm"
-                className={selectedCategoryFilter === category ? 'bg-white/20' : ''}
-                onClick={() => setSelectedCategoryFilter(category)}
-              >
-                {category === 'all' ? 'Tous' : category}
-              </Button>
-            ))}
-          </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {filteredDesigns.map(design => (
-              <Card 
-                key={design.id} 
-                className="overflow-hidden cursor-pointer hover:ring-2 hover:ring-white/20 transition-all"
-                onClick={() => handleDesignSelect(design)}
-              >
-                <div className="aspect-square bg-black/30 flex items-center justify-center p-2">
-                  <img 
-                    src={design.image_url} 
-                    alt={design.name}
-                    className="max-w-full max-h-full object-contain"
-                  />
-                </div>
-                <div className="p-2 text-center">
-                  <p className="text-sm truncate">{design.name}</p>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-
+      
       <Footer />
     </div>
   );
