@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Product, Design, Mockup, Lottery } from '@/types/supabase.types';
+import { Product, Design, Mockup, Lottery, PrintArea } from '@/types/supabase.types';
 import { useDesignState } from './useDesignState';
 import { useTextState } from './useTextState';
 import { useLotteryState } from './useLotteryState';
@@ -74,7 +74,26 @@ export const useProductDetail = () => {
         throw error;
       }
 
-      return data as Mockup;
+      // Process the data to ensure print_areas and colors are properly typed
+      const processedData: Mockup = {
+        ...data as any,
+        print_areas: Array.isArray(data.print_areas) 
+          ? data.print_areas.map((area: any) => ({
+              id: area.id || '',
+              name: area.name || '',
+              x: area.x || area.position_x || 0,
+              y: area.y || area.position_y || 0,
+              width: area.width || 0,
+              height: area.height || 0,
+              side: area.side || 'front',
+              position_x: area.position_x || area.x || 0,
+              position_y: area.position_y || area.y || 0
+            } as PrintArea))
+          : [],
+        colors: Array.isArray(data.colors) ? data.colors : []
+      };
+
+      return processedData;
     },
     enabled: !!product?.mockup_id && !!product?.is_customizable,
   });
