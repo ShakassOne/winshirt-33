@@ -97,25 +97,56 @@ export interface CartItem {
   size?: string | null;
   image_url: string;
   customization?: {
-    designId: string;
-    designName?: string;
-    designUrl: string;
-    printPosition: 'front' | 'back';
-    printSize: string;
-    transform?: {
-      position: { x: number; y: number };
-      scale: number;
-      rotation: number;
-    };
-    text?: {
-      content: string;
-      font: string;
-      color: string;
-      printPosition: 'front' | 'back';
-      transform?: {
+    frontDesign?: {
+      designId: string;
+      designName: string;
+      designUrl: string;
+      printSize: string;
+      transform: {
         position: { x: number; y: number };
         scale: number;
         rotation: number;
+      };
+    };
+    backDesign?: {
+      designId: string;
+      designName: string;
+      designUrl: string;
+      printSize: string;
+      transform: {
+        position: { x: number; y: number };
+        scale: number;
+        rotation: number;
+      };
+    };
+    frontText?: {
+      content: string;
+      font: string;
+      color: string;
+      transform: {
+        position: { x: number; y: number };
+        scale: number;
+        rotation: number;
+      };
+      styles: {
+        bold: boolean;
+        italic: boolean;
+        underline: boolean;
+      };
+    };
+    backText?: {
+      content: string;
+      font: string;
+      color: string;
+      transform: {
+        position: { x: number; y: number };
+        scale: number;
+        rotation: number;
+      };
+      styles: {
+        bold: boolean;
+        italic: boolean;
+        underline: boolean;
       };
     };
   };
