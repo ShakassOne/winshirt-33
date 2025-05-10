@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
@@ -13,6 +14,10 @@ import MockupForm from '@/components/admin/MockupForm';
 import { useToast } from '@/hooks/use-toast';
 import { Mockup } from '@/types/supabase.types';
 import { UploadButton } from '@/components/ui/upload-button';
+
+interface NormalizedMockup extends Mockup {
+  print_areas: any[];
+}
 
 const MockupsAdmin = () => {
   const { toast } = useToast();
@@ -51,7 +56,7 @@ const MockupsAdmin = () => {
       return {
         ...mockup,
         print_areas: printAreas
-      };
+      } as NormalizedMockup;
     });
   }, [mockupsData]);
 
@@ -63,7 +68,7 @@ const MockupsAdmin = () => {
     });
   };
 
-  const handleEditMockup = (mockup: Mockup) => {
+  const handleEditMockup = (mockup: NormalizedMockup) => {
     setActiveMockup(mockup);
     setShowMockupForm(true);
   };
@@ -74,7 +79,7 @@ const MockupsAdmin = () => {
   };
 
   const filteredMockups = React.useMemo(() => {
-    return mockups.filter((mockup: any) => {
+    return mockups.filter((mockup: NormalizedMockup) => {
       const matchesSearch = 
         mockup.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         mockup.category.toLowerCase().includes(searchTerm.toLowerCase());
@@ -86,7 +91,7 @@ const MockupsAdmin = () => {
   }, [mockups, searchTerm, activeCategory]);
 
   const categories = React.useMemo(() => {
-    return mockups ? [...new Set(mockups.map((mockup: any) => mockup.category))] : [];
+    return mockups ? [...new Set(mockups.map((mockup: NormalizedMockup) => mockup.category))] : [];
   }, [mockups]);
 
   return (
@@ -184,7 +189,7 @@ const MockupsAdmin = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/10">
-                      {filteredMockups?.map((mockup: Mockup) => (
+                      {filteredMockups?.map((mockup: NormalizedMockup) => (
                         <tr key={mockup.id} className="hover:bg-white/5">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="w-12 h-12 rounded overflow-hidden bg-white/10 flex items-center justify-center">

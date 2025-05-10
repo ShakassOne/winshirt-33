@@ -10,7 +10,7 @@ export interface Design {
   updated_at?: string;
 }
 
-// Mockup
+// PrintArea
 export interface PrintArea {
   id: string;
   name: string;
@@ -24,6 +24,10 @@ export interface PrintArea {
   position_y?: number;
 }
 
+// Import the MockupColor type from mockup.types to resolve circular dependency
+import { MockupColor } from '@/types/mockup.types';
+
+// Mockup
 export interface Mockup {
   id: string;
   name: string;

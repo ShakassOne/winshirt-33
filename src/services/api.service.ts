@@ -205,14 +205,14 @@ export const fetchMockupById = async (id: string): Promise<MockupWithColors> => 
 
   // Ensure colors property is an array
   let colors: MockupColor[] = [];
-  if (data.colors) {
-    try {
+  try {
+    if (data.colors) {
       colors = Array.isArray(data.colors) 
         ? data.colors 
         : (typeof data.colors === 'string' ? JSON.parse(data.colors) : []);
-    } catch (e) {
-      console.error("Error parsing mockup colors:", e);
     }
+  } catch (e) {
+    console.error("Error parsing mockup colors:", e);
   }
   
   return {

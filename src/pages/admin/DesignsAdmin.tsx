@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -30,9 +31,10 @@ const DesignsAdmin = () => {
     queryFn: fetchDesigns,
   });
 
-  const createDesignMutation = useMutation(createDesign, {
+  const createDesignMutation = useMutation({
+    mutationFn: (designData: any) => createDesign(designData),
     onSuccess: () => {
-      queryClient.invalidateQueries(['designs']);
+      queryClient.invalidateQueries({ queryKey: ['designs'] });
       closeDialog();
       toast({
         title: "Succès",
@@ -49,31 +51,31 @@ const DesignsAdmin = () => {
     }
   });
 
-  const updateDesignMutation = useMutation(
-    (designData: { id: string; data: any }) => updateDesign(designData.id, designData.data),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['designs']);
-        closeDialog();
-        toast({
-          title: "Succès",
-          description: "Le design a été mis à jour avec succès",
-          variant: "default"
-        });
-      },
-      onError: () => {
-        toast({
-          title: "Erreur",
-          description: "Une erreur s'est produite lors de la mise à jour du design",
-          variant: "destructive"
-        });
-      }
-    }
-  );
-
-  const deleteDesignMutation = useMutation(deleteDesign, {
+  const updateDesignMutation = useMutation({
+    mutationFn: (designData: { id: string; data: any }) => 
+      updateDesign(designData.id, designData.data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['designs']);
+      queryClient.invalidateQueries({ queryKey: ['designs'] });
+      closeDialog();
+      toast({
+        title: "Succès",
+        description: "Le design a été mis à jour avec succès",
+        variant: "default"
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de la mise à jour du design",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const deleteDesignMutation = useMutation({
+    mutationFn: (id: string) => deleteDesign(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['designs'] });
       toast({
         title: "Succès",
         description: "Le design a été supprimé avec succès",
