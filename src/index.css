@@ -127,6 +127,3 @@
     color: transparent;
   }
 }
-.grid grid-cols-1 lg:grid-cols-2 gap-8{
-  padding-top: 5%;
-}
