@@ -1,4 +1,3 @@
-
 // Design
 export interface Design {
   id: string;
@@ -18,7 +17,10 @@ export interface PrintArea {
   y: number;
   width: number;
   height: number;
-  side: 'front' | 'back';  // Added this property
+  side: 'front' | 'back';
+  // Add position_x and position_y as aliases for x and y
+  position_x?: number;
+  position_y?: number;
 }
 
 export interface Mockup {
@@ -37,6 +39,7 @@ export interface Mockup {
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
+  colors?: any[]; // Add colors property for mockup color variants
 }
 
 // Product

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
@@ -22,10 +21,39 @@ const MockupsAdmin = () => {
   const [activeMockup, setActiveMockup] = useState<Mockup | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   
-  const { data: mockups, isLoading, error, refetch } = useQuery({
+  const { data: mockupsData, isLoading, error, refetch } = useQuery({
     queryKey: ['adminMockups'],
     queryFn: fetchAllMockups,
   });
+
+  // Normalize mockups data to ensure compatible types
+  const mockups = React.useMemo(() => {
+    if (!mockupsData) return [];
+    
+    return mockupsData.map((mockup: any) => {
+      // Ensure print_areas is an array
+      let printAreas = [];
+      if (mockup.print_areas) {
+        try {
+          if (Array.isArray(mockup.print_areas)) {
+            printAreas = mockup.print_areas;
+          } else if (typeof mockup.print_areas === 'string') {
+            const parsed = JSON.parse(mockup.print_areas);
+            printAreas = Array.isArray(parsed) ? parsed : [];
+          } else if (typeof mockup.print_areas === 'object') {
+            printAreas = [mockup.print_areas];
+          }
+        } catch (e) {
+          console.error("Error parsing print areas", e);
+        }
+      }
+      
+      return {
+        ...mockup,
+        print_areas: printAreas
+      };
+    });
+  }, [mockupsData]);
 
   const handleCreateSuccess = () => {
     refetch();
@@ -45,17 +73,21 @@ const MockupsAdmin = () => {
     setShowMockupForm(false);
   };
 
-  const filteredMockups = mockups?.filter((mockup: Mockup) => {
-    const matchesSearch = 
-      mockup.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      mockup.category.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = !activeCategory || mockup.category === activeCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
+  const filteredMockups = React.useMemo(() => {
+    return mockups.filter((mockup: any) => {
+      const matchesSearch = 
+        mockup.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        mockup.category.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesCategory = !activeCategory || mockup.category === activeCategory;
+      
+      return matchesSearch && matchesCategory;
+    });
+  }, [mockups, searchTerm, activeCategory]);
 
-  const categories = mockups ? [...new Set(mockups.map((mockup: Mockup) => mockup.category))] : [];
+  const categories = React.useMemo(() => {
+    return mockups ? [...new Set(mockups.map((mockup: any) => mockup.category))] : [];
+  }, [mockups]);
 
   return (
     <div className="flex flex-col min-h-screen">

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Product, Lottery, Mockup } from "@/types/supabase.types";
 import { MockupWithColors, MockupColor } from "@/types/mockup.types";
@@ -326,7 +325,7 @@ export const deleteDesign = async (id: string) => {
 };
 
 // File upload
-export const uploadFileToStorage = async (file: File, folder: string = "uploads") => {
+export const uploadFileToStorage = async (file: File, folder: string = "uploads"): Promise<string> => {
   const fileExt = file.name.split('.').pop();
   const fileName = `${Math.random().toString(36).substring(2, 15)}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
   const filePath = `${folder}/${fileName}`;
