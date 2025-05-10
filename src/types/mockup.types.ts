@@ -24,4 +24,5 @@ export interface PrintArea {
 
 export interface MockupWithColors extends BaseMockup {
   colors: MockupColor[];
+  has_back_side?: boolean; // Add this property
 }

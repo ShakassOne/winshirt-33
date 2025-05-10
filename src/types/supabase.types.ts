@@ -64,6 +64,8 @@ export interface Product {
   mockup_id?: string;
   created_at?: string;
   updated_at?: string;
+  is_new?: boolean; // Add this property
+  details?: string; // Add this property
 }
 
 // Lottery
@@ -80,6 +82,8 @@ export interface Lottery {
   is_featured?: boolean;
   created_at?: string;
   updated_at?: string;
+  color?: string; // Add this property
+  name?: string; // Add this property for compatibility
 }
 
 // Cart Item
