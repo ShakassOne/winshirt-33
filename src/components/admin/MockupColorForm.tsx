@@ -10,7 +10,6 @@ interface MockupColor {
   id?: string;
   name: string;
   color_code: string;
-  hex_code: string;  // Added hex_code property
   front_image_url: string;
   back_image_url: string;
 }
@@ -78,13 +77,6 @@ const MockupColorForm = ({
           </div>
         </div>
       </div>
-      
-      {/* Add hex_code field with same value as color_code for now */}
-      <input 
-        type="hidden" 
-        value={color.hex_code || color.color_code} 
-        onChange={(e) => handleChange('hex_code', e.target.value)} 
-      />
       
       <div className="mt-4">
         <Label htmlFor={`front-image-${index}`}>Image recto</Label>

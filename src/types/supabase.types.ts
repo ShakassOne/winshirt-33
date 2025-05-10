@@ -1,3 +1,4 @@
+
 // Design
 export interface Design {
   id: string;
@@ -25,8 +26,6 @@ export interface PrintArea {
 
 // Import the MockupColor type from mockup.types to resolve circular dependency
 import { MockupColor } from '@/types/mockup.types';
-// Re-export MockupColor as a type to solve the import error with isolatedModules
-export type { MockupColor };
 
 // Mockup
 export interface Mockup {
@@ -46,7 +45,6 @@ export interface Mockup {
   created_at?: string;
   updated_at?: string;
   colors?: MockupColor[]; // Add colors property for mockup color variants
-  has_back_side?: boolean; // Adding has_back_side property
 }
 
 // Product
@@ -66,8 +64,6 @@ export interface Product {
   mockup_id?: string;
   created_at?: string;
   updated_at?: string;
-  is_new?: boolean; // Added this property to fix the error
-  details?: string; // Add details property
 }
 
 // Lottery
@@ -84,8 +80,6 @@ export interface Lottery {
   is_featured?: boolean;
   created_at?: string;
   updated_at?: string;
-  color?: string;
-  name?: string; // Added this property for compatibility
 }
 
 // Cart Item
@@ -98,56 +92,25 @@ export interface CartItem {
   size?: string | null;
   image_url: string;
   customization?: {
-    frontDesign?: {
-      designId: string;
-      designName: string;
-      designUrl: string;
-      printSize: string;
-      transform: {
-        position: { x: number; y: number };
-        scale: number;
-        rotation: number;
-      };
+    designId: string;
+    designName?: string;
+    designUrl: string;
+    printPosition: 'front' | 'back';
+    printSize: string;
+    transform?: {
+      position: { x: number; y: number };
+      scale: number;
+      rotation: number;
     };
-    backDesign?: {
-      designId: string;
-      designName: string;
-      designUrl: string;
-      printSize: string;
-      transform: {
-        position: { x: number; y: number };
-        scale: number;
-        rotation: number;
-      };
-    };
-    frontText?: {
+    text?: {
       content: string;
       font: string;
       color: string;
-      transform: {
+      printPosition: 'front' | 'back';
+      transform?: {
         position: { x: number; y: number };
         scale: number;
         rotation: number;
-      };
-      styles: {
-        bold: boolean;
-        italic: boolean;
-        underline: boolean;
-      };
-    };
-    backText?: {
-      content: string;
-      font: string;
-      color: string;
-      transform: {
-        position: { x: number; y: number };
-        scale: number;
-        rotation: number;
-      };
-      styles: {
-        bold: boolean;
-        italic: boolean;
-        underline: boolean;
       };
     };
   };

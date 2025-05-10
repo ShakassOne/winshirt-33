@@ -1,6 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Product, Lottery, Mockup } from "@/types/supabase.types";
-import { MockupColor, MockupWithColors } from "@/types/mockup.types";
+import { MockupWithColors, MockupColor } from "@/types/mockup.types";
 
 // Products
 export const fetchAllProducts = async () => {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -156,7 +157,6 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
     const newColor: MockupColor = {
       name: `Couleur ${mockupColors.length + 1}`,
       color_code: '#000000',
-      hex_code: '#000000', // Add hex_code with same value as color_code
       front_image_url: '',
       back_image_url: ''
     };
