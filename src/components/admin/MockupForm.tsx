@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { createMockup, updateMockup } from '@/services/api.service';
+import { createMockup, updateMockup, uploadFileToStorage } from '@/services/api.service';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { X, Plus, Trash } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Mockup, PrintArea } from '@/types/supabase.types';
+import { UploadButton } from '@/components/ui/upload-button';
 
 const mockupSchema = z.object({
   name: z.string().min(3, { message: 'Le nom doit contenir au moins 3 caractères' }),
@@ -76,7 +77,24 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
       setValue('text_price_back', initialData.text_price_back);
       setValue('is_active', initialData.is_active);
 
-      setPrintAreas(initialData.print_areas || []);
+      // Ensure print_areas is always an array
+      let areas: PrintArea[] = [];
+      if (initialData.print_areas) {
+        if (Array.isArray(initialData.print_areas)) {
+          areas = initialData.print_areas;
+        } else if (typeof initialData.print_areas === 'string') {
+          try {
+            areas = JSON.parse(initialData.print_areas);
+            if (!Array.isArray(areas)) {
+              areas = [];
+            }
+          } catch (e) {
+            console.error("Error parsing print_areas JSON:", e);
+            areas = [];
+          }
+        }
+      }
+      setPrintAreas(areas);
     } else {
       reset(defaultValues);
       setPrintAreas([]);
@@ -105,6 +123,14 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
     setPrintAreas(areas => areas.map(area => 
       area.id === areaId ? { ...area, [field]: value } : area
     ));
+  };
+
+  const handleSvgFrontUpload = (url: string) => {
+    setValue('svg_front_url', url);
+  };
+
+  const handleSvgBackUpload = (url: string) => {
+    setValue('svg_back_url', url);
   };
 
   const onSubmit = async (data: MockupFormValues) => {
@@ -196,13 +222,37 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
               
               <div className="space-y-2">
                 <Label htmlFor="svg_front_url">URL SVG avant</Label>
-                <Input id="svg_front_url" {...register('svg_front_url')} />
+                <div className="flex gap-2">
+                  <Input 
+                    id="svg_front_url" 
+                    className="flex-1"
+                    {...register('svg_front_url')} 
+                  />
+                  <UploadButton 
+                    onUpload={handleSvgFrontUpload} 
+                    size="icon"
+                    targetFolder="mockups"
+                    acceptTypes=".svg,.png,.jpg,.jpeg"
+                  />
+                </div>
                 {errors.svg_front_url && <p className="text-red-500 text-sm">{errors.svg_front_url.message}</p>}
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="svg_back_url">URL SVG arrière (optionnel)</Label>
-                <Input id="svg_back_url" {...register('svg_back_url')} />
+                <div className="flex gap-2">
+                  <Input 
+                    id="svg_back_url" 
+                    className="flex-1"
+                    {...register('svg_back_url')} 
+                  />
+                  <UploadButton 
+                    onUpload={handleSvgBackUpload} 
+                    size="icon"
+                    targetFolder="mockups"
+                    acceptTypes=".svg,.png,.jpg,.jpeg"
+                  />
+                </div>
                 {errors.svg_back_url && <p className="text-red-500 text-sm">{errors.svg_back_url.message}</p>}
               </div>
               
