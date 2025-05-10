@@ -1,4 +1,3 @@
-
 // Design
 export interface Design {
   id: string;
@@ -67,7 +66,7 @@ export interface Product {
   mockup_id?: string;
   created_at?: string;
   updated_at?: string;
-  is_new?: boolean; // Add is_new property
+  is_new?: boolean; // Added this property to fix the error
   details?: string; // Add details property
 }
 
