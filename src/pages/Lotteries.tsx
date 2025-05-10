@@ -7,7 +7,7 @@ import { fetchAllLotteries } from '@/services/api.service';
 import { useQuery } from '@tanstack/react-query';
 import LotteryCard from '@/components/ui/LotteryCard';
 import { Button } from '@/components/ui/button';
-import { Search, Calendar, Users, Clock } from 'lucide-react';
+import { Search, Calendar, Users, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { Badge } from '@/components/ui/badge';
 
@@ -43,13 +43,9 @@ const Lotteries = () => {
     const days = Math.floor(total / (1000 * 60 * 60 * 24));
     const hours = Math.floor((total % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((total % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((total % (1000 * 60)) / 1000);
     
-    return {
-      total,
-      days,
-      hours,
-      minutes
-    };
+    return { total, days, hours, minutes, seconds };
   };
 
   return (
@@ -65,7 +61,7 @@ const Lotteries = () => {
               alt={featuredLottery.title} 
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80" />
             
             <div className="absolute inset-0 flex flex-col justify-end pb-16 px-6 md:px-12 lg:container lg:mx-auto">
               <div className="max-w-3xl">
@@ -78,7 +74,7 @@ const Lotteries = () => {
                   }).format(featuredLottery.value)}
                 </p>
                 
-                <div className="flex flex-wrap gap-6 mb-8 text-white/80">
+                <div className="flex flex-wrap gap-6 mb-6 text-white/80">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-winshirt-blue" />
                     <span>Tirage le {new Date(featuredLottery.draw_date).toLocaleDateString('fr-FR', {
@@ -100,21 +96,29 @@ const Lotteries = () => {
                 {/* Countdown Timer */}
                 {featuredLottery.is_active && (
                   <div className="flex flex-wrap gap-4 mb-8">
+                    <p className="w-full text-white/70 text-sm mb-1 flex items-center">
+                      <Clock className="h-4 w-4 mr-1" />
+                      Temps restant avant le tirage:
+                    </p>
                     {(() => {
                       const time = getTimeRemaining(new Date(featuredLottery.draw_date));
                       return (
                         <div className="flex gap-4">
                           <div className="text-center bg-black/40 backdrop-blur-sm px-4 py-3 rounded-lg">
                             <div className="text-3xl font-bold">{time.days}</div>
-                            <div className="text-xs text-white/70">Jours</div>
+                            <div className="text-xs text-white/70">JOURS</div>
                           </div>
                           <div className="text-center bg-black/40 backdrop-blur-sm px-4 py-3 rounded-lg">
                             <div className="text-3xl font-bold">{time.hours}</div>
-                            <div className="text-xs text-white/70">Heures</div>
+                            <div className="text-xs text-white/70">HEURES</div>
                           </div>
                           <div className="text-center bg-black/40 backdrop-blur-sm px-4 py-3 rounded-lg">
                             <div className="text-3xl font-bold">{time.minutes}</div>
-                            <div className="text-xs text-white/70">Minutes</div>
+                            <div className="text-xs text-white/70">MINUTES</div>
+                          </div>
+                          <div className="text-center bg-black/40 backdrop-blur-sm px-4 py-3 rounded-lg">
+                            <div className="text-3xl font-bold">{time.seconds}</div>
+                            <div className="text-xs text-white/70">SECONDES</div>
                           </div>
                         </div>
                       );
@@ -136,7 +140,7 @@ const Lotteries = () => {
                 </div>
                 
                 <div className="flex flex-wrap gap-4">
-                  <Button className="bg-gradient-purple hover:opacity-90 text-lg px-8 py-6" size="lg" asChild>
+                  <Button className="bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90 text-lg px-8 py-6" size="lg" asChild>
                     <Link to={`/lotteries/${featuredLottery.id}`}>
                       Participer
                     </Link>
@@ -190,21 +194,21 @@ const Lotteries = () => {
                 <Button
                   variant={filterActive === null ? "default" : "outline"}
                   onClick={() => setFilterActive(null)}
-                  className={filterActive === null ? "bg-gradient-purple" : ""}
+                  className={filterActive === null ? "bg-gradient-to-r from-winshirt-purple to-winshirt-blue" : ""}
                 >
                   Toutes
                 </Button>
                 <Button
                   variant={filterActive === true ? "default" : "outline"}
                   onClick={() => setFilterActive(true)}
-                  className={filterActive === true ? "bg-gradient-purple" : ""}
+                  className={filterActive === true ? "bg-gradient-to-r from-winshirt-purple to-winshirt-blue" : ""}
                 >
                   Actives
                 </Button>
                 <Button
                   variant={filterActive === false ? "default" : "outline"}
                   onClick={() => setFilterActive(false)}
-                  className={filterActive === false ? "bg-gradient-purple" : ""}
+                  className={filterActive === false ? "bg-gradient-to-r from-winshirt-purple to-winshirt-blue" : ""}
                 >
                   Terminées
                 </Button>
@@ -231,34 +235,18 @@ const Lotteries = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredLotteries?.map(lottery => (
-                  <div key={lottery.id} className="relative">
-                    <LotteryCard 
-                      id={lottery.id}
-                      title={lottery.title}
-                      image={lottery.image_url}
-                      value={lottery.value}
-                      participants={lottery.participants}
-                      goal={lottery.goal}
-                      isActive={lottery.is_active}
-                      isFeatured={lottery.is_featured}
-                      drawDate={new Date(lottery.draw_date)}
-                    />
-                    
-                    {/* Countdown timer overlay */}
-                    {lottery.is_active && (
-                      <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1 flex items-center gap-1">
-                        <Clock className="h-3 w-3 text-winshirt-purple" />
-                        {(() => {
-                          const time = getTimeRemaining(new Date(lottery.draw_date));
-                          return (
-                            <span className="text-xs font-medium">
-                              {time.days}j {time.hours}h {time.minutes}m
-                            </span>
-                          );
-                        })()}
-                      </div>
-                    )}
-                  </div>
+                  <LotteryCard 
+                    key={lottery.id}
+                    id={lottery.id}
+                    title={lottery.title}
+                    image={lottery.image_url}
+                    value={lottery.value}
+                    participants={lottery.participants}
+                    goal={lottery.goal}
+                    isActive={lottery.is_active}
+                    isFeatured={lottery.is_featured}
+                    drawDate={new Date(lottery.draw_date)}
+                  />
                 ))}
               </div>
             )}

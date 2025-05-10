@@ -1,4 +1,5 @@
-import React, { useRef } from 'react';
+
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import LotteryCard from '../ui/LotteryCard';
 import { cn } from '@/lib/utils';
@@ -7,7 +8,7 @@ import { fetchFeaturedLotteries } from '@/services/api.service';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
-import { Calendar, Users, Clock } from 'lucide-react';
+import { Calendar, Users, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface FeaturedLotteriesProps {
   className?: string;
@@ -24,6 +25,17 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
   
   // Get the first lottery for the full-screen hero showcase
   const featuredLottery = lotteriesList.length > 0 ? lotteriesList[0] : null;
+
+  // Calculate time remaining until draw date
+  const getTimeRemaining = (drawDate: Date) => {
+    const total = drawDate.getTime() - new Date().getTime();
+    const days = Math.floor(total / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((total % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((total % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((total % (1000 * 60)) / 1000);
+    
+    return { total, days, hours, minutes, seconds };
+  };
 
   if (isLoading) {
     return (
@@ -64,6 +76,8 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
       year: 'numeric'
     }).format(drawDate);
     
+    const timeLeft = getTimeRemaining(drawDate);
+    
     return (
       <>
         {/* Hero Lottery Showcase - Full Screen */}
@@ -73,14 +87,14 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
             alt={featuredLottery.title} 
             className="absolute inset-0 w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80" />
           
           <div className="absolute inset-0 flex flex-col justify-end pb-16 px-6 md:px-12 lg:container lg:mx-auto">
             <div className="max-w-3xl">
               <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4">{featuredLottery.title}</h1>
               <p className="text-xl md:text-2xl font-semibold text-white/90 mb-6">{formattedValue}</p>
               
-              <div className="flex flex-wrap gap-6 mb-8 text-white/80">
+              <div className="flex flex-wrap gap-6 mb-6 text-white/80">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-winshirt-blue" />
                   <span>Tirage le {formattedDate}</span>
@@ -92,6 +106,32 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
                 <div className="flex items-center gap-2">
                   <Clock className="w-5 h-5 text-winshirt-blue" />
                   <span>Objectif: {featuredLottery.goal} participants</span>
+                </div>
+              </div>
+              
+              {/* Countdown Timer */}
+              <div className="flex flex-wrap gap-4 mb-8">
+                <p className="w-full text-white/70 text-sm mb-1 flex items-center">
+                  <Clock className="h-4 w-4 mr-1" />
+                  Temps restant avant le tirage:
+                </p>
+                <div className="flex gap-4">
+                  <div className="text-center bg-black/40 backdrop-blur-sm px-4 py-3 rounded-lg">
+                    <div className="text-3xl font-bold">{timeLeft.days}</div>
+                    <div className="text-xs text-white/70">JOURS</div>
+                  </div>
+                  <div className="text-center bg-black/40 backdrop-blur-sm px-4 py-3 rounded-lg">
+                    <div className="text-3xl font-bold">{timeLeft.hours}</div>
+                    <div className="text-xs text-white/70">HEURES</div>
+                  </div>
+                  <div className="text-center bg-black/40 backdrop-blur-sm px-4 py-3 rounded-lg">
+                    <div className="text-3xl font-bold">{timeLeft.minutes}</div>
+                    <div className="text-xs text-white/70">MINUTES</div>
+                  </div>
+                  <div className="text-center bg-black/40 backdrop-blur-sm px-4 py-3 rounded-lg">
+                    <div className="text-3xl font-bold">{timeLeft.seconds}</div>
+                    <div className="text-xs text-white/70">SECONDES</div>
+                  </div>
                 </div>
               </div>
               
@@ -109,7 +149,7 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
               </div>
               
               <div className="flex flex-wrap gap-4">
-                <Button className="bg-gradient-purple hover:opacity-90 text-lg px-8 py-6" size="lg" asChild>
+                <Button className="bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90 text-lg px-8 py-6" size="lg" asChild>
                   <Link to={`/lotteries/${featuredLottery.id}`}>
                     Participer
                   </Link>
@@ -148,35 +188,41 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
             </div>
             
             {lotteriesList.length > 1 ? (
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {lotteriesList.slice(1).map((lottery: Lottery) => (
-                    <CarouselItem key={lottery.id} className="md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-                      <div className="p-1">
-                        <LotteryCard 
-                          id={lottery.id}
-                          title={lottery.title}
-                          image={lottery.image_url}
-                          value={lottery.value}
-                          participants={lottery.participants}
-                          goal={lottery.goal}
-                          isActive={lottery.is_active}
-                          isFeatured={lottery.is_featured}
-                          drawDate={new Date(lottery.draw_date)}
-                        />
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="left-2" />
-                <CarouselNext className="right-2" />
-              </Carousel>
+              <div className="relative">
+                <Carousel className="w-full">
+                  <CarouselContent>
+                    {lotteriesList.slice(1).map((lottery: Lottery) => (
+                      <CarouselItem key={lottery.id} className="md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                        <div className="p-1">
+                          <LotteryCard 
+                            id={lottery.id}
+                            title={lottery.title}
+                            image={lottery.image_url}
+                            value={lottery.value}
+                            participants={lottery.participants}
+                            goal={lottery.goal}
+                            isActive={lottery.is_active}
+                            isFeatured={lottery.is_featured}
+                            drawDate={new Date(lottery.draw_date)}
+                          />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="left-0 bg-black/30 backdrop-blur-sm border-white/10 hover:bg-black/50 text-white">
+                    <ChevronLeft className="h-6 w-6" />
+                  </CarouselPrevious>
+                  <CarouselNext className="right-0 bg-black/30 backdrop-blur-sm border-white/10 hover:bg-black/50 text-white">
+                    <ChevronRight className="h-6 w-6" />
+                  </CarouselNext>
+                </Carousel>
+              </div>
             ) : (
               <p className="text-center text-white/70">Pas d'autres loteries en vedette pour le moment.</p>
             )}
             
             <div className="text-center mt-10">
-              <Button className="bg-gradient-purple hover:opacity-90" asChild>
+              <Button className="bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90" asChild>
                 <Link to="/lotteries">
                   Voir toutes les loteries
                 </Link>
@@ -221,7 +267,7 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
         )}
         
         <div className="text-center mt-10">
-          <Button className="bg-gradient-purple hover:opacity-90" asChild>
+          <Button className="bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90" asChild>
             <Link to="/lotteries">
               Voir toutes les loteries
             </Link>
