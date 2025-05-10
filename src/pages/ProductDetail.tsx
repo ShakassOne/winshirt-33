@@ -737,8 +737,8 @@ const ProductDetail = () => {
                   textContentBack={textContentBack}
                   setTextContentBack={setTextContentBack}
                   textFontFront={textFontFront}
-                  setTextFontFront={setTextFontFront}
-                  textFontBack={setTextFontBack}
+                  setTextFontFront={textFontFront}
+                  textFontBack={textFontBack}
                   setTextFontBack={setTextFontBack}
                   textColorFront={textColorFront}
                   setTextColorFront={setTextColorFront}
