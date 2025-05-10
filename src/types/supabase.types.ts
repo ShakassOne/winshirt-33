@@ -96,7 +96,7 @@ export interface CartItem {
   color?: string | null;
   size?: string | null;
   image_url: string;
-  customization?: { // Make sure this property is defined in the interface
+  customization?: {
     frontDesign?: {
       designId: string;
       designName: string;
