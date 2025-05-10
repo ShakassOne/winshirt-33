@@ -449,6 +449,7 @@ const ProductDetail = () => {
     setSelectedLotteryIds(filteredLotteries.map(l => l.id));
   };
 
+  // Define these mouse handling functions outside useEffect
   const handleMouseDown = (event: React.MouseEvent | React.TouchEvent, isText: boolean = false) => {
     event.preventDefault();
     
@@ -473,7 +474,6 @@ const ProductDetail = () => {
     setPageScrollLocked(true);
   };
 
-  // Move handleMouseMove outside useEffect to fix the Hook dependencies
   const handleMouseMove = (event: MouseEvent | TouchEvent) => {
     let clientX: number, clientY: number;
     
@@ -534,7 +534,6 @@ const ProductDetail = () => {
     }
   };
 
-  // Move handleMouseUp outside useEffect to fix the Hook dependencies
   const handleMouseUp = () => {
     setIsDragging(false);
     setIsDraggingText(false);
@@ -734,32 +733,6 @@ const ProductDetail = () => {
     return currentViewSide === 'front' ? textStylesFront : textStylesBack;
   };
 
-  if (isLoading || !product) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
-          <div className="animate-pulse flex space-x-4">
-            <div className="rounded-full bg-slate-700 h-10 w-10"></div>
-            <div className="flex-1 space-y-6 py-1">
-              <div className="h-2 bg-slate-700 rounded"></div>
-              <div className="space-y-3">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="h-2 bg-slate-700 rounded col-span-2"></div>
-                  <div className="h-2 bg-slate-700 rounded col-span-1"></div>
-                </div>
-                <div className="h-2 bg-slate-700 rounded"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  const activeLotteries = lotteries.filter(lottery => lottery.is_active);
-
   useEffect(() => {
     const preventScroll = (e: TouchEvent) => {
       if (isDragging || isDraggingText) {
@@ -798,6 +771,32 @@ const ProductDetail = () => {
     }
   }, [currentViewSide]);
 
+  if (isLoading || !product) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
+          <div className="animate-pulse flex space-x-4">
+            <div className="rounded-full bg-slate-700 h-10 w-10"></div>
+            <div className="flex-1 space-y-6 py-1">
+              <div className="h-2 bg-slate-700 rounded"></div>
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="h-2 bg-slate-700 rounded col-span-2"></div>
+                  <div className="h-2 bg-slate-700 rounded col-span-1"></div>
+                </div>
+                <div className="h-2 bg-slate-700 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  const activeLotteries = lotteries.filter(lottery => lottery.is_active);
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -824,4 +823,5 @@ const ProductDetail = () => {
                   ref={productCanvasRef} 
                   className="w-full h-full relative"
                 >
-                  {/*
+                  {/* This is the fixed comment that was previously unterminated */}
+                  {/* Product
