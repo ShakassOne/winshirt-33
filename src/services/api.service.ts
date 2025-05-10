@@ -36,7 +36,7 @@ export const fetchProductById = async (id: string) => {
 export const createProduct = async (productData: Partial<Product>) => {
   const { data, error } = await supabase
     .from("products")
-    .insert([productData])
+    .insert([productData as any]) // Cast to any to avoid type errors
     .select()
     .single();
 
@@ -51,7 +51,7 @@ export const createProduct = async (productData: Partial<Product>) => {
 export const updateProduct = async (id: string, productData: Partial<Product>) => {
   const { data, error } = await supabase
     .from("products")
-    .update(productData)
+    .update(productData as any) // Cast to any to avoid type errors
     .eq("id", id)
     .select()
     .single();
@@ -124,7 +124,7 @@ export const fetchLotteryById = async (id: string) => {
 export const createLottery = async (lotteryData: Partial<Lottery>) => {
   const { data, error } = await supabase
     .from("lotteries")
-    .insert([lotteryData])
+    .insert([lotteryData as any]) // Cast to any to avoid type errors
     .select()
     .single();
 
@@ -139,7 +139,7 @@ export const createLottery = async (lotteryData: Partial<Lottery>) => {
 export const updateLottery = async (id: string, lotteryData: Partial<Lottery>) => {
   const { data, error } = await supabase
     .from("lotteries")
-    .update(lotteryData)
+    .update(lotteryData as any) // Cast to any to avoid type errors
     .eq("id", id)
     .select()
     .single();
@@ -203,29 +203,38 @@ export const fetchMockupById = async (id: string): Promise<MockupWithColors> => 
     }
   }
 
-  // Ensure colors property is an array
-  let colors: MockupColor[] = [];
-  try {
-    if (data.colors) {
-      colors = Array.isArray(data.colors) 
-        ? data.colors 
-        : (typeof data.colors === 'string' ? JSON.parse(data.colors) : []);
+  // Handle colors property
+  let colorsArray: MockupColor[] = [];
+  // Add safe check for colors property 
+  const rawColors = (data as any).colors;
+  if (rawColors) {
+    try {
+      colorsArray = Array.isArray(rawColors) 
+        ? rawColors 
+        : (typeof rawColors === 'string' ? JSON.parse(rawColors) : []);
+    } catch (e) {
+      console.error("Error parsing mockup colors:", e);
     }
-  } catch (e) {
-    console.error("Error parsing mockup colors:", e);
   }
   
   return {
     ...data,
     print_areas: printAreas,
-    colors: Array.isArray(colors) ? colors : []
+    colors: colorsArray
   } as MockupWithColors;
 };
 
 export const createMockup = async (mockupData: Partial<MockupWithColors>) => {
+  // Need to ensure the data structure is compatible with Supabase
+  const supabaseData = {
+    ...mockupData,
+    print_areas: Array.isArray(mockupData.print_areas) ? mockupData.print_areas : [],
+    colors: Array.isArray(mockupData.colors) ? mockupData.colors : []
+  };
+
   const { data, error } = await supabase
     .from("mockups")
-    .insert([mockupData])
+    .insert([supabaseData as any]) // Cast to any to avoid type errors
     .select()
     .single();
 
@@ -238,9 +247,16 @@ export const createMockup = async (mockupData: Partial<MockupWithColors>) => {
 };
 
 export const updateMockup = async (id: string, mockupData: Partial<MockupWithColors>) => {
+  // Need to ensure the data structure is compatible with Supabase
+  const supabaseData = {
+    ...mockupData,
+    print_areas: Array.isArray(mockupData.print_areas) ? mockupData.print_areas : [],
+    colors: Array.isArray(mockupData.colors) ? mockupData.colors : []
+  };
+
   const { data, error } = await supabase
     .from("mockups")
-    .update(mockupData)
+    .update(supabaseData as any) // Cast to any to avoid type errors
     .eq("id", id)
     .select()
     .single();
