@@ -823,4 +823,4 @@ const ProductDetail = () => {
         <div className="container mx-auto px-4 py-8">
           {/* Bouton retour */}
           <Link to="/products" className="flex items-center gap-2 font-medium mb-8">
-            <ArrowLeft className="h-5 w-
+            <ArrowLeft className="h-5 w-5" />
