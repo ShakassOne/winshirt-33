@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { fetchDesigns, createDesign, updateDesign, deleteDesign } from '@/services/api.service';
+import { fetchAllDesigns as fetchDesigns, createDesign, updateDesign, deleteDesign } from '@/services/api.service';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Design } from '@/types/supabase.types';
