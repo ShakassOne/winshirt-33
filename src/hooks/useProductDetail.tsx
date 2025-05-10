@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { fetchProductById, fetchMockupById, fetchAllLotteries, fetchAllDesigns } from '@/services/api.service';
-import { Design, Lottery, MockupColor } from '@/types/supabase.types';
+import { Design, Lottery } from '@/types/supabase.types';
+import { MockupColor } from '@/types/mockup.types';
 
 // Helper function moved from ProductDetail
 export const getContrastColor = (hexColor: string): string => {

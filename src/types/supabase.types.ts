@@ -26,6 +26,8 @@ export interface PrintArea {
 
 // Import the MockupColor type from mockup.types to resolve circular dependency
 import { MockupColor } from '@/types/mockup.types';
+// Re-export MockupColor to solve the import error
+export { MockupColor };
 
 // Mockup
 export interface Mockup {
