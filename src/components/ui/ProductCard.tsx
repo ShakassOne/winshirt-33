@@ -30,12 +30,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
   color,
 }) => {
   return (
-    <GlassCard hover3D shine className="group relative overflow-hidden transition-all duration-500">
+    <GlassCard hover3D shine className="group relative overflow-hidden hover:shadow-lg">
       <div className="relative aspect-square overflow-hidden rounded-t-xl">
         <img
           src={image}
           alt={name}
-          className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+          className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
         />
         {isCustomizable && (
           <div className="absolute top-2 left-2 bg-winshirt-purple/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium">

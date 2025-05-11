@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import GlassCard from '@/components/ui/GlassCard';
-import { ShoppingBag, Ticket, Award, ShoppingCart, Package, Users, Image, Palette } from 'lucide-react';
+import { ShoppingBag, Ticket, Award, ShoppingCart, Package, Users, Image, Palette, Settings } from 'lucide-react';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -65,6 +65,13 @@ const AdminDashboard = () => {
       icon: <Users className="h-8 w-8 text-amber-500" />,
       route: '/admin/users',
       color: 'from-amber-500/20 to-amber-500/5'
+    },
+    {
+      title: 'Thème',
+      description: 'Personnalisez l\'apparence du site',
+      icon: <Settings className="h-8 w-8 text-purple-500" />,
+      route: '/admin/theme',
+      color: 'from-purple-500/20 to-purple-500/5'
     }
   ];
   

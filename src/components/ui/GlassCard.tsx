@@ -26,9 +26,9 @@ const GlassCard = ({
     const x = (clientX - left) / width;
     const y = (clientY - top) / height;
     
-    // Make the effect more pronounced and responsive
-    const rotateX = (y - 0.5) * 16; // Increased from 10 to 16
-    const rotateY = (x - 0.5) * -16; // Increased from 10 to 16
+    // Make the effect more pronounced and responsive with immediate response
+    const rotateX = (y - 0.5) * 20; // Increased from 16 to 20
+    const rotateY = (x - 0.5) * -20; // Increased from 16 to 20
     
     setTransform(`perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.03, 1.03, 1.03)`);
   };
@@ -41,10 +41,14 @@ const GlassCard = ({
   return (
     <div
       className={cn(
-        'glass-card', 
+        'glass-card',
+        !hover3D && 'transition-all duration-300', // Only add transition when not in hover3D mode
         className
       )}
-      style={{ transform }}
+      style={{ 
+        transform,
+        transition: hover3D ? 'none' : 'all 0.3s ease' // Remove transition for hover3D for immediate responsiveness
+      }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       {...props}

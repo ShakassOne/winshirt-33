@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { X, Menu, ShoppingCart, ChevronDown, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +34,7 @@ const Navbar = () => {
 
             {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center">
+              <ThemeToggle />
               <button
                 type="button"
                 onClick={toggleMenu}
@@ -74,8 +76,9 @@ const Navbar = () => {
               </Link>
             </nav>
 
-            {/* User Menu and Cart */}
+            {/* User Menu, Theme Toggle and Cart */}
             <div className="hidden md:flex items-center space-x-1">
+              <ThemeToggle />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="text-white/80 hover:text-white">
@@ -144,10 +147,17 @@ const Navbar = () => {
             </Link>
             <Link
               to="/admin/mockups"
-              className="block text-white/70 hover:text-white px-3 py-2 rounded-md font-medium"
+              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
               onClick={toggleMenu}
             >
               Gestion des mockups
+            </Link>
+            <Link
+              to="/admin/theme"
+              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+              onClick={toggleMenu}
+            >
+              Réglages du thème
             </Link>
           </div>
         )}
