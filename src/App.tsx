@@ -16,9 +16,6 @@ import LotteriesAdmin from "./pages/admin/LotteriesAdmin";
 import MockupsAdmin from "./pages/admin/MockupsAdmin";
 import DesignsAdmin from "./pages/admin/DesignsAdmin";
 import ThemeSettings from "./pages/admin/ThemeSettings";
-import Checkout from "./pages/Checkout";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import PaymentCanceled from "./pages/PaymentCanceled";
 import { useScrollReset } from "./hooks/useScrollReset";
 import { ThemeProvider } from "./components/theme-provider";
 
@@ -52,9 +49,6 @@ const App = () => (
             <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/lotteries" element={<Lotteries />} />
             <Route path="/lotteries/:id" element={<LotteryDetail />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route path="/payment-canceled" element={<PaymentCanceled />} />
             
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminDashboard />} />
