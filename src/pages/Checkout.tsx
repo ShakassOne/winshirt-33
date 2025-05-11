@@ -65,6 +65,7 @@ const Checkout = () => {
         product_id: product.id,
         product_name: product.name,
         price: product.price,
+        total_amount: product.price, // Add total_amount field
         customization: customization,
         status: "pending",
       };

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -15,13 +16,15 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch product data
+  // Fetch product data - fixed onError implementation for React Query
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
     queryFn: () => fetchProductById(id!),
-    onError: (err: any) => {
-      console.error('Error fetching product details:', err);
-      setError('Failed to load product details. Please try again later.');
+    meta: {
+      onError: (err: any) => {
+        console.error('Error fetching product details:', err);
+        setError('Failed to load product details. Please try again later.');
+      }
     }
   });
 
@@ -82,11 +85,11 @@ const ProductDetail = () => {
         ) : product ? (
           <div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Product Image */}
+              {/* Product Image - fixed image_url property */}
               <div className="bg-background/40 rounded-lg overflow-hidden backdrop-blur-sm">
                 <div className="aspect-square">
                   <img 
-                    src={product.image} 
+                    src={product.image_url} 
                     alt={product.name} 
                     className="w-full h-full object-cover object-center"
                   />
@@ -98,7 +101,7 @@ const ProductDetail = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <h1 className="text-2xl md:text-3xl font-bold">{product.name}</h1>
-                    {product.isCustomizable && (
+                    {product.is_customizable && (
                       <Badge className="bg-winshirt-purple text-white">
                         Customizable
                       </Badge>
@@ -121,7 +124,7 @@ const ProductDetail = () => {
                 <Separator />
                 
                 {/* Customization section */}
-                {product.isCustomizable ? (
+                {product.is_customizable ? (
                   <CustomizationForm product={product} onCheckout={handleCheckout} />
                 ) : (
                   <div className="mt-4">

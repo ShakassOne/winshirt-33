@@ -6,6 +6,7 @@ CREATE TABLE public.orders (
   product_id TEXT NOT NULL,
   product_name TEXT NOT NULL,
   price NUMERIC(10, 2) NOT NULL,
+  total_amount NUMERIC(10, 2) NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending',
   stripe_session_id TEXT UNIQUE NULL,
   customization JSONB NULL,

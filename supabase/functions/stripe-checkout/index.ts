@@ -70,6 +70,20 @@ serve(async (req) => {
       }
     });
     
+    // Update the order with the Stripe session ID
+    const supabaseAdminClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    await supabaseAdminClient
+      .from('orders')
+      .update({ 
+        stripe_session_id: session.id 
+      })
+      .eq('id', orderId);
+    
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
     
     // Return the checkout session URL
