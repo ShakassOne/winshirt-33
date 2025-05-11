@@ -16,7 +16,7 @@ const CustomizationAccordion = ({ children }: CustomizationAccordionProps) => {
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
-      className="w-full border border-white/10 rounded-lg overflow-hidden mt-6 mb-4"
+      className="w-full border border-white/10 rounded-lg overflow-hidden mt-6 mb-4 md:block"
     >
       <div className="bg-white/5 p-4">
         <CollapsibleTrigger asChild>

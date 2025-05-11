@@ -100,6 +100,13 @@
     --input: 215 27.9% 16.9%;
     --ring: 255 79% 75%;
   }
+  
+  /* Définition de la propriété personnalisée pour l'animation */
+  @property --rotate {
+    syntax: "<angle>";
+    initial-value: 132deg;
+    inherits: false;
+  }
 }
 
 @layer base {
@@ -130,13 +137,6 @@
     background-size: 550px 550px, 350px 350px, 250px 250px;
     background-position: 0 0, 40px 60px, 130px 270px;
     z-index: -1;
-  }
-  
-  /* Définition de la propriété personnalisée pour l'animation */
-  @property --rotate {
-    syntax: "<angle>";
-    initial-value: 132deg;
-    inherits: false;
   }
 }
 
@@ -234,6 +234,15 @@
       --rotate: 360deg;
     }
   }
+
+  @keyframes shine {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 200% 0%;
+    }
+  }
   
   .progress-bar {
     @apply h-2 rounded-full bg-white/10 overflow-hidden;
@@ -241,6 +250,26 @@
   
   .progress-bar-fill {
     @apply h-full rounded-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue transition-all duration-300;
+  }
+  
+  /* Rendre les customizations sous l'image en version mobile */
+  @media (max-width: 768px) {
+    .product-mobile-layout {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .product-mobile-layout .product-image {
+      order: 1;
+    }
+    
+    .product-mobile-layout .product-customization {
+      order: 2;
+    }
+    
+    .product-mobile-layout .product-details {
+      order: 3;
+    }
   }
 }
 
@@ -252,4 +281,32 @@
     background-clip: text;
     color: transparent;
   }
+  
+  /* CSS Color Variables Lexicon */
+  .color-neutral-gray { color: #8E9196; }
+  .color-primary-purple { color: #9b87f5; }
+  .color-secondary-purple { color: #7E69AB; }
+  .color-tertiary-purple { color: #6E59A5; }
+  .color-dark-purple { color: #1A1F2C; }
+  .color-light-purple { color: #D6BCFA; }
+  .color-soft-green { color: #F2FCE2; }
+  .color-soft-yellow { color: #FEF7CD; }
+  .color-soft-orange { color: #FEC6A1; }
+  .color-soft-purple { color: #E5DEFF; }
+  .color-soft-pink { color: #FFDEE2; }
+  .color-soft-peach { color: #FDE1D3; }
+  .color-soft-blue { color: #D3E4FD; }
+  .color-soft-gray { color: #F1F0FB; }
+  .color-vivid-purple { color: #8B5CF6; }
+  .color-magenta-pink { color: #D946EF; }
+  .color-bright-orange { color: #F97316; }
+  .color-ocean-blue { color: #0EA5E9; }
+  .color-charcoal-gray { color: #403E43; }
+  .color-pure-white { color: #FFFFFF; }
+  .color-medium-gray { color: #8A898C; }
+  .color-bright-blue { color: #1EAEDB; }
+  .color-dark-charcoal { color: #221F26; }
+  .color-light-gray { color: #C8C8C9; }
+  .color-silver-gray { color: #9F9EA1; }
+  .color-sky-blue { color: #33C3F0; }
 }

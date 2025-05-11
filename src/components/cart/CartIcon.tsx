@@ -1,12 +1,19 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
 import { Link } from 'react-router-dom';
 
 const CartIcon = () => {
-  const { itemCount } = useCart();
+  const { itemCount, loadCartItems } = useCart();
+  
+  // Always load cart items when component mounts to ensure latest state
+  useEffect(() => {
+    if(typeof loadCartItems === 'function') {
+      loadCartItems();
+    }
+  }, []);
 
   return (
     <Button variant="ghost" size="icon" className="text-white/80 hover:text-white relative" asChild>

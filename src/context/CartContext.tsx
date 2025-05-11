@@ -67,7 +67,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const linkCartToUser = async (userId: string) => {
     try {
       // Logic to update cart_sessions with user_id
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('cart_sessions')
         .update({ user_id: userId })
         .eq('session_id', sessionId);
@@ -84,9 +84,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       console.log("Adding item to cart:", item, "with sessionId:", sessionId);
-      await addToCart(sessionId, item);
       
-      // Update local state immediately for better UX
+      // Better UX by updating local state immediately
       setItems(prevItems => {
         const existingItemIndex = prevItems.findIndex(i => i.productId === item.productId);
         if (existingItemIndex >= 0) {
@@ -103,6 +102,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       });
       
+      // Call API to add to cart in database
+      await addToCart(sessionId, item);
+      
+      // Success notification
       toast.success("Produit ajouté au panier");
       
       // Reload items to ensure consistency with server
@@ -127,9 +130,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setItems(prevItems => prevItems.filter(item => item.productId !== productId));
       
       toast.success("Produit retiré du panier");
-      
-      // Reload items to ensure consistency
-      await loadCartItems();
     } catch (err: any) {
       setError(err.message);
       console.error("Error in removeFromCart: ", err);
@@ -152,9 +152,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           item.productId === productId ? { ...item, quantity } : item
         )
       );
-      
-      // Reload items to ensure consistency
-      await loadCartItems();
     } catch (err: any) {
       setError(err.message);
       console.error("Error in updateItemQuantity: ", err);
@@ -175,9 +172,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setItems([]);
       
       toast.success("Panier vidé");
-      
-      // Reload items to ensure consistency
-      await loadCartItems();
     } catch (err: any) {
       setError(err.message);
       console.error("Error in clearCart: ", err);
@@ -201,6 +195,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeItem,
         updateItemQuantity,
         clearCart,
+        loadCartItems,
         isLoading,
         error,
         total,

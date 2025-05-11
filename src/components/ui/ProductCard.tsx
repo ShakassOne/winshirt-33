@@ -36,6 +36,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
+    console.log("Adding to cart:", id, name, price);
+    
     addItem({
       productId: id,
       name,
