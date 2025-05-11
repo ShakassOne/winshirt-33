@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +28,11 @@ const ThemeSettings = () => {
       title: "Thème sauvegardé",
       description: "Les modifications ont été appliquées avec succès.",
     });
+  };
+
+  // Helper function to convert slider value to number
+  const getNumericValue = (value: number[]): number => {
+    return value[0] || 0;
   };
 
   return (
@@ -256,7 +260,7 @@ const ThemeSettings = () => {
                       />
                       <div className="flex justify-between mt-1.5">
                         <span className="text-xs text-muted-foreground">Anguleux</span>
-                        <span className="text-xs text-muted-foreground">{borderRadius}px</span>
+                        <span className="text-xs text-muted-foreground">{getNumericValue(borderRadius)}px</span>
                         <span className="text-xs text-muted-foreground">Arrondi</span>
                       </div>
                     </div>
@@ -264,7 +268,7 @@ const ThemeSettings = () => {
                     <div className="h-24 flex items-center justify-center">
                       <div 
                         className="w-24 h-24 bg-card border" 
-                        style={{ borderRadius: `${borderRadius}px` }}
+                        style={{ borderRadius: `${getNumericValue(borderRadius)}px` }}
                       ></div>
                     </div>
                   </div>
@@ -289,7 +293,7 @@ const ThemeSettings = () => {
                       />
                       <div className="flex justify-between mt-1.5">
                         <span className="text-xs text-muted-foreground">Discret</span>
-                        <span className="text-xs text-muted-foreground">{glassMorphismIntensity}</span>
+                        <span className="text-xs text-muted-foreground">{getNumericValue(glassMorphismIntensity)}</span>
                         <span className="text-xs text-muted-foreground">Intense</span>
                       </div>
                     </div>
@@ -298,8 +302,8 @@ const ThemeSettings = () => {
                       <div 
                         className="w-24 h-24 border" 
                         style={{ 
-                          backdropFilter: `blur(${glassMorphismIntensity * 2}px)`,
-                          backgroundColor: `rgba(255, 255, 255, ${glassMorphismIntensity * 0.01})`,
+                          backdropFilter: `blur(${getNumericValue(glassMorphismIntensity) * 2}px)`,
+                          backgroundColor: `rgba(255, 255, 255, ${getNumericValue(glassMorphismIntensity) * 0.01})`,
                         }}
                       ></div>
                     </div>
