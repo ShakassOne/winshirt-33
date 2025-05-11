@@ -57,7 +57,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setItems(cartItems);
     } catch (err: any) {
       setError(err.message);
-      toast.error("Erreur lors du chargement du panier");
+      console.error("Error in getCartItems: ", err);
     } finally {
       setIsLoading(false);
     }
@@ -83,10 +83,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await addToCart(sessionId, item);
-      await loadCartItems(); // Reload items
       toast.success("Produit ajouté au panier");
+      // Important: recharger les articles immédiatement après l'ajout
+      await loadCartItems();
     } catch (err: any) {
       setError(err.message);
+      console.error("Error in addToCart: ", err);
       toast.error("Erreur lors de l'ajout au panier");
     } finally {
       setIsLoading(false);
@@ -99,10 +101,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await removeFromCart(sessionId, productId);
-      await loadCartItems(); // Reload items
       toast.success("Produit retiré du panier");
+      // Recharger les articles immédiatement après la suppression
+      await loadCartItems();
     } catch (err: any) {
       setError(err.message);
+      console.error("Error in removeFromCart: ", err);
       toast.error("Erreur lors du retrait du produit");
     } finally {
       setIsLoading(false);
@@ -115,9 +119,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await updateCartItemQuantity(sessionId, productId, quantity);
-      await loadCartItems(); // Reload items
+      // Recharger les articles immédiatement après la mise à jour
+      await loadCartItems();
     } catch (err: any) {
       setError(err.message);
+      console.error("Error in updateItemQuantity: ", err);
       toast.error("Erreur lors de la mise à jour de la quantité");
     } finally {
       setIsLoading(false);
@@ -130,10 +136,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await clearCartService(sessionId);
-      await loadCartItems(); // Reload items
       toast.success("Panier vidé");
+      // Recharger les articles immédiatement après le vidage
+      await loadCartItems();
     } catch (err: any) {
       setError(err.message);
+      console.error("Error in clearCart: ", err);
       toast.error("Erreur lors du vidage du panier");
     } finally {
       setIsLoading(false);

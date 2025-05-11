@@ -62,7 +62,7 @@ const LotteryCard: React.FC<LotteryCardProps> = ({
     <Link to={`/lotteries/${id}`}>
       <GlassCard 
         className={cn(
-          "overflow-hidden transition-all duration-500",
+          "overflow-hidden transition-all duration-500 glow-card",
           isFeatured ? "md:col-span-2 md:row-span-2" : ""
         )}
         hover3D

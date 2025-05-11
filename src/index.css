@@ -34,6 +34,11 @@
     --ring: 255 79% 75%;
 
     --radius: 0.75rem;
+    
+    /* Variables pour l'effet de carte brillante */
+    --rotate: 132deg;
+    --card-height: auto;
+    --card-width: 100%;
   }
 
   .light {
@@ -126,6 +131,13 @@
     background-position: 0 0, 40px 60px, 130px 270px;
     z-index: -1;
   }
+  
+  /* Définition de la propriété personnalisée pour l'animation */
+  @property --rotate {
+    syntax: "<angle>";
+    initial-value: 132deg;
+    inherits: false;
+  }
 }
 
 @layer components {
@@ -165,12 +177,61 @@
     animation: shine 3s infinite linear;
   }
   
-  @keyframes shine {
+  /* Effet de carte brillante */
+  .glow-card {
+    @apply relative p-[3px] rounded-md cursor-pointer;
+  }
+  
+  .glow-card::before {
+    content: "";
+    width: 104%;
+    height: 102%;
+    border-radius: 8px;
+    background-image: linear-gradient(
+      var(--rotate),
+      #5ddcff, #3c67e3 43%, #4e00c2
+    );
+    position: absolute;
+    z-index: -1;
+    top: -1%;
+    left: -2%;
+    animation: spin 2.5s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .glow-card::after {
+    position: absolute;
+    content: "";
+    top: calc(var(--card-height) / 6);
+    left: 0;
+    right: 0;
+    z-index: -1;
+    height: 100%;
+    width: 100%;
+    margin: 0 auto;
+    transform: scale(0.8);
+    filter: blur(calc(var(--card-height) / 6));
+    background-image: linear-gradient(
+      var(--rotate),
+      #5ddcff, #3c67e3 43%, #4e00c2
+    );
+    opacity: 0;
+    transition: opacity 0.3s;
+    animation: spin 2.5s linear infinite;
+  }
+  
+  .glow-card:hover::before,
+  .glow-card:hover::after {
+    opacity: 1;
+  }
+  
+  @keyframes spin {
     0% {
-      background-position: 200% 0;
+      --rotate: 0deg;
     }
     100% {
-      background-position: -200% 0;
+      --rotate: 360deg;
     }
   }
   
