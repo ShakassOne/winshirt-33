@@ -127,12 +127,12 @@ export const getCartItems = async (sessionId: string): Promise<CartItem[]> => {
     return cartItems.map(item => ({
       productId: item.products.id,
       name: item.products.name,
-      price: parseFloat(item.price),
+      price: parseFloat(item.price as unknown as string),
       quantity: item.quantity,
-      color: item.color,
-      size: item.size,
+      color: item.color || null,
+      size: item.size || null,
       image_url: item.products.image_url,
-      customization: item.customization
+      customization: item.customization as unknown as CartItem['customization']
     }));
     
   } catch (error) {

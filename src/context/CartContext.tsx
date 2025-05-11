@@ -55,7 +55,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const cartItems = await getCartItems(sessionId);
       setItems(cartItems);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
       toast.error("Erreur lors du chargement du panier");
     } finally {
@@ -72,7 +72,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         .eq('session_id', sessionId);
         
       if (error) throw error;
-    } catch (err) {
+    } catch (err: any) {
       console.error("Erreur lors de la liaison du panier à l'utilisateur:", err);
     }
   };
@@ -85,7 +85,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       await addToCart(sessionId, item);
       await loadCartItems(); // Reload items
       toast.success("Produit ajouté au panier");
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
       toast.error("Erreur lors de l'ajout au panier");
     } finally {
@@ -101,7 +101,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       await removeFromCart(sessionId, productId);
       await loadCartItems(); // Reload items
       toast.success("Produit retiré du panier");
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
       toast.error("Erreur lors du retrait du produit");
     } finally {
@@ -116,7 +116,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       await updateCartItemQuantity(sessionId, productId, quantity);
       await loadCartItems(); // Reload items
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
       toast.error("Erreur lors de la mise à jour de la quantité");
     } finally {
@@ -132,7 +132,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       await clearCartService(sessionId);
       await loadCartItems(); // Reload items
       toast.success("Panier vidé");
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
       toast.error("Erreur lors du vidage du panier");
     } finally {
