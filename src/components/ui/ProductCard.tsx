@@ -5,6 +5,7 @@ import GlassCard from './GlassCard';
 import { ShoppingCart, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { useCart } from '@/context/CartContext';
 
 interface ProductCardProps {
   id: string;
@@ -29,6 +30,21 @@ const ProductCard: React.FC<ProductCardProps> = ({
   tickets = 0,
   color,
 }) => {
+  const { addItem } = useCart();
+  
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    addItem({
+      productId: id,
+      name,
+      price,
+      quantity: 1,
+      image_url: image
+    });
+  };
+  
   return (
     <Link to={`/products/${id}`} className="block">
       <GlassCard hover3D shine className="group relative overflow-hidden hover:shadow-lg glow-card">
@@ -50,11 +66,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
           <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-between items-center translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-            <Button size="sm" variant="secondary" className="flex items-center gap-1" asChild>
-              <Link to={`/products/${id}`} onClick={(e) => e.stopPropagation()}>
-                <ShoppingCart className="h-4 w-4" />
-                <span className="hidden sm:inline-block">Ajouter</span>
-              </Link>
+            <Button size="sm" variant="secondary" className="flex items-center gap-1" onClick={handleAddToCart}>
+              <ShoppingCart className="h-4 w-4" />
+              <span className="hidden sm:inline-block">Ajouter</span>
             </Button>
             <Button size="sm" variant="outline" className="flex items-center gap-1" asChild>
               <Link to={`/products/${id}`} onClick={(e) => e.stopPropagation()}>

@@ -54,6 +54,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const cartItems = await getCartItems(sessionId);
+      console.log("Loaded cart items:", cartItems);
       setItems(cartItems);
     } catch (err: any) {
       setError(err.message);
@@ -82,9 +83,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     
     setIsLoading(true);
     try {
+      console.log("Adding item to cart:", item, "with sessionId:", sessionId);
       await addToCart(sessionId, item);
+      
+      // Update local state immediately for better UX
+      setItems(prevItems => {
+        const existingItemIndex = prevItems.findIndex(i => i.productId === item.productId);
+        if (existingItemIndex >= 0) {
+          // Update existing item
+          const updatedItems = [...prevItems];
+          updatedItems[existingItemIndex] = {
+            ...updatedItems[existingItemIndex],
+            quantity: updatedItems[existingItemIndex].quantity + item.quantity
+          };
+          return updatedItems;
+        } else {
+          // Add new item
+          return [...prevItems, item];
+        }
+      });
+      
       toast.success("Produit ajouté au panier");
-      // Important: recharger les articles immédiatement après l'ajout
+      
+      // Reload items to ensure consistency with server
       await loadCartItems();
     } catch (err: any) {
       setError(err.message);
@@ -101,8 +122,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await removeFromCart(sessionId, productId);
+      
+      // Update local state immediately
+      setItems(prevItems => prevItems.filter(item => item.productId !== productId));
+      
       toast.success("Produit retiré du panier");
-      // Recharger les articles immédiatement après la suppression
+      
+      // Reload items to ensure consistency
       await loadCartItems();
     } catch (err: any) {
       setError(err.message);
@@ -119,7 +145,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await updateCartItemQuantity(sessionId, productId, quantity);
-      // Recharger les articles immédiatement après la mise à jour
+      
+      // Update local state immediately
+      setItems(prevItems => 
+        prevItems.map(item => 
+          item.productId === productId ? { ...item, quantity } : item
+        )
+      );
+      
+      // Reload items to ensure consistency
       await loadCartItems();
     } catch (err: any) {
       setError(err.message);
@@ -136,8 +170,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await clearCartService(sessionId);
+      
+      // Update local state immediately
+      setItems([]);
+      
       toast.success("Panier vidé");
-      // Recharger les articles immédiatement après le vidage
+      
+      // Reload items to ensure consistency
       await loadCartItems();
     } catch (err: any) {
       setError(err.message);
