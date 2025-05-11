@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { X, Menu, ShoppingCart, ChevronDown, User } from "lucide-react";
+import { X, Menu, ChevronDown, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
+import CartIcon from "@/components/cart/CartIcon";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,6 +36,7 @@ const Navbar = () => {
             {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center">
               <ThemeToggle />
+              <CartIcon />
               <button
                 type="button"
                 onClick={toggleMenu}
@@ -106,10 +108,7 @@ const Navbar = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button variant="ghost" size="icon" className="text-white/80 hover:text-white">
-                <ShoppingCart className="h-5 w-5" />
-                <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-winshirt-purple text-[10px]">0</span>
-              </Button>
+              <CartIcon />
             </div>
           </div>
         </div>

@@ -116,3 +116,73 @@ export interface CartItem {
   };
   lotteries?: string[];
 }
+
+// Order
+export interface Order {
+  id: string;
+  user_id?: string;
+  guest_email?: string;
+  session_id?: string;
+  total_amount: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  payment_status?: 'pending' | 'paid' | 'failed';
+  payment_intent_id?: string;
+  shipping_first_name: string;
+  shipping_last_name: string;
+  shipping_email: string;
+  shipping_phone: string;
+  shipping_address: string;
+  shipping_city: string;
+  shipping_postal_code: string;
+  shipping_country: string;
+  delivery_notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// OrderItem
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  price: number;
+  customization?: {
+    designId: string;
+    designUrl: string;
+    printPosition: 'front' | 'back';
+    printSize: string;
+    text?: {
+      content: string;
+      font: string;
+      color: string;
+    };
+  };
+  created_at?: string;
+}
+
+// UserProfile
+export interface UserProfile {
+  id: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
+  avatar_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// CartSession
+export interface CartSession {
+  id: string;
+  user_id?: string;
+  guest_email?: string;
+  session_id: string;
+  created_at?: string;
+  updated_at?: string;
+}

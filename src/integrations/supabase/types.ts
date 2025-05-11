@@ -9,6 +9,87 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      cart_items: {
+        Row: {
+          cart_session_id: string
+          color: string | null
+          created_at: string
+          customization: Json | null
+          id: string
+          price: number
+          product_id: string
+          quantity: number
+          size: string | null
+          updated_at: string
+        }
+        Insert: {
+          cart_session_id: string
+          color?: string | null
+          created_at?: string
+          customization?: Json | null
+          id?: string
+          price: number
+          product_id: string
+          quantity?: number
+          size?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cart_session_id?: string
+          color?: string | null
+          created_at?: string
+          customization?: Json | null
+          id?: string
+          price?: number
+          product_id?: string
+          quantity?: number
+          size?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_cart_session_id_fkey"
+            columns: ["cart_session_id"]
+            isOneToOne: false
+            referencedRelation: "cart_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cart_sessions: {
+        Row: {
+          created_at: string
+          guest_email: string | null
+          id: string
+          session_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          guest_email?: string | null
+          id?: string
+          session_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          guest_email?: string | null
+          id?: string
+          session_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       designs: {
         Row: {
           category: string
@@ -228,8 +309,20 @@ export type Database = {
       orders: {
         Row: {
           created_at: string | null
+          delivery_notes: string | null
+          guest_email: string | null
           id: string
-          shipping_address: Json | null
+          payment_intent_id: string | null
+          payment_status: string | null
+          session_id: string | null
+          shipping_address: string | null
+          shipping_city: string | null
+          shipping_country: string | null
+          shipping_email: string | null
+          shipping_first_name: string | null
+          shipping_last_name: string | null
+          shipping_phone: string | null
+          shipping_postal_code: string | null
           status: string
           total_amount: number
           updated_at: string | null
@@ -237,8 +330,20 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          delivery_notes?: string | null
+          guest_email?: string | null
           id?: string
-          shipping_address?: Json | null
+          payment_intent_id?: string | null
+          payment_status?: string | null
+          session_id?: string | null
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_country?: string | null
+          shipping_email?: string | null
+          shipping_first_name?: string | null
+          shipping_last_name?: string | null
+          shipping_phone?: string | null
+          shipping_postal_code?: string | null
           status?: string
           total_amount: number
           updated_at?: string | null
@@ -246,8 +351,20 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          delivery_notes?: string | null
+          guest_email?: string | null
           id?: string
-          shipping_address?: Json | null
+          payment_intent_id?: string | null
+          payment_status?: string | null
+          session_id?: string | null
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_country?: string | null
+          shipping_email?: string | null
+          shipping_first_name?: string | null
+          shipping_last_name?: string | null
+          shipping_phone?: string | null
+          shipping_postal_code?: string | null
           status?: string
           total_amount?: number
           updated_at?: string | null
@@ -321,31 +438,43 @@ export type Database = {
         Row: {
           address: string | null
           avatar_url: string | null
+          city: string | null
+          country: string | null
           created_at: string | null
+          email: string | null
           first_name: string | null
           id: string
           last_name: string | null
           phone: string | null
+          postal_code: string | null
           updated_at: string | null
         }
         Insert: {
           address?: string | null
           avatar_url?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
+          email?: string | null
           first_name?: string | null
           id: string
           last_name?: string | null
           phone?: string | null
+          postal_code?: string | null
           updated_at?: string | null
         }
         Update: {
           address?: string | null
           avatar_url?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
+          email?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
           phone?: string | null
+          postal_code?: string | null
           updated_at?: string | null
         }
         Relationships: []

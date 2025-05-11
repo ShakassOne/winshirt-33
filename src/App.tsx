@@ -18,6 +18,11 @@ import DesignsAdmin from "./pages/admin/DesignsAdmin";
 import ThemeSettings from "./pages/admin/ThemeSettings";
 import { useScrollReset } from "./hooks/useScrollReset";
 import { ThemeProvider } from "./components/theme-provider";
+import { CartProvider } from "./context/CartContext";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import Payment from "./pages/Payment";
+import OrderConfirmation from "./pages/OrderConfirmation";
 
 // ScrollToTop component to reset scroll position
 const ScrollToTop = () => {
@@ -38,31 +43,37 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/products/:id" element={<ProductDetail />} />
-            <Route path="/lotteries" element={<Lotteries />} />
-            <Route path="/lotteries/:id" element={<LotteryDetail />} />
-            
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/products" element={<ProductsAdmin />} />
-            <Route path="/admin/lotteries" element={<LotteriesAdmin />} />
-            <Route path="/admin/mockups" element={<MockupsAdmin />} />
-            <Route path="/admin/designs" element={<DesignsAdmin />} />
-            <Route path="/admin/theme" element={<ThemeSettings />} />
-            
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <CartProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/products/:id" element={<ProductDetail />} />
+              <Route path="/lotteries" element={<Lotteries />} />
+              <Route path="/lotteries/:id" element={<LotteryDetail />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/payment/:orderId" element={<Payment />} />
+              <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+              
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/products" element={<ProductsAdmin />} />
+              <Route path="/admin/lotteries" element={<LotteriesAdmin />} />
+              <Route path="/admin/mockups" element={<MockupsAdmin />} />
+              <Route path="/admin/designs" element={<DesignsAdmin />} />
+              <Route path="/admin/theme" element={<ThemeSettings />} />
+              
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </CartProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
