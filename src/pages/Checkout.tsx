@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
@@ -64,9 +63,10 @@ const Checkout = () => {
             firstName: profileData.first_name || '',
             lastName: profileData.last_name || '',
             address: profileData.address || '',
-            city: profileData.city || '',
-            postalCode: profileData.postal_code || '',
-            country: profileData.country || 'France',
+            // Handle missing city, postal_code, and country in the profile schema
+            city: '',  // Default to empty string since it doesn't exist in the profile
+            postalCode: '',  // Default to empty string since it doesn't exist in the profile
+            country: 'France',  // Default country since it doesn't exist in the profile
             email: data.session.user.email || '',
             phone: profileData.phone || '',
           });
@@ -156,10 +156,8 @@ const Checkout = () => {
           first_name: shippingAddress.firstName,
           last_name: shippingAddress.lastName,
           address: shippingAddress.address,
-          city: shippingAddress.city,
-          postal_code: shippingAddress.postalCode,
-          country: shippingAddress.country,
           phone: shippingAddress.phone,
+          // Note: We don't update city, postal_code, or country since they don't exist in the schema
         }).eq('id', userId);
       }
       
