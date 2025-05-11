@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import LotteryCard from '../ui/LotteryCard';
 import { cn } from '@/lib/utils';
@@ -20,12 +20,28 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
     queryFn: fetchFeaturedLotteries,
   });
 
-  // Ensure lotteries is always treated as an array
+  // State for hero carousel
+  const [activeIndex, setActiveIndex] = useState(0);
   const lotteriesList = Array.isArray(lotteries) ? lotteries : [];
   
-  // Get the first lottery for the full-screen hero showcase
-  const featuredLottery = lotteriesList.length > 0 ? lotteriesList[0] : null;
-
+  // Get the featured lotteries for the hero carousel
+  const featuredLotteries = lotteriesList.filter(lottery => lottery.is_featured);
+  const featuredLottery = featuredLotteries.length > 0 ? featuredLotteries[activeIndex % featuredLotteries.length] : null;
+  
+  // Get other lotteries for the carousel below
+  const otherLotteries = lotteriesList.filter(lottery => !lottery.is_featured);
+  
+  // Auto-rotate hero carousel every 5 seconds
+  useEffect(() => {
+    if (featuredLotteries.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setActiveIndex((prevIndex) => (prevIndex + 1) % featuredLotteries.length);
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [featuredLotteries.length]);
+  
   // Calculate time remaining until draw date
   const getTimeRemaining = (drawDate: Date) => {
     const total = drawDate.getTime() - new Date().getTime();
@@ -36,6 +52,20 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
     
     return { total, days, hours, minutes, seconds };
   };
+
+  const goToPrev = useCallback(() => {
+    if (featuredLotteries.length <= 1) return;
+    setActiveIndex((prevIndex) => 
+      prevIndex === 0 ? featuredLotteries.length - 1 : prevIndex - 1
+    );
+  }, [featuredLotteries.length]);
+
+  const goToNext = useCallback(() => {
+    if (featuredLotteries.length <= 1) return;
+    setActiveIndex((prevIndex) => 
+      (prevIndex + 1) % featuredLotteries.length
+    );
+  }, [featuredLotteries.length]);
 
   if (isLoading) {
     return (
@@ -162,19 +192,47 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
               </div>
             </div>
           </div>
+
+          {/* Navigation Arrows */}
+          {featuredLotteries.length > 1 && (
+            <>
+              <Button 
+                onClick={goToPrev} 
+                variant="outline" 
+                size="icon" 
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 rounded-full w-12 h-12 bg-black/30 backdrop-blur-sm border-white/10 hover:bg-black/50 z-10"
+              >
+                <ChevronLeft className="h-6 w-6" />
+                <span className="sr-only">Previous</span>
+              </Button>
+              <Button 
+                onClick={goToNext} 
+                variant="outline" 
+                size="icon" 
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 rounded-full w-12 h-12 bg-black/30 backdrop-blur-sm border-white/10 hover:bg-black/50 z-10"
+              >
+                <ChevronRight className="h-6 w-6" />
+                <span className="sr-only">Next</span>
+              </Button>
+            </>
+          )}
           
           {/* Indicators */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-            {lotteriesList.slice(0, 4).map((_, idx) => (
-              <div 
-                key={idx} 
-                className={cn(
-                  "w-2 h-2 rounded-full",
-                  idx === 0 ? "bg-winshirt-purple" : "bg-white/30"
-                )}
-              />
-            ))}
-          </div>
+          {featuredLotteries.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
+              {featuredLotteries.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveIndex(idx)} 
+                  className={cn(
+                    "w-2 h-2 rounded-full transition-all",
+                    idx === activeIndex ? "bg-winshirt-purple w-6" : "bg-white/30"
+                  )}
+                  aria-label={`Go to slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Other Featured Lotteries */}
@@ -187,11 +245,11 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
               </div>
             </div>
             
-            {lotteriesList.length > 1 ? (
+            {otherLotteries.length > 0 ? (
               <div className="relative">
                 <Carousel className="w-full">
                   <CarouselContent>
-                    {lotteriesList.slice(1).map((lottery: Lottery) => (
+                    {otherLotteries.map((lottery: Lottery) => (
                       <CarouselItem key={lottery.id} className="md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
                         <div className="p-1">
                           <LotteryCard 

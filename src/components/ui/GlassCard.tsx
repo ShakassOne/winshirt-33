@@ -26,10 +26,11 @@ const GlassCard = ({
     const x = (clientX - left) / width;
     const y = (clientY - top) / height;
     
-    const rotateX = (y - 0.5) * 10;
-    const rotateY = (x - 0.5) * -10;
+    // Make the effect more pronounced and responsive
+    const rotateX = (y - 0.5) * 16; // Increased from 10 to 16
+    const rotateY = (x - 0.5) * -16; // Increased from 10 to 16
     
-    setTransform(`perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`);
+    setTransform(`perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.03, 1.03, 1.03)`);
   };
   
   const handleMouseLeave = () => {
@@ -41,7 +42,6 @@ const GlassCard = ({
     <div
       className={cn(
         'glass-card', 
-        shine && 'shine-effect',
         className
       )}
       style={{ transform }}

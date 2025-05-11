@@ -35,6 +35,66 @@
 
     --radius: 0.75rem;
   }
+
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 224 71.4% 4.1%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
+    
+    --primary: 255 79% 75%;
+    --primary-foreground: 210 20% 98%;
+    
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
+    
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+    
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220.9 39.3% 11%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 20% 98%;
+    
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 224 71.4% 4.1%;
+  }
+
+  .dark {
+    --background: 225 24% 13%;
+    --foreground: 210 40% 98%;
+    
+    --card: 225 24% 13%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 225 24% 13%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 255 79% 75%;
+    --primary-foreground: 210 40% 98%;
+    
+    --secondary: 225 24% 26%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 225 24% 26%;
+    --muted-foreground: 215 20% 65%;
+    
+    --accent: 199 85% 47%;
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 255 79% 75%;
+  }
 }
 
 @layer base {
@@ -85,8 +145,9 @@
     @apply relative overflow-hidden;
   }
   
+  /* Only apply shine animation on hover */
   .shine-effect::after {
-    @apply absolute inset-0 z-10 pointer-events-none;
+    @apply absolute inset-0 z-10 pointer-events-none opacity-0 transition-opacity duration-300;
     content: "";
     background: linear-gradient(
       45deg,
@@ -97,7 +158,11 @@
       rgba(255, 255, 255, 0) 100%
     );
     background-size: 200% 100%;
-    animation: shine 4s infinite linear;
+  }
+  
+  .shine-effect:hover::after {
+    @apply opacity-100;
+    animation: shine 3s infinite linear;
   }
   
   @keyframes shine {
