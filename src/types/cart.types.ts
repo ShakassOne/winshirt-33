@@ -13,7 +13,6 @@ export type CartContextType = {
   total: number;
   itemCount: number;
   sessionId: string;
-  fetchAttempted: boolean;
 };
 
 export interface CheckoutFormData {

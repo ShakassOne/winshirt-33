@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
@@ -34,8 +35,7 @@ const MockupsAdmin = () => {
   const mockups = React.useMemo(() => {
     if (!mockupsData) return [];
     
-    // Ensure mockupsData is an array
-    return (Array.isArray(mockupsData) ? mockupsData : []).map((mockup: any) => {
+    return mockupsData.map((mockup: any) => {
       // Ensure print_areas is an array
       let printAreas = [];
       if (mockup.print_areas) {
