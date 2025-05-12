@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Product, Lottery, Design, Mockup } from "@/types/supabase.types";
+import { Product, Lottery, Design, Mockup, PrintArea } from "@/types/supabase.types";
 
 // Fetch all products
 export const fetchAllProducts = async (): Promise<Product[]> => {
@@ -147,6 +147,11 @@ export const fetchRelatedProducts = async (productId: string, limit: number = 4)
 // Create a new design
 export const createDesign = async (designData: Partial<Design>): Promise<Design | null> => {
   try {
+    // Make sure required fields are present
+    if (!designData.name || !designData.image_url || !designData.category) {
+      throw new Error("Missing required fields for design");
+    }
+    
     const { data, error } = await supabase
       .from('designs')
       .insert([designData])
@@ -214,14 +219,36 @@ export const fetchAllDesigns = async (): Promise<Design[]> => {
 // Create a new mockup
 export const createMockup = async (mockupData: Partial<Mockup>): Promise<Mockup | null> => {
   try {
+    // Make sure required fields are present
+    if (!mockupData.name || !mockupData.category || !mockupData.svg_front_url) {
+      throw new Error("Missing required fields for mockup");
+    }
+    
+    // Handle the print_areas array type
+    const dataToInsert = {
+      ...mockupData,
+      // Convert PrintArea[] to JSON if needed
+      print_areas: mockupData.print_areas ? JSON.stringify(mockupData.print_areas) : JSON.stringify([]),
+      // Handle colors array if present
+      colors: mockupData.colors ? JSON.stringify(mockupData.colors) : null
+    };
+    
     const { data, error } = await supabase
       .from('mockups')
-      .insert([mockupData])
+      .insert([dataToInsert])
       .select()
       .single();
     
     if (error) throw error;
-    return data;
+    
+    // Parse the JSON data back to arrays
+    const result = {
+      ...data,
+      print_areas: data.print_areas ? JSON.parse(data.print_areas) : [],
+      colors: data.colors ? JSON.parse(data.colors) : []
+    } as unknown as Mockup;
+    
+    return result;
   } catch (error) {
     console.error("Error creating mockup:", error);
     return null;
@@ -231,15 +258,34 @@ export const createMockup = async (mockupData: Partial<Mockup>): Promise<Mockup 
 // Update an existing mockup
 export const updateMockup = async (id: string, mockupData: Partial<Mockup>): Promise<Mockup | null> => {
   try {
+    // Handle arrays that need to be stringified
+    const dataToUpdate: any = { ...mockupData };
+    
+    if (mockupData.print_areas) {
+      dataToUpdate.print_areas = JSON.stringify(mockupData.print_areas);
+    }
+    
+    if (mockupData.colors) {
+      dataToUpdate.colors = JSON.stringify(mockupData.colors);
+    }
+    
     const { data, error } = await supabase
       .from('mockups')
-      .update(mockupData)
+      .update(dataToUpdate)
       .eq('id', id)
       .select()
       .single();
     
     if (error) throw error;
-    return data;
+    
+    // Parse JSON fields back to arrays
+    const result = {
+      ...data,
+      print_areas: data.print_areas ? JSON.parse(data.print_areas) : [],
+      colors: data.colors ? JSON.parse(data.colors) : []
+    } as unknown as Mockup;
+    
+    return result;
   } catch (error) {
     console.error("Error updating mockup:", error);
     return null;
@@ -256,7 +302,17 @@ export const fetchMockupById = async (id: string): Promise<Mockup | null> => {
       .single();
     
     if (error) throw error;
-    return data;
+    
+    if (!data) return null;
+    
+    // Parse JSON fields
+    const result = {
+      ...data,
+      print_areas: data.print_areas ? JSON.parse(data.print_areas) : [],
+      colors: data.colors ? JSON.parse(data.colors) : []
+    } as unknown as Mockup;
+    
+    return result;
   } catch (error) {
     console.error("Error fetching mockup by ID:", error);
     return null;
@@ -272,7 +328,17 @@ export const fetchAllMockups = async (): Promise<Mockup[]> => {
       .order('created_at', { ascending: false });
     
     if (error) throw error;
-    return data || [];
+    
+    if (!data) return [];
+    
+    // Parse JSON fields for all mockups
+    const result = data.map(item => ({
+      ...item,
+      print_areas: item.print_areas ? JSON.parse(item.print_areas) : [],
+      colors: item.colors ? JSON.parse(item.colors) : []
+    })) as unknown as Mockup[];
+    
+    return result;
   } catch (error) {
     console.error("Error fetching all mockups:", error);
     return [];
@@ -282,9 +348,22 @@ export const fetchAllMockups = async (): Promise<Mockup[]> => {
 // Create a new product
 export const createProduct = async (productData: Partial<Product>): Promise<Product | null> => {
   try {
+    // Make sure required fields are present
+    if (!productData.name || !productData.description || !productData.price || 
+        !productData.image_url || !productData.category) {
+      throw new Error("Missing required fields for product");
+    }
+    
+    // Handle arrays that need to be properly formatted
+    const dataToInsert = {
+      ...productData,
+      available_colors: productData.available_colors || [],
+      available_sizes: productData.available_sizes || []
+    };
+    
     const { data, error } = await supabase
       .from('products')
-      .insert([productData])
+      .insert([dataToInsert])
       .select()
       .single();
     
@@ -333,6 +412,12 @@ export const deleteProduct = async (id: string): Promise<boolean> => {
 // Create a new lottery
 export const createLottery = async (lotteryData: Partial<Lottery>): Promise<Lottery | null> => {
   try {
+    // Make sure required fields are present
+    if (!lotteryData.title || !lotteryData.description || !lotteryData.image_url || 
+        !lotteryData.value || !lotteryData.goal || !lotteryData.draw_date) {
+      throw new Error("Missing required fields for lottery");
+    }
+    
     const { data, error } = await supabase
       .from('lotteries')
       .insert([lotteryData])

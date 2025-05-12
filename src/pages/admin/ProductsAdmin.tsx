@@ -10,7 +10,7 @@ import GlassCard from '@/components/ui/GlassCard';
 import { Edit, Trash, Eye, Plus, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import ProductForm from '@/components/admin/ProductForm';
+import { ProductForm } from '@/components/admin/ProductForm'; // Changed from default import to named import
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
 import { Product } from '@/types/supabase.types';

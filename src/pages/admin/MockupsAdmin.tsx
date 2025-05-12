@@ -34,6 +34,7 @@ const MockupsAdmin = () => {
   const mockups = React.useMemo(() => {
     if (!mockupsData) return [];
     
+    // Ensure mockupsData is an array
     return (Array.isArray(mockupsData) ? mockupsData : []).map((mockup: any) => {
       // Ensure print_areas is an array
       let printAreas = [];

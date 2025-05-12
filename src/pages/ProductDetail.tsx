@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
   fetchProductById,
   fetchRelatedProducts,
@@ -10,17 +11,17 @@ import { Product, Design, Mockup } from '@/types/supabase.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { GlassCard } from '@/components/ui/GlassCard';
+import GlassCard from '@/components/ui/GlassCard';
 import { ShoppingCart, CheckCircle, Truck, RotateCcw, Share2, Heart, Check } from 'lucide-react';
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -28,17 +29,15 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet"
+} from "@/components/ui/sheet";
 import { UploadButton } from '@/components/ui/upload-button';
-import { useCart } from '@/hooks/use-cart';
+import { useCart } from '@/context/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { useSession } from '@/hooks/use-session';
 import { useQuery } from '@tanstack/react-query';
-import { Skeleton } from "@/components/ui/skeleton"
-import { Slider } from "@/components/ui/slider"
-import { cn } from "@/lib/utils"
-import { useSearchParams } from 'react-router-dom';
+import { Skeleton } from "@/components/ui/skeleton";
+import { Slider } from "@/components/ui/slider";
+import { cn } from "@/lib/utils";
 
 interface DesignOption {
   value: string;
@@ -81,41 +80,14 @@ const ProductDetail = () => {
   const [isShareSheetOpen, setIsShareSheetOpen] = useState(false);
   const [shareLink, setShareLink] = useState('');
   const [isCopied, setIsCopied] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [isInitialCustomization, setIsInitialCustomization] = useState(false);
-  const [isInitialColor, setIsInitialColor] = useState(false);
-  const [isInitialSize, setIsInitialSize] = useState(false);
-  const [isInitialFrontDesign, setIsInitialFrontDesign] = useState(false);
-  const [isInitialBackDesign, setIsInitialBackDesign] = useState(false);
-  const [isInitialFrontText, setIsInitialFrontText] = useState(false);
-  const [isInitialBackText, setIsInitialBackText] = useState(false);
-  const [isInitialFrontTextSize, setIsInitialFrontTextSize] = useState(false);
-  const [isInitialBackTextSize, setIsInitialBackTextSize] = useState(false);
-  const [isInitialGeneratedMockup, setIsInitialGeneratedMockup] = useState(false);
-  const [isInitialCustomizationId, setIsInitialCustomizationId] = useState(false);
-  const [isInitialSvgUrl, setIsInitialSvgUrl] = useState(false);
-  const [isInitialIsCustomizable, setIsInitialIsCustomizable] = useState(false);
-  const [isInitialQuantity, setIsInitialQuantity] = useState(false);
-  const [isInitialSheetOpen, setIsInitialSheetOpen] = useState(false);
-  const [isInitialShareSheetOpen, setIsInitialShareSheetOpen] = useState(false);
-  const [isInitialCopied, setIsInitialCopied] = useState(false);
-  const [isInitialMobileView, setIsInitialMobileView] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(false);
-  const [isInitialError, setIsInitialError] = useState(false);
-  const [isInitialMockupLoading, setIsInitialMockupLoading] = useState(false);
-  const [isInitialMockupError, setIsInitialMockupError] = useState(false);
-  const [isInitialDesignLoading, setIsInitialDesignLoading] = useState(false);
-  const [isInitialDesignError, setIsInitialDesignError] = useState(false);
-  const [isInitialGeneratingMockup, setIsInitialGeneratingMockup] = useState(false);
-  const [isInitialAddingToCart, setIsInitialAddingToCart] = useState(false);
-  const [isInitialProduct, setIsInitialProduct] = useState(false);
-  const [isInitialRelatedProducts, setIsInitialRelatedProducts] = useState(false);
-  const [isInitialDesigns, setIsInitialDesigns] = useState(false);
-  const [isInitialMockup, setIsInitialMockup] = useState(false);
-  const [isInitialFrontDesignUrl, setIsInitialFrontDesignUrl] = useState(false);
-  const [isInitialBackDesignUrl, setIsInitialBackDesignUrl] = useState(false);
-  const [isInitialShareLink, setIsInitialShareLink] = useState(false);
-  const [isInitialGeneratedMockupUrl, setIsInitialGeneratedMockupUrl] = useState(false);
+  
+  // Return a JSX element instead of void
+  return (
+    <div>
+      <h1>Product Detail</h1>
+      <p>This component is under development</p>
+    </div>
+  );
 };
 
 export default ProductDetail;
