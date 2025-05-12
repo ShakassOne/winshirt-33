@@ -431,7 +431,7 @@ const ProductDetail = () => {
                   <div>
                     <Label htmlFor="front-design">Design avant</Label>
                     <Select 
-                      value={selectedFrontDesign || ''} 
+                      value={selectedFrontDesign || ''}  
                       onValueChange={(value) => handleDesignSelect(value, 'front')}
                     >
                       <SelectTrigger className="w-full">
@@ -454,7 +454,7 @@ const ProductDetail = () => {
                   <div>
                     <Label htmlFor="back-design">Design arrière</Label>
                     <Select 
-                      value={selectedBackDesign || ''} 
+                      value={selectedBackDesign || ''}
                       onValueChange={(value) => handleDesignSelect(value, 'back')}
                     >
                       <SelectTrigger className="w-full">
