@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -165,7 +164,7 @@ const DesignsAdmin = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {designs?.map((design) => (
+        {Array.isArray(designs) && designs.map((design) => (
           <div key={design.id} className="relative bg-white/5 rounded-lg shadow-md p-4">
             <img src={design.image_url} alt={design.name} className="w-full h-32 object-contain mb-4" />
             <h3 className="text-lg font-semibold mb-2">{design.name}</h3>
