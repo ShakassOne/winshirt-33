@@ -14,3 +14,17 @@ export type CartContextType = {
   itemCount: number;
   sessionId: string;
 };
+
+export interface CheckoutFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  deliveryNotes?: string;
+  createAccount?: boolean;
+  password?: string;
+}
