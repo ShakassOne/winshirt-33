@@ -72,7 +72,7 @@ const App = () => (
               <Route path="/admin/designs" element={<DesignsAdmin />} />
               <Route path="/admin/theme" element={<ThemeSettings />} />
               
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              {/* 404 route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

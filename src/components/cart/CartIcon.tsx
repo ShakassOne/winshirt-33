@@ -10,16 +10,23 @@ const CartIcon = () => {
   
   // Always load cart items when component mounts to ensure latest state
   useEffect(() => {
-    console.log("CartIcon mounted, loading cart items");
-    if(typeof loadCartItems === 'function') {
-      loadCartItems().then(() => {
-        console.log("Cart items loaded successfully");
-      }).catch(error => {
-        console.error("Error loading cart items:", error);
-      });
-    } else {
-      console.warn("loadCartItems function is not available");
-    }
+    console.log("CartIcon mounted");
+    
+    const loadCart = async () => {
+      if (typeof loadCartItems === 'function') {
+        try {
+          console.log("Starting cart items load");
+          await loadCartItems();
+          console.log("Cart items loaded successfully");
+        } catch (error) {
+          console.error("Failed to load cart items:", error);
+        }
+      } else {
+        console.warn("loadCartItems function is not available");
+      }
+    };
+    
+    loadCart();
   }, [loadCartItems]);
 
   return (
