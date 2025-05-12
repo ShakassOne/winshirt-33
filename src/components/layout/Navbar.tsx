@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { X, Menu, ChevronDown, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -14,13 +14,47 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import CartIcon from "@/components/cart/CartIcon";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check user authentication status when component mounts
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsLoggedIn(!!data.session);
+    };
+    
+    checkAuth();
+    
+    // Listen for auth state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsLoggedIn(!!session);
+    });
+    
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+  
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Vous avez été déconnecté avec succès");
+      navigate('/');
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast.error("Une erreur s'est produite lors de la déconnexion");
+    }
   };
 
   return (
@@ -70,12 +104,14 @@ const Navbar = () => {
               >
                 Loteries
               </Link>
-              <Link
-                to="/admin"
-                className="text-white/80 hover:text-white transition-colors px-3 py-1"
-              >
-                Admin
-              </Link>
+              {isLoggedIn && (
+                <Link
+                  to="/admin"
+                  className="text-white/80 hover:text-white transition-colors px-3 py-1"
+                >
+                  Admin
+                </Link>
+              )}
             </nav>
 
             {/* User Menu, Theme Toggle and Cart */}
@@ -90,22 +126,34 @@ const Navbar = () => {
                 <DropdownMenuContent align="end" className="bg-black/90 border-white/20">
                   <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-white/10" />
-                  <DropdownMenuItem className="hover:bg-white/5">
-                    <Link to="/profile" className="flex w-full">Profil</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-white/5">
-                    <Link to="/orders" className="flex w-full">Mes commandes</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-white/5">
-                    <Link to="/admin" className="flex w-full">Administration</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-white/5">
-                    <Link to="/admin/mockups" className="flex w-full">Mockups Admin</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-white/10" />
-                  <DropdownMenuItem className="hover:bg-white/5">
-                    Déconnexion
-                  </DropdownMenuItem>
+                  {isLoggedIn ? (
+                    <>
+                      <DropdownMenuItem className="hover:bg-white/5">
+                        <Link to="/account" className="flex w-full">Profil</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="hover:bg-white/5">
+                        <Link to="/orders" className="flex w-full">Mes commandes</Link>
+                      </DropdownMenuItem>
+                      {isLoggedIn && (
+                        <>
+                          <DropdownMenuItem className="hover:bg-white/5">
+                            <Link to="/admin" className="flex w-full">Administration</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="hover:bg-white/5">
+                            <Link to="/admin/mockups" className="flex w-full">Mockups Admin</Link>
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      <DropdownMenuSeparator className="bg-white/10" />
+                      <DropdownMenuItem onClick={handleLogout} className="hover:bg-white/5 cursor-pointer">
+                        Déconnexion
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <DropdownMenuItem className="hover:bg-white/5">
+                      <Link to="/login" className="flex w-full">Connexion</Link>
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
               <CartIcon />
@@ -137,27 +185,55 @@ const Navbar = () => {
             >
               Loteries
             </Link>
-            <Link
-              to="/admin"
-              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
-              onClick={toggleMenu}
-            >
-              Admin
-            </Link>
-            <Link
-              to="/admin/mockups"
-              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
-              onClick={toggleMenu}
-            >
-              Gestion des mockups
-            </Link>
-            <Link
-              to="/admin/theme"
-              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
-              onClick={toggleMenu}
-            >
-              Réglages du thème
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <Link
+                  to="/admin"
+                  className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+                  onClick={toggleMenu}
+                >
+                  Admin
+                </Link>
+                <Link
+                  to="/admin/mockups"
+                  className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+                  onClick={toggleMenu}
+                >
+                  Gestion des mockups
+                </Link>
+                <Link
+                  to="/admin/theme"
+                  className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+                  onClick={toggleMenu}
+                >
+                  Réglages du thème
+                </Link>
+                <Link
+                  to="/account"
+                  className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+                  onClick={toggleMenu}
+                >
+                  Mon compte
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    toggleMenu();
+                  }}
+                  className="block w-full text-left text-white/70 hover:text-white px-3 py-2 rounded-md"
+                >
+                  Déconnexion
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+                onClick={toggleMenu}
+              >
+                Connexion
+              </Link>
+            )}
           </div>
         )}
       </div>

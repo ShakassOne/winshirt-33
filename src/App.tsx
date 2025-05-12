@@ -25,6 +25,8 @@ import Payment from "./pages/Payment";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Account from "./pages/Account";
 import OrderDetails from "./pages/OrderDetails";
+import Login from "./pages/Login";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 // ScrollToTop component to reset scroll position
 const ScrollToTop = () => {
@@ -61,16 +63,51 @@ const App = () => (
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/payment/:orderId" element={<Payment />} />
               <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-              <Route path="/account" element={<Account />} />
-              <Route path="/order-details/:orderId" element={<OrderDetails />} />
+              <Route path="/login" element={<Login />} />
+              
+              {/* Protected Routes */}
+              <Route path="/account" element={
+                <ProtectedRoute>
+                  <Account />
+                </ProtectedRoute>
+              } />
+              <Route path="/order-details/:orderId" element={
+                <ProtectedRoute>
+                  <OrderDetails />
+                </ProtectedRoute>
+              } />
               
               {/* Admin Routes */}
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/products" element={<ProductsAdmin />} />
-              <Route path="/admin/lotteries" element={<LotteriesAdmin />} />
-              <Route path="/admin/mockups" element={<MockupsAdmin />} />
-              <Route path="/admin/designs" element={<DesignsAdmin />} />
-              <Route path="/admin/theme" element={<ThemeSettings />} />
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/products" element={
+                <ProtectedRoute>
+                  <ProductsAdmin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/lotteries" element={
+                <ProtectedRoute>
+                  <LotteriesAdmin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/mockups" element={
+                <ProtectedRoute>
+                  <MockupsAdmin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/designs" element={
+                <ProtectedRoute>
+                  <DesignsAdmin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/theme" element={
+                <ProtectedRoute>
+                  <ThemeSettings />
+                </ProtectedRoute>
+              } />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
