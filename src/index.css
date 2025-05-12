@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -116,13 +115,13 @@
 
   body {
     @apply bg-winshirt-background text-foreground antialiased;
-    background: radial-gradient(ellipse at top, #2A2F3C 0%, #1A1F2C 70%);
-    min-height: 100vh;
+    /* Removing the starry background that conflicts with custom backgrounds */
     position: relative;
     overflow-x: hidden;
   }
 
-  body::after {
+  /* Removing the starry background overlay */
+  /* body::after {
     content: '';
     position: fixed;
     top: 0;
@@ -137,7 +136,7 @@
     background-size: 550px 550px, 350px 350px, 250px 250px;
     background-position: 0 0, 40px 60px, 130px 270px;
     z-index: -1;
-  }
+  } */
 }
 
 @layer components {
@@ -250,6 +249,12 @@
   
   .progress-bar-fill {
     @apply h-full rounded-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue transition-all duration-300;
+  }
+  
+  /* Modified py-8 class as requested */
+  .py-8 {
+    padding-top: 10rem;
+    padding-bottom: 10rem;
   }
   
   /* Rendre les customizations sous l'image en version mobile */

@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import Lotteries from "./pages/Lotteries";
@@ -23,6 +23,8 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import Account from "./pages/Account";
+import OrderDetails from "./pages/OrderDetails";
 
 // ScrollToTop component to reset scroll position
 const ScrollToTop = () => {
@@ -59,6 +61,8 @@ const App = () => (
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/payment/:orderId" element={<Payment />} />
               <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+              <Route path="/account" element={<Account />} />
+              <Route path="/order-details/:orderId" element={<OrderDetails />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminDashboard />} />
