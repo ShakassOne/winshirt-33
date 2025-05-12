@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
@@ -309,8 +308,8 @@ const ProductDetail = () => {
           {/* Product Image */}
           <div className="rounded-xl overflow-hidden bg-white/5 border border-white/10 p-2">
             <img 
-              src={product.image_url} 
-              alt={product.name} 
+              src={product?.image_url} 
+              alt={product?.name} 
               className="w-full h-auto rounded-lg object-cover"
             />
           </div>
@@ -319,7 +318,7 @@ const ProductDetail = () => {
           <div className="space-y-6">
             <div>
               <div className="flex items-center justify-between">
-                <h1 className="text-3xl md:text-4xl font-bold">{product.name}</h1>
+                <h1 className="text-3xl md:text-4xl font-bold">{product?.name}</h1>
                 <Button 
                   variant="outline" 
                   size="icon" 
@@ -330,29 +329,29 @@ const ProductDetail = () => {
                 </Button>
               </div>
               <p className="text-xl font-bold text-winshirt-purple mt-2">
-                {product.price.toFixed(2)} €
+                {product?.price.toFixed(2)} €
               </p>
               
               <div className="flex items-center mt-2">
                 <Badge variant="outline" className="mr-2">
-                  {product.category}
+                  {product?.category}
                 </Badge>
-                {product.tickets_offered > 0 && (
+                {product?.tickets_offered > 0 && (
                   <Badge className="bg-winshirt-gold text-black">
-                    {product.tickets_offered} tickets
+                    {product?.tickets_offered} tickets
                   </Badge>
                 )}
               </div>
             </div>
             
             <div>
-              <p className="text-white/80">{product.description}</p>
+              <p className="text-white/80">{product?.description}</p>
             </div>
             
             {/* Product Options */}
             <div className="space-y-4">
               {/* Colors */}
-              {product.available_colors && product.available_colors.length > 0 && (
+              {product?.available_colors && product.available_colors.length > 0 && (
                 <div>
                   <Label htmlFor="color">Couleur</Label>
                   <div className="flex gap-2 mt-2">
@@ -377,7 +376,7 @@ const ProductDetail = () => {
               )}
               
               {/* Sizes */}
-              {product.available_sizes && product.available_sizes.length > 0 && (
+              {product?.available_sizes && product.available_sizes.length > 0 && (
                 <div>
                   <Label htmlFor="size">Taille</Label>
                   <Select 
@@ -425,7 +424,7 @@ const ProductDetail = () => {
             </div>
             
             {/* Customization Accordion */}
-            {product.is_customizable && (
+            {product?.is_customizable && (
               <CustomizationAccordion>
                 <div className="space-y-4">
                   <div>
@@ -438,7 +437,10 @@ const ProductDetail = () => {
                         <SelectValue placeholder="Sélectionner un design" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Aucun</SelectItem>
+                        {/* Fix: Changed empty string to "none" with a real value */}
+                        <SelectItem key="front-none" value="none">
+                          Aucun
+                        </SelectItem>
                         {designOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
@@ -458,7 +460,10 @@ const ProductDetail = () => {
                         <SelectValue placeholder="Sélectionner un design" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Aucun</SelectItem>
+                        {/* Fix: Changed empty string to "none" with a real value */}
+                        <SelectItem key="back-none" value="none">
+                          Aucun
+                        </SelectItem>
                         {designOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
@@ -556,10 +561,10 @@ const ProductDetail = () => {
                 <RotateCcw className="h-5 w-5 text-winshirt-purple" />
                 <span>Retours sous 30 jours</span>
               </div>
-              {product.tickets_offered > 0 && (
+              {product?.tickets_offered > 0 && (
                 <div className="flex items-center space-x-2">
                   <Heart className="h-5 w-5 text-winshirt-gold" />
-                  <span>{product.tickets_offered} tickets de loterie offerts</span>
+                  <span>{product?.tickets_offered} tickets de loterie offerts</span>
                 </div>
               )}
             </div>
@@ -630,7 +635,7 @@ const ProductDetail = () => {
                   </a>
                 </Button>
                 <Button variant="outline" className="flex-1" asChild>
-                  <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(product.name)}`} target="_blank" rel="noopener noreferrer">
+                  <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareLink)}&text=${encodeURIComponent(product?.name || '')}`} target="_blank" rel="noopener noreferrer">
                     Twitter
                   </a>
                 </Button>
