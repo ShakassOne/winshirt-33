@@ -120,7 +120,7 @@
     overflow-x: hidden;
   }
 
-  /* Completely removed the starry background overlay to prevent conflicts */
+  /* Removed starry background overlay to prevent conflicts */
 }
 
 @layer components {
@@ -235,10 +235,10 @@
     @apply h-full rounded-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue transition-all duration-300;
   }
   
-  /* Modified py-8 class as requested */
+  /* Custom padding for the py-8 class */
   .py-8 {
-    padding-top: 2rem;
-    padding-bottom: 2rem;
+    padding-top: 10rem;
+    padding-bottom: 10rem;
   }
   
   /* Page specific adjustments for py-8 */

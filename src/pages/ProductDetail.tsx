@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { fetchProductById } from '@/services/api.service';
+import { fetchProductById, fetchRelatedProducts } from '@/services/api.service';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { fetchRelatedProducts } from '@/services/api.service';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,11 +45,11 @@ const ProductDetail = () => {
   // Set default color and size when product loads
   useEffect(() => {
     if (product) {
-      if (product.colors && product.colors.length > 0) {
-        setSelectedColor(product.colors[0]);
+      if (product.available_colors && product.available_colors.length > 0) {
+        setSelectedColor(product.available_colors[0]);
       }
-      if (product.sizes && product.sizes.length > 0) {
-        setSelectedSize(product.sizes[0]);
+      if (product.available_sizes && product.available_sizes.length > 0) {
+        setSelectedSize(product.available_sizes[0]);
       }
     }
   }, [product]);
@@ -57,15 +57,18 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     if (!product) return;
     
-    const customization = product.is_customizable 
-      ? {
-          text: customText ? {
-            content: customText,
-            color: customTextColor,
-            font: customTextFont
-          } : undefined
-        }
-      : undefined;
+    // Simplified customization object that matches the required structure
+    const customization = product.is_customizable && customText ? {
+      designId: 'placeholder-design-id',  // Default placeholder
+      designUrl: 'placeholder-url',      // Default placeholder
+      printPosition: 'front' as const,   // Default position
+      printSize: 'A4',                  // Default size
+      text: {
+        content: customText,
+        color: customTextColor,
+        font: customTextFont
+      }
+    } : undefined;
     
     addItem({
       productId: product.id,
@@ -129,6 +132,10 @@ const ProductDetail = () => {
     );
   }
   
+  // Rating and review placeholders (since the product type doesn't have these)
+  const rating = 5; // Default rating
+  const reviewsCount = 0; // Default reviews count
+  
   return (
     <div className="min-h-screen flex flex-col product-detail-page">
       <Navbar />
@@ -154,21 +161,6 @@ const ProductDetail = () => {
                   className="w-full h-auto object-cover"
                 />
               </div>
-              
-              {/* Additional Images (if available) */}
-              {product.additional_images && product.additional_images.length > 0 && (
-                <div className="grid grid-cols-4 gap-2 mt-4">
-                  {product.additional_images.map((image, index) => (
-                    <div key={index} className="glass-card overflow-hidden cursor-pointer">
-                      <img 
-                        src={image} 
-                        alt={`${product.name} - Vue ${index + 1}`} 
-                        className="w-full h-auto object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
             
             {/* Product Info */}
@@ -182,22 +174,17 @@ const ProductDetail = () => {
                         key={star} 
                         className={cn(
                           "h-4 w-4", 
-                          star <= (product.rating || 5) ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                          star <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
                         )} 
                       />
                     ))}
                   </div>
                   <span className="ml-2 text-sm text-gray-400">
-                    {product.reviews_count || 0} avis
+                    {reviewsCount} avis
                   </span>
                 </div>
                 <div className="mt-4">
                   <span className="text-2xl font-bold">{product.price.toFixed(2)} €</span>
-                  {product.original_price && (
-                    <span className="ml-2 text-gray-400 line-through">
-                      {product.original_price.toFixed(2)} €
-                    </span>
-                  )}
                 </div>
               </div>
               
@@ -206,11 +193,11 @@ const ProductDetail = () => {
               {/* Product Customization */}
               <div className="space-y-4">
                 {/* Color Selection */}
-                {product.colors && product.colors.length > 0 && (
+                {product.available_colors && product.available_colors.length > 0 && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">Couleur</h3>
                     <div className="flex flex-wrap gap-2">
-                      {product.colors.map((color) => (
+                      {product.available_colors.map((color) => (
                         <button
                           key={color}
                           className={cn(
@@ -227,11 +214,11 @@ const ProductDetail = () => {
                 )}
                 
                 {/* Size Selection */}
-                {product.sizes && product.sizes.length > 0 && (
+                {product.available_sizes && product.available_sizes.length > 0 && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">Taille</h3>
                     <div className="flex flex-wrap gap-2">
-                      {product.sizes.map((size) => (
+                      {product.available_sizes.map((size) => (
                         <button
                           key={size}
                           className={cn(
@@ -343,18 +330,6 @@ const ProductDetail = () => {
                     Partager
                   </Button>
                 </div>
-                
-                {/* Product Features */}
-                {product.features && product.features.length > 0 && (
-                  <div className="space-y-2">
-                    {product.features.map((feature, index) => (
-                      <div key={index} className="flex items-center">
-                        <Check className="h-4 w-4 text-winshirt-blue mr-2" />
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -371,52 +346,36 @@ const ProductDetail = () => {
                 <h2 className="text-xl font-semibold mb-4">À propos de ce produit</h2>
                 <div className="prose prose-invert max-w-none">
                   <p>{product.description}</p>
-                  {product.long_description && (
-                    <div dangerouslySetInnerHTML={{ __html: product.long_description }} />
-                  )}
                 </div>
               </TabsContent>
               <TabsContent value="specifications" className="glass-card p-6 mt-4">
                 <h2 className="text-xl font-semibold mb-4">Spécifications techniques</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {product.specifications && Object.entries(product.specifications).map(([key, value]) => (
-                    <div key={key} className="flex justify-between py-2 border-b border-gray-100/10">
-                      <span className="text-gray-400">{key}</span>
-                      <span>{value as string}</span>
+                  <div className="flex justify-between py-2 border-b border-gray-100/10">
+                    <span className="text-gray-400">Catégorie</span>
+                    <span>{product.category}</span>
+                  </div>
+                  {product.color && (
+                    <div className="flex justify-between py-2 border-b border-gray-100/10">
+                      <span className="text-gray-400">Couleur</span>
+                      <span>{product.color}</span>
                     </div>
-                  ))}
+                  )}
+                  <div className="flex justify-between py-2 border-b border-gray-100/10">
+                    <span className="text-gray-400">Personnalisable</span>
+                    <span>{product.is_customizable ? 'Oui' : 'Non'}</span>
+                  </div>
+                  {product.tickets_offered > 0 && (
+                    <div className="flex justify-between py-2 border-b border-gray-100/10">
+                      <span className="text-gray-400">Tickets offerts</span>
+                      <span>{product.tickets_offered}</span>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
               <TabsContent value="reviews" className="glass-card p-6 mt-4">
                 <h2 className="text-xl font-semibold mb-4">Avis clients</h2>
-                {product.reviews && product.reviews.length > 0 ? (
-                  <div className="space-y-4">
-                    {product.reviews.map((review, index) => (
-                      <div key={index} className="border-b border-gray-100/10 pb-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">{review.author}</p>
-                            <div className="flex mt-1">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star 
-                                  key={star} 
-                                  className={cn(
-                                    "h-3 w-3", 
-                                    star <= review.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-                                  )} 
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          <span className="text-sm text-gray-400">{review.date}</span>
-                        </div>
-                        <p className="mt-2">{review.content}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p>Aucun avis pour le moment.</p>
-                )}
+                <p>Aucun avis pour le moment.</p>
               </TabsContent>
             </Tabs>
           </div>

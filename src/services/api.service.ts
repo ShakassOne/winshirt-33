@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Product, Lottery, Mockup } from "@/types/supabase.types";
 import { MockupWithColors, MockupColor } from "@/types/mockup.types";
@@ -12,6 +11,23 @@ export const fetchAllProducts = async () => {
 
   if (error) {
     console.error("Error fetching products:", error);
+    throw error;
+  }
+
+  return data || [];
+};
+
+// Add the missing fetchRelatedProducts function
+export const fetchRelatedProducts = async (category: string, currentProductId: string) => {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("category", category)
+    .neq("id", currentProductId)
+    .limit(4);
+
+  if (error) {
+    console.error("Error fetching related products:", error);
     throw error;
   }
 
