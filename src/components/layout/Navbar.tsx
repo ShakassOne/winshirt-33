@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { X, Menu, ChevronDown, User } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { X, Menu, ChevronDown, User, LogIn, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -14,13 +14,36 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import CartIcon from "@/components/cart/CartIcon";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Déconnecté avec succès",
+        description: "À bientôt sur WinShirt!",
+      });
+      navigate("/");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de la déconnexion.",
+      });
+    }
   };
 
   return (
@@ -70,44 +93,66 @@ const Navbar = () => {
               >
                 Loteries
               </Link>
-              <Link
-                to="/admin"
-                className="text-white/80 hover:text-white transition-colors px-3 py-1"
-              >
-                Admin
-              </Link>
+              {user && (
+                <Link
+                  to="/admin"
+                  className="text-white/80 hover:text-white transition-colors px-3 py-1"
+                >
+                  Admin
+                </Link>
+              )}
             </nav>
 
             {/* User Menu, Theme Toggle and Cart */}
             <div className="hidden md:flex items-center space-x-1">
               <ThemeToggle />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-white/80 hover:text-white">
-                    <User className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-black/90 border-white/20">
-                  <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-white/10" />
-                  <DropdownMenuItem className="hover:bg-white/5">
-                    <Link to="/profile" className="flex w-full">Profil</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-white/5">
-                    <Link to="/orders" className="flex w-full">Mes commandes</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-white/5">
-                    <Link to="/admin" className="flex w-full">Administration</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-white/5">
-                    <Link to="/admin/mockups" className="flex w-full">Mockups Admin</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-white/10" />
-                  <DropdownMenuItem className="hover:bg-white/5">
-                    Déconnexion
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              
+              {/* User Menu */}
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-white/80 hover:text-white">
+                      <User className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-black/90 border-white/20">
+                    <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-white/10" />
+                    <DropdownMenuItem className="hover:bg-white/5">
+                      <Link to="/account" className="flex w-full">Profil</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="hover:bg-white/5">
+                      <Link to="/orders" className="flex w-full">Mes commandes</Link>
+                    </DropdownMenuItem>
+                    {user && (
+                      <>
+                        <DropdownMenuItem className="hover:bg-white/5">
+                          <Link to="/admin" className="flex w-full">Administration</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="hover:bg-white/5">
+                          <Link to="/admin/mockups" className="flex w-full">Mockups Admin</Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    <DropdownMenuSeparator className="bg-white/10" />
+                    <DropdownMenuItem 
+                      className="hover:bg-white/5" 
+                      onClick={handleSignOut}
+                    >
+                      <span className="flex items-center w-full">
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Déconnexion
+                      </span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button variant="ghost" size="icon" className="text-white/80 hover:text-white" asChild>
+                  <Link to="/auth">
+                    <LogIn className="h-5 w-5" />
+                  </Link>
+                </Button>
+              )}
               <CartIcon />
             </div>
           </div>
@@ -137,27 +182,53 @@ const Navbar = () => {
             >
               Loteries
             </Link>
-            <Link
-              to="/admin"
-              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
-              onClick={toggleMenu}
-            >
-              Admin
-            </Link>
-            <Link
-              to="/admin/mockups"
-              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
-              onClick={toggleMenu}
-            >
-              Gestion des mockups
-            </Link>
-            <Link
-              to="/admin/theme"
-              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
-              onClick={toggleMenu}
-            >
-              Réglages du thème
-            </Link>
+            {user && (
+              <>
+                <Link
+                  to="/admin"
+                  className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+                  onClick={toggleMenu}
+                >
+                  Admin
+                </Link>
+                <Link
+                  to="/admin/mockups"
+                  className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+                  onClick={toggleMenu}
+                >
+                  Gestion des mockups
+                </Link>
+                <Link
+                  to="/admin/theme"
+                  className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+                  onClick={toggleMenu}
+                >
+                  Réglages du thème
+                </Link>
+              </>
+            )}
+            {user ? (
+              <div 
+                onClick={handleSignOut}
+                className="block text-white/70 hover:text-white px-3 py-2 rounded-md cursor-pointer"
+              >
+                <span className="flex items-center">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Déconnexion
+                </span>
+              </div>
+            ) : (
+              <Link
+                to="/auth"
+                className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+                onClick={toggleMenu}
+              >
+                <span className="flex items-center">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Connexion
+                </span>
+              </Link>
+            )}
           </div>
         )}
       </div>
