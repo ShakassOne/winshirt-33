@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -57,16 +56,17 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     if (!product) return;
     
-    // Simplified customization object that matches the required structure
+    // Fixed customization object that matches the required structure
     const customization = product.is_customizable && customText ? {
-      designId: 'placeholder-design-id',  // Default placeholder
-      designUrl: 'placeholder-url',      // Default placeholder
-      printPosition: 'front' as const,   // Default position
-      printSize: 'A4',                  // Default size
+      designId: 'placeholder-design-id',
+      designUrl: 'placeholder-url',
+      printPosition: 'front' as const,
+      printSize: 'A4',
       text: {
         content: customText,
         color: customTextColor,
-        font: customTextFont
+        font: customTextFont,
+        printPosition: 'front' as const, // Added the missing printPosition property
       }
     } : undefined;
     
