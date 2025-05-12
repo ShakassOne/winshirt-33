@@ -31,13 +31,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { UploadButton } from '@/components/ui/upload-button';
-import { useCart } from '@/context/CartContext';
+import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { useSession } from '@/hooks/use-session';
 
 interface DesignOption {
   value: string;

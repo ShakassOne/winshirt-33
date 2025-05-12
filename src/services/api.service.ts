@@ -1,6 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Product, Lottery, Design, Mockup, PrintArea } from "@/types/supabase.types";
+import { Json } from "@/integrations/supabase/types";
 
 // Fetch all products
 export const fetchAllProducts = async (): Promise<Product[]> => {
@@ -154,7 +154,12 @@ export const createDesign = async (designData: Partial<Design>): Promise<Design 
     
     const { data, error } = await supabase
       .from('designs')
-      .insert([designData])
+      .insert([{
+        name: designData.name,
+        image_url: designData.image_url,
+        category: designData.category,
+        is_active: designData.is_active || true
+      }])
       .select()
       .single();
     
@@ -226,7 +231,17 @@ export const createMockup = async (mockupData: Partial<Mockup>): Promise<Mockup 
     
     // Handle the print_areas array type
     const dataToInsert = {
-      ...mockupData,
+      name: mockupData.name,
+      category: mockupData.category,
+      svg_front_url: mockupData.svg_front_url,
+      svg_back_url: mockupData.svg_back_url,
+      price_a3: mockupData.price_a3 || 0,
+      price_a4: mockupData.price_a4 || 0,
+      price_a5: mockupData.price_a5 || 0,
+      price_a6: mockupData.price_a6 || 0,
+      text_price_front: mockupData.text_price_front || 0,
+      text_price_back: mockupData.text_price_back || 0,
+      is_active: mockupData.is_active !== false,
       // Convert PrintArea[] to JSON if needed
       print_areas: mockupData.print_areas ? JSON.stringify(mockupData.print_areas) : JSON.stringify([]),
       // Handle colors array if present
@@ -244,11 +259,11 @@ export const createMockup = async (mockupData: Partial<Mockup>): Promise<Mockup 
     // Parse the JSON data back to arrays
     const result = {
       ...data,
-      print_areas: data.print_areas ? JSON.parse(data.print_areas) : [],
-      colors: data.colors ? JSON.parse(data.colors) : []
-    } as unknown as Mockup;
+      print_areas: data.print_areas ? JSON.parse(data.print_areas as string) : [],
+      colors: data.colors ? JSON.parse(data.colors as string) : []
+    };
     
-    return result;
+    return result as Mockup;
   } catch (error) {
     console.error("Error creating mockup:", error);
     return null;
@@ -281,11 +296,11 @@ export const updateMockup = async (id: string, mockupData: Partial<Mockup>): Pro
     // Parse JSON fields back to arrays
     const result = {
       ...data,
-      print_areas: data.print_areas ? JSON.parse(data.print_areas) : [],
-      colors: data.colors ? JSON.parse(data.colors) : []
-    } as unknown as Mockup;
+      print_areas: data.print_areas ? JSON.parse(data.print_areas as string) : [],
+      colors: data.colors ? JSON.parse(data.colors as string) : []
+    };
     
-    return result;
+    return result as Mockup;
   } catch (error) {
     console.error("Error updating mockup:", error);
     return null;
@@ -308,11 +323,11 @@ export const fetchMockupById = async (id: string): Promise<Mockup | null> => {
     // Parse JSON fields
     const result = {
       ...data,
-      print_areas: data.print_areas ? JSON.parse(data.print_areas) : [],
-      colors: data.colors ? JSON.parse(data.colors) : []
-    } as unknown as Mockup;
+      print_areas: data.print_areas ? JSON.parse(data.print_areas as string) : [],
+      colors: data.colors ? JSON.parse(data.colors as string) : []
+    };
     
-    return result;
+    return result as Mockup;
   } catch (error) {
     console.error("Error fetching mockup by ID:", error);
     return null;
@@ -334,11 +349,11 @@ export const fetchAllMockups = async (): Promise<Mockup[]> => {
     // Parse JSON fields for all mockups
     const result = data.map(item => ({
       ...item,
-      print_areas: item.print_areas ? JSON.parse(item.print_areas) : [],
-      colors: item.colors ? JSON.parse(item.colors) : []
-    })) as unknown as Mockup[];
+      print_areas: item.print_areas ? JSON.parse(item.print_areas as string) : [],
+      colors: item.colors ? JSON.parse(item.colors as string) : []
+    }));
     
-    return result;
+    return result as Mockup[];
   } catch (error) {
     console.error("Error fetching all mockups:", error);
     return [];
@@ -354,11 +369,20 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
       throw new Error("Missing required fields for product");
     }
     
-    // Handle arrays that need to be properly formatted
+    // Create a valid product object with all required fields
     const dataToInsert = {
-      ...productData,
+      name: productData.name,
+      description: productData.description,
+      price: productData.price,
+      image_url: productData.image_url,
+      category: productData.category,
+      is_customizable: productData.is_customizable || false,
       available_colors: productData.available_colors || [],
-      available_sizes: productData.available_sizes || []
+      available_sizes: productData.available_sizes || [],
+      color: productData.color || null,
+      tickets_offered: productData.tickets_offered || 0,
+      is_active: productData.is_active !== false,
+      mockup_id: productData.mockup_id || null
     };
     
     const { data, error } = await supabase
@@ -414,13 +438,25 @@ export const createLottery = async (lotteryData: Partial<Lottery>): Promise<Lott
   try {
     // Make sure required fields are present
     if (!lotteryData.title || !lotteryData.description || !lotteryData.image_url || 
-        !lotteryData.value || !lotteryData.goal || !lotteryData.draw_date) {
+        lotteryData.value === undefined || lotteryData.goal === undefined || !lotteryData.draw_date) {
       throw new Error("Missing required fields for lottery");
     }
     
+    const dataToInsert = {
+      title: lotteryData.title,
+      description: lotteryData.description,
+      image_url: lotteryData.image_url,
+      value: lotteryData.value,
+      goal: lotteryData.goal,
+      participants: lotteryData.participants || 0,
+      draw_date: lotteryData.draw_date,
+      is_active: lotteryData.is_active !== false,
+      is_featured: lotteryData.is_featured || false
+    };
+    
     const { data, error } = await supabase
       .from('lotteries')
-      .insert([lotteryData])
+      .insert([dataToInsert])
       .select()
       .single();
     
