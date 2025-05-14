@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -23,6 +24,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 
+// Schema for password validation - only required when creating account
+const passwordSchema = z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères");
+
 // Schéma de validation pour le formulaire de checkout
 const checkoutSchema = z.object({
   firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
@@ -35,11 +39,20 @@ const checkoutSchema = z.object({
   country: z.string().min(2, "Pays invalide"),
   deliveryNotes: z.string().optional(),
   createAccount: z.boolean().default(false),
-  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").optional()
-    .refine(
-      (pw, ctx) => !ctx.parent.createAccount || (pw && pw.length >= 6),
-      { message: "Le mot de passe est requis pour créer un compte" }
-    ),
+  password: z.string().optional()
+}).superRefine((data, ctx) => {
+  // Only validate password if createAccount is true
+  if (data.createAccount) {
+    try {
+      passwordSchema.parse(data.password);
+    } catch (error) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Le mot de passe est requis pour créer un compte et doit contenir au moins 6 caractères",
+        path: ["password"],
+      });
+    }
+  }
 });
 
 const Checkout = () => {
