@@ -11,7 +11,7 @@ const defaultContext: CartContextType = {
   addItem: () => {},
   removeItem: () => {},
   updateItemQuantity: () => {},
-  clearCart: () => {},
+  clearCart: async () => true, // Fix: Return a Promise<boolean>
   loadCartItems: async () => {},
   isLoading: false,
   error: null,
