@@ -1,3 +1,4 @@
+
 // Mise à jour des imports pour le service de panier
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -69,7 +70,20 @@ export const addCartItem = async (
       return null;
     }
 
-    return data as CartItem;
+    // Transform the data to match CartItem structure
+    const cartItem: CartItem = {
+      id: data.id,
+      productId: data.product_id,
+      name: data.name,
+      price: data.price,
+      quantity: data.quantity,
+      image_url: data.image_url,
+      color: data.color || undefined,
+      size: data.size || undefined,
+      customization: data.customization || undefined
+    };
+
+    return cartItem;
   } catch (error) {
     console.error('Unexpected error adding cart item:', error);
     return null;
@@ -89,7 +103,20 @@ export const getCartItems = async (cartSessionId: string): Promise<CartItem[]> =
       return [];
     }
 
-    return data as CartItem[];
+    // Transform the data to match CartItem structure
+    const cartItems: CartItem[] = data.map(item => ({
+      id: item.id,
+      productId: item.product_id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      image_url: item.image_url,
+      color: item.color || undefined,
+      size: item.size || undefined,
+      customization: item.customization || undefined
+    }));
+
+    return cartItems;
   } catch (error) {
     console.error('Unexpected error fetching cart items:', error);
     return [];

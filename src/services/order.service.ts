@@ -1,3 +1,4 @@
+
 // Mise à jour des imports pour le service de commande
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -72,6 +73,86 @@ export const createOrder = async (
     return { orderId, order: orderData[0] };
   } catch (error: any) {
     console.error('Failed to create order', error);
+    throw error;
+  }
+};
+
+// Add missing functions for order services
+export const getOrderById = async (orderId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        items: order_items (
+          *,
+          products: product_id (*)
+        )
+      `)
+      .eq('id', orderId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching order:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch order', error);
+    throw error;
+  }
+};
+
+export const getUserOrders = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        items: order_items (
+          *,
+          products: product_id (*)
+        )
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching user orders:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch user orders', error);
+    throw error;
+  }
+};
+
+export const updateOrderPaymentStatus = async (orderId: string, paymentStatus: string, paymentIntentId?: string) => {
+  try {
+    const updateData: any = {
+      payment_status: paymentStatus,
+    };
+
+    if (paymentIntentId) {
+      updateData.payment_intent_id = paymentIntentId;
+    }
+
+    const { error } = await supabase
+      .from('orders')
+      .update(updateData)
+      .eq('id', orderId);
+
+    if (error) {
+      console.error('Error updating order payment status:', error);
+      throw error;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Failed to update order payment status', error);
     throw error;
   }
 };

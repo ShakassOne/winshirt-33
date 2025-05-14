@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { v4 as uuidv4 } from 'uuid';
 
 interface ProductCardProps {
   id: string;
@@ -46,6 +47,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
     console.log("Adding to cart:", id, name, price);
     
     addItem({
+      id: uuidv4(), // Generate a unique ID for this cart item
       productId: id,
       name,
       price,

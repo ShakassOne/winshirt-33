@@ -67,7 +67,7 @@ export interface Mockup {
   image_url?: string;
 }
 
-// Add PrintArea interface
+// Updated PrintArea interface with x and y properties
 export interface PrintArea {
   id: string;
   name: string;
@@ -75,6 +75,8 @@ export interface PrintArea {
   height: number;
   position_x: number;
   position_y: number;
+  x?: number; // Adding x for compatibility
+  y?: number; // Adding y for compatibility
   side: 'front' | 'back';
 }
 
