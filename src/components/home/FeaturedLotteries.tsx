@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import LotteryCard from '../ui/LotteryCard';
@@ -20,12 +19,16 @@ const FeaturedLotteries: React.FC<FeaturedLotteriesProps> = ({ className }) => {
     queryFn: fetchFeaturedLotteries,
   });
 
-  // State for hero carousel
-  const [activeIndex, setActiveIndex] = useState(0);
-  const lotteriesList = Array.isArray(lotteries) ? lotteries : [];
+  // Ensure lotteries is an array with the correct type
+  const lotteriesList = Array.isArray(lotteries) ? lotteries as Lottery[] : [];
   
   // Get the featured lotteries for the hero carousel
   const featuredLotteries = lotteriesList.filter(lottery => lottery.is_featured);
+  
+  // State for hero carousel
+  const [activeIndex, setActiveIndex] = useState(0);
+  
+  // Get the featured lotteries for the hero carousel
   const featuredLottery = featuredLotteries.length > 0 ? featuredLotteries[activeIndex % featuredLotteries.length] : null;
   
   // Get other lotteries for the carousel below

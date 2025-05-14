@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export const fetchAllProducts = async () => {
@@ -116,6 +117,116 @@ export const deleteProduct = async (id: string) => {
     return { success: true };
   } catch (error) {
     console.error('Error deleting product:', error);
+    throw error;
+  }
+};
+
+// Add lottery related functions
+export const fetchAllLotteries = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('lotteries')
+      .select('*');
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching lotteries:', error);
+    throw error;
+  }
+};
+
+export const fetchFeaturedLotteries = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('lotteries')
+      .select('*')
+      .eq('is_featured', true);
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching featured lotteries:', error);
+    throw error;
+  }
+};
+
+export const fetchLotteryById = async (id: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('lotteries')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching lottery by ID:', error);
+    throw error;
+  }
+};
+
+export const createLottery = async (lotteryData: any) => {
+  try {
+    const { data, error } = await supabase
+      .from('lotteries')
+      .insert([lotteryData])
+      .select();
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data[0];
+  } catch (error) {
+    console.error('Error creating lottery:', error);
+    throw error;
+  }
+};
+
+export const updateLottery = async (id: string, lotteryData: any) => {
+  try {
+    const { data, error } = await supabase
+      .from('lotteries')
+      .update(lotteryData)
+      .eq('id', id)
+      .select();
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data[0];
+  } catch (error) {
+    console.error('Error updating lottery:', error);
+    throw error;
+  }
+};
+
+export const deleteLottery = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('lotteries')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      throw error;
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting lottery:', error);
     throw error;
   }
 };
