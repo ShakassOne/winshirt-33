@@ -90,21 +90,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   // Add item to cart
   const addItem = (item: CartItem) => {
     setItems((prevItems) => {
+      // Ensure the item has a cartItemId
+      const newItem = {
+        ...item,
+        cartItemId: item.cartItemId || uuidv4()
+      };
+
       // Check if the item already exists with the same customization options
       const existingItemIndex = prevItems.findIndex(
         (i) =>
-          i.id === item.id &&
-          JSON.stringify(i.customization) === JSON.stringify(item.customization)
+          i.productId === newItem.productId &&
+          JSON.stringify(i.customization) === JSON.stringify(newItem.customization)
       );
 
       if (existingItemIndex !== -1) {
         // Update quantity if item exists
         const updatedItems = [...prevItems];
-        updatedItems[existingItemIndex].quantity += item.quantity;
+        updatedItems[existingItemIndex].quantity += newItem.quantity;
         return updatedItems;
       } else {
         // Add new item
-        return [...prevItems, item];
+        return [...prevItems, newItem];
       }
     });
 
