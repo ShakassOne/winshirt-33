@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
 import { CartItem } from "@/types/supabase.types";
@@ -36,7 +35,7 @@ export const createOrder = async (
     
     console.log("Création d'une commande avec les données:", orderData);
     
-    // Create order
+    // Create order with more robust error handling
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert([orderData])
@@ -48,9 +47,13 @@ export const createOrder = async (
       throw orderError;
     }
     
+    if (!order) {
+      throw new Error("La commande a été créée mais aucune donnée n'a été retournée");
+    }
+    
     console.log("Commande créée avec succès:", order);
     
-    // Create order items
+    // Create order items with better error handling
     const orderItems = items.map(item => ({
       order_id: order.id,
       product_id: item.productId,
@@ -67,6 +70,8 @@ export const createOrder = async (
       
     if (itemsError) {
       console.error("Erreur lors de la création des éléments de commande:", itemsError);
+      // Tentative de suppression de la commande en cas d'erreur
+      await supabase.from('orders').delete().eq('id', order.id);
       throw itemsError;
     }
     
@@ -145,5 +150,25 @@ export const updateOrderPaymentStatus = async (
   } catch (error) {
     console.error("Error in updateOrderPaymentStatus:", error);
     throw error;
+  }
+};
+
+// Ajouter une nouvelle fonction pour vérifier si une commande existe
+export const checkOrderExists = async (orderId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('id', orderId)
+      .single();
+      
+    if (error) {
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error("Error in checkOrderExists:", error);
+    return false;
   }
 };
