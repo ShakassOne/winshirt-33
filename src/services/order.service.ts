@@ -10,33 +10,45 @@ export const createOrder = async (
   userId?: string
 ) => {
   try {
+    if (!items || items.length === 0) {
+      throw new Error("Le panier est vide");
+    }
+    
     const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    
+    // Données de commande
+    const orderData = {
+      user_id: userId || null,
+      guest_email: !userId ? checkoutData.email : null,
+      session_id: sessionId,
+      total_amount: totalAmount,
+      shipping_first_name: checkoutData.firstName,
+      shipping_last_name: checkoutData.lastName,
+      shipping_email: checkoutData.email,
+      shipping_phone: checkoutData.phone,
+      shipping_address: checkoutData.address,
+      shipping_city: checkoutData.city,
+      shipping_postal_code: checkoutData.postalCode,
+      shipping_country: checkoutData.country,
+      delivery_notes: checkoutData.deliveryNotes,
+      status: 'pending'
+    };
+    
+    console.log("Création d'une commande avec les données:", orderData);
     
     // Create order
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .insert([
-        {
-          user_id: userId || null,
-          guest_email: !userId ? checkoutData.email : null,
-          session_id: sessionId,
-          total_amount: totalAmount,
-          shipping_first_name: checkoutData.firstName,
-          shipping_last_name: checkoutData.lastName,
-          shipping_email: checkoutData.email,
-          shipping_phone: checkoutData.phone,
-          shipping_address: checkoutData.address,
-          shipping_city: checkoutData.city,
-          shipping_postal_code: checkoutData.postalCode,
-          shipping_country: checkoutData.country,
-          delivery_notes: checkoutData.deliveryNotes,
-          status: 'pending'
-        }
-      ])
+      .insert([orderData])
       .select()
       .single();
       
-    if (orderError) throw orderError;
+    if (orderError) {
+      console.error("Erreur lors de la création de la commande:", orderError);
+      throw orderError;
+    }
+    
+    console.log("Commande créée avec succès:", order);
     
     // Create order items
     const orderItems = items.map(item => ({
@@ -47,11 +59,18 @@ export const createOrder = async (
       customization: item.customization || null
     }));
     
+    console.log("Création des éléments de commande:", orderItems);
+    
     const { error: itemsError } = await supabase
       .from('order_items')
       .insert(orderItems);
       
-    if (itemsError) throw itemsError;
+    if (itemsError) {
+      console.error("Erreur lors de la création des éléments de commande:", itemsError);
+      throw itemsError;
+    }
+    
+    console.log("Éléments de commande créés avec succès");
     
     return order;
   } catch (error) {

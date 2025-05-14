@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -61,7 +62,7 @@ const Checkout = () => {
   const [user, setUser] = useState<any>(null);
 
   // Vérifie si l'utilisateur est connecté
-  React.useEffect(() => {
+  useEffect(() => {
     const checkUser = async () => {
       try {
         const { data } = await supabase.auth.getSession();
@@ -97,6 +98,14 @@ const Checkout = () => {
     
     checkUser();
   }, []);
+
+  useEffect(() => {
+    // Vérifier si le panier est vide et rediriger si nécessaire
+    if (!items || items.length === 0) {
+      toast.warning("Votre panier est vide. Veuillez ajouter des articles avant de procéder au paiement.");
+      navigate('/products');
+    }
+  }, [items, navigate]);
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
@@ -147,7 +156,8 @@ const Checkout = () => {
         
         if (error) {
           console.error("Error creating account:", error);
-          throw error;
+          toast.error(`Erreur lors de la création du compte: ${error.message}`);
+          return;
         }
         
         userId = authData.user?.id;
@@ -156,22 +166,25 @@ const Checkout = () => {
         // Crée ou met à jour le profil utilisateur
         if (userId) {
           console.log("Creating user profile");
+          const profileData = {
+            id: userId,
+            first_name: data.firstName,
+            last_name: data.lastName,
+            email: data.email,
+            phone: data.phone,
+            address: data.address,
+            city: data.city,
+            postal_code: data.postalCode,
+            country: data.country
+          };
+          
           const { error: profileError } = await supabase
             .from('profiles')
-            .upsert({
-              id: userId,
-              first_name: data.firstName,
-              last_name: data.lastName,
-              email: data.email,
-              phone: data.phone,
-              address: data.address,
-              city: data.city,
-              postal_code: data.postalCode,
-              country: data.country
-            });
+            .upsert(profileData);
             
           if (profileError) {
             console.error("Error creating profile:", profileError);
+            // Continue despite profile error
           }
         }
       }
@@ -190,9 +203,9 @@ const Checkout = () => {
       // Redirige vers la page de paiement
       console.log("Redirecting to payment page:", `/payment/${order.id}`);
       navigate(`/payment/${order.id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur lors de la création de la commande:", error);
-      toast.error("Une erreur est survenue lors de la création de la commande");
+      toast.error(`Une erreur est survenue: ${error.message || "Impossible de créer la commande"}`);
     } finally {
       setIsLoading(false);
     }
@@ -398,7 +411,7 @@ const Checkout = () => {
                         type="submit" 
                         className="w-full" 
                         size="lg"
-                        disabled={isLoading}
+                        disabled={isLoading || !items || items.length === 0}
                       >
                         {isLoading ? "Traitement en cours..." : "Procéder au paiement"}
                       </Button>
