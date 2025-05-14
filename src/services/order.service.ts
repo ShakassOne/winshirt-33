@@ -1,130 +1,174 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { CheckoutFormData } from "@/types/cart.types";
-import { CartItem } from "@/types/supabase.types";
+import { CartItem, Order, OrderWithItems } from "@/types/supabase.types";
 
-export const createOrder = async (
-  checkoutData: CheckoutFormData,
-  items: CartItem[],
-  sessionId: string,
-  userId?: string
-) => {
-  try {
-    const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    
-    // Create order
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .insert([
-        {
-          user_id: userId || null,
-          guest_email: !userId ? checkoutData.email : null,
-          session_id: sessionId,
-          total_amount: totalAmount,
-          shipping_first_name: checkoutData.firstName,
-          shipping_last_name: checkoutData.lastName,
-          shipping_email: checkoutData.email,
-          shipping_phone: checkoutData.phone,
-          shipping_address: checkoutData.address,
-          shipping_city: checkoutData.city,
-          shipping_postal_code: checkoutData.postalCode,
-          shipping_country: checkoutData.country,
-          delivery_notes: checkoutData.deliveryNotes,
-          status: 'pending'
-        }
-      ])
-      .select()
-      .single();
-      
-    if (orderError) throw orderError;
-    
-    // Create order items
-    const orderItems = items.map(item => ({
-      order_id: order.id,
-      product_id: item.productId,
-      quantity: item.quantity,
-      price: item.price,
-      customization: item.customization || null
-    }));
-    
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems);
-      
-    if (itemsError) throw itemsError;
-    
-    return order;
-  } catch (error) {
-    console.error("Error in createOrder:", error);
+// Get all orders for current user
+export const getUserOrders = async (): Promise<Order[]> => {
+  const user = (await supabase.auth.getUser()).data.user;
+  
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+  
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+  
+  if (error) {
     throw error;
   }
+  
+  return data || [];
 };
 
-export const getOrderById = async (orderId: string) => {
-  try {
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('id', orderId)
-      .single();
-      
-    if (orderError) throw orderError;
-    
-    const { data: orderItems, error: itemsError } = await supabase
-      .from('order_items')
-      .select(`
-        *,
-        products:product_id (*)
-      `)
-      .eq('order_id', orderId);
-      
-    if (itemsError) throw itemsError;
-    
+// Get order by ID
+export const getOrderById = async (orderId: string): Promise<OrderWithItems | null> => {
+  // First, get the order
+  const { data: orderData, error: orderError } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('id', orderId)
+    .single();
+  
+  if (orderError || !orderData) {
+    console.error("Error fetching order:", orderError);
+    return null;
+  }
+  
+  // Then, get the order items
+  const { data: itemsData, error: itemsError } = await supabase
+    .from('order_items')
+    .select('*')
+    .eq('order_id', orderId);
+  
+  if (itemsError) {
+    console.error("Error fetching order items:", itemsError);
     return {
-      ...order,
-      items: orderItems
+      ...orderData,
+      items: []
     };
-  } catch (error) {
-    console.error("Error in getOrderById:", error);
-    throw error;
   }
+  
+  // Transform order items to match CartItem interface
+  const items: CartItem[] = itemsData.map(item => ({
+    id: item.id,
+    productId: item.product_id,
+    name: item.product_name,
+    price: item.price,
+    quantity: item.quantity,
+    color: item.color,
+    size: item.size,
+    image_url: item.product_image || '',
+    customization: item.customization,
+    lotteries: item.lotteries
+  }));
+  
+  return {
+    ...orderData,
+    items
+  };
 };
 
-export const getUserOrders = async (userId: string) => {
-  try {
-    const { data: orders, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-      
-    if (error) throw error;
-    
-    return orders;
-  } catch (error) {
-    console.error("Error in getUserOrders:", error);
-    throw error;
+// Create an order
+export const createOrder = async (
+  shippingAddress: string,
+  billingAddress: string,
+  shippingMethod: string,
+  paymentMethod: string,
+  items: CartItem[],
+  guestEmail?: string
+): Promise<{ orderId: string; order: Order }> => {
+  const user = (await supabase.auth.getUser()).data.user;
+  
+  const userId = user?.id;
+  
+  if (!userId && !guestEmail) {
+    throw new Error("User not authenticated and no guest email provided");
   }
+  
+  // Calculate total price
+  const totalPrice = items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  
+  // Set shipping price based on shipping method (simplified example)
+  let shippingPrice = 0;
+  if (shippingMethod === 'standard') {
+    shippingPrice = 5.99;
+  } else if (shippingMethod === 'express') {
+    shippingPrice = 12.99;
+  }
+  
+  // Create the order
+  const { data: orderData, error: orderError } = await supabase
+    .from('orders')
+    .insert({
+      user_id: userId || null,
+      guest_email: !userId ? guestEmail : null,
+      shipping_address: shippingAddress,
+      billing_address: billingAddress,
+      shipping_method: shippingMethod,
+      shipping_price: shippingPrice,
+      payment_method: paymentMethod,
+      payment_status: 'pending',
+      total_price: totalPrice + shippingPrice,
+    })
+    .select('*')
+    .single();
+  
+  if (orderError || !orderData) {
+    console.error("Error creating order:", orderError);
+    throw new Error("Failed to create order");
+  }
+  
+  // Insert order items
+  const orderItems = items.map(item => ({
+    order_id: orderData.id,
+    product_id: item.productId,
+    product_name: item.name,
+    product_image: item.image_url,
+    price: item.price,
+    quantity: item.quantity,
+    color: item.color || null,
+    size: item.size || null,
+    customization: item.customization || null,
+    lotteries: item.lotteries || null,
+  }));
+  
+  const { error: itemsError } = await supabase
+    .from('order_items')
+    .insert(orderItems);
+  
+  if (itemsError) {
+    console.error("Error creating order items:", itemsError);
+    throw new Error("Failed to create order items");
+  }
+  
+  return { 
+    orderId: orderData.id,
+    order: orderData
+  };
 };
 
-export const updateOrderPaymentStatus = async (
-  orderId: string, 
-  paymentIntentId: string, 
-  status: 'paid' | 'failed' | 'pending'
-) => {
-  try {
-    const { error } = await supabase
-      .from('orders')
-      .update({ 
-        payment_intent_id: paymentIntentId,
-        payment_status: status,
-        status: status === 'paid' ? 'processing' : 'pending'
-      })
-      .eq('id', orderId);
-      
-    if (error) throw error;
-  } catch (error) {
-    console.error("Error in updateOrderPaymentStatus:", error);
-    throw error;
+// Update order payment status
+export const updateOrderPaymentStatus = async (orderId: string, status: string, paymentIntentId?: string): Promise<boolean> => {
+  const updateData: any = { 
+    payment_status: status
+  };
+  
+  if (paymentIntentId) {
+    updateData.payment_intent_id = paymentIntentId;
   }
+  
+  const { error } = await supabase
+    .from('orders')
+    .update(updateData)
+    .eq('id', orderId);
+  
+  if (error) {
+    console.error("Error updating order payment status:", error);
+    return false;
+  }
+  
+  return true;
 };

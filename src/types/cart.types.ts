@@ -1,33 +1,21 @@
 
-import { CartItem as SupabaseCartItem } from './supabase.types';
+import { CartItem } from './supabase.types';
 
-// Export the CartItem from supabase.types
-export type CartItem = SupabaseCartItem;
+export { CartItem };
 
-export type CartContextType = {
+export interface CartState {
   items: CartItem[];
-  addItem: (item: CartItem) => void;
-  removeItem: (id: string) => void;
-  updateItemQuantity: (id: string, quantity: number) => void;
-  clearCart: () => void;
-  loadCartItems?: () => Promise<void>;
-  isLoading: boolean;
-  error: string | null;
-  total: number;
-  itemCount: number;
-  sessionId: string;
-};
+  totalItems: number;
+  totalPrice: number;
+  cartId?: string;
+}
 
-export interface CheckoutFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  postalCode: string;
-  country: string;
-  deliveryNotes?: string;
-  createAccount?: boolean;
-  password?: string;
+export interface CartContextType {
+  cart: CartState;
+  addToCart: (item: CartItem) => void;
+  removeFromCart: (itemId: string) => void;
+  updateItemQuantity: (itemId: string, quantity: number) => void;
+  clearCart: () => void;
+  isCartOpen: boolean;
+  setIsCartOpen: (isOpen: boolean) => void;
 }
