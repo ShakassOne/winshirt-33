@@ -16,7 +16,7 @@ import {
   ShoppingBag, 
   Ticket, 
   Palette, 
-  TShirt,
+  Shirt,
   Settings 
 } from 'lucide-react';
 
@@ -42,7 +42,7 @@ const AdminNavigation = () => {
     { 
       path: '/admin/mockups', 
       label: 'Mockups',
-      icon: <TShirt className="mr-2 h-4 w-4" />
+      icon: <Shirt className="mr-2 h-4 w-4" />
     },
     { 
       path: '/admin/designs', 
