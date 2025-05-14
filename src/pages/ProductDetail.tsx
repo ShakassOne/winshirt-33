@@ -28,7 +28,7 @@ import { toast } from 'sonner';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel"
 import ProductCard from '@/components/ui/ProductCard';
 import { Link } from 'react-router-dom';
-import { GlassCard } from '@/components/ui/GlassCard';
+import GlassCard from '@/components/ui/GlassCard';
 
 interface DeliveryOption {
   id: string;
@@ -87,7 +87,9 @@ const ProductDetail = () => {
     const fetchMockup = async () => {
       if (product?.mockup_id) {
         const mockup = await fetchMockupById(product.mockup_id);
-        setMockupURL(mockup?.image_url || null);
+        if (mockup && mockup.svg_front_url) {
+          setMockupURL(mockup.svg_front_url || null);
+        }
       }
     };
 
@@ -189,6 +191,16 @@ const ProductDetail = () => {
     });
   }
 
+  // Type guard for product.images
+  const hasImages = (product: Product | null | undefined): product is Product & { images: string[] } => {
+    return !!product && !!product.images && Array.isArray(product.images) && product.images.length > 0;
+  };
+
+  // Type guard for lotteries data
+  const areLotteries = (data: unknown): data is Lottery[] => {
+    return Array.isArray(data);
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -244,7 +256,7 @@ const ProductDetail = () => {
                   </CardFooter>
                 </Card>
 
-                {product.images && product.images.length > 0 && (
+                {hasImages(product) && (
                   <Carousel className="w-full mt-4">
                     <CarouselContent>
                       {product.images.map((image, index) => (
@@ -454,7 +466,7 @@ const ProductDetail = () => {
             )}
 
             {/* Lotteries Section */}
-            {lotteriesArray && lotteriesArray.length > 0 && (
+            {areLotteries(lotteries) && lotteries.length > 0 && (
               <section className="py-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Participez à nos loteries</h2>
@@ -466,7 +478,7 @@ const ProductDetail = () => {
                   Tentez votre chance et gagnez des prix exceptionnels !
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {lotteriesArray.slice(0, 3).map(lottery => (
+                  {lotteries.filter(lottery => lottery.is_active).slice(0, 3).map(lottery => (
                     <GlassCard key={lottery.id} className="p-4">
                       <div className="flex flex-col h-full">
                         <div className="mb-4">

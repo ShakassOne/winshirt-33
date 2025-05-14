@@ -1,6 +1,6 @@
 
 // Mockup color variants type
-import { Mockup as BaseMockup } from '@/types/supabase.types';
+import { Mockup, PrintArea as BasePrintArea } from '@/types/supabase.types';
 
 export interface MockupColor {
   id?: string;
@@ -10,18 +10,11 @@ export interface MockupColor {
   back_image_url: string;
 }
 
-export interface PrintArea {
-  id: string;
-  name: string;
-  width: number;
-  height: number;
-  position_x: number;
-  position_y: number;
-  side: 'front' | 'back';
+export interface PrintArea extends BasePrintArea {
   x?: number; // Add x and y as aliases for position_x and position_y
   y?: number;
 }
 
-export interface MockupWithColors extends BaseMockup {
+export interface MockupWithColors extends Mockup {
   colors: MockupColor[];
 }

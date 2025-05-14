@@ -1,130 +1,77 @@
-
-import { supabase } from "@/integrations/supabase/client";
-import { CheckoutFormData } from "@/types/cart.types";
-import { CartItem } from "@/types/supabase.types";
+// Mise à jour des imports pour le service de commande
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
+import { CheckoutFormData } from '@/types/cart.types';
+import { CartItem } from '@/types/supabase.types';
 
 export const createOrder = async (
+  userId: string | null,
+  sessionId: string | null,
+  cartItems: CartItem[],
   checkoutData: CheckoutFormData,
-  items: CartItem[],
-  sessionId: string,
-  userId?: string
+  totalAmount: number
 ) => {
   try {
-    const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    
-    // Create order
-    const { data: order, error: orderError } = await supabase
+    // Generate a unique order ID
+    const orderId = uuidv4();
+
+    // Insert the order into the orders table
+    const { data: orderData, error: orderError } = await supabase
       .from('orders')
       .insert([
         {
-          user_id: userId || null,
-          guest_email: !userId ? checkoutData.email : null,
+          id: orderId,
+          user_id: userId,
           session_id: sessionId,
+          status: 'pending', // You might want to adjust the initial status
           total_amount: totalAmount,
-          shipping_first_name: checkoutData.firstName,
-          shipping_last_name: checkoutData.lastName,
-          shipping_email: checkoutData.email,
-          shipping_phone: checkoutData.phone,
           shipping_address: checkoutData.address,
           shipping_city: checkoutData.city,
           shipping_postal_code: checkoutData.postalCode,
           shipping_country: checkoutData.country,
+          shipping_first_name: checkoutData.firstName,
+          shipping_last_name: checkoutData.lastName,
+          shipping_email: checkoutData.email,
+          shipping_phone: checkoutData.phone,
           delivery_notes: checkoutData.deliveryNotes,
-          status: 'pending'
-        }
+          guest_email: checkoutData.email,
+        },
       ])
       .select()
-      .single();
-      
-    if (orderError) throw orderError;
-    
-    // Create order items
-    const orderItems = items.map(item => ({
-      order_id: order.id,
-      product_id: item.productId,
-      quantity: item.quantity,
-      price: item.price,
-      customization: item.customization || null
-    }));
-    
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems);
-      
-    if (itemsError) throw itemsError;
-    
-    return order;
-  } catch (error) {
-    console.error("Error in createOrder:", error);
-    throw error;
-  }
-};
 
-export const getOrderById = async (orderId: string) => {
-  try {
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('id', orderId)
-      .single();
-      
-    if (orderError) throw orderError;
-    
-    const { data: orderItems, error: itemsError } = await supabase
-      .from('order_items')
-      .select(`
-        *,
-        products:product_id (*)
-      `)
-      .eq('order_id', orderId);
-      
-    if (itemsError) throw itemsError;
-    
-    return {
-      ...order,
-      items: orderItems
-    };
-  } catch (error) {
-    console.error("Error in getOrderById:", error);
-    throw error;
-  }
-};
+    if (orderError) {
+      console.error('Error creating order:', orderError);
+      throw new Error(`Unable to create order: ${orderError.message}`);
+    }
 
-export const getUserOrders = async (userId: string) => {
-  try {
-    const { data: orders, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-      
-    if (error) throw error;
-    
-    return orders;
-  } catch (error) {
-    console.error("Error in getUserOrders:", error);
-    throw error;
-  }
-};
+    if (!orderData || orderData.length === 0) {
+      throw new Error("Order creation failed, no order data returned.");
+    }
 
-export const updateOrderPaymentStatus = async (
-  orderId: string, 
-  paymentIntentId: string, 
-  status: 'paid' | 'failed' | 'pending'
-) => {
-  try {
-    const { error } = await supabase
-      .from('orders')
-      .update({ 
-        payment_intent_id: paymentIntentId,
-        payment_status: status,
-        status: status === 'paid' ? 'processing' : 'pending'
-      })
-      .eq('id', orderId);
-      
-    if (error) throw error;
-  } catch (error) {
-    console.error("Error in updateOrderPaymentStatus:", error);
+    // Insert each cart item into the order_items table
+    for (const cartItem of cartItems) {
+      const { error: orderItemError } = await supabase
+        .from('order_items')
+        .insert([
+          {
+            id: uuidv4(),
+            order_id: orderId,
+            product_id: cartItem.productId,
+            quantity: cartItem.quantity,
+            price: cartItem.price,
+            customization: cartItem.customization,
+          },
+        ]);
+
+      if (orderItemError) {
+        console.error('Error creating order item:', orderItemError);
+        throw new Error(`Unable to create order item: ${orderItemError.message}`);
+      }
+    }
+
+    return { orderId, order: orderData[0] };
+  } catch (error: any) {
+    console.error('Failed to create order', error);
     throw error;
   }
 };

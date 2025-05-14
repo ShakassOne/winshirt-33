@@ -1,3 +1,4 @@
+
 // Add this to your existing supabase.types.ts file
 export interface Lottery {
   id: string;
@@ -14,7 +15,7 @@ export interface Lottery {
   updated_at?: string;
 }
 
-// If Product interface exists, update it to include images array
+// Updated Product interface with images array
 export interface Product {
   id: string;
   name: string;
@@ -32,4 +33,80 @@ export interface Product {
   mockup_id?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+// Add missing Design interface
+export interface Design {
+  id: string;
+  name: string;
+  category: string;
+  image_url: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Add missing Mockup interface
+export interface Mockup {
+  id: string;
+  name: string;
+  category: string;
+  svg_front_url: string;
+  svg_back_url?: string;
+  price_a4: number;
+  price_a3: number;
+  price_a5: number;
+  price_a6: number;
+  text_price_front: number;
+  text_price_back: number;
+  print_areas: PrintArea[] | string;
+  colors?: MockupColor[] | string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  image_url?: string;
+}
+
+// Add PrintArea interface
+export interface PrintArea {
+  id: string;
+  name: string;
+  width: number;
+  height: number;
+  position_x: number;
+  position_y: number;
+  side: 'front' | 'back';
+}
+
+// Add MockupColor interface
+export interface MockupColor {
+  id?: string;
+  name: string;
+  color_code: string;
+  front_image_url: string;
+  back_image_url?: string;
+}
+
+// Add CartItem interface
+export interface CartItem {
+  id: string;
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image_url: string;
+  color?: string;
+  size?: string;
+  customization?: {
+    text?: {
+      content: string;
+      font?: string;
+      color?: string;
+      size?: number;
+    };
+    designId?: string;
+    designUrl?: string;
+    position?: string;
+    scale?: number;
+  };
 }
