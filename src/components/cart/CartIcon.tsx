@@ -8,19 +8,15 @@ import { Link } from 'react-router-dom';
 const CartIcon = () => {
   const { itemCount, loadCartItems } = useCart();
   
-  // Always load cart items when component mounts to ensure latest state
+  // Load cart items only once when component mounts
   useEffect(() => {
     console.log("CartIcon mounted, loading cart items");
     if(typeof loadCartItems === 'function') {
-      loadCartItems().then(() => {
-        console.log("Cart items loaded successfully");
-      }).catch(error => {
+      loadCartItems().catch(error => {
         console.error("Error loading cart items:", error);
       });
-    } else {
-      console.warn("loadCartItems function is not available");
     }
-  }, [loadCartItems]);
+  }, []);
 
   return (
     <Button variant="ghost" size="icon" className="text-white/80 hover:text-white relative" asChild>

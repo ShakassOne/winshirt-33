@@ -11,7 +11,7 @@ export type CartContextType = {
   addItem: (item: CartItem) => void;
   removeItem: (id: string) => void;
   updateItemQuantity: (id: string, quantity: number) => void;
-  clearCart: () => void;
+  clearCart: () => Promise<boolean>;
   loadCartItems?: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
