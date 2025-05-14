@@ -7,18 +7,16 @@ import { cn } from "@/lib/utils";
 
 interface CustomizationAccordionProps {
   children: React.ReactNode;
-  defaultOpen?: boolean;
-  className?: string;
 }
 
-const CustomizationAccordion = ({ children, defaultOpen = false, className = '' }: CustomizationAccordionProps) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+const CustomizationAccordion = ({ children }: CustomizationAccordionProps) => {
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
-      className={cn("w-full border border-white/10 rounded-lg overflow-hidden mt-6 mb-4", className)}
+      className="w-full border border-white/10 rounded-lg overflow-hidden mt-6 mb-4 md:block"
     >
       <div className="bg-white/5 p-4">
         <CollapsibleTrigger asChild>

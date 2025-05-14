@@ -1,136 +1,250 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from 'uuid';
-import { CartItem } from '@/types/cart.types';
+import { CartItem } from "@/types/supabase.types";
 
-// Fonction pour générer un ID de session de panier unique
-const generateCartSessionId = (): string => {
-  // Utiliser l'ID de l'utilisateur authentifié s'il est disponible, sinon générer un ID de session unique
-  const user = supabase.auth.getUser();
-  if (user) {
-    return user.data.user?.id || uuidv4();
+// Get or create cart session
+export const getOrCreateCartSession = async (sessionId: string, guestEmail?: string) => {
+  try {
+    // Check if session exists
+    const { data: existingSession, error: fetchError } = await supabase
+      .from('cart_sessions')
+      .select('*')
+      .eq('session_id', sessionId)
+      .single();
+      
+    if (!fetchError && existingSession) {
+      return existingSession;
+    }
+    
+    // Create a new session if doesn't exist
+    const { data: newSession, error: insertError } = await supabase
+      .from('cart_sessions')
+      .insert([
+        { 
+          session_id: sessionId,
+          guest_email: guestEmail,
+        }
+      ])
+      .select()
+      .single();
+      
+    if (insertError) {
+      throw insertError;
+    }
+    
+    return newSession;
+    
+  } catch (error) {
+    console.error("Error in getOrCreateCartSession:", error);
+    throw error;
   }
-  
-  // Récupérer l'ID de session de panier depuis le localStorage s'il existe
-  const existingCartId = localStorage.getItem('cartSessionId');
-  if (existingCartId) {
-    return existingCartId;
-  }
-  
-  // Générer un nouvel ID de session de panier
-  const newCartId = uuidv4();
-  localStorage.setItem('cartSessionId', newCartId);
-  return newCartId;
 };
 
-// Fonction pour ajouter un produit au panier dans Supabase
-export const addToCartSupabase = async (item: CartItem): Promise<boolean> => {
+// Add item to cart
+export const addToCart = async (sessionId: string, item: CartItem) => {
   try {
-    const cartSessionId = generateCartSessionId();
+    // Get or create cart session
+    const cartSession = await getOrCreateCartSession(sessionId);
     
-    // Convertir l'objet CartItem au format attendu par la base de données
-    const cartItemForDb = {
-      cart_session_id: cartSessionId,
-      product_id: item.productId,
-      price: item.price,
+    // Check if item already exists in cart
+    const { data: existingItem, error: fetchError } = await supabase
+      .from('cart_items')
+      .select('*')
+      .eq('cart_session_id', cartSession.id)
+      .eq('product_id', item.productId)
+      .single();
+    
+    if (!fetchError && existingItem) {
+      // Update quantity if item exists
+      const { error: updateError } = await supabase
+        .from('cart_items')
+        .update({ 
+          quantity: existingItem.quantity + item.quantity,
+          customization: item.customization || existingItem.customization,
+          color: item.color || existingItem.color,
+          size: item.size || existingItem.size
+        })
+        .eq('id', existingItem.id);
+        
+      if (updateError) throw updateError;
+    } else {
+      // Insert new item
+      const { error: insertError } = await supabase
+        .from('cart_items')
+        .insert([
+          {
+            cart_session_id: cartSession.id,
+            product_id: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+            color: item.color,
+            size: item.size,
+            customization: item.customization
+          }
+        ]);
+        
+      if (insertError) throw insertError;
+    }
+  } catch (error) {
+    console.error("Error in addToCart:", error);
+    throw error;
+  }
+};
+
+// Get cart items
+export const getCartItems = async (sessionId: string): Promise<CartItem[]> => {
+  try {
+    // Get cart session
+    const { data: sessionData } = await supabase
+      .from('cart_sessions')
+      .select('id')
+      .eq('session_id', sessionId)
+      .single();
+      
+    if (!sessionData) {
+      // Create new session if doesn't exist
+      const cartSession = await getOrCreateCartSession(sessionId);
+      return [];
+    }
+    
+    // Get cart items with product details
+    const { data: cartItems, error } = await supabase
+      .from('cart_items')
+      .select(`
+        id,
+        quantity,
+        color,
+        size,
+        price,
+        customization,
+        products:product_id (id, name, image_url, price, description)
+      `)
+      .eq('cart_session_id', sessionData.id);
+      
+    if (error) throw error;
+    
+    // Map to CartItem type
+    return cartItems.map(item => ({
+      productId: item.products.id,
+      name: item.products.name,
+      price: parseFloat(item.price as unknown as string),
       quantity: item.quantity,
       color: item.color || null,
       size: item.size || null,
-      customization: item.customization || null
-    };
+      image_url: item.products.image_url,
+      customization: item.customization as unknown as CartItem['customization']
+    }));
     
-    const { error } = await supabase
-      .from('cart_items')
-      .insert(cartItemForDb);
-    
-    if (error) throw error;
-    return true;
   } catch (error) {
-    console.error("Erreur lors de l'ajout au panier:", error);
-    return false;
+    console.error("Error in getCartItems:", error);
+    throw error;
   }
 };
 
-// Fonction pour supprimer un produit du panier dans Supabase
-export const removeFromCartSupabase = async (itemId: string): Promise<boolean> => {
+// Remove item from cart
+export const removeFromCart = async (sessionId: string, productId: string) => {
   try {
+    // Get cart session
+    const { data: sessionData } = await supabase
+      .from('cart_sessions')
+      .select('id')
+      .eq('session_id', sessionId)
+      .single();
+      
+    if (!sessionData) {
+      throw new Error("Cart session not found");
+    }
+    
+    // Find the cart item
+    const { data: cartItem } = await supabase
+      .from('cart_items')
+      .select('id')
+      .eq('cart_session_id', sessionData.id)
+      .eq('product_id', productId)
+      .single();
+      
+    if (!cartItem) {
+      throw new Error("Cart item not found");
+    }
+    
+    // Delete the item
     const { error } = await supabase
       .from('cart_items')
       .delete()
-      .eq('id', itemId);
-    
+      .eq('id', cartItem.id);
+      
     if (error) throw error;
-    return true;
+    
   } catch (error) {
-    console.error("Erreur lors de la suppression du panier:", error);
-    return false;
+    console.error("Error in removeFromCart:", error);
+    throw error;
   }
 };
 
-// Fonction pour mettre à jour la quantité d'un produit dans le panier
-export const updateCartItemQuantitySupabase = async (itemId: string, quantity: number): Promise<boolean> => {
+// Update cart item quantity
+export const updateCartItemQuantity = async (sessionId: string, productId: string, quantity: number) => {
   try {
+    // Get cart session
+    const { data: sessionData } = await supabase
+      .from('cart_sessions')
+      .select('id')
+      .eq('session_id', sessionId)
+      .single();
+      
+    if (!sessionData) {
+      throw new Error("Cart session not found");
+    }
+    
+    // Find the cart item
+    const { data: cartItem } = await supabase
+      .from('cart_items')
+      .select('id')
+      .eq('cart_session_id', sessionData.id)
+      .eq('product_id', productId)
+      .single();
+      
+    if (!cartItem) {
+      throw new Error("Cart item not found");
+    }
+    
+    // Update the quantity
     const { error } = await supabase
       .from('cart_items')
       .update({ quantity })
-      .eq('id', itemId);
-    
+      .eq('id', cartItem.id);
+      
     if (error) throw error;
-    return true;
+    
   } catch (error) {
-    console.error("Erreur lors de la mise à jour du panier:", error);
-    return false;
+    console.error("Error in updateCartItemQuantity:", error);
+    throw error;
   }
 };
 
-// Fonction pour récupérer les produits du panier pour l'utilisateur actuel
-export const getCartItemsSupabase = async (): Promise<CartItem[]> => {
+// Clear cart
+export const clearCart = async (sessionId: string) => {
   try {
-    const cartSessionId = generateCartSessionId();
+    // Get cart session
+    const { data: sessionData } = await supabase
+      .from('cart_sessions')
+      .select('id')
+      .eq('session_id', sessionId)
+      .single();
+      
+    if (!sessionData) {
+      return; // No items to clear
+    }
     
-    const { data, error } = await supabase
-      .from('cart_items')
-      .select('*, products:product_id(*)')
-      .eq('cart_session_id', cartSessionId);
-    
-    if (error) throw error;
-    
-    // Transformer les données pour correspondre à l'interface CartItem
-    const cartItems: CartItem[] = data.map((item: any) => {
-      return {
-        id: item.id,
-        productId: item.product_id,
-        name: item.products?.name || '',
-        price: item.price,
-        quantity: item.quantity,
-        image_url: item.products?.image_url || '',
-        color: item.color || undefined,
-        size: item.size || undefined,
-        customization: item.customization ? JSON.parse(JSON.stringify(item.customization)) : undefined
-      };
-    });
-    
-    return cartItems;
-  } catch (error) {
-    console.error("Erreur lors de la récupération du panier:", error);
-    return [];
-  }
-};
-
-// Fonction pour vider le panier
-export const clearCartSupabase = async (): Promise<boolean> => {
-  try {
-    const cartSessionId = generateCartSessionId();
-    
+    // Delete all items
     const { error } = await supabase
       .from('cart_items')
       .delete()
-      .eq('cart_session_id', cartSessionId);
-    
+      .eq('cart_session_id', sessionData.id);
+      
     if (error) throw error;
-    return true;
+    
   } catch (error) {
-    console.error("Erreur lors de la suppression du panier:", error);
-    return false;
+    console.error("Error in clearCart:", error);
+    throw error;
   }
 };
