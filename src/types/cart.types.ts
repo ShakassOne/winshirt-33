@@ -2,7 +2,9 @@
 import { CartItem as SupabaseCartItem } from './supabase.types';
 
 // Export the CartItem from supabase.types
-export type CartItem = SupabaseCartItem;
+export type CartItem = SupabaseCartItem & {
+  cartItemId?: string;
+};
 
 export type CartContextType = {
   items: CartItem[];

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -69,6 +68,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { HexColorPicker } from 'react-colorful';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useCart } from '@/context/CartContext';
 import {
   Accordion,
   AccordionContent,
@@ -182,6 +182,7 @@ const googleFonts = [
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const isMobile = useIsMobile();
+  const { addItem } = useCart();
   const productCanvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [quantity, setQuantity] = useState(1);
@@ -259,6 +260,11 @@ const ProductDetail = () => {
   // États pour les loteries - support pour plusieurs loteries
   const [selectedLotteryIds, setSelectedLotteryIds] = useState<string[]>([]);
   const [selectedLotteries, setSelectedLotteries] = useState<Lottery[]>([]);
+  const [validationErrors, setValidationErrors] = useState<{
+    color?: string;
+    size?: string;
+    lottery?: string;
+  }>({});
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -330,17 +336,33 @@ const ProductDetail = () => {
     };
   }, [pageScrollLocked, isDragging, isDraggingText]);
 
-  // Ajout automatique d'une loterie lors du montage si tickets_offered > 0 et lotteries disponibles
-  useEffect(() => {
-    if (product?.tickets_offered && product.tickets_offered > 0 && lotteries.length > 0) {
-      const activeLotteries = lotteries.filter(lottery => lottery.is_active);
-      if (activeLotteries.length > 0 && selectedLotteries.length === 0) {
-        // Ajouter la première loterie par défaut
-        setSelectedLotteries([activeLotteries[0]]);
-        setSelectedLotteryIds([activeLotteries[0].id]);
-      }
+  // Removed automatic lottery selection useEffect to make it optional
+
+  const validateSelection = () => {
+    const errors: { color?: string; size?: string; lottery?: string } = {};
+    let isValid = true;
+
+    // Validate color selection if product has colors
+    if (product?.available_colors && product.available_colors.length > 0 && !selectedColor) {
+      errors.color = "Veuillez sélectionner une couleur";
+      isValid = false;
     }
-  }, [product, lotteries, selectedLotteries.length]);
+
+    // Validate size selection if product has sizes
+    if (product?.available_sizes && product.available_sizes.length > 0 && !selectedSize) {
+      errors.size = "Veuillez sélectionner une taille";
+      isValid = false;
+    }
+
+    // Validate lottery selection if product offers tickets and none are selected
+    if (product?.tickets_offered && product.tickets_offered > 0 && selectedLotteryIds.length === 0) {
+      errors.lottery = "Veuillez sélectionner une loterie";
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
 
   const handleQuantityChange = (type: 'increase' | 'decrease') => {
     if (type === 'increase') {
@@ -361,221 +383,6 @@ const ProductDetail = () => {
     setDesignDialogOpen(false);
     setPageScrollLocked(true);
   };
-
-  const handleDesignTransformChange = (property: keyof typeof designTransformFront, value: any) => {
-    if (activeDesignSide === 'front') {
-      setDesignTransformFront(prev => ({
-        ...prev,
-        [property]: value
-      }));
-    } else {
-      setDesignTransformBack(prev => ({
-        ...prev,
-        [property]: value
-      }));
-    }
-  };
-
-  const handleTextTransformChange = (property: keyof typeof textTransformFront, value: any) => {
-    if (activeTextSide === 'front') {
-      setTextTransformFront(prev => ({
-        ...prev,
-        [property]: value
-      }));
-    } else {
-      setTextTransformBack(prev => ({
-        ...prev,
-        [property]: value
-      }));
-    }
-  };
-
-  const handleLotteryToggle = (lottery: Lottery, index: number) => {
-    // Vérifier si nous avons atteint la limite de tickets
-    if (selectedLotteries.length >= (product?.tickets_offered || 0) && !selectedLotteryIds.includes(lottery.id)) {
-      toast.error(`Vous ne pouvez sélectionner que ${product?.tickets_offered} loterie(s) maximum pour ce produit.`);
-      return;
-    }
-
-    // Si la loterie est déjà sélectionnée, la supprimer
-    if (selectedLotteryIds.includes(lottery.id)) {
-      setSelectedLotteries(prev => prev.filter(l => l.id !== lottery.id));
-      setSelectedLotteryIds(prev => prev.filter(id => id !== lottery.id));
-    } 
-    // Sinon, l'ajouter
-    else {
-      // Pour l'index spécifique
-      if (index < (product?.tickets_offered || 0)) {
-        // Créer un nouveau tableau de loteries sélectionnées
-        const updatedLotteries = [...selectedLotteries];
-        // S'assurer que le tableau a la bonne taille
-        while (updatedLotteries.length <= index) {
-          updatedLotteries.push(null as unknown as Lottery);
-        }
-        // Mettre à jour la loterie à l'index spécifié
-        updatedLotteries[index] = lottery;
-        // Filtrer les entrées nulles
-        const filteredLotteries = updatedLotteries.filter(l => l !== null);
-        
-        setSelectedLotteries(filteredLotteries);
-        setSelectedLotteryIds(filteredLotteries.map(l => l.id));
-      }
-    }
-  };
-
-  const handleMouseDown = (event: React.MouseEvent | React.TouchEvent, isText: boolean = false) => {
-    event.preventDefault();
-    
-    let clientX: number, clientY: number;
-    
-    if ('touches' in event) {
-      clientX = event.touches[0].clientX;
-      clientY = event.touches[0].clientY;
-    } else {
-      clientX = event.clientX;
-      clientY = event.clientY;
-    }
-
-    if (isText) {
-      setIsDraggingText(true);
-      setStartPosText({ x: clientX, y: clientY });
-    } else {
-      setIsDragging(true);
-      setStartPos({ x: clientX, y: clientY });
-    }
-    
-    setPageScrollLocked(true);
-  };
-
-  const handleMouseMove = (event: MouseEvent | TouchEvent) => {
-    let clientX: number, clientY: number;
-    
-    if ('touches' in event) {
-      clientX = event.touches[0].clientX;
-      clientY = event.touches[0].clientY;
-    } else {
-      clientX = event.clientX;
-      clientY = event.clientY;
-    }
-
-    if (isDragging) {
-      const deltaX = clientX - startPos.x;
-      const deltaY = clientY - startPos.y;
-      
-      if (activeDesignSide === 'front') {
-        setDesignTransformFront(prev => ({
-          ...prev,
-          position: {
-            x: prev.position.x + deltaX,
-            y: prev.position.y + deltaY
-          }
-        }));
-      } else {
-        setDesignTransformBack(prev => ({
-          ...prev,
-          position: {
-            x: prev.position.x + deltaX,
-            y: prev.position.y + deltaY
-          }
-        }));
-      }
-      
-      setStartPos({ x: clientX, y: clientY });
-    } else if (isDraggingText) {
-      const deltaX = clientX - startPosText.x;
-      const deltaY = clientY - startPosText.y;
-      
-      if (activeTextSide === 'front') {
-        setTextTransformFront(prev => ({
-          ...prev,
-          position: {
-            x: prev.position.x + deltaX,
-            y: prev.position.y + deltaY
-          }
-        }));
-      } else {
-        setTextTransformBack(prev => ({
-          ...prev,
-          position: {
-            x: prev.position.x + deltaX,
-            y: prev.position.y + deltaY
-          }
-        }));
-      }
-      
-      setStartPosText({ x: clientX, y: clientY });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    setIsDraggingText(false);
-    setPageScrollLocked(false);
-  };
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    
-    if (file) {
-      const reader = new FileReader();
-      
-      reader.onloadend = () => {
-        const design: Design = {
-          id: `custom-${Date.now()}`,
-          name: 'Mon design personnalisé',
-          image_url: reader.result as string,
-          category: 'custom',
-          is_active: true
-        };
-        
-        if (currentViewSide === 'front') {
-          setSelectedDesignFront(design);
-          setActiveDesignSide('front');
-        } else {
-          setSelectedDesignBack(design);
-          setActiveDesignSide('back');
-        }
-        
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-      };
-      
-      reader.readAsDataURL(file);
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    window.addEventListener('touchmove', handleMouseMove, { passive: false });
-    window.addEventListener('touchend', handleMouseUp);
-    
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('touchmove', handleMouseMove);
-      window.removeEventListener('touchend', handleMouseUp);
-    };
-  }, [isDragging, startPos, isDraggingText, startPosText]);
-
-  // Suivre le côté actif lors du changement de vue
-  useEffect(() => {
-    if (currentViewSide === 'front') {
-      setActiveDesignSide('front');
-      setActiveTextSide('front');
-    } else {
-      setActiveDesignSide('back');
-      setActiveTextSide('back');
-    }
-  }, [currentViewSide]);
-
-  // Activer le texte automatiquement lorsque l'onglet texte est sélectionné
-  useEffect(() => {
-    if (selectedTab === 'text') {
-      // Le texte est automatiquement activé dans cette version
-    }
-  }, [selectedTab]);
 
   const calculatePrice = () => {
     if (!product) return 0;
@@ -624,7 +431,18 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     if (!product) return;
 
+    // Validate required selections
+    if (!validateSelection()) {
+      // Show toast for validation errors
+      const errorMessages = Object.values(validationErrors).filter(Boolean);
+      if (errorMessages.length > 0) {
+        toast.error(errorMessages[0]);
+      }
+      return;
+    }
+
     const cartItem: CartItem = {
+      id: `cart-item-${Date.now()}`,
       productId: product.id,
       name: product.name,
       price: calculatePrice(),
@@ -632,8 +450,13 @@ const ProductDetail = () => {
       color: selectedColor,
       size: selectedSize,
       image_url: product.image_url,
-      lotteries: selectedLotteryIds.length > 0 ? selectedLotteryIds : undefined
+      cartItemId: `cart-item-${Date.now()}`
     };
+
+    // Add lotteries if selected
+    if (selectedLotteryIds.length > 0) {
+      cartItem.lotteries = selectedLotteryIds;
+    }
 
     // Customization object that includes both front and back designs and text
     if (customizationMode) {
@@ -685,9 +508,8 @@ const ProductDetail = () => {
       }
     }
 
-    // Ajouter l'élément au panier (localStorage pour l'instant)
-    const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-    localStorage.setItem('cart', JSON.stringify([...existingCart, cartItem]));
+    // Use Cart Context to add the item to cart
+    addItem(cartItem);
     
     toast.success('Produit ajouté au panier !');
   };
@@ -709,34 +531,6 @@ const ProductDetail = () => {
     }
     
     return product?.image_url;
-  };
-
-  const getCurrentDesign = () => {
-    return currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack;
-  };
-  
-  const getCurrentDesignTransform = () => {
-    return currentViewSide === 'front' ? designTransformFront : designTransformBack;
-  };
-  
-  const getCurrentTextContent = () => {
-    return currentViewSide === 'front' ? textContentFront : textContentBack;
-  };
-  
-  const getCurrentTextTransform = () => {
-    return currentViewSide === 'front' ? textTransformFront : textTransformBack;
-  };
-  
-  const getCurrentTextFont = () => {
-    return currentViewSide === 'front' ? textFontFront : textFontBack;
-  };
-  
-  const getCurrentTextColor = () => {
-    return currentViewSide === 'front' ? textColorFront : textColorBack;
-  };
-  
-  const getCurrentTextStyles = () => {
-    return currentViewSide === 'front' ? textStylesFront : textStylesBack;
   };
 
   if (isLoading || !product) {
@@ -903,7 +697,9 @@ const ProductDetail = () => {
               {/* Couleurs disponibles */}
               {product.available_colors && product.available_colors.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-medium mb-3">Couleur</h3>
+                  <h3 className="text-sm font-medium mb-3">
+                    Couleur {validationErrors.color && <span className="text-red-500 text-xs ml-1">*</span>}
+                  </h3>
                   <div className="flex flex-wrap gap-2">
                     {product.available_colors.map((color) => (
                       <div
@@ -912,17 +708,25 @@ const ProductDetail = () => {
                           selectedColor === color ? 'border-winshirt-purple' : 'border-transparent'
                         }`}
                         style={{ backgroundColor: getColorHexCode(color) }}
-                        onClick={() => setSelectedColor(color)}
+                        onClick={() => {
+                          setSelectedColor(color);
+                          setValidationErrors({...validationErrors, color: undefined});
+                        }}
                       />
                     ))}
                   </div>
+                  {validationErrors.color && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.color}</p>
+                  )}
                 </div>
               )}
 
               {/* Tailles disponibles */}
               {product.available_sizes && product.available_sizes.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-medium mb-3">Taille</h3>
+                  <h3 className="text-sm font-medium mb-3">
+                    Taille {validationErrors.size && <span className="text-red-500 text-xs ml-1">*</span>}
+                  </h3>
                   <div className="flex flex-wrap gap-2">
                     {product.available_sizes.map((size) => (
                       <div
@@ -932,12 +736,18 @@ const ProductDetail = () => {
                             ? 'bg-winshirt-purple text-white'
                             : 'bg-black/20 hover:bg-black/30'
                         }`}
-                        onClick={() => setSelectedSize(size)}
+                        onClick={() => {
+                          setSelectedSize(size);
+                          setValidationErrors({...validationErrors, size: undefined});
+                        }}
                       >
                         {size}
                       </div>
                     ))}
                   </div>
+                  {validationErrors.size && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.size}</p>
+                  )}
                 </div>
               )}
 
@@ -1369,12 +1179,17 @@ const ProductDetail = () => {
                   <h3 className="flex items-center text-lg font-medium">
                     <UsersRound className="h-5 w-5 mr-2 text-winshirt-purple" />
                     Participez à {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}
+                    {validationErrors.lottery && <span className="text-red-500 text-xs ml-1">*</span>}
                   </h3>
                   
                   <p className="text-sm text-white/70">
                     Ce produit vous permet de participer à {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}.
                     Sélectionnez {product.tickets_offered > 1 ? 'celles qui vous intéressent' : 'celle qui vous intéresse'}.
                   </p>
+                  
+                  {validationErrors.lottery && (
+                    <p className="text-red-500 text-xs mt-1">{validationErrors.lottery}</p>
+                  )}
                   
                   <div className="space-y-3">
                     {Array.from({ length: product.tickets_offered }).map((_, index) => (
@@ -1414,7 +1229,10 @@ const ProductDetail = () => {
                                   <DropdownMenuItem
                                     key={lottery.id}
                                     className={`flex justify-between cursor-pointer ${isSelected ? 'bg-winshirt-purple/20' : ''}`}
-                                    onClick={() => handleLotteryToggle(lottery, index)}
+                                    onClick={() => {
+                                      handleLotteryToggle(lottery, index);
+                                      setValidationErrors({...validationErrors, lottery: undefined});
+                                    }}
                                   >
                                     <span>{lottery.title}</span>
                                     {isSelected && <Check className="h-4 w-4" />}
