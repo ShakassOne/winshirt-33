@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Plus, Pencil, Trash } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { UploadButton } from '@/components/ui/upload-button';
+import AdminNavigation from '@/components/admin/AdminNavigation';
 
 const DesignsAdmin = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -29,6 +30,7 @@ const DesignsAdmin = () => {
   const { data: designs, isLoading, error } = useQuery({
     queryKey: ['designs'],
     queryFn: fetchDesigns,
+    staleTime: 5 * 60 * 1000, // 5 minutes cache to reduce API calls
   });
 
   const createDesignMutation = useMutation({
@@ -156,6 +158,7 @@ const DesignsAdmin = () => {
 
   return (
     <div className="container mx-auto py-8">
+      <AdminNavigation />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Gestion des Designs</h1>
         <Button onClick={handleCreate}>

@@ -107,52 +107,55 @@ const Navbar = () => {
             <div className="hidden md:flex items-center space-x-1">
               <ThemeToggle />
               
-              {/* User Menu */}
-              {user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-white/80 hover:text-white">
-                      <User className="h-5 w-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-black/90 border-white/20">
-                    <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-white/10" />
-                    <DropdownMenuItem className="hover:bg-white/5">
-                      <Link to="/account" className="flex w-full">Profil</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="hover:bg-white/5">
-                      <Link to="/orders" className="flex w-full">Mes commandes</Link>
-                    </DropdownMenuItem>
-                    {user && (
-                      <>
-                        <DropdownMenuItem className="hover:bg-white/5">
-                          <Link to="/admin" className="flex w-full">Administration</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="hover:bg-white/5">
-                          <Link to="/admin/mockups" className="flex w-full">Mockups Admin</Link>
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    <DropdownMenuSeparator className="bg-white/10" />
-                    <DropdownMenuItem 
-                      className="hover:bg-white/5" 
-                      onClick={handleSignOut}
-                    >
-                      <span className="flex items-center w-full">
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Déconnexion
-                      </span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button variant="ghost" size="icon" className="text-white/80 hover:text-white" asChild>
-                  <Link to="/auth">
-                    <LogIn className="h-5 w-5" />
-                  </Link>
-                </Button>
-              )}
+              {/* User Menu - Always show User icon, but with different actions based on auth status */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-white/80 hover:text-white">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-black/90 border-white/20">
+                  {user ? (
+                    <>
+                      <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
+                      <DropdownMenuSeparator className="bg-white/10" />
+                      <DropdownMenuItem className="hover:bg-white/5">
+                        <Link to="/account" className="flex w-full">Profil</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="hover:bg-white/5">
+                        <Link to="/orders" className="flex w-full">Mes commandes</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="hover:bg-white/5">
+                        <Link to="/admin" className="flex w-full">Administration</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="hover:bg-white/5">
+                        <Link to="/admin/mockups" className="flex w-full">Mockups Admin</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="bg-white/10" />
+                      <DropdownMenuItem 
+                        className="hover:bg-white/5" 
+                        onClick={handleSignOut}
+                      >
+                        <span className="flex items-center w-full">
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Déconnexion
+                        </span>
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuLabel>Compte</DropdownMenuLabel>
+                      <DropdownMenuSeparator className="bg-white/10" />
+                      <DropdownMenuItem className="hover:bg-white/5">
+                        <Link to="/auth" className="flex items-center w-full">
+                          <LogIn className="h-4 w-4 mr-2" />
+                          Connexion
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <CartIcon />
             </div>
           </div>
@@ -197,6 +200,13 @@ const Navbar = () => {
                   onClick={toggleMenu}
                 >
                   Gestion des mockups
+                </Link>
+                <Link
+                  to="/admin/designs"
+                  className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+                  onClick={toggleMenu}
+                >
+                  Gestion des designs
                 </Link>
                 <Link
                   to="/admin/theme"

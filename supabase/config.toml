@@ -1,1 +1,18 @@
+
+# Project Configuration
 project_id = "gyprtpqgeukcoxbfxtfg"
+
+[db.pooler]
+enabled = true
+pool_mode = "transaction"
+default_pool_size = 15
+max_client_conn = 100
+
+[api]
+enabled = true
+
+[db]
+# Database performance optimization
+max_connections = 100
+pool_timeout = 60
+idle_timeout = 300
