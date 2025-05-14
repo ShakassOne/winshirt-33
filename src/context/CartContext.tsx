@@ -89,27 +89,33 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Add item to cart
   const addItem = (item: CartItem) => {
+    // S'assurer que l'article a un cartItemId unique
+    const newItem = {
+      ...item,
+      cartItemId: item.cartItemId || uuidv4()
+    };
+    
+    console.log("Adding item to cart:", newItem);
+    
     setItems((prevItems) => {
-      // Ensure the item has a cartItemId
-      const newItem = {
-        ...item,
-        cartItemId: item.cartItemId || uuidv4()
-      };
-
-      // Check if the item already exists with the same customization options
+      // Vérifier si un article identique existe déjà
       const existingItemIndex = prevItems.findIndex(
-        (i) =>
-          i.productId === newItem.productId &&
+        (i) => 
+          i.productId === newItem.productId && 
+          i.color === newItem.color && 
+          i.size === newItem.size &&
           JSON.stringify(i.customization) === JSON.stringify(newItem.customization)
       );
 
       if (existingItemIndex !== -1) {
-        // Update quantity if item exists
+        // Mettre à jour la quantité si l'article existe
+        console.log("Item exists, updating quantity");
         const updatedItems = [...prevItems];
         updatedItems[existingItemIndex].quantity += newItem.quantity;
         return updatedItems;
       } else {
-        // Add new item
+        // Ajouter un nouvel article
+        console.log("Item is new, adding to cart");
         return [...prevItems, newItem];
       }
     });
@@ -122,6 +128,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Remove item from cart
   const removeItem = (id: string) => {
+    console.log("Removing item from cart, id:", id);
     setItems((prevItems) => prevItems.filter((item) => item.cartItemId !== id));
   };
 
@@ -129,6 +136,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   const updateItemQuantity = (id: string, quantity: number) => {
     if (quantity < 1) return;
 
+    console.log("Updating item quantity:", id, quantity);
     setItems((prevItems) =>
       prevItems.map((item) =>
         item.cartItemId === id ? { ...item, quantity } : item
@@ -137,8 +145,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Clear cart
-  const clearCart = () => {
+  const clearCart = async () => {
+    console.log("Clearing cart");
     setItems([]);
+    return true;
   };
 
   const contextValue: CartContextType = {

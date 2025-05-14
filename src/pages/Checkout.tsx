@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -38,7 +37,7 @@ const checkoutSchema = z.object({
   createAccount: z.boolean().default(false),
   password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").optional()
     .refine(
-      (pw) => !z.boolean().parse(z.object({ createAccount: z.boolean() }).shape.createAccount) || (pw && pw.length >= 6),
+      (pw, ctx) => !ctx.parent.createAccount || (pw && pw.length >= 6),
       { message: "Le mot de passe est requis pour créer un compte" }
     ),
 });
@@ -103,6 +102,7 @@ const Checkout = () => {
   const createAccount = form.watch('createAccount');
 
   const onSubmit = async (data: CheckoutFormData) => {
+    console.log("Form submitted with data:", data);
     try {
       setIsLoading(true);
       
@@ -110,6 +110,7 @@ const Checkout = () => {
       
       // Si l'utilisateur veut créer un compte et n'est pas connecté
       if (data.createAccount && !user) {
+        console.log("Creating account for user");
         const { error, data: authData } = await supabase.auth.signUp({
           email: data.email,
           password: data.password as string,
@@ -121,12 +122,17 @@ const Checkout = () => {
           }
         });
         
-        if (error) throw error;
+        if (error) {
+          console.error("Error creating account:", error);
+          throw error;
+        }
         
         userId = authData.user?.id;
+        console.log("Account created, user ID:", userId);
         
         // Crée ou met à jour le profil utilisateur
         if (userId) {
+          console.log("Creating user profile");
           const { error: profileError } = await supabase
             .from('profiles')
             .upsert({
@@ -141,20 +147,26 @@ const Checkout = () => {
               country: data.country
             });
             
-          if (profileError) console.error("Erreur lors de la création du profil:", profileError);
+          if (profileError) {
+            console.error("Error creating profile:", profileError);
+          }
         }
       }
       
       // Crée la commande
+      console.log("Creating order with items:", items);
       const order = await createOrder(data, items, sessionId, userId);
-      
-      // Redirige vers la page de paiement
-      navigate(`/payment/${order.id}`);
+      console.log("Order created:", order);
       
       // Vide le panier après la création de la commande
-      await clearCart();
+      const cleared = await clearCart();
+      console.log("Cart cleared:", cleared);
       
       toast.success("Commande créée avec succès!");
+      
+      // Redirige vers la page de paiement
+      console.log("Redirecting to payment page:", `/payment/${order.id}`);
+      navigate(`/payment/${order.id}`);
     } catch (error) {
       console.error("Erreur lors de la création de la commande:", error);
       toast.error("Une erreur est survenue lors de la création de la commande");
@@ -379,7 +391,7 @@ const Checkout = () => {
                 
                 <div className="space-y-4">
                   {items.map((item) => (
-                    <div key={item.productId} className="flex gap-3">
+                    <div key={item.cartItemId || item.productId} className="flex gap-3">
                       <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
                         <img 
                           src={item.image_url} 
