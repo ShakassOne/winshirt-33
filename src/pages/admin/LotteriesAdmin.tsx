@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
@@ -26,9 +27,6 @@ const LotteriesAdmin = () => {
     queryFn: fetchAllLotteries,
   });
 
-  // Type guard to ensure lotteries is an array
-  const lotteriesArray = Array.isArray(lotteries) ? lotteries as Lottery[] : [];
-
   const handleCreateSuccess = () => {
     refetch();
     toastHook({
@@ -54,7 +52,7 @@ const LotteriesAdmin = () => {
     }
   };
 
-  const filteredLotteries = lotteriesArray.filter((lottery: Lottery) => {
+  const filteredLotteries = lotteries?.filter((lottery: Lottery) => {
     const matchesSearch = 
       lottery.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lottery.description.toLowerCase().includes(searchTerm.toLowerCase());

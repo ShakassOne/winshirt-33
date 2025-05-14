@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
@@ -171,9 +172,6 @@ const ProductsAdmin = () => {
                                 alt={product.name} 
                                 className="w-full h-full object-cover"
                               />
-                              {product.images && product.images.length > 0 && (
-                                <div className="mt-1 text-xs text-white/50">+{product.images.length} images</div>
-                              )}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">

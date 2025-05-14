@@ -6,7 +6,7 @@ import { fetchAllProducts } from '@/services/api.service';
 import { useQuery } from '@tanstack/react-query';
 import ProductCard from '@/components/ui/ProductCard';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 import { Product } from '@/types/supabase.types';
 import { useCart } from '@/context/CartContext';
 
@@ -37,21 +37,21 @@ const Products = () => {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       
-      <main className="flex-grow pb-20 relative">
-        {/* Hero Section with containerbanner class */}
-        <section className="containerbanner py-20">
+      <main className="flex-grow pb-20">
+        {/* Hero Section */}
+        <section className="relative py-20 bg-gradient-to-b from-winshirt-blue/20 to-transparent">
           <div className="container mx-auto px-4">
             <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center">
               Notre <span className="text-gradient">Collection</span>
             </h1>
-            <p className="text-lg text-white text-center max-w-2xl mx-auto">
+            <p className="text-lg text-white/70 text-center max-w-2xl mx-auto">
               Découvrez nos vêtements personnalisables de qualité avec une chance de gagner des prix exceptionnels
             </p>
           </div>
         </section>
 
         {/* Filters */}
-        <section className="py-8 mt-48">
+        <section className="py-8">
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
               <div className="relative w-full md:w-64">
@@ -89,7 +89,7 @@ const Products = () => {
         </section>
 
         {/* Products Grid */}
-        <section className="py-8 z-10 relative">
+        <section className="py-8">
           <div className="container mx-auto px-4">
             {isLoading ? (
               <div className="text-center py-20">

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -11,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { Slider } from "@/components/ui/slider";
-import { Product } from '@/types/supabase.types';
 
 const LotteryDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,11 +33,8 @@ const LotteryDetail = () => {
     queryFn: fetchAllProducts,
   });
 
-  // Type guard to ensure products is an array
-  const productsArray = Array.isArray(products) ? products as Product[] : [];
-
   // Products that offer this lottery as a ticket
-  const relatedProducts = productsArray.filter(product => product.tickets_offered > 0).slice(0, 4);
+  const relatedProducts = products?.filter(product => product.tickets_offered > 0).slice(0, 4);
 
   // Update countdown timer every second
   useEffect(() => {

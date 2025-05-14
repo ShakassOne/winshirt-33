@@ -1,114 +1,189 @@
 
-// Add this to your existing supabase.types.ts file
-export interface Lottery {
-  id: string;
-  title: string;
-  description: string;
-  image_url: string;
-  value: number;
-  participants: number;
-  goal: number;
-  is_active: boolean;
-  is_featured: boolean;
-  draw_date: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// Updated Product interface with images array
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image_url: string;
-  images?: string[];
-  category: string;
-  is_customizable: boolean;
-  is_active: boolean;
-  tickets_offered?: number;
-  color?: string;
-  available_colors?: string[];
-  available_sizes?: string[];
-  mockup_id?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// Add missing Design interface
+// Design
 export interface Design {
   id: string;
   name: string;
-  category: string;
   image_url: string;
-  is_active: boolean;
+  category: string;
+  is_active?: boolean;
   created_at?: string;
   updated_at?: string;
 }
 
-// Add missing Mockup interface
+// PrintArea
+export interface PrintArea {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  side: 'front' | 'back';
+  // Add position_x and position_y as aliases for x and y
+  position_x?: number;
+  position_y?: number;
+}
+
+// Import the MockupColor type from mockup.types to resolve circular dependency
+import { MockupColor } from '@/types/mockup.types';
+
+// Mockup
 export interface Mockup {
   id: string;
   name: string;
   category: string;
   svg_front_url: string;
   svg_back_url?: string;
-  price_a4: number;
   price_a3: number;
+  price_a4: number;
   price_a5: number;
   price_a6: number;
   text_price_front: number;
   text_price_back: number;
-  print_areas: PrintArea[] | string;
-  colors?: MockupColor[] | string;
+  print_areas: PrintArea[];
   is_active: boolean;
   created_at?: string;
   updated_at?: string;
-  image_url?: string;
+  colors?: MockupColor[]; // Add colors property for mockup color variants
 }
 
-// Updated PrintArea interface with x and y properties
-export interface PrintArea {
+// Product
+export interface Product {
   id: string;
   name: string;
-  width: number;
-  height: number;
-  position_x: number;
-  position_y: number;
-  x?: number; // Adding x for compatibility
-  y?: number; // Adding y for compatibility
-  side: 'front' | 'back';
+  description: string;
+  price: number;
+  image_url: string;
+  category: string;
+  is_customizable: boolean;
+  available_colors: string[];
+  available_sizes: string[];
+  color?: string;
+  tickets_offered?: number;
+  is_active?: boolean;
+  mockup_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
-// Add MockupColor interface
-export interface MockupColor {
-  id?: string;
-  name: string;
-  color_code: string;
-  front_image_url: string;
-  back_image_url?: string;
+// Lottery
+export interface Lottery {
+  id: string;
+  title: string;
+  description: string;
+  image_url: string;
+  value: number;
+  goal: number;
+  participants: number;
+  draw_date: string;
+  is_active?: boolean;
+  is_featured?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
-// Add CartItem interface
+// Cart Item
 export interface CartItem {
-  id: string;
+  cartItemId?: string; // Add this field
   productId: string;
   name: string;
   price: number;
   quantity: number;
+  color?: string | null;
+  size?: string | null;
   image_url: string;
-  color?: string;
-  size?: string;
   customization?: {
+    designId: string;
+    designName?: string;
+    designUrl: string;
+    printPosition: 'front' | 'back';
+    printSize: string;
+    transform?: {
+      position: { x: number; y: number };
+      scale: number;
+      rotation: number;
+    };
     text?: {
       content: string;
-      font?: string;
-      color?: string;
-      size?: number;
+      font: string;
+      color: string;
+      printPosition: 'front' | 'back';
+      transform?: {
+        position: { x: number; y: number };
+        scale: number;
+        rotation: number;
+      };
     };
-    designId?: string;
-    designUrl?: string;
-    position?: string;
-    scale?: number;
   };
+  lotteries?: string[];
+}
+
+// Order
+export interface Order {
+  id: string;
+  user_id?: string;
+  guest_email?: string;
+  session_id?: string;
+  total_amount: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  payment_status?: 'pending' | 'paid' | 'failed';
+  payment_intent_id?: string;
+  shipping_first_name: string;
+  shipping_last_name: string;
+  shipping_email: string;
+  shipping_phone: string;
+  shipping_address: string;
+  shipping_city: string;
+  shipping_postal_code: string;
+  shipping_country: string;
+  delivery_notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// OrderItem
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  price: number;
+  customization?: {
+    designId: string;
+    designUrl: string;
+    printPosition: 'front' | 'back';
+    printSize: string;
+    text?: {
+      content: string;
+      font: string;
+      color: string;
+    };
+  };
+  created_at?: string;
+}
+
+// UserProfile
+export interface UserProfile {
+  id: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
+  avatar_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// CartSession
+export interface CartSession {
+  id: string;
+  user_id?: string;
+  guest_email?: string;
+  session_id: string;
+  created_at?: string;
+  updated_at?: string;
 }

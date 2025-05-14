@@ -1,13 +1,11 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { cn } from '@/lib/utils';
 import GlassCard from './GlassCard';
-import { ShoppingCart, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { v4 as uuidv4 } from 'uuid';
 
 interface ProductCardProps {
   id: string;
@@ -15,7 +13,6 @@ interface ProductCardProps {
   category: string;
   price: number;
   image: string;
-  images?: string[];
   rating?: number;
   isCustomizable?: boolean;
   tickets?: number;
@@ -28,17 +25,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
   category,
   price,
   image,
-  images = [],
   rating = 5,
   isCustomizable = false,
   tickets = 0,
   color,
 }) => {
   const { addItem } = useCart();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
-  // Combine main image with additional images for the carousel
-  const allImages = [image, ...(images || [])];
   
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -47,7 +39,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
     console.log("Adding to cart:", id, name, price);
     
     addItem({
-      id: uuidv4(), // Generate a unique ID for this cart item
       productId: id,
       name,
       price,
@@ -55,63 +46,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
       image_url: image
     });
   };
-
-  const nextImage = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
-  };
-
-  const prevImage = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
-  };
   
   return (
     <Link to={`/products/${id}`} className="block">
       <GlassCard hover3D shine className="group relative overflow-hidden hover:shadow-lg glow-card">
         <div className="relative aspect-square overflow-hidden rounded-t-xl">
           <img
-            src={allImages[currentImageIndex]}
+            src={image}
             alt={name}
             className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
           />
-          
-          {allImages.length > 1 && (
-            <>
-              <Button 
-                size="icon" 
-                variant="ghost" 
-                className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={prevImage}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              
-              <Button 
-                size="icon" 
-                variant="ghost" 
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={nextImage}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              
-              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
-                {allImages.map((_, idx) => (
-                  <div 
-                    key={idx} 
-                    className={cn(
-                      "h-1.5 w-1.5 rounded-full transition-colors", 
-                      idx === currentImageIndex ? "bg-white" : "bg-white/40"
-                    )}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-          
           {isCustomizable && (
             <div className="absolute top-2 left-2 bg-winshirt-purple/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium">
               Personnalisable

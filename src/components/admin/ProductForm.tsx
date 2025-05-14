@@ -11,10 +11,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { X, Plus, Image, Trash } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Product } from '@/types/supabase.types';
-import { UploadButton } from '@/components/ui/upload-button';
 
 const productSchema = z.object({
   name: z.string().min(3, { message: 'Le nom doit contenir au moins 3 caractères' }),
@@ -44,7 +43,6 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormPro
   const [sizes, setSizes] = useState<string[]>([]);
   const [newColor, setNewColor] = useState('');
   const [newSize, setNewSize] = useState('');
-  const [additionalImages, setAdditionalImages] = useState<string[]>([]);
 
   const { data: mockups } = useQuery({
     queryKey: ['mockups'],
@@ -84,23 +82,16 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormPro
       
       setColors(initialData.available_colors || []);
       setSizes(initialData.available_sizes || []);
-      
-      // Set additional images if available
-      if (initialData.images && initialData.images.length > 0) {
-        setAdditionalImages(initialData.images);
-      }
     } else {
       reset(defaultValues);
       setColors([]);
       setSizes([]);
-      setAdditionalImages([]);
     }
   }, [initialData, setValue, reset]);
 
   const isCustomizable = watch('is_customizable');
   const ticketsOffered = watch('tickets_offered');
   const selectedCategory = watch('category');
-  const mainImageUrl = watch('image_url');
 
   useEffect(() => {
     // Filtrer les mockups par catégorie sélectionnée
@@ -111,18 +102,6 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormPro
       }
     }
   }, [selectedCategory, mockups, setValue]);
-
-  const handleMainImageUpload = (url: string) => {
-    setValue('image_url', url);
-  };
-
-  const handleAdditionalImageUpload = (url: string) => {
-    setAdditionalImages([...additionalImages, url]);
-  };
-
-  const removeAdditionalImage = (index: number) => {
-    setAdditionalImages(additionalImages.filter((_, i) => i !== index));
-  };
 
   const addColor = () => {
     if (newColor && !colors.includes(newColor)) {
@@ -150,13 +129,12 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormPro
     try {
       setIsSubmitting(true);
       
-      // Ensure we have all the product data including additional images
+      // Nous nous assurons que toutes les propriétés requises sont définies
       const productData = {
         name: data.name,
         description: data.description,
         price: data.price,
         image_url: data.image_url,
-        images: additionalImages,
         category: data.category,
         is_customizable: data.is_customizable,
         is_active: data.is_active,
@@ -186,7 +164,6 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormPro
       reset(defaultValues);
       setColors([]);
       setSizes([]);
-      setAdditionalImages([]);
       if (onSuccess) onSuccess();
       onClose();
     } catch (error) {
@@ -266,59 +243,9 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormPro
               </div>
               
               <div className="space-y-2">
-                <Label>Image principale</Label>
-                <div className="flex items-center gap-2">
-                  <Input 
-                    id="image_url" 
-                    {...register('image_url')} 
-                    placeholder="URL de l'image principale"
-                  />
-                  <UploadButton 
-                    onUpload={handleMainImageUpload} 
-                    targetFolder="products" 
-                    size="sm"
-                  />
-                </div>
+                <Label htmlFor="image_url">URL de l'image</Label>
+                <Input id="image_url" {...register('image_url')} />
                 {errors.image_url && <p className="text-red-500 text-sm">{errors.image_url.message}</p>}
-                
-                {mainImageUrl && (
-                  <div className="mt-2 relative w-24 h-24 rounded-md overflow-hidden">
-                    <img src={mainImageUrl} alt="Aperçu" className="w-full h-full object-cover" />
-                  </div>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Images additionnelles</Label>
-                <div className="flex items-center gap-2">
-                  <UploadButton 
-                    onUpload={handleAdditionalImageUpload} 
-                    targetFolder="products" 
-                    className="w-full"
-                    variant="outline"
-                  />
-                </div>
-                
-                {additionalImages.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {additionalImages.map((url, index) => (
-                      <div key={index} className="relative w-24 h-24 group">
-                        <img 
-                          src={url} 
-                          alt={`Image ${index + 2}`} 
-                          className="w-full h-full object-cover rounded-md"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeAdditionalImage(index)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Trash className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
               
               <div className="space-y-2">

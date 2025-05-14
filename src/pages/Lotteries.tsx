@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -10,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Search, Calendar, Users, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { Badge } from '@/components/ui/badge';
-import { Lottery } from '@/types/supabase.types';
 
 const Lotteries = () => {
   const [filterActive, setFilterActive] = useState<boolean | null>(null);
@@ -21,10 +19,7 @@ const Lotteries = () => {
     queryFn: fetchAllLotteries,
   });
 
-  // Type guard to ensure lotteries is an array
-  const lotteriesArray = Array.isArray(lotteries) ? lotteries : [];
-
-  const filteredLotteries = lotteriesArray.filter(lottery => {
+  const filteredLotteries = lotteries?.filter(lottery => {
     const matchesStatus = filterActive === null ? true : lottery.is_active === filterActive;
     const matchesSearch = searchTerm 
       ? lottery.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -34,10 +29,10 @@ const Lotteries = () => {
   });
   
   // Get featured lottery for the hero section
-  const featuredLottery = lotteriesArray.find(lottery => lottery.is_featured);
+  const featuredLottery = lotteries?.find(lottery => lottery.is_featured);
 
   // Get remaining featured lotteries
-  const otherFeaturedLotteries = lotteriesArray.filter(lottery => 
+  const otherFeaturedLotteries = lotteries?.filter(lottery => 
     lottery.is_featured && lottery.id !== featuredLottery?.id
   ) || [];
 
