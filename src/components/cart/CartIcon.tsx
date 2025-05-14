@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
@@ -7,18 +7,19 @@ import { Link } from 'react-router-dom';
 
 const CartIcon = () => {
   const { itemCount, loadCartItems } = useCart();
+  const hasLoadedRef = useRef(false);
   
-  // Always load cart items when component mounts to ensure latest state
+  // Only load cart items once when component mounts
   useEffect(() => {
-    console.log("CartIcon mounted, loading cart items");
-    if(typeof loadCartItems === 'function') {
+    if (!hasLoadedRef.current && typeof loadCartItems === 'function') {
+      console.log("CartIcon mounted, loading cart items");
+      hasLoadedRef.current = true;
+      
       loadCartItems().then(() => {
         console.log("Cart items loaded successfully");
       }).catch(error => {
         console.error("Error loading cart items:", error);
       });
-    } else {
-      console.warn("loadCartItems function is not available");
     }
   }, [loadCartItems]);
 

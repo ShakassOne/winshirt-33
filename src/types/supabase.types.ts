@@ -54,6 +54,7 @@ export interface Product {
   description: string;
   price: number;
   image_url: string;
+  images?: string[]; // Add support for multiple images
   category: string;
   is_customizable: boolean;
   available_colors: string[];
