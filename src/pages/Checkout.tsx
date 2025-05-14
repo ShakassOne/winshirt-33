@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -24,7 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 
-// Schema for password validation - only required when creating account
+// Schema pour password validation - only required when creating account
 const passwordSchema = z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères");
 
 // Schéma de validation pour le formulaire de checkout
@@ -64,31 +63,35 @@ const Checkout = () => {
   // Vérifie si l'utilisateur est connecté
   React.useEffect(() => {
     const checkUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.user) {
-        setUser(data.session.user);
-        
-        // Récupère les informations du profil pour pré-remplir le formulaire
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.session.user.id)
-          .single();
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.user) {
+          setUser(data.session.user);
           
-        if (profileData) {
-          form.reset({
-            firstName: profileData.first_name || '',
-            lastName: profileData.last_name || '',
-            email: data.session.user.email || '',
-            phone: profileData.phone || '',
-            address: profileData.address || '',
-            city: profileData.city || '',
-            postalCode: profileData.postal_code || '',
-            country: profileData.country || '',
-            deliveryNotes: '',
-            createAccount: false
-          });
+          // Récupère les informations du profil pour pré-remplir le formulaire
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.session.user.id)
+            .single();
+            
+          if (profileData) {
+            form.reset({
+              firstName: profileData.first_name || '',
+              lastName: profileData.last_name || '',
+              email: data.session.user.email || '',
+              phone: profileData.phone || '',
+              address: profileData.address || '',
+              city: profileData.city || '',
+              postalCode: profileData.postal_code || '',
+              country: profileData.country || '',
+              deliveryNotes: '',
+              createAccount: false
+            });
+          }
         }
+      } catch (error) {
+        console.error("Erreur lors de la vérification de l'utilisateur:", error);
       }
     };
     
@@ -116,6 +119,13 @@ const Checkout = () => {
 
   const onSubmit = async (data: CheckoutFormData) => {
     console.log("Form submitted with data:", data);
+    
+    if (!items || items.length === 0) {
+      toast.error("Votre panier est vide. Veuillez ajouter des articles avant de procéder au paiement.");
+      navigate('/products');
+      return;
+    }
+    
     try {
       setIsLoading(true);
       
@@ -172,8 +182,8 @@ const Checkout = () => {
       console.log("Order created:", order);
       
       // Vide le panier après la création de la commande
-      const cleared = await clearCart();
-      console.log("Cart cleared:", cleared);
+      await clearCart();
+      console.log("Cart cleared");
       
       toast.success("Commande créée avec succès!");
       
@@ -403,28 +413,32 @@ const Checkout = () => {
                 <h2 className="text-lg font-semibold mb-4">Résumé de la commande</h2>
                 
                 <div className="space-y-4">
-                  {items.map((item) => (
-                    <div key={item.cartItemId || item.productId} className="flex gap-3">
-                      <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
-                        <img 
-                          src={item.image_url} 
-                          alt={item.name} 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-grow">
-                        <div className="flex justify-between">
-                          <p className="font-medium">{item.name}</p>
-                          <p>{(item.price * item.quantity).toFixed(2)} €</p>
+                  {items && items.length > 0 ? (
+                    items.map((item) => (
+                      <div key={item.cartItemId || item.productId} className="flex gap-3">
+                        <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
+                          <img 
+                            src={item.image_url} 
+                            alt={item.name} 
+                            className="w-full h-full object-cover"
+                          />
                         </div>
-                        <div className="text-sm text-gray-400">
-                          Qté: {item.quantity}
-                          {item.color && ` • ${item.color}`}
-                          {item.size && ` • ${item.size}`}
+                        <div className="flex-grow">
+                          <div className="flex justify-between">
+                            <p className="font-medium">{item.name}</p>
+                            <p>{(item.price * item.quantity).toFixed(2)} €</p>
+                          </div>
+                          <div className="text-sm text-gray-400">
+                            Qté: {item.quantity}
+                            {item.color && ` • ${item.color}`}
+                            {item.size && ` • ${item.size}`}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-center text-gray-400">Votre panier est vide</p>
+                  )}
                 </div>
                 
                 <div className="mt-6 pt-4 border-t border-gray-100/10 space-y-2">

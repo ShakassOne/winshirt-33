@@ -12,6 +12,20 @@ interface CustomizationAccordionProps {
 const CustomizationAccordion = ({ children }: CustomizationAccordionProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  // Utiliser une fonction indépendante pour la gestion du clic
+  // afin d'éviter les problèmes de propagation d'événements
+  const handleToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen(!isOpen);
+    
+    // Petit délai pour laisser le DOM se mettre à jour
+    setTimeout(() => {
+      // Garder le focus sur le bouton pour éviter les problèmes de scroll
+      document.activeElement && (document.activeElement as HTMLElement).blur();
+    }, 10);
+  };
+
   return (
     <Collapsible
       open={isOpen}
@@ -23,7 +37,7 @@ const CustomizationAccordion = ({ children }: CustomizationAccordionProps) => {
           <Button 
             variant="default" 
             className="w-full bg-gradient-purple"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={handleToggle}
           >
             <span>Commencer à personnaliser</span>
             <ChevronDown className={cn(
