@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
 import { CartItem } from "@/types/supabase.types";
+import { toast } from "sonner";
 
 export const createOrder = async (
   checkoutData: CheckoutFormData,
@@ -36,18 +37,22 @@ export const createOrder = async (
     
     console.log("Création d'une commande avec les données:", orderData);
     
-    // Create order
-    const { data: order, error: orderError } = await supabase
+    // Create order - sans utiliser .single() qui peut causer des erreurs
+    const { data: orders, error: orderError } = await supabase
       .from('orders')
       .insert([orderData])
-      .select()
-      .single();
+      .select();
       
     if (orderError) {
       console.error("Erreur lors de la création de la commande:", orderError);
       throw orderError;
     }
     
+    if (!orders || orders.length === 0) {
+      throw new Error("La commande n'a pas pu être créée");
+    }
+    
+    const order = orders[0];
     console.log("Commande créée avec succès:", order);
     
     // Create order items
@@ -67,10 +72,11 @@ export const createOrder = async (
       
     if (itemsError) {
       console.error("Erreur lors de la création des éléments de commande:", itemsError);
-      throw itemsError;
+      // Même en cas d'erreur pour les items, on continue avec la commande
+      toast.error("Attention: Certains articles de votre commande n'ont pas été correctement enregistrés. Veuillez contacter le support.");
+    } else {
+      console.log("Éléments de commande créés avec succès");
     }
-    
-    console.log("Éléments de commande créés avec succès");
     
     return order;
   } catch (error) {
@@ -85,9 +91,13 @@ export const getOrderById = async (orderId: string) => {
       .from('orders')
       .select('*')
       .eq('id', orderId)
-      .single();
+      .maybeSingle(); // Utilisation de maybeSingle au lieu de single
       
     if (orderError) throw orderError;
+    
+    if (!order) {
+      throw new Error("Commande introuvable");
+    }
     
     const { data: orderItems, error: itemsError } = await supabase
       .from('order_items')
@@ -101,7 +111,7 @@ export const getOrderById = async (orderId: string) => {
     
     return {
       ...order,
-      items: orderItems
+      items: orderItems || []
     };
   } catch (error) {
     console.error("Error in getOrderById:", error);
