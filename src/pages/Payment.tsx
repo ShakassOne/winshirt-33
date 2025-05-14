@@ -1,70 +1,42 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { checkOrderExists, getOrderById, updateOrderPaymentStatus } from '@/services/order.service';
+import { getOrderById, updateOrderPaymentStatus } from '@/services/order.service';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CreditCard, Check, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const Payment = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
-  const { user, refreshSession } = useAuth();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'success' | 'failed'>('pending');
 
-  // Vérifier si l'ordre existe avant de charger les détails
   useEffect(() => {
-    const checkOrder = async () => {
-      if (!orderId) {
-        setError("Identifiant de commande manquant");
-        setLoading(false);
-        return;
-      }
+    if (!orderId) {
+      setError("Identifiant de commande manquant");
+      setLoading(false);
+      return;
+    }
 
+    const fetchOrder = async () => {
       try {
-        const exists = await checkOrderExists(orderId);
-        if (!exists) {
-          setError("Commande introuvable");
-          setLoading(false);
-          return;
-        }
-
-        // Si l'utilisateur est connecté, rafraîchir sa session pour s'assurer 
-        // qu'il a les bons droits
-        if (user) {
-          await refreshSession();
-        }
-
-        await fetchOrderDetails();
+        const orderData = await getOrderById(orderId);
+        setOrder(orderData);
       } catch (err) {
-        console.error("Erreur lors de la vérification de la commande:", err);
-        setError("Impossible de vérifier les détails de la commande");
+        console.error("Erreur lors de la récupération de la commande:", err);
+        setError("Impossible de récupérer les détails de la commande");
+      } finally {
         setLoading(false);
       }
     };
 
-    checkOrder();
-  }, [orderId, user]);
-
-  const fetchOrderDetails = async () => {
-    if (!orderId) return;
-    
-    try {
-      const orderData = await getOrderById(orderId);
-      setOrder(orderData);
-      setLoading(false);
-    } catch (err) {
-      console.error("Erreur lors de la récupération de la commande:", err);
-      setError("Impossible de récupérer les détails de la commande");
-      setLoading(false);
-    }
-  };
+    fetchOrder();
+  }, [orderId]);
 
   const handleProcessPayment = async () => {
     if (!order) return;
@@ -86,11 +58,9 @@ const Payment = () => {
       }
       
       setPaymentStatus('success');
-      toast.success("Paiement effectué avec succès !");
     } catch (err) {
       console.error("Erreur lors du traitement du paiement:", err);
       setPaymentStatus('failed');
-      toast.error("Le paiement a échoué. Veuillez réessayer.");
     }
   };
 
