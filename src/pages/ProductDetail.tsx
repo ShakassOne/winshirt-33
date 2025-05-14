@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -338,6 +339,224 @@ const ProductDetail = () => {
 
   // Removed automatic lottery selection useEffect to make it optional
 
+  // Helper functions for accessing the current design based on the active side
+  const getCurrentDesign = () => {
+    return currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack;
+  };
+
+  const getCurrentDesignTransform = () => {
+    return currentViewSide === 'front' ? designTransformFront : designTransformBack;
+  };
+
+  // Helper functions for accessing the current text content based on the active side
+  const getCurrentTextContent = () => {
+    return currentViewSide === 'front' ? textContentFront : textContentBack;
+  };
+
+  const getCurrentTextFont = () => {
+    return currentViewSide === 'front' ? textFontFront : textFontBack;
+  };
+
+  const getCurrentTextColor = () => {
+    return currentViewSide === 'front' ? textColorFront : textColorBack;
+  };
+
+  const getCurrentTextStyles = () => {
+    return currentViewSide === 'front' ? textStylesFront : textStylesBack;
+  };
+
+  const getCurrentTextTransform = () => {
+    return currentViewSide === 'front' ? textTransformFront : textTransformBack;
+  };
+
+  // Handle design transformation changes
+  const handleDesignTransformChange = (property: 'scale' | 'rotation', value: number) => {
+    if (currentViewSide === 'front') {
+      setDesignTransformFront(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    } else {
+      setDesignTransformBack(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    }
+  };
+
+  // Handle text transformation changes
+  const handleTextTransformChange = (property: 'scale' | 'rotation', value: number) => {
+    if (currentViewSide === 'front') {
+      setTextTransformFront(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    } else {
+      setTextTransformBack(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    }
+  };
+
+  // Handle mouse/touch interactions for dragging designs and text
+  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent, isText: boolean = false) => {
+    e.preventDefault();
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    if (isText) {
+      setIsDraggingText(true);
+      setStartPosText({ x: clientX, y: clientY });
+      setActiveTextSide(currentViewSide);
+      
+      const handleTextMouseMove = (moveEvent: MouseEvent | TouchEvent) => {
+        if (isDraggingText) {
+          const moveClientX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
+          const moveClientY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
+          
+          const deltaX = moveClientX - startPosText.x;
+          const deltaY = moveClientY - startPosText.y;
+          
+          if (activeTextSide === 'front') {
+            setTextTransformFront(prev => ({
+              ...prev,
+              position: {
+                x: prev.position.x + deltaX,
+                y: prev.position.y + deltaY
+              }
+            }));
+          } else {
+            setTextTransformBack(prev => ({
+              ...prev,
+              position: {
+                x: prev.position.x + deltaX,
+                y: prev.position.y + deltaY
+              }
+            }));
+          }
+          
+          setStartPosText({ x: moveClientX, y: moveClientY });
+        }
+      };
+      
+      const handleTextMouseUp = () => {
+        setIsDraggingText(false);
+        document.removeEventListener('mousemove', handleTextMouseMove);
+        document.removeEventListener('touchmove', handleTextMouseMove);
+        document.removeEventListener('mouseup', handleTextMouseUp);
+        document.removeEventListener('touchend', handleTextMouseUp);
+      };
+      
+      document.addEventListener('mousemove', handleTextMouseMove);
+      document.addEventListener('touchmove', handleTextMouseMove);
+      document.addEventListener('mouseup', handleTextMouseUp);
+      document.addEventListener('touchend', handleTextMouseUp);
+    } else {
+      setIsDragging(true);
+      setStartPos({ x: clientX, y: clientY });
+      setActiveDesignSide(currentViewSide);
+      
+      const handleDesignMouseMove = (moveEvent: MouseEvent | TouchEvent) => {
+        if (isDragging) {
+          const moveClientX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
+          const moveClientY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
+          
+          const deltaX = moveClientX - startPos.x;
+          const deltaY = moveClientY - startPos.y;
+          
+          if (activeDesignSide === 'front') {
+            setDesignTransformFront(prev => ({
+              ...prev,
+              position: {
+                x: prev.position.x + deltaX,
+                y: prev.position.y + deltaY
+              }
+            }));
+          } else {
+            setDesignTransformBack(prev => ({
+              ...prev,
+              position: {
+                x: prev.position.x + deltaX,
+                y: prev.position.y + deltaY
+              }
+            }));
+          }
+          
+          setStartPos({ x: moveClientX, y: moveClientY });
+        }
+      };
+      
+      const handleDesignMouseUp = () => {
+        setIsDragging(false);
+        document.removeEventListener('mousemove', handleDesignMouseMove);
+        document.removeEventListener('touchmove', handleDesignMouseMove);
+        document.removeEventListener('mouseup', handleDesignMouseUp);
+        document.removeEventListener('touchend', handleDesignMouseUp);
+      };
+      
+      document.addEventListener('mousemove', handleDesignMouseMove);
+      document.addEventListener('touchmove', handleDesignMouseMove);
+      document.addEventListener('mouseup', handleDesignMouseUp);
+      document.addEventListener('touchend', handleDesignMouseUp);
+    }
+  };
+
+  // Handle file upload for custom designs
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const uploadedDesign: Design = {
+        id: `custom-${Date.now()}`,
+        name: file.name,
+        image_url: e.target?.result as string,
+        category: 'custom'
+      };
+      
+      if (currentViewSide === 'front') {
+        setSelectedDesignFront(uploadedDesign);
+      } else {
+        setSelectedDesignBack(uploadedDesign);
+      }
+    };
+    
+    reader.readAsDataURL(file);
+  };
+
+  // Handle lottery selection
+  const handleLotteryToggle = (lottery: Lottery, index: number) => {
+    // Create a copy of the current selectedLotteries array
+    const updatedLotteries = [...selectedLotteries];
+    const updatedLotteryIds = [...selectedLotteryIds];
+    
+    // Check if this lottery is already selected
+    const existingIndex = updatedLotteryIds.indexOf(lottery.id);
+    
+    if (existingIndex !== -1) {
+      // Lottery is already selected, remove it
+      updatedLotteryIds.splice(existingIndex, 1);
+      updatedLotteries.splice(existingIndex, 1);
+    } else {
+      // Lottery is not selected, add it at the specified index
+      if (index < updatedLotteries.length) {
+        // Replace lottery at the specific index
+        updatedLotteryIds[index] = lottery.id;
+        updatedLotteries[index] = lottery;
+      } else {
+        // Add to the end if index is out of bounds
+        updatedLotteryIds.push(lottery.id);
+        updatedLotteries.push(lottery);
+      }
+    }
+    
+    setSelectedLotteryIds(updatedLotteryIds);
+    setSelectedLotteries(updatedLotteries);
+  };
+
   const validateSelection = () => {
     const errors: { color?: string; size?: string; lottery?: string } = {};
     let isValid = true;
@@ -442,7 +661,6 @@ const ProductDetail = () => {
     }
 
     const cartItem: CartItem = {
-      id: `cart-item-${Date.now()}`,
       productId: product.id,
       name: product.name,
       price: calculatePrice(),
@@ -1295,3 +1513,4 @@ const ProductDetail = () => {
 };
 
 export default ProductDetail;
+
