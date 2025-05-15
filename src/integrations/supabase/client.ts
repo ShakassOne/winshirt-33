@@ -6,20 +6,25 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://gyprtpqgeukcoxbfxtfg.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5cHJ0cHFnZXVrY294YmZ4dGZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NzY1MDQsImV4cCI6MjA2MjM1MjUwNH0.sm-yWpvwGPvEFHdKomFsE-YKF0BHzry2W4Gma2hpY_4";
 
-// Options pour améliorer la stabilité des connexions
+// Options optimisées pour améliorer la stabilité des connexions
 const supabaseOptions = {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    storage: localStorage,
   },
   global: {
-    fetch: (...args: Parameters<typeof fetch>) => fetch(...args)
+    fetch: (...args: Parameters<typeof fetch>) => fetch(...args),
   },
   realtime: {
     params: {
       eventsPerSecond: 10
     }
+  },
+  // Ajout de retries pour améliorer la fiabilité
+  db: {
+    schema: 'public'
   }
 };
 
@@ -27,3 +32,22 @@ const supabaseOptions = {
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, supabaseOptions);
+
+// Helper function to handle common database errors
+export const handleSupabaseError = (error: any): string => {
+  console.error('Supabase error:', error);
+  
+  if (error?.code === '23505') {
+    return 'Cette entrée existe déjà.';
+  }
+  
+  if (error?.code === '42501') {
+    return 'Vous n\'avez pas les permissions nécessaires pour cette action.';
+  }
+  
+  if (error?.message?.includes('JWTExpired')) {
+    return 'Votre session a expiré. Veuillez vous reconnecter.';
+  }
+  
+  return error?.message || error?.details || 'Une erreur s\'est produite. Veuillez réessayer.';
+};

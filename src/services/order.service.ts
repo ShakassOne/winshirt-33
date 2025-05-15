@@ -1,5 +1,5 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, handleSupabaseError } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
 import { CartItem } from "@/types/supabase.types";
 import { toast } from "sonner";
@@ -37,7 +37,7 @@ export const createOrder = async (
     
     console.log("Création d'une commande avec les données:", orderData);
     
-    // Create order - sans utiliser .single() qui peut causer des erreurs
+    // Create order with errorMode to better handle errors
     const { data: orders, error: orderError } = await supabase
       .from('orders')
       .insert([orderData])
@@ -45,7 +45,7 @@ export const createOrder = async (
       
     if (orderError) {
       console.error("Erreur lors de la création de la commande:", orderError);
-      throw orderError;
+      throw new Error(handleSupabaseError(orderError));
     }
     
     if (!orders || orders.length === 0) {
@@ -93,7 +93,7 @@ export const getOrderById = async (orderId: string) => {
       .eq('id', orderId)
       .maybeSingle(); // Utilisation de maybeSingle au lieu de single
       
-    if (orderError) throw orderError;
+    if (orderError) throw new Error(handleSupabaseError(orderError));
     
     if (!order) {
       throw new Error("Commande introuvable");
@@ -107,7 +107,7 @@ export const getOrderById = async (orderId: string) => {
       `)
       .eq('order_id', orderId);
       
-    if (itemsError) throw itemsError;
+    if (itemsError) throw new Error(handleSupabaseError(itemsError));
     
     return {
       ...order,
@@ -127,7 +127,7 @@ export const getUserOrders = async (userId: string) => {
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
       
-    if (error) throw error;
+    if (error) throw new Error(handleSupabaseError(error));
     
     return orders;
   } catch (error) {
@@ -151,7 +151,9 @@ export const updateOrderPaymentStatus = async (
       })
       .eq('id', orderId);
       
-    if (error) throw error;
+    if (error) throw new Error(handleSupabaseError(error));
+    
+    return true;
   } catch (error) {
     console.error("Error in updateOrderPaymentStatus:", error);
     throw error;
