@@ -8,12 +8,10 @@ import ProductCard from '@/components/ui/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Search, Filter } from 'lucide-react';
 import { Product } from '@/types/supabase.types';
-import { useCart } from '@/context/CartContext';
 
 const Products = () => {
   const [category, setCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const { addItem } = useCart();
   
   const { data: products, isLoading, error } = useQuery({
     queryKey: ['products'],

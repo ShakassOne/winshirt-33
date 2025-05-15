@@ -7,15 +7,13 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { addToCart, getCartItems, removeFromCart, updateCartItemQuantity, clearCart as clearCartService } from '@/services/cart.service';
 
-// Export the CartContext so it can be imported by useCart hook
-export const CartContext = createContext<CartContextType | undefined>(undefined);
+const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string>('');
-  const [fetchAttempted, setFetchAttempted] = useState(false);
   
   // Generate a session ID if not exists
   useEffect(() => {
@@ -54,38 +52,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (!sessionId) return;
     
     setIsLoading(true);
-    setFetchAttempted(true);
-    
     try {
       const cartItems = await getCartItems(sessionId);
-      console.log("Loaded cart items:", cartItems);
-      setItems(cartItems || []); // Ensure we set an empty array if null is returned
+      setItems(cartItems);
     } catch (err: any) {
       setError(err.message);
       console.error("Error in getCartItems: ", err);
-      // Handle the case where Supabase might be down or unavailable
-      // Continue with local cart items if any are stored
-      const localCartItems = localStorage.getItem('cart_items');
-      if (localCartItems) {
-        try {
-          const parsedItems = JSON.parse(localCartItems);
-          setItems(parsedItems);
-        } catch (parseErr) {
-          console.error("Error parsing local cart items:", parseErr);
-        }
-      }
     } finally {
       setIsLoading(false);
-      console.log("Cart items loaded successfully");
     }
   };
   
   const linkCartToUser = async (userId: string) => {
-    if (!sessionId) return;
-    
     try {
       // Logic to update cart_sessions with user_id
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('cart_sessions')
         .update({ user_id: userId })
         .eq('session_id', sessionId);
@@ -93,7 +74,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
     } catch (err: any) {
       console.error("Erreur lors de la liaison du panier à l'utilisateur:", err);
-      // Don't show error to user as this is a background operation
     }
   };
   
@@ -102,46 +82,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     
     setIsLoading(true);
     try {
-      console.log("Adding item to cart:", item, "with sessionId:", sessionId);
-      
-      // Better UX by updating local state immediately
-      setItems(prevItems => {
-        const existingItemIndex = prevItems.findIndex(i => i.productId === item.productId);
-        if (existingItemIndex >= 0) {
-          // Update existing item
-          const updatedItems = [...prevItems];
-          updatedItems[existingItemIndex] = {
-            ...updatedItems[existingItemIndex],
-            quantity: updatedItems[existingItemIndex].quantity + item.quantity
-          };
-          return updatedItems;
-        } else {
-          // Add new item
-          return [...prevItems, item];
-        }
-      });
-      
-      // Store items in localStorage as backup
-      const updatedItems = [...items];
-      if (!updatedItems.some(i => i.productId === item.productId)) {
-        updatedItems.push(item);
-      } else {
-        const existingIndex = updatedItems.findIndex(i => i.productId === item.productId);
-        updatedItems[existingIndex].quantity += item.quantity;
-      }
-      localStorage.setItem('cart_items', JSON.stringify(updatedItems));
-      
-      // Call API to add to cart in database
-      try {
-        await addToCart(sessionId, item);
-      } catch (err) {
-        console.error("Failed to save to Supabase, but item is saved locally:", err);
-      }
-      
-      // Success notification
+      await addToCart(sessionId, item);
       toast.success("Produit ajouté au panier");
-      
-      // Reload items to ensure consistency with server
+      // Important: recharger les articles immédiatement après l'ajout
       await loadCartItems();
     } catch (err: any) {
       setError(err.message);
@@ -157,21 +100,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     
     setIsLoading(true);
     try {
-      // Update local state immediately
-      setItems(prevItems => prevItems.filter(item => item.productId !== productId));
-      
-      // Update localStorage
-      const filteredItems = items.filter(item => item.productId !== productId);
-      localStorage.setItem('cart_items', JSON.stringify(filteredItems));
-      
-      // Try to update remote storage
-      try {
-        await removeFromCart(sessionId, productId);
-      } catch (err) {
-        console.error("Failed to remove from Supabase, but item is removed locally:", err);
-      }
-      
+      await removeFromCart(sessionId, productId);
       toast.success("Produit retiré du panier");
+      // Recharger les articles immédiatement après la suppression
+      await loadCartItems();
     } catch (err: any) {
       setError(err.message);
       console.error("Error in removeFromCart: ", err);
@@ -186,25 +118,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     
     setIsLoading(true);
     try {
-      // Update local state immediately
-      setItems(prevItems => 
-        prevItems.map(item => 
-          item.productId === productId ? { ...item, quantity } : item
-        )
-      );
-      
-      // Update localStorage
-      const updatedItems = items.map(item => 
-        item.productId === productId ? { ...item, quantity } : item
-      );
-      localStorage.setItem('cart_items', JSON.stringify(updatedItems));
-      
-      // Try to update remote storage
-      try {
-        await updateCartItemQuantity(sessionId, productId, quantity);
-      } catch (err) {
-        console.error("Failed to update quantity in Supabase, but updated locally:", err);
-      }
+      await updateCartItemQuantity(sessionId, productId, quantity);
+      // Recharger les articles immédiatement après la mise à jour
+      await loadCartItems();
     } catch (err: any) {
       setError(err.message);
       console.error("Error in updateItemQuantity: ", err);
@@ -219,20 +135,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     
     setIsLoading(true);
     try {
-      // Update local state immediately
-      setItems([]);
-      
-      // Update localStorage
-      localStorage.setItem('cart_items', JSON.stringify([]));
-      
-      // Try to update remote storage
-      try {
-        await clearCartService(sessionId);
-      } catch (err) {
-        console.error("Failed to clear cart in Supabase, but cleared locally:", err);
-      }
-      
+      await clearCartService(sessionId);
       toast.success("Panier vidé");
+      // Recharger les articles immédiatement après le vidage
+      await loadCartItems();
     } catch (err: any) {
       setError(err.message);
       console.error("Error in clearCart: ", err);
@@ -256,13 +162,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeItem,
         updateItemQuantity,
         clearCart,
-        loadCartItems,
         isLoading,
         error,
         total,
         itemCount,
-        sessionId,
-        fetchAttempted
+        sessionId
       }}
     >
       {children}

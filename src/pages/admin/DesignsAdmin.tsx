@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  fetchAllDesigns, createDesign, updateDesign, deleteDesign
+  fetchAllDesigns as fetchDesigns, createDesign, updateDesign, deleteDesign
 } from '@/services/api.service';
 import { Design } from '@/types/supabase.types';
 import { Button } from '@/components/ui/button';
@@ -25,15 +26,10 @@ const DesignsAdmin = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: designsData, isLoading, error } = useQuery({
+  const { data: designs, isLoading, error } = useQuery({
     queryKey: ['designs'],
-    queryFn: fetchAllDesigns,
+    queryFn: fetchDesigns,
   });
-
-  // Make sure designs is an array
-  const designs = React.useMemo(() => {
-    return Array.isArray(designsData) ? designsData : [];
-  }, [designsData]);
 
   const createDesignMutation = useMutation({
     mutationFn: (designData: any) => createDesign(designData),
@@ -169,7 +165,7 @@ const DesignsAdmin = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {designs.map((design) => (
+        {designs?.map((design) => (
           <div key={design.id} className="relative bg-white/5 rounded-lg shadow-md p-4">
             <img src={design.image_url} alt={design.name} className="w-full h-32 object-contain mb-4" />
             <h3 className="text-lg font-semibold mb-2">{design.name}</h3>

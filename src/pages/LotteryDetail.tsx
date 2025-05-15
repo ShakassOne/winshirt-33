@@ -69,7 +69,7 @@ const LotteryDetail = () => {
     return (
       <div className="flex flex-col min-h-screen">
         <Navbar />
-        <main className="flex-grow flex items-center justify-center">
+        <main className="flex-grow mt-16 flex items-center justify-center">
           <p>Chargement de la loterie...</p>
         </main>
         <Footer />
@@ -81,7 +81,7 @@ const LotteryDetail = () => {
     return (
       <div className="flex flex-col min-h-screen">
         <Navbar />
-        <main className="flex-grow flex items-center justify-center">
+        <main className="flex-grow mt-16 flex items-center justify-center">
           <p>Loterie non trouvée ou une erreur est survenue.</p>
         </main>
         <Footer />
