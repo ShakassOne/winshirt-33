@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -259,6 +258,8 @@ const ProductDetail = () => {
   // États pour les loteries - support pour plusieurs loteries
   const [selectedLotteryIds, setSelectedLotteryIds] = useState<string[]>([]);
   const [selectedLotteries, setSelectedLotteries] = useState<Lottery[]>([]);
+  // Nouvel état pour suivre si les loteries ont été initialisées
+  const [lotteriesInitialized, setLotteriesInitialized] = useState(false);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -319,7 +320,8 @@ const ProductDetail = () => {
 
   // Verrouiller le défilement de la page pendant la personnalisation
   useEffect(() => {
-    if (pageScrollLocked || isDragging || isDraggingText) {
+    // N'appliquer le verrouillage que lorsque c'est nécessaire
+    if (isDragging || isDraggingText || (pageScrollLocked && customizationMode)) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'auto';
@@ -328,19 +330,30 @@ const ProductDetail = () => {
     return () => {
       document.body.style.overflow = 'auto';
     };
-  }, [pageScrollLocked, isDragging, isDraggingText]);
+  }, [pageScrollLocked, isDragging, isDraggingText, customizationMode]);
 
-  // Ajout automatique d'une loterie lors du montage si tickets_offered > 0 et lotteries disponibles
+  // Réimplementation de l'ajout automatique des loteries pour corriger le blocage
   useEffect(() => {
-    if (product?.tickets_offered && product.tickets_offered > 0 && lotteries.length > 0) {
+    // Ne faire cette initialisation qu'une seule fois quand les données sont prêtes
+    if (
+      product?.tickets_offered > 0 && 
+      lotteries.length > 0 && 
+      !isLoadingLotteries && 
+      !lotteriesInitialized && 
+      selectedLotteries.length === 0
+    ) {
       const activeLotteries = lotteries.filter(lottery => lottery.is_active);
-      if (activeLotteries.length > 0 && selectedLotteries.length === 0) {
-        // Ajouter la première loterie par défaut
-        setSelectedLotteries([activeLotteries[0]]);
-        setSelectedLotteryIds([activeLotteries[0].id]);
+      
+      if (activeLotteries.length > 0) {
+        // Retarder légèrement l'initialisation pour éviter les problèmes de rendu
+        setTimeout(() => {
+          setSelectedLotteries([activeLotteries[0]]);
+          setSelectedLotteryIds([activeLotteries[0].id]);
+          setLotteriesInitialized(true);
+        }, 100);
       }
     }
-  }, [product, lotteries, selectedLotteries.length]);
+  }, [product, lotteries, isLoadingLotteries, lotteriesInitialized, selectedLotteries.length]);
 
   const handleQuantityChange = (type: 'increase' | 'decrease') => {
     if (type === 'increase') {
@@ -359,7 +372,6 @@ const ProductDetail = () => {
       setActiveDesignSide('back');
     }
     setDesignDialogOpen(false);
-    setPageScrollLocked(true);
   };
 
   const handleDesignTransformChange = (property: keyof typeof designTransformFront, value: any) => {
