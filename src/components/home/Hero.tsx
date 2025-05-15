@@ -33,7 +33,7 @@ const Hero: React.FC<HeroProps> = ({ className }) => {
     Découvrir les produits
   </Button>
 </a>
-<a href="/products">
+<a href="https://winshirt-33.lovable.app/products">
   <Button size="lg" variant="outline" className="border-winshirt-purple text-white">
     Voir les loteries
   </Button>
