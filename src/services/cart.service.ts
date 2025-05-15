@@ -121,17 +121,24 @@ export const getCartItems = async (sessionId: string): Promise<CartItem[]> => {
       `)
       .eq('cart_session_id', sessionData.id);
       
-    if (error) throw error;
+    if (error) {
+      console.error("Error fetching cart items:", error);
+      throw error;
+    }
+    
+    if (!cartItems || cartItems.length === 0) {
+      return [];
+    }
     
     // Map to CartItem type
     return cartItems.map(item => ({
-      productId: item.products.id,
-      name: item.products.name,
+      productId: item.products?.id,
+      name: item.products?.name,
       price: parseFloat(item.price as unknown as string),
       quantity: item.quantity,
       color: item.color || null,
       size: item.size || null,
-      image_url: item.products.image_url,
+      image_url: item.products?.image_url,
       customization: item.customization as unknown as CartItem['customization']
     }));
     

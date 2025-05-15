@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { CartContextType } from '@/types/cart.types';
 import { CartItem } from '@/types/supabase.types';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { addToCart, getCartItems, removeFromCart, updateCartItemQuantity, clearCart as clearCartService } from '@/services/cart.service';
 
