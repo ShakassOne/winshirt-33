@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -36,17 +35,13 @@ const DesignsAdmin = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['designs'] });
       closeDialog();
-      toast({
-        title: "Succès",
-        description: "Le design a été créé avec succès",
-        variant: "default"
+      toast("Succès", {
+        description: "Le design a été créé avec succès"
       });
     },
     onError: () => {
-      toast({
-        title: "Erreur",
-        description: "Une erreur s'est produite lors de la création du design",
-        variant: "destructive"
+      toast("Erreur", {
+        description: "Une erreur s'est produite lors de la création du design"
       });
     }
   });
@@ -57,17 +52,13 @@ const DesignsAdmin = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['designs'] });
       closeDialog();
-      toast({
-        title: "Succès",
-        description: "Le design a été mis à jour avec succès",
-        variant: "default"
+      toast("Succès", {
+        description: "Le design a été mis à jour avec succès"
       });
     },
     onError: () => {
-      toast({
-        title: "Erreur",
-        description: "Une erreur s'est produite lors de la mise à jour du design",
-        variant: "destructive"
+      toast("Erreur", {
+        description: "Une erreur s'est produite lors de la mise à jour du design"
       });
     }
   });
@@ -76,17 +67,13 @@ const DesignsAdmin = () => {
     mutationFn: (id: string) => deleteDesign(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['designs'] });
-      toast({
-        title: "Succès",
-        description: "Le design a été supprimé avec succès",
-        variant: "default"
+      toast("Succès", {
+        description: "Le design a été supprimé avec succès"
       });
     },
     onError: () => {
-      toast({
-        title: "Erreur",
-        description: "Une erreur s'est produite lors de la suppression du design",
-        variant: "destructive"
+      toast("Erreur", {
+        description: "Une erreur s'est produite lors de la suppression du design"
       });
     }
   });

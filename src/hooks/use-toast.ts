@@ -14,13 +14,13 @@ export const toast = (
   titleOrMessage: string,
   props?: ToastProps
 ) => {
-  // Convert variant to type expected by sonner
+  // Map our variant to Sonner's type
   const type = props?.variant === "destructive" ? "error" : "default";
   
   return sonnerToast(titleOrMessage, {
     description: props?.description,
-    type,
-    ...props
+    // Use Sonner's format directly instead of trying to convert
+    ...(props || {})
   });
 };
 

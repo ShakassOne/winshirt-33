@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { CartContextType } from '@/types/cart.types';
 import { CartItem } from '@/types/supabase.types';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   addToCart, 
@@ -72,7 +72,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       await migrateCartToUser(userId, token);
       toast("Panier transféré", {
-        description: "Votre panier a été associé à votre compte",
+        description: "Votre panier a été associé à votre compte"
       });
       await loadCartItems(); // Reload cart after migration
     } catch (err: any) {
@@ -105,7 +105,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       await addToCart(cartToken, item, currentUser?.id);
       toast("Produit ajouté au panier", {
-        description: `${item.name} a été ajouté à votre panier`,
+        description: `${item.name} a été ajouté à votre panier`
       });
       // Reload cart items after adding
       await loadCartItems();
@@ -113,8 +113,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setError(err.message);
       console.error("Error adding to cart:", err);
       toast("Erreur", {
-        description: "Erreur lors de l'ajout au panier",
-        variant: "destructive",
+        description: "Erreur lors de l'ajout au panier"
       });
     } finally {
       setIsLoading(false);
@@ -128,7 +127,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       await removeFromCart(cartToken, productId, currentUser?.id);
       toast("Produit retiré du panier", {
-        description: "Le produit a été retiré de votre panier",
+        description: "Le produit a été retiré de votre panier"
       });
       // Reload cart items after removal
       await loadCartItems();
@@ -136,8 +135,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setError(err.message);
       console.error("Error removing from cart:", err);
       toast("Erreur", {
-        description: "Erreur lors du retrait du produit",
-        variant: "destructive",
+        description: "Erreur lors du retrait du produit"
       });
     } finally {
       setIsLoading(false);

@@ -8,6 +8,7 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
+import { ReactNode } from "react"
 
 export function Toaster() {
   const { toasts } = useToast()
@@ -23,7 +24,7 @@ export function Toaster() {
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
-            {action}
+            {action as ReactNode}
             <ToastClose />
           </Toast>
         )

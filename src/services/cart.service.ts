@@ -84,7 +84,7 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
         
       if (updateError) throw updateError;
     } else {
-      // Insert new item
+      // Insert new item - provide a dummy cart_session_id as it's required by the type
       const newItem: CartItemInsert = {
         cart_token_id: cartToken.id,
         product_id: item.productId,
@@ -96,9 +96,10 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
         cart_session_id: '00000000-0000-0000-0000-000000000000' // Dummy UUID as placeholder
       };
       
+      // Insert as a single object, not an array
       const { error: insertError } = await supabase
         .from('cart_items')
-        .insert([newItem]);
+        .insert(newItem);
         
       if (insertError) throw insertError;
     }
