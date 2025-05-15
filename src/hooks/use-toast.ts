@@ -1,7 +1,9 @@
 
 import { toast as sonnerToast } from "sonner";
+import React from "react";
 
 type ToastProps = {
+  id?: string;
   title?: string;
   description?: string;
   variant?: "default" | "destructive";
