@@ -3,6 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { CartItem } from "@/types/supabase.types";
 import { CartItemInsert } from "@/types/supabase-custom.types";
 
+// Define Json type if needed
+type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
 // Create or get cart token from the database
 export const getOrCreateCartToken = async (token: string, userId?: string) => {
   try {
@@ -89,12 +92,13 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
         price: item.price,
         color: item.color,
         size: item.size,
-        customization: item.customization as unknown as Json
+        customization: item.customization as any,
+        cart_session_id: null // Provide null value to satisfy the type requirement
       };
       
       const { error: insertError } = await supabase
         .from('cart_items')
-        .insert([newItem]);
+        .insert(newItem); // Pass single object instead of array
         
       if (insertError) throw insertError;
     }
