@@ -24,7 +24,7 @@ export function Toaster() {
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
-            {action as ReactNode}
+            {action}
             <ToastClose />
           </Toast>
         )

@@ -128,9 +128,8 @@ const Checkout = () => {
         // Migrate the cart to the new user
         if (userId && cartToken) {
           await migrateCartToUser(userId, cartToken);
-          toast({
-            title: "Panier migrée",
-            description: "Votre panier a été associé à votre nouveau compte",
+          toast("Panier migrée", {
+            description: "Votre panier a été associé à votre nouveau compte"
           });
         }
         
@@ -163,16 +162,14 @@ const Checkout = () => {
       // Vide le panier après la création de la commande
       await clearCart();
       
-      toast({
-        title: "Commande créée avec succès!",
-        description: "Vous allez être redirigé vers la page de paiement.",
+      toast("Commande créée avec succès!", {
+        description: "Vous allez être redirigé vers la page de paiement."
       });
     } catch (error) {
       console.error("Erreur lors de la création de la commande:", error);
-      toast({
-        title: "Erreur",
+      toast("Erreur", {
         description: "Une erreur est survenue lors de la création de la commande",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);

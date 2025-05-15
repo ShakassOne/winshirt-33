@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -217,17 +216,13 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
 
       if (initialData) {
         await updateMockup(initialData.id, mockupData);
-        toast({
-          title: "Succès",
-          description: "Le mockup a été mis à jour avec succès",
-          variant: "default"
+        toast("Succès", {
+          description: "Le mockup a été mis à jour avec succès"
         });
       } else {
         await createMockup(mockupData);
-        toast({
-          title: "Succès",
-          description: "Le mockup a été créé avec succès",
-          variant: "default"
+        toast("Succès", {
+          description: "Le mockup a été créé avec succès"
         });
       }
 
@@ -238,8 +233,7 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
       onClose();
     } catch (error) {
       console.error("Erreur:", error);
-      toast({
-        title: "Erreur",
+      toast("Erreur", {
         description: "Une erreur s'est produite",
         variant: "destructive"
       });

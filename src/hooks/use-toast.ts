@@ -2,26 +2,38 @@
 // Import from the Sonner package
 import { toast as sonnerToast, type ToastT } from "sonner";
 
-// Create types for the toast function
+// Create a type that combines Sonner's toast options with our legacy options
 type ToastProps = {
   description?: string;
   variant?: "default" | "destructive";
+  duration?: number;
   [key: string]: any;
 };
 
-// Create a wrapper for the sonner toast that accepts both our old API and the new one
+// Create a wrapper for the sonner toast that accepts both string and object formats
 export const toast = (
-  titleOrMessage: string,
-  props?: ToastProps
+  titleOrOptions: string | ToastProps,
+  options?: ToastProps
 ) => {
-  // Map our variant to Sonner's type
-  const type = props?.variant === "destructive" ? "error" : "default";
+  // If we receive a string as first argument, use it as title
+  if (typeof titleOrOptions === 'string') {
+    return sonnerToast(titleOrOptions, options);
+  } 
   
-  return sonnerToast(titleOrMessage, {
-    description: props?.description,
-    // Use Sonner's format directly instead of trying to convert
-    ...(props || {})
-  });
+  // If we receive an object, extract title and the rest of options
+  const { title, description, variant, ...rest } = titleOrOptions as ToastProps;
+  
+  // Map our variant to Sonner's type
+  const type = variant === "destructive" ? "error" : "default";
+  
+  // Call Sonner's toast with the extracted values
+  return sonnerToast(
+    title as string,
+    { 
+      description, 
+      ...rest 
+    }
+  );
 };
 
 // Create a custom useToast hook that provides the same API for compatibility
