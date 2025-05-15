@@ -1,16 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from '@/hooks/use-toast';
 
 interface CustomizationAccordionProps {
   children: React.ReactNode;
+  onFileUpload?: (file: File) => void;
 }
 
-const CustomizationAccordion = ({ children }: CustomizationAccordionProps) => {
+const CustomizationAccordion = ({ children, onFileUpload }: CustomizationAccordionProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   // Utiliser une fonction indépendante pour la gestion du clic
   // afin d'éviter les problèmes de propagation d'événements
@@ -24,6 +28,20 @@ const CustomizationAccordion = ({ children }: CustomizationAccordionProps) => {
       // Garder le focus sur le bouton pour éviter les problèmes de scroll
       document.activeElement && (document.activeElement as HTMLElement).blur();
     }, 10);
+  };
+
+  // Fonction pour gérer le téléchargement de fichiers
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (onFileUpload) {
+      onFileUpload(file);
+      toast({
+        title: "Fichier sélectionné",
+        description: `${file.name} a été sélectionné avec succès`,
+      });
+    }
   };
 
   return (
@@ -53,6 +71,15 @@ const CustomizationAccordion = ({ children }: CustomizationAccordionProps) => {
           {children}
         </div>
       </CollapsibleContent>
+      
+      {/* Input caché pour télécharger des fichiers */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileUpload}
+        accept="image/*"
+      />
     </Collapsible>
   );
 };
