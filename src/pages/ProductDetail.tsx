@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -11,7 +10,7 @@ import CustomizationAccordion from '@/components/product/CustomizationAccordion'
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/context/CartContext';
-import { Plus, Minus, Package, Award, CheckCircle } from 'lucide-react';
+import { Plus, Minus, Package, Award, CheckCircle, Upload } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
