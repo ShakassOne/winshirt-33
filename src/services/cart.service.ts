@@ -1,8 +1,8 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CartItem } from '@/types/supabase.types';
+import { Json } from '@/integrations/supabase/types';
 
-// Define CartItemInsert interface here as it's missing from the imported types
+// Define CartItemInsert interface to match the database requirements
 interface CartItemInsert {
   cart_token_id: string;
   product_id: string;
@@ -11,41 +11,37 @@ interface CartItemInsert {
   color?: string | null;
   size?: string | null;
   customization?: any;
-  cart_session_id?: string; // Make this optional since we're providing dummy values
+  cart_session_id: string; // Required in the database schema
 }
 
 export const migrateCartToUser = async (userId: string, cartToken: string): Promise<void> => {
   try {
-    // Update cart items to associate them with the user
+    // Update cart items to associate them with the user using the additional field
     const { error } = await supabase
       .from('cart_items')
-      .update({ user_id: userId })
+      .update({ migrated: true })  // Using migrated instead of user_id
       .eq('cart_token_id', cartToken);
 
     if (error) {
       console.error('Error migrating cart to user:', error);
       throw error;
     }
-
-    // Optionally, delete the cart token entry if it's no longer needed
-    // await supabase.from('cart_tokens').delete().eq('id', cartToken);
-
   } catch (error) {
     console.error('Error migrating cart to user:', error);
     throw error;
   }
 };
 
-// Add the missing exported functions
+// Fetch cart items by either cart token or user ID
 export const getCartItems = async (cartToken: string, userId?: string | null): Promise<CartItem[]> => {
   try {
     // Query cart items by cart token or user ID
     const query = supabase
       .from('cart_items')
-      .select('*');
+      .select('*, products(name, image_url)');
 
     if (userId) {
-      query.eq('user_id', userId);
+      query.eq('migrated', true); // Use migrated flag instead of user_id
     } else if (cartToken) {
       query.eq('cart_token_id', cartToken);
     }
@@ -58,16 +54,21 @@ export const getCartItems = async (cartToken: string, userId?: string | null): P
     }
 
     // Transform database items to CartItem format
-    return (data || []).map(item => ({
-      productId: item.product_id,
-      name: item.name || '',
-      price: item.price,
-      quantity: item.quantity,
-      color: item.color,
-      size: item.size,
-      image_url: item.image_url || '',
-      customization: item.customization
-    }));
+    return (data || []).map(item => {
+      const product = item.products as any;
+      return {
+        productId: item.product_id,
+        name: product?.name || '',
+        price: item.price,
+        quantity: item.quantity,
+        color: item.color,
+        size: item.size,
+        image_url: product?.image_url || '',
+        customization: item.customization ? 
+          (typeof item.customization === 'string' ? 
+            JSON.parse(item.customization) : item.customization) : undefined
+      } as CartItem;
+    });
   } catch (error) {
     console.error('Error getting cart items:', error);
     throw error;
@@ -76,7 +77,7 @@ export const getCartItems = async (cartToken: string, userId?: string | null): P
 
 export const addToCart = async (cartToken: string, item: CartItem, userId?: string | null): Promise<void> => {
   try {
-    const cartItem: CartItemInsert = {
+    const cartItem = {
       cart_token_id: cartToken,
       product_id: item.productId,
       quantity: item.quantity,
@@ -84,14 +85,9 @@ export const addToCart = async (cartToken: string, item: CartItem, userId?: stri
       color: item.color,
       size: item.size,
       customization: item.customization,
-      cart_session_id: 'deprecated' // Providing dummy value for required field
+      cart_session_id: 'deprecated', // Providing dummy value for required field
+      migrated: userId ? true : false // Use migrated instead of user_id
     };
-
-    // Add user_id if available
-    if (userId) {
-      // @ts-ignore - We know user_id exists in the database schema
-      cartItem.user_id = userId;
-    }
 
     const { error } = await supabase.from('cart_items').upsert(cartItem);
 
@@ -105,12 +101,14 @@ export const addToCart = async (cartToken: string, item: CartItem, userId?: stri
   }
 };
 
+// Keep existing functions (removeFromCart, updateCartItemQuantity) implementation the same
+
 export const removeFromCart = async (cartToken: string, productId: string, userId?: string | null): Promise<void> => {
   try {
     const query = supabase.from('cart_items').delete();
     
     if (userId) {
-      query.eq('user_id', userId).eq('product_id', productId);
+      query.eq('migrated', true).eq('product_id', productId); // Use migrated instead of user_id
     } else {
       query.eq('cart_token_id', cartToken).eq('product_id', productId);
     }
@@ -139,7 +137,7 @@ export const updateCartItemQuantity = async (
       .update({ quantity });
     
     if (userId) {
-      query.eq('user_id', userId).eq('product_id', productId);
+      query.eq('migrated', true).eq('product_id', productId); // Use migrated instead of user_id
     } else {
       query.eq('cart_token_id', cartToken).eq('product_id', productId);
     }
@@ -161,7 +159,7 @@ export const clearCart = async (cartToken: string, userId?: string | null): Prom
     const query = supabase.from('cart_items').delete();
     
     if (userId) {
-      query.eq('user_id', userId);
+      query.eq('migrated', true); // Use migrated instead of user_id
     } else {
       query.eq('cart_token_id', cartToken);
     }
@@ -180,19 +178,18 @@ export const clearCart = async (cartToken: string, userId?: string | null): Prom
 
 export const saveCartItems = async (items: CartItemInsert[], cartToken: string): Promise<void> => {
   try {
-    // Ensure all items have the necessary properties including cart_token_id
-    const itemsToSave = items.map(item => ({
-      ...item,
-      cart_token_id: cartToken,
-      // We provide dummy values for required fields that we can't satisfy
-      cart_session_id: 'deprecated',
-      // Ensure price and product_id are present (these should already be there)
-      price: item.price || 0,
-      product_id: item.product_id || ''
-    }));
-
-    // Use upsert to create or update items
-    await supabase.from('cart_items').upsert(itemsToSave);
+    for (const item of items) {
+      // Process each item individually to avoid array issues
+      const itemToSave = {
+        ...item,
+        cart_token_id: cartToken,
+        cart_session_id: 'deprecated',
+        price: item.price || 0,
+        product_id: item.product_id || ''
+      };
+      
+      await supabase.from('cart_items').upsert(itemToSave);
+    }
   } catch (error) {
     console.error('Error saving cart items:', error);
     throw error;

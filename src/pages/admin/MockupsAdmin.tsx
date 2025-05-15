@@ -74,15 +74,15 @@ const MockupsAdmin = () => {
     setIsDialogOpen(true);
   };
 
-  const handleEdit = (mockup: Mockup) => {
-    // Make sure print_areas is properly parsed if it's a string
+  const handleEdit = (mockup: any) => {
+    // Make sure print_areas is properly parsed as PrintArea[]
+    const print_areas = mockup.print_areas ? 
+      (typeof mockup.print_areas === 'string' ? 
+        JSON.parse(mockup.print_areas) : mockup.print_areas) : [];
+    
     const parsedMockup = {
       ...mockup,
-      print_areas: Array.isArray(mockup.print_areas) ? 
-        mockup.print_areas : 
-        (typeof mockup.print_areas === 'string' ? 
-          JSON.parse(mockup.print_areas) : 
-          [])
+      print_areas: print_areas as PrintArea[]
     };
     
     setSelectedMockup(parsedMockup as Mockup);

@@ -1,7 +1,7 @@
 
-import { toast as sonnerToast, type Toast } from "sonner";
+import { toast as sonnerToast, type ToastOptions } from "sonner";
 
-type ToastProps = Toast & {
+type ToastProps = ToastOptions & {
   title?: string;
   description?: string;
   variant?: "default" | "destructive";

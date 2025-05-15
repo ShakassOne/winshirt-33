@@ -14,3 +14,13 @@ export interface CartItemInsert {
   // Making cart_session_id required but we'll pass a dummy value
   cart_session_id: string;
 }
+
+// ThemeSetting interface for the theme_settings table
+export interface ThemeSetting {
+  id: string;
+  name: string;
+  value: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
