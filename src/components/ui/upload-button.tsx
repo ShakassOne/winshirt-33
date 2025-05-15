@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
@@ -40,15 +39,13 @@ export function UploadButton({
     try {
       const url = await uploadFileToStorage(file, targetFolder);
       onUpload(url);
-      toast({
-        title: "Téléchargement réussi",
-        description: "Le fichier a été téléchargé avec succès",
+      toast("Téléchargement réussi", {
+        description: "Le fichier a été téléchargé avec succès"
       });
     } catch (error) {
-      toast({
-        title: "Erreur de téléchargement",
+      toast("Erreur de téléchargement", {
         description: "Une erreur est survenue lors du téléchargement",
-        variant: "destructive",
+        variant: "destructive"
       });
       console.error("Upload error:", error);
     } finally {
