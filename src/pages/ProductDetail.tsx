@@ -258,8 +258,6 @@ const ProductDetail = () => {
   // États pour les loteries - support pour plusieurs loteries
   const [selectedLotteryIds, setSelectedLotteryIds] = useState<string[]>([]);
   const [selectedLotteries, setSelectedLotteries] = useState<Lottery[]>([]);
-  // Nouvel état pour suivre si les loteries ont été initialisées
-  const [lotteriesInitialized, setLotteriesInitialized] = useState(false);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -331,29 +329,6 @@ const ProductDetail = () => {
       document.body.style.overflow = 'auto';
     };
   }, [pageScrollLocked, isDragging, isDraggingText, customizationMode]);
-
-  // Réimplementation de l'ajout automatique des loteries pour corriger le blocage
-  useEffect(() => {
-    // Ne faire cette initialisation qu'une seule fois quand les données sont prêtes
-    if (
-      product?.tickets_offered > 0 && 
-      lotteries.length > 0 && 
-      !isLoadingLotteries && 
-      !lotteriesInitialized && 
-      selectedLotteries.length === 0
-    ) {
-      const activeLotteries = lotteries.filter(lottery => lottery.is_active);
-      
-      if (activeLotteries.length > 0) {
-        // Retarder légèrement l'initialisation pour éviter les problèmes de rendu
-        setTimeout(() => {
-          setSelectedLotteries([activeLotteries[0]]);
-          setSelectedLotteryIds([activeLotteries[0].id]);
-          setLotteriesInitialized(true);
-        }, 100);
-      }
-    }
-  }, [product, lotteries, isLoadingLotteries, lotteriesInitialized, selectedLotteries.length]);
 
   const handleQuantityChange = (type: 'increase' | 'decrease') => {
     if (type === 'increase') {
