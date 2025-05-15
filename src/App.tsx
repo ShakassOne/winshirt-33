@@ -16,19 +16,17 @@ import LotteriesAdmin from "./pages/admin/LotteriesAdmin";
 import MockupsAdmin from "./pages/admin/MockupsAdmin";
 import DesignsAdmin from "./pages/admin/DesignsAdmin";
 import ThemeSettings from "./pages/admin/ThemeSettings";
-import OrdersAdmin from "./pages/admin/OrdersAdmin";
-import UsersAdmin from "./pages/admin/UsersAdmin";
 import { useScrollReset } from "./hooks/useScrollReset";
 import { ThemeProvider } from "./components/theme-provider";
 import { CartProvider } from "./context/CartContext";
-import { AuthProvider } from "./hooks/useAuth";
-import Auth from "./pages/Auth";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Account from "./pages/Account";
 import OrderDetails from "./pages/OrderDetails";
+import Login from "./pages/Login";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 // ScrollToTop component to reset scroll position
 const ScrollToTop = () => {
@@ -49,44 +47,74 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
-      <AuthProvider>
-        <CartProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <ScrollToTop />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/products/:id" element={<ProductDetail />} />
-                <Route path="/lotteries" element={<Lotteries />} />
-                <Route path="/lotteries/:id" element={<LotteryDetail />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/payment/:orderId" element={<Payment />} />
-                <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-                <Route path="/account" element={<Account />} />
-                <Route path="/order-details/:orderId" element={<OrderDetails />} />
-                <Route path="/auth" element={<Auth />} />
-                
-                {/* Admin Routes */}
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/products" element={<ProductsAdmin />} />
-                <Route path="/admin/lotteries" element={<LotteriesAdmin />} />
-                <Route path="/admin/mockups" element={<MockupsAdmin />} />
-                <Route path="/admin/designs" element={<DesignsAdmin />} />
-                <Route path="/admin/theme" element={<ThemeSettings />} />
-                <Route path="/admin/orders" element={<OrdersAdmin />} />
-                <Route path="/admin/users" element={<UsersAdmin />} />
-                
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </CartProvider>
-      </AuthProvider>
+      <CartProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/products/:id" element={<ProductDetail />} />
+              <Route path="/lotteries" element={<Lotteries />} />
+              <Route path="/lotteries/:id" element={<LotteryDetail />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/payment/:orderId" element={<Payment />} />
+              <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+              <Route path="/login" element={<Login />} />
+              
+              {/* Protected Routes */}
+              <Route path="/account" element={
+                <ProtectedRoute>
+                  <Account />
+                </ProtectedRoute>
+              } />
+              <Route path="/order-details/:orderId" element={
+                <ProtectedRoute>
+                  <OrderDetails />
+                </ProtectedRoute>
+              } />
+              
+              {/* Admin Routes */}
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/products" element={
+                <ProtectedRoute>
+                  <ProductsAdmin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/lotteries" element={
+                <ProtectedRoute>
+                  <LotteriesAdmin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/mockups" element={
+                <ProtectedRoute>
+                  <MockupsAdmin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/designs" element={
+                <ProtectedRoute>
+                  <DesignsAdmin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/theme" element={
+                <ProtectedRoute>
+                  <ThemeSettings />
+                </ProtectedRoute>
+              } />
+              
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </CartProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

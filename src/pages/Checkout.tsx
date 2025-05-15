@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,9 +24,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 
-// Schema pour password validation - only required when creating account
-const passwordSchema = z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères");
-
 // Schéma de validation pour le formulaire de checkout
 const checkoutSchema = z.object({
   firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
@@ -39,20 +36,11 @@ const checkoutSchema = z.object({
   country: z.string().min(2, "Pays invalide"),
   deliveryNotes: z.string().optional(),
   createAccount: z.boolean().default(false),
-  password: z.string().optional()
-}).superRefine((data, ctx) => {
-  // Only validate password if createAccount is true
-  if (data.createAccount) {
-    try {
-      passwordSchema.parse(data.password);
-    } catch (error) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Le mot de passe est requis pour créer un compte et doit contenir au moins 6 caractères",
-        path: ["password"],
-      });
-    }
-  }
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").optional()
+    .refine(
+      (pw) => !z.boolean().parse(z.object({ createAccount: z.boolean() }).shape.createAccount) || (pw && pw.length >= 6),
+      { message: "Le mot de passe est requis pour créer un compte" }
+    ),
 });
 
 const Checkout = () => {
@@ -62,50 +50,38 @@ const Checkout = () => {
   const [user, setUser] = useState<any>(null);
 
   // Vérifie si l'utilisateur est connecté
-  useEffect(() => {
+  React.useEffect(() => {
     const checkUser = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data.session?.user) {
-          setUser(data.session.user);
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        setUser(data.session.user);
+        
+        // Récupère les informations du profil pour pré-remplir le formulaire
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.session.user.id)
+          .single();
           
-          // Récupère les informations du profil pour pré-remplir le formulaire
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.session.user.id)
-            .single();
-            
-          if (profileData) {
-            form.reset({
-              firstName: profileData.first_name || '',
-              lastName: profileData.last_name || '',
-              email: data.session.user.email || '',
-              phone: profileData.phone || '',
-              address: profileData.address || '',
-              city: profileData.city || '',
-              postalCode: profileData.postal_code || '',
-              country: profileData.country || '',
-              deliveryNotes: '',
-              createAccount: false
-            });
-          }
+        if (profileData) {
+          form.reset({
+            firstName: profileData.first_name || '',
+            lastName: profileData.last_name || '',
+            email: data.session.user.email || '',
+            phone: profileData.phone || '',
+            address: profileData.address || '',
+            city: profileData.city || '',
+            postalCode: profileData.postal_code || '',
+            country: profileData.country || '',
+            deliveryNotes: '',
+            createAccount: false
+          });
         }
-      } catch (error) {
-        console.error("Erreur lors de la vérification de l'utilisateur:", error);
       }
     };
     
     checkUser();
   }, []);
-
-  useEffect(() => {
-    // Vérifier si le panier est vide et rediriger si nécessaire
-    if (!items || items.length === 0) {
-      toast.warning("Votre panier est vide. Veuillez ajouter des articles avant de procéder au paiement.");
-      navigate('/products');
-    }
-  }, [items, navigate]);
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
@@ -127,14 +103,6 @@ const Checkout = () => {
   const createAccount = form.watch('createAccount');
 
   const onSubmit = async (data: CheckoutFormData) => {
-    console.log("Form submitted with data:", data);
-    
-    if (!items || items.length === 0) {
-      toast.error("Votre panier est vide. Veuillez ajouter des articles avant de procéder au paiement.");
-      navigate('/products');
-      return;
-    }
-    
     try {
       setIsLoading(true);
       
@@ -142,7 +110,6 @@ const Checkout = () => {
       
       // Si l'utilisateur veut créer un compte et n'est pas connecté
       if (data.createAccount && !user) {
-        console.log("Creating account for user");
         const { error, data: authData } = await supabase.auth.signUp({
           email: data.email,
           password: data.password as string,
@@ -154,58 +121,43 @@ const Checkout = () => {
           }
         });
         
-        if (error) {
-          console.error("Error creating account:", error);
-          toast.error(`Erreur lors de la création du compte: ${error.message}`);
-          return;
-        }
+        if (error) throw error;
         
         userId = authData.user?.id;
-        console.log("Account created, user ID:", userId);
         
         // Crée ou met à jour le profil utilisateur
         if (userId) {
-          console.log("Creating user profile");
-          const profileData = {
-            id: userId,
-            first_name: data.firstName,
-            last_name: data.lastName,
-            email: data.email,
-            phone: data.phone,
-            address: data.address,
-            city: data.city,
-            postal_code: data.postalCode,
-            country: data.country
-          };
-          
           const { error: profileError } = await supabase
             .from('profiles')
-            .upsert(profileData);
+            .upsert({
+              id: userId,
+              first_name: data.firstName,
+              last_name: data.lastName,
+              email: data.email,
+              phone: data.phone,
+              address: data.address,
+              city: data.city,
+              postal_code: data.postalCode,
+              country: data.country
+            });
             
-          if (profileError) {
-            console.error("Error creating profile:", profileError);
-            // Continue despite profile error
-          }
+          if (profileError) console.error("Erreur lors de la création du profil:", profileError);
         }
       }
       
       // Crée la commande
-      console.log("Creating order with items:", items);
       const order = await createOrder(data, items, sessionId, userId);
-      console.log("Order created:", order);
+      
+      // Redirige vers la page de paiement
+      navigate(`/payment/${order.id}`);
       
       // Vide le panier après la création de la commande
       await clearCart();
-      console.log("Cart cleared");
       
       toast.success("Commande créée avec succès!");
-      
-      // Redirige vers la page de paiement
-      console.log("Redirecting to payment page:", `/payment/${order.id}`);
-      navigate(`/payment/${order.id}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Erreur lors de la création de la commande:", error);
-      toast.error(`Une erreur est survenue: ${error.message || "Impossible de créer la commande"}`);
+      toast.error("Une erreur est survenue lors de la création de la commande");
     } finally {
       setIsLoading(false);
     }
@@ -411,7 +363,7 @@ const Checkout = () => {
                         type="submit" 
                         className="w-full" 
                         size="lg"
-                        disabled={isLoading || !items || items.length === 0}
+                        disabled={isLoading}
                       >
                         {isLoading ? "Traitement en cours..." : "Procéder au paiement"}
                       </Button>
@@ -426,32 +378,28 @@ const Checkout = () => {
                 <h2 className="text-lg font-semibold mb-4">Résumé de la commande</h2>
                 
                 <div className="space-y-4">
-                  {items && items.length > 0 ? (
-                    items.map((item) => (
-                      <div key={item.cartItemId || item.productId} className="flex gap-3">
-                        <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
-                          <img 
-                            src={item.image_url} 
-                            alt={item.name} 
-                            className="w-full h-full object-cover"
-                          />
+                  {items.map((item) => (
+                    <div key={item.productId} className="flex gap-3">
+                      <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
+                        <img 
+                          src={item.image_url} 
+                          alt={item.name} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-grow">
+                        <div className="flex justify-between">
+                          <p className="font-medium">{item.name}</p>
+                          <p>{(item.price * item.quantity).toFixed(2)} €</p>
                         </div>
-                        <div className="flex-grow">
-                          <div className="flex justify-between">
-                            <p className="font-medium">{item.name}</p>
-                            <p>{(item.price * item.quantity).toFixed(2)} €</p>
-                          </div>
-                          <div className="text-sm text-gray-400">
-                            Qté: {item.quantity}
-                            {item.color && ` • ${item.color}`}
-                            {item.size && ` • ${item.size}`}
-                          </div>
+                        <div className="text-sm text-gray-400">
+                          Qté: {item.quantity}
+                          {item.color && ` • ${item.color}`}
+                          {item.size && ` • ${item.size}`}
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-center text-gray-400">Votre panier est vide</p>
-                  )}
+                    </div>
+                  ))}
                 </div>
                 
                 <div className="mt-6 pt-4 border-t border-gray-100/10 space-y-2">

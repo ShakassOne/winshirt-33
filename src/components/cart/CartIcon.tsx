@@ -6,17 +6,20 @@ import { useCart } from '@/context/CartContext';
 import { Link } from 'react-router-dom';
 
 const CartIcon = () => {
-  const { itemCount, loadCartItems } = useCart();
+  const { itemCount, loadCartItems, fetchAttempted } = useCart();
   
-  // Load cart items only once when component mounts
+  // Only attempt to load cart items when component mounts and a load hasn't been attempted yet
   useEffect(() => {
     console.log("CartIcon mounted, loading cart items");
-    if(typeof loadCartItems === 'function') {
-      loadCartItems().catch(error => {
+    if(typeof loadCartItems === 'function' && !fetchAttempted) {
+      loadCartItems().then(() => {
+        console.log("Cart items loaded successfully");
+      }).catch(error => {
         console.error("Error loading cart items:", error);
+        // Error is already handled in CartContext
       });
     }
-  }, []);
+  }, [loadCartItems, fetchAttempted]);
 
   return (
     <Button variant="ghost" size="icon" className="text-white/80 hover:text-white relative" asChild>

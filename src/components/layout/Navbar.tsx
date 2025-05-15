@@ -1,7 +1,7 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { X, Menu, ChevronDown, User, LogIn, LogOut } from "lucide-react";
+import { X, Menu, ChevronDown, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -14,35 +14,46 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import CartIcon from "@/components/cart/CartIcon";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const isMobile = useIsMobile();
-  const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+
+  useEffect(() => {
+    // Check user authentication status when component mounts
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsLoggedIn(!!data.session);
+    };
+    
+    checkAuth();
+    
+    // Listen for auth state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsLoggedIn(!!session);
+    });
+    
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
-
-  const handleSignOut = async () => {
+  
+  const handleLogout = async () => {
     try {
-      await signOut();
-      toast({
-        title: "Déconnecté avec succès",
-        description: "À bientôt sur WinShirt!",
-      });
-      navigate("/");
+      await supabase.auth.signOut();
+      toast.success("Vous avez été déconnecté avec succès");
+      navigate('/');
     } catch (error) {
-      console.error("Error signing out:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur s'est produite lors de la déconnexion.",
-      });
+      console.error("Error logging out:", error);
+      toast.error("Une erreur s'est produite lors de la déconnexion");
     }
   };
 
@@ -93,7 +104,7 @@ const Navbar = () => {
               >
                 Loteries
               </Link>
-              {user && (
+              {isLoggedIn && (
                 <Link
                   to="/admin"
                   className="text-white/80 hover:text-white transition-colors px-3 py-1"
@@ -106,8 +117,6 @@ const Navbar = () => {
             {/* User Menu, Theme Toggle and Cart */}
             <div className="hidden md:flex items-center space-x-1">
               <ThemeToggle />
-              
-              {/* User Menu - Always show User icon, but with different actions based on auth status */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="text-white/80 hover:text-white">
@@ -115,44 +124,35 @@ const Navbar = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-black/90 border-white/20">
-                  {user ? (
+                  <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  {isLoggedIn ? (
                     <>
-                      <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
-                      <DropdownMenuSeparator className="bg-white/10" />
                       <DropdownMenuItem className="hover:bg-white/5">
                         <Link to="/account" className="flex w-full">Profil</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem className="hover:bg-white/5">
                         <Link to="/orders" className="flex w-full">Mes commandes</Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="hover:bg-white/5">
-                        <Link to="/admin" className="flex w-full">Administration</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="hover:bg-white/5">
-                        <Link to="/admin/mockups" className="flex w-full">Mockups Admin</Link>
-                      </DropdownMenuItem>
+                      {isLoggedIn && (
+                        <>
+                          <DropdownMenuItem className="hover:bg-white/5">
+                            <Link to="/admin" className="flex w-full">Administration</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="hover:bg-white/5">
+                            <Link to="/admin/mockups" className="flex w-full">Mockups Admin</Link>
+                          </DropdownMenuItem>
+                        </>
+                      )}
                       <DropdownMenuSeparator className="bg-white/10" />
-                      <DropdownMenuItem 
-                        className="hover:bg-white/5" 
-                        onClick={handleSignOut}
-                      >
-                        <span className="flex items-center w-full">
-                          <LogOut className="h-4 w-4 mr-2" />
-                          Déconnexion
-                        </span>
+                      <DropdownMenuItem onClick={handleLogout} className="hover:bg-white/5 cursor-pointer">
+                        Déconnexion
                       </DropdownMenuItem>
                     </>
                   ) : (
-                    <>
-                      <DropdownMenuLabel>Compte</DropdownMenuLabel>
-                      <DropdownMenuSeparator className="bg-white/10" />
-                      <DropdownMenuItem className="hover:bg-white/5">
-                        <Link to="/auth" className="flex items-center w-full">
-                          <LogIn className="h-4 w-4 mr-2" />
-                          Connexion
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
+                    <DropdownMenuItem className="hover:bg-white/5">
+                      <Link to="/login" className="flex w-full">Connexion</Link>
+                    </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -185,7 +185,7 @@ const Navbar = () => {
             >
               Loteries
             </Link>
-            {user && (
+            {isLoggedIn ? (
               <>
                 <Link
                   to="/admin"
@@ -202,41 +202,36 @@ const Navbar = () => {
                   Gestion des mockups
                 </Link>
                 <Link
-                  to="/admin/designs"
-                  className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
-                  onClick={toggleMenu}
-                >
-                  Gestion des designs
-                </Link>
-                <Link
                   to="/admin/theme"
                   className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
                   onClick={toggleMenu}
                 >
                   Réglages du thème
                 </Link>
-              </>
-            )}
-            {user ? (
-              <div 
-                onClick={handleSignOut}
-                className="block text-white/70 hover:text-white px-3 py-2 rounded-md cursor-pointer"
-              >
-                <span className="flex items-center">
-                  <LogOut className="h-4 w-4 mr-2" />
+                <Link
+                  to="/account"
+                  className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+                  onClick={toggleMenu}
+                >
+                  Mon compte
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    toggleMenu();
+                  }}
+                  className="block w-full text-left text-white/70 hover:text-white px-3 py-2 rounded-md"
+                >
                   Déconnexion
-                </span>
-              </div>
+                </button>
+              </>
             ) : (
               <Link
-                to="/auth"
+                to="/login"
                 className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
                 onClick={toggleMenu}
               >
-                <span className="flex items-center">
-                  <LogIn className="h-4 w-4 mr-2" />
-                  Connexion
-                </span>
+                Connexion
               </Link>
             )}
           </div>

@@ -84,7 +84,6 @@ export interface Lottery {
 
 // Cart Item
 export interface CartItem {
-  cartItemId?: string; // Add this field
   productId: string;
   name: string;
   price: number;

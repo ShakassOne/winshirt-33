@@ -43,7 +43,7 @@ const Cart = () => {
                 <div className="glass-card divide-y divide-gray-100/10">
                   {items.map((item) => (
                     <CartItem 
-                      key={item.cartItemId || item.productId}
+                      key={item.productId}
                       item={item}
                       onRemove={removeItem}
                       onUpdateQuantity={updateItemQuantity}
