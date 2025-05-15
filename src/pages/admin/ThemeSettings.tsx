@@ -1,14 +1,50 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchThemeSettings, updateThemeSettings } from '@/services/api.service';
-import { ThemeSetting } from '@/types/supabase.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Pencil } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
+// Define ThemeSetting interface since it's not exported from supabase.types
+interface ThemeSetting {
+  id: string;
+  name: string;
+  value: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Define the functions that were imported but missing
+const fetchThemeSettings = async (): Promise<ThemeSetting[]> => {
+  const { data, error } = await supabase
+    .from('theme_settings')
+    .select('*')
+    .order('name');
+
+  if (error) throw error;
+  return data || [];
+};
+
+const updateThemeSettings = async (
+  id: string,
+  updates: Partial<ThemeSetting>
+): Promise<ThemeSetting> => {
+  const { data, error } = await supabase
+    .from('theme_settings')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
 
 const ThemeSettings = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -16,7 +52,6 @@ const ThemeSettings = () => {
   const [name, setName] = useState('');
   const [value, setValue] = useState('');
   const [isActive, setIsActive] = useState(true);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: settings, isLoading, error } = useQuery({
@@ -84,7 +119,7 @@ const ThemeSettings = () => {
       <h1 className="text-2xl font-bold mb-6">Gestion des Paramètres du Thème</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {settings?.map((setting) => (
+        {settings && settings.map((setting) => (
           <div key={setting.id} className="relative bg-white/5 rounded-lg shadow-md p-4">
             <h3 className="text-lg font-semibold mb-2">{setting.name}</h3>
             <p className="text-sm text-gray-500 mb-2">Valeur: {setting.value}</p>

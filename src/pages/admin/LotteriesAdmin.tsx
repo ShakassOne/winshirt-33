@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -13,16 +14,15 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 const LotteriesAdmin = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedLottery, setSelectedLottery] = useState<Lottery | null>(null);
-  const [name, setName] = useState('');
-  const [price, setPrice] = useState(0);
+  const [title, setTitle] = useState('');
+  const [value, setValue] = useState(0);
   const [isActive, setIsActive] = useState(true);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: lotteries, isLoading, error } = useQuery({
@@ -80,8 +80,8 @@ const LotteriesAdmin = () => {
 
   useEffect(() => {
     if (selectedLottery) {
-      setName(selectedLottery.name);
-      setPrice(selectedLottery.price);
+      setTitle(selectedLottery.title);
+      setValue(selectedLottery.value);
       setIsActive(selectedLottery.is_active !== false);
     }
   }, [selectedLottery]);
@@ -94,8 +94,8 @@ const LotteriesAdmin = () => {
     setIsDialogOpen(false);
     setIsEditing(false);
     setSelectedLottery(null);
-    setName('');
-    setPrice(0);
+    setTitle('');
+    setValue(0);
     setIsActive(true);
   };
 
@@ -119,8 +119,8 @@ const LotteriesAdmin = () => {
     e.preventDefault();
 
     const lotteryData = {
-      name,
-      price,
+      title,
+      value,
       is_active: isActive,
     };
 
@@ -147,8 +147,8 @@ const LotteriesAdmin = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {lotteries?.map((lottery) => (
           <div key={lottery.id} className="relative bg-white/5 rounded-lg shadow-md p-4">
-            <h3 className="text-lg font-semibold mb-2">{lottery.name}</h3>
-            <p className="text-sm text-gray-500 mb-2">Prix: {lottery.price} €</p>
+            <h3 className="text-lg font-semibold mb-2">{lottery.title}</h3>
+            <p className="text-sm text-gray-500 mb-2">Prix: {lottery.value} €</p>
             <div className="flex items-center justify-between">
               <Switch
                 id={`lottery-active-${lottery.id}`}
@@ -183,22 +183,22 @@ const LotteriesAdmin = () => {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="name">Nom</Label>
+              <Label htmlFor="title">Nom</Label>
               <Input
                 type="text"
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="price">Prix</Label>
+              <Label htmlFor="value">Prix</Label>
               <Input
                 type="number"
-                id="price"
-                value={price}
-                onChange={(e) => setPrice(Number(e.target.value))}
+                id="value"
+                value={value}
+                onChange={(e) => setValue(Number(e.target.value))}
                 required
               />
             </div>

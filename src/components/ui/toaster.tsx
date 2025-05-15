@@ -8,7 +8,6 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
-import { ReactNode } from "react"
 
 export function Toaster() {
   const { toasts } = useToast()
@@ -24,7 +23,7 @@ export function Toaster() {
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
-            {action}
+            {action && <div className="mt-2">{action}</div>}
             <ToastClose />
           </Toast>
         )

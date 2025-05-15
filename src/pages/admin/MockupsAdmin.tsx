@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   fetchAllMockups as fetchMockups,
@@ -6,16 +7,15 @@ import {
   updateMockup,
   deleteMockup,
 } from '@/services/api.service';
-import { Mockup } from '@/types/supabase.types';
+import { Mockup, PrintArea } from '@/types/supabase.types';
 import { Button } from '@/components/ui/button';
 import { Plus, Pencil, Trash } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import MockupForm from '@/components/admin/MockupForm';
 
 const MockupsAdmin = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMockup, setSelectedMockup] = useState<Mockup | null>(null);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: mockups, isLoading, error } = useQuery({
@@ -75,7 +75,17 @@ const MockupsAdmin = () => {
   };
 
   const handleEdit = (mockup: Mockup) => {
-    setSelectedMockup(mockup);
+    // Make sure print_areas is properly parsed if it's a string
+    const parsedMockup = {
+      ...mockup,
+      print_areas: Array.isArray(mockup.print_areas) ? 
+        mockup.print_areas : 
+        (typeof mockup.print_areas === 'string' ? 
+          JSON.parse(mockup.print_areas) : 
+          [])
+    };
+    
+    setSelectedMockup(parsedMockup as Mockup);
     setIsDialogOpen(true);
   };
 
