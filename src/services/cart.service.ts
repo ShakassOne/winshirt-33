@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { CartItem } from "@/types/supabase.types";
+import { CartItemInsert } from "@/types/supabase-custom.types";
 
 // Create or get cart token from the database
 export const getOrCreateCartToken = async (token: string, userId?: string) => {
@@ -81,19 +82,19 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
       if (updateError) throw updateError;
     } else {
       // Insert new item
+      const newItem: CartItemInsert = {
+        cart_token_id: cartToken.id,
+        product_id: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+        color: item.color,
+        size: item.size,
+        customization: item.customization as unknown as Json
+      };
+      
       const { error: insertError } = await supabase
         .from('cart_items')
-        .insert([
-          {
-            cart_token_id: cartToken.id,
-            product_id: item.productId,
-            quantity: item.quantity,
-            price: item.price,
-            color: item.color,
-            size: item.size,
-            customization: item.customization
-          }
-        ]);
+        .insert([newItem]);
         
       if (insertError) throw insertError;
     }
