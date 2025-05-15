@@ -11,5 +11,4 @@ export interface CartItemInsert {
   color?: string | null;
   size?: string | null;
   customization?: Json | null;
-  cart_session_id?: string | null; // Made optional for compatibility
 }

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { CartItem } from "@/types/supabase.types";
 import { CartItemInsert } from "@/types/supabase-custom.types";
@@ -93,12 +92,11 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
         color: item.color,
         size: item.size,
         customization: item.customization as any,
-        cart_session_id: null // Provide null value to satisfy the type requirement
       };
       
       const { error: insertError } = await supabase
         .from('cart_items')
-        .insert(newItem); // Pass single object instead of array
+        .insert([newItem]); // Pass as array to match Supabase API expectation
         
       if (insertError) throw insertError;
     }

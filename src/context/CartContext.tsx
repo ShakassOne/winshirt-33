@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { CartContextType } from '@/types/cart.types';
@@ -72,8 +71,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await migrateCartToUser(userId, token);
-      toast({
-        title: "Panier transféré",
+      toast("Panier transféré", {
         description: "Votre panier a été associé à votre compte",
       });
       await loadCartItems(); // Reload cart after migration
@@ -106,8 +104,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await addToCart(cartToken, item, currentUser?.id);
-      toast({
-        title: "Produit ajouté au panier",
+      toast("Produit ajouté au panier", {
         description: `${item.name} a été ajouté à votre panier`,
       });
       // Reload cart items after adding
@@ -115,8 +112,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       setError(err.message);
       console.error("Error adding to cart:", err);
-      toast({
-        title: "Erreur",
+      toast("Erreur", {
         description: "Erreur lors de l'ajout au panier",
         variant: "destructive",
       });
@@ -131,8 +127,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await removeFromCart(cartToken, productId, currentUser?.id);
-      toast({
-        title: "Produit retiré du panier",
+      toast("Produit retiré du panier", {
         description: "Le produit a été retiré de votre panier",
       });
       // Reload cart items after removal
@@ -140,8 +135,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       setError(err.message);
       console.error("Error removing from cart:", err);
-      toast({
-        title: "Erreur",
+      toast("Erreur", {
         description: "Erreur lors du retrait du produit",
         variant: "destructive",
       });
@@ -161,8 +155,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       setError(err.message);
       console.error("Error updating quantity:", err);
-      toast({
-        title: "Erreur",
+      toast("Erreur", {
         description: "Erreur lors de la mise à jour de la quantité",
         variant: "destructive",
       });
@@ -177,8 +170,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await clearCartService(cartToken, currentUser?.id);
-      toast({
-        title: "Panier vidé",
+      toast("Panier vidé", {
         description: "Votre panier a été vidé",
       });
       // Reload cart items after clearing
@@ -186,8 +178,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       setError(err.message);
       console.error("Error clearing cart:", err);
-      toast({
-        title: "Erreur",
+      toast("Erreur", {
         description: "Erreur lors du vidage du panier",
         variant: "destructive",
       });
