@@ -28,16 +28,12 @@ const Hero: React.FC<HeroProps> = ({ className }) => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-         <a href="https://example.com/produits">
-  <Button size="lg" className="bg-gradient-purple hover:opacity-90">
-    Découvrir les produits
-  </Button>
-</a>
-<a href="https://winshirt-33.lovable.app/products">
-  <Button size="lg" variant="outline" className="border-winshirt-purple text-white">
-    Voir les loteries
-  </Button>
-</a>
+            <Button size="lg" className="bg-gradient-purple hover:opacity-90">
+              Découvrir les produits
+            </Button>
+            <Button size="lg" variant="outline" className="border-winshirt-purple text-white">
+              Voir les loteries
+            </Button>
           </div>
           
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
