@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -15,19 +14,17 @@ import { ThemeSetting } from '@/types/supabase-custom.types';
 const fetchThemeSettings = async (): Promise<ThemeSetting[]> => {
   try {
     // Since we don't have a theme_settings table, we'll simulate it with designs table for now
-    // This would need to be updated once the theme_settings table is created
     const { data, error } = await supabase
       .from('designs')
-      .select('id, name, category as value, is_active')
-      .limit(10); // Just getting a few records for the demonstration
-
+      .select('id, name, category, is_active');
+    
     if (error) throw error;
     
     // Map the designs data to the ThemeSetting structure
     return (data || []).map(item => ({
       id: item.id,
       name: item.name,
-      value: item.value,
+      value: item.category,
       is_active: item.is_active !== false,
       created_at: '',
       updated_at: ''
@@ -44,7 +41,6 @@ const updateThemeSettings = async (
 ): Promise<ThemeSetting> => {
   try {
     // Since we don't have a theme_settings table, we'll simulate with designs
-    // This would need to be updated once the theme_settings table is created
     const { data, error } = await supabase
       .from('designs')
       .update({ 
@@ -53,7 +49,7 @@ const updateThemeSettings = async (
         is_active: updates.is_active 
       })
       .eq('id', id)
-      .select('id, name, category as value, is_active')
+      .select('id, name, category, is_active')
       .single();
 
     if (error) throw error;
@@ -61,7 +57,7 @@ const updateThemeSettings = async (
     return {
       id: data.id,
       name: data.name,
-      value: data.value,
+      value: data.category,
       is_active: data.is_active !== false,
       created_at: '',
       updated_at: ''

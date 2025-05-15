@@ -1,10 +1,14 @@
 
-import { toast as sonnerToast, type ToastOptions } from "sonner";
+import { toast as sonnerToast } from "sonner";
 
-type ToastProps = ToastOptions & {
+type ToastProps = {
   title?: string;
   description?: string;
   variant?: "default" | "destructive";
+  // Include any other properties you need from sonner but don't reference ToastOptions directly
+  duration?: number;
+  action?: React.ReactNode;
+  position?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "top-center" | "bottom-center";
 };
 
 const useToast = () => {
