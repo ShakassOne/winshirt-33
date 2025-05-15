@@ -2,59 +2,71 @@
 import { supabase } from "@/integrations/supabase/client";
 import { CartItem } from "@/types/supabase.types";
 
-// Get or create cart session
-export const getOrCreateCartSession = async (sessionId: string, guestEmail?: string) => {
+// Create or get cart token from the database
+export const getOrCreateCartToken = async (token: string, userId?: string) => {
   try {
-    // Check if session exists
-    const { data: existingSession, error: fetchError } = await supabase
-      .from('cart_sessions')
+    // Check if token exists
+    const { data: existingToken, error: fetchError } = await supabase
+      .from('cart_tokens')
       .select('*')
-      .eq('session_id', sessionId)
+      .eq('token', token)
       .single();
       
-    if (!fetchError && existingSession) {
-      return existingSession;
+    if (!fetchError && existingToken) {
+      // If token exists but we now have a user ID, update the token
+      if (userId && !existingToken.user_id) {
+        const { data: updatedToken, error: updateError } = await supabase
+          .from('cart_tokens')
+          .update({ user_id: userId })
+          .eq('id', existingToken.id)
+          .select()
+          .single();
+          
+        if (updateError) throw updateError;
+        return updatedToken;
+      }
+      return existingToken;
     }
     
-    // Create a new session if doesn't exist
-    const { data: newSession, error: insertError } = await supabase
-      .from('cart_sessions')
+    // Create a new token if doesn't exist
+    const { data: newToken, error: insertError } = await supabase
+      .from('cart_tokens')
       .insert([
         { 
-          session_id: sessionId,
-          guest_email: guestEmail,
+          token: token,
+          user_id: userId || null,
         }
       ])
       .select()
       .single();
       
-    if (insertError) {
-      throw insertError;
-    }
+    if (insertError) throw insertError;
     
-    return newSession;
+    return newToken;
     
   } catch (error) {
-    console.error("Error in getOrCreateCartSession:", error);
+    console.error("Error in getOrCreateCartToken:", error);
     throw error;
   }
 };
 
 // Add item to cart
-export const addToCart = async (sessionId: string, item: CartItem) => {
+export const addToCart = async (token: string, item: CartItem, userId?: string) => {
   try {
-    // Get or create cart session
-    const cartSession = await getOrCreateCartSession(sessionId);
+    // Get or create cart token
+    const cartToken = await getOrCreateCartToken(token, userId);
     
     // Check if item already exists in cart
-    const { data: existingItem, error: fetchError } = await supabase
+    const { data: existingItems, error: fetchError } = await supabase
       .from('cart_items')
       .select('*')
-      .eq('cart_session_id', cartSession.id)
-      .eq('product_id', item.productId)
-      .single();
+      .eq('cart_token_id', cartToken.id)
+      .eq('product_id', item.productId);
     
-    if (!fetchError && existingItem) {
+    if (fetchError) throw fetchError;
+    
+    if (existingItems && existingItems.length > 0) {
+      const existingItem = existingItems[0];
       // Update quantity if item exists
       const { error: updateError } = await supabase
         .from('cart_items')
@@ -73,7 +85,7 @@ export const addToCart = async (sessionId: string, item: CartItem) => {
         .from('cart_items')
         .insert([
           {
-            cart_session_id: cartSession.id,
+            cart_token_id: cartToken.id,
             product_id: item.productId,
             quantity: item.quantity,
             price: item.price,
@@ -92,20 +104,10 @@ export const addToCart = async (sessionId: string, item: CartItem) => {
 };
 
 // Get cart items
-export const getCartItems = async (sessionId: string): Promise<CartItem[]> => {
+export const getCartItems = async (token: string, userId?: string): Promise<CartItem[]> => {
   try {
-    // Get cart session
-    const { data: sessionData } = await supabase
-      .from('cart_sessions')
-      .select('id')
-      .eq('session_id', sessionId)
-      .single();
-      
-    if (!sessionData) {
-      // Create new session if doesn't exist
-      const cartSession = await getOrCreateCartSession(sessionId);
-      return [];
-    }
+    // Get cart token
+    const cartToken = await getOrCreateCartToken(token, userId);
     
     // Get cart items with product details
     const { data: cartItems, error } = await supabase
@@ -119,7 +121,7 @@ export const getCartItems = async (sessionId: string): Promise<CartItem[]> => {
         customization,
         products:product_id (id, name, image_url, price, description)
       `)
-      .eq('cart_session_id', sessionData.id);
+      .eq('cart_token_id', cartToken.id);
       
     if (error) {
       console.error("Error fetching cart items:", error);
@@ -149,28 +151,21 @@ export const getCartItems = async (sessionId: string): Promise<CartItem[]> => {
 };
 
 // Remove item from cart
-export const removeFromCart = async (sessionId: string, productId: string) => {
+export const removeFromCart = async (token: string, productId: string, userId?: string) => {
   try {
-    // Get cart session
-    const { data: sessionData } = await supabase
-      .from('cart_sessions')
-      .select('id')
-      .eq('session_id', sessionId)
-      .single();
-      
-    if (!sessionData) {
-      throw new Error("Cart session not found");
-    }
+    // Get cart token
+    const cartToken = await getOrCreateCartToken(token, userId);
     
     // Find the cart item
-    const { data: cartItem } = await supabase
+    const { data: cartItems, error: fetchError } = await supabase
       .from('cart_items')
       .select('id')
-      .eq('cart_session_id', sessionData.id)
-      .eq('product_id', productId)
-      .single();
+      .eq('cart_token_id', cartToken.id)
+      .eq('product_id', productId);
       
-    if (!cartItem) {
+    if (fetchError) throw fetchError;
+    
+    if (!cartItems || cartItems.length === 0) {
       throw new Error("Cart item not found");
     }
     
@@ -178,7 +173,7 @@ export const removeFromCart = async (sessionId: string, productId: string) => {
     const { error } = await supabase
       .from('cart_items')
       .delete()
-      .eq('id', cartItem.id);
+      .eq('id', cartItems[0].id);
       
     if (error) throw error;
     
@@ -189,28 +184,21 @@ export const removeFromCart = async (sessionId: string, productId: string) => {
 };
 
 // Update cart item quantity
-export const updateCartItemQuantity = async (sessionId: string, productId: string, quantity: number) => {
+export const updateCartItemQuantity = async (token: string, productId: string, quantity: number, userId?: string) => {
   try {
-    // Get cart session
-    const { data: sessionData } = await supabase
-      .from('cart_sessions')
-      .select('id')
-      .eq('session_id', sessionId)
-      .single();
-      
-    if (!sessionData) {
-      throw new Error("Cart session not found");
-    }
+    // Get cart token
+    const cartToken = await getOrCreateCartToken(token, userId);
     
     // Find the cart item
-    const { data: cartItem } = await supabase
+    const { data: cartItems, error: fetchError } = await supabase
       .from('cart_items')
       .select('id')
-      .eq('cart_session_id', sessionData.id)
-      .eq('product_id', productId)
-      .single();
+      .eq('cart_token_id', cartToken.id)
+      .eq('product_id', productId);
       
-    if (!cartItem) {
+    if (fetchError) throw fetchError;
+    
+    if (!cartItems || cartItems.length === 0) {
       throw new Error("Cart item not found");
     }
     
@@ -218,7 +206,7 @@ export const updateCartItemQuantity = async (sessionId: string, productId: strin
     const { error } = await supabase
       .from('cart_items')
       .update({ quantity })
-      .eq('id', cartItem.id);
+      .eq('id', cartItems[0].id);
       
     if (error) throw error;
     
@@ -229,29 +217,117 @@ export const updateCartItemQuantity = async (sessionId: string, productId: strin
 };
 
 // Clear cart
-export const clearCart = async (sessionId: string) => {
+export const clearCart = async (token: string, userId?: string) => {
   try {
-    // Get cart session
-    const { data: sessionData } = await supabase
-      .from('cart_sessions')
-      .select('id')
-      .eq('session_id', sessionId)
-      .single();
-      
-    if (!sessionData) {
-      return; // No items to clear
-    }
+    // Get cart token
+    const cartToken = await getOrCreateCartToken(token, userId);
     
     // Delete all items
     const { error } = await supabase
       .from('cart_items')
       .delete()
-      .eq('cart_session_id', sessionData.id);
+      .eq('cart_token_id', cartToken.id);
       
     if (error) throw error;
     
   } catch (error) {
     console.error("Error in clearCart:", error);
+    throw error;
+  }
+};
+
+// Migrate cart from token to user
+export const migrateCartToUser = async (userId: string, token: string) => {
+  try {
+    // Find token entry
+    const { data: tokenData, error: tokenError } = await supabase
+      .from('cart_tokens')
+      .select('id')
+      .eq('token', token)
+      .single();
+      
+    if (tokenError) {
+      // If no token exists yet, no need to migrate
+      if (tokenError.code === 'PGRST116') return;
+      throw tokenError;
+    }
+    
+    // Update token with user_id
+    const { error: updateError } = await supabase
+      .from('cart_tokens')
+      .update({ user_id: userId })
+      .eq('id', tokenData.id);
+      
+    if (updateError) throw updateError;
+    
+    // Check if there are other tokens for this user
+    const { data: otherTokens, error: otherError } = await supabase
+      .from('cart_tokens')
+      .select('id')
+      .eq('user_id', userId)
+      .neq('id', tokenData.id);
+      
+    if (otherError) throw otherError;
+    
+    // If user has other tokens, merge the cart items
+    if (otherTokens && otherTokens.length > 0) {
+      for (const otherToken of otherTokens) {
+        // Get items from other token
+        const { data: otherItems, error: itemsError } = await supabase
+          .from('cart_items')
+          .select('*')
+          .eq('cart_token_id', otherToken.id);
+          
+        if (itemsError) throw itemsError;
+        
+        if (otherItems && otherItems.length > 0) {
+          // For each item in other token, transfer to current token
+          for (const item of otherItems) {
+            // Check if item already exists in current token
+            const { data: existingItems, error: checkError } = await supabase
+              .from('cart_items')
+              .select('id, quantity')
+              .eq('cart_token_id', tokenData.id)
+              .eq('product_id', item.product_id);
+              
+            if (checkError) throw checkError;
+            
+            if (existingItems && existingItems.length > 0) {
+              // Update quantity if item exists
+              const { error: updateQuantityError } = await supabase
+                .from('cart_items')
+                .update({ quantity: existingItems[0].quantity + item.quantity })
+                .eq('id', existingItems[0].id);
+                
+              if (updateQuantityError) throw updateQuantityError;
+              
+              // Delete item from other token
+              await supabase
+                .from('cart_items')
+                .delete()
+                .eq('id', item.id);
+            } else {
+              // Update item to point to current token
+              const { error: moveError } = await supabase
+                .from('cart_items')
+                .update({ cart_token_id: tokenData.id })
+                .eq('id', item.id);
+                
+              if (moveError) throw moveError;
+            }
+          }
+        }
+        
+        // Delete the other token
+        await supabase
+          .from('cart_tokens')
+          .delete()
+          .eq('id', otherToken.id);
+      }
+    }
+    
+  } catch (error) {
+    console.error("Error in migrateCartToUser:", error);
     throw error;
   }
 };

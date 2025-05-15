@@ -3,9 +3,16 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { CartContextType } from '@/types/cart.types';
 import { CartItem } from '@/types/supabase.types';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { addToCart, getCartItems, removeFromCart, updateCartItemQuantity, clearCart as clearCartService } from '@/services/cart.service';
+import { 
+  addToCart, 
+  getCartItems, 
+  removeFromCart, 
+  updateCartItemQuantity, 
+  clearCart as clearCartService,
+  migrateCartToUser
+} from '@/services/cart.service';
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
@@ -13,136 +20,177 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string>('');
+  const [cartToken, setCartToken] = useState<string>('');
+  const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
   
-  // Generate a session ID if not exists
+  // Generate a cart token if not exists
   useEffect(() => {
-    const storedSessionId = localStorage.getItem('cart_session_id');
-    if (!storedSessionId) {
-      const newSessionId = uuidv4();
-      localStorage.setItem('cart_session_id', newSessionId);
-      setSessionId(newSessionId);
+    const storedCartToken = localStorage.getItem('cart_token');
+    if (!storedCartToken) {
+      const newCartToken = uuidv4();
+      localStorage.setItem('cart_token', newCartToken);
+      setCartToken(newCartToken);
     } else {
-      setSessionId(storedSessionId);
+      setCartToken(storedCartToken);
     }
   }, []);
   
-  // Load cart items when session ID is available
+  // Check for auth state changes
   useEffect(() => {
-    if (sessionId) {
-      loadCartItems();
-    }
-  }, [sessionId]);
-  
-  // Listen for auth state changes to link cart with user
-  useEffect(() => {
+    // Get current auth status
+    const checkCurrentUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setCurrentUser(session?.user || null);
+    };
+    
+    checkCurrentUser();
+    
+    // Set up auth state change listener
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        // Update existing cart session with user ID
-        await linkCartToUser(session.user.id);
+      const user = session?.user || null;
+      setCurrentUser(user);
+      
+      // Handle sign in - migrate cart if user just signed in
+      if (event === 'SIGNED_IN' && user && cartToken) {
+        await handleCartMigration(user.id, cartToken);
       }
     });
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
-
-  const loadCartItems = async () => {
-    if (!sessionId) return;
-    
+  }, [cartToken]);
+  
+  // Load cart items when cartToken is available or user changes
+  useEffect(() => {
+    if (cartToken) {
+      loadCartItems();
+    }
+  }, [cartToken, currentUser]);
+  
+  const handleCartMigration = async (userId: string, token: string) => {
     setIsLoading(true);
     try {
-      const cartItems = await getCartItems(sessionId);
-      setItems(cartItems);
+      await migrateCartToUser(userId, token);
+      toast({
+        title: "Panier transféré",
+        description: "Votre panier a été associé à votre compte",
+      });
+      await loadCartItems(); // Reload cart after migration
     } catch (err: any) {
+      console.error("Error migrating cart:", err);
       setError(err.message);
-      console.error("Error in getCartItems: ", err);
     } finally {
       setIsLoading(false);
     }
   };
   
-  const linkCartToUser = async (userId: string) => {
+  const loadCartItems = async () => {
+    if (!cartToken) return;
+    
+    setIsLoading(true);
     try {
-      // Logic to update cart_sessions with user_id
-      const { data, error } = await supabase
-        .from('cart_sessions')
-        .update({ user_id: userId })
-        .eq('session_id', sessionId);
-        
-      if (error) throw error;
+      const cartItems = await getCartItems(cartToken, currentUser?.id);
+      setItems(cartItems);
     } catch (err: any) {
-      console.error("Erreur lors de la liaison du panier à l'utilisateur:", err);
+      setError(err.message);
+      console.error("Error loading cart items:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
   
   const addItem = async (item: CartItem) => {
-    if (!sessionId) return;
+    if (!cartToken) return;
     
     setIsLoading(true);
     try {
-      await addToCart(sessionId, item);
-      toast.success("Produit ajouté au panier");
-      // Important: recharger les articles immédiatement après l'ajout
+      await addToCart(cartToken, item, currentUser?.id);
+      toast({
+        title: "Produit ajouté au panier",
+        description: `${item.name} a été ajouté à votre panier`,
+      });
+      // Reload cart items after adding
       await loadCartItems();
     } catch (err: any) {
       setError(err.message);
-      console.error("Error in addToCart: ", err);
-      toast.error("Erreur lors de l'ajout au panier");
+      console.error("Error adding to cart:", err);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de l'ajout au panier",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
   
   const removeItem = async (productId: string) => {
-    if (!sessionId) return;
+    if (!cartToken) return;
     
     setIsLoading(true);
     try {
-      await removeFromCart(sessionId, productId);
-      toast.success("Produit retiré du panier");
-      // Recharger les articles immédiatement après la suppression
+      await removeFromCart(cartToken, productId, currentUser?.id);
+      toast({
+        title: "Produit retiré du panier",
+        description: "Le produit a été retiré de votre panier",
+      });
+      // Reload cart items after removal
       await loadCartItems();
     } catch (err: any) {
       setError(err.message);
-      console.error("Error in removeFromCart: ", err);
-      toast.error("Erreur lors du retrait du produit");
+      console.error("Error removing from cart:", err);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors du retrait du produit",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
   
   const updateItemQuantity = async (productId: string, quantity: number) => {
-    if (!sessionId || quantity < 1) return;
+    if (!cartToken || quantity < 1) return;
     
     setIsLoading(true);
     try {
-      await updateCartItemQuantity(sessionId, productId, quantity);
-      // Recharger les articles immédiatement après la mise à jour
+      await updateCartItemQuantity(cartToken, productId, quantity, currentUser?.id);
+      // Reload cart items after update
       await loadCartItems();
     } catch (err: any) {
       setError(err.message);
-      console.error("Error in updateItemQuantity: ", err);
-      toast.error("Erreur lors de la mise à jour de la quantité");
+      console.error("Error updating quantity:", err);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la mise à jour de la quantité",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
   
   const clearCart = async () => {
-    if (!sessionId) return;
+    if (!cartToken) return;
     
     setIsLoading(true);
     try {
-      await clearCartService(sessionId);
-      toast.success("Panier vidé");
-      // Recharger les articles immédiatement après le vidage
+      await clearCartService(cartToken, currentUser?.id);
+      toast({
+        title: "Panier vidé",
+        description: "Votre panier a été vidé",
+      });
+      // Reload cart items after clearing
       await loadCartItems();
     } catch (err: any) {
       setError(err.message);
-      console.error("Error in clearCart: ", err);
-      toast.error("Erreur lors du vidage du panier");
+      console.error("Error clearing cart:", err);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors du vidage du panier",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -166,7 +214,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         error,
         total,
         itemCount,
-        sessionId
+        cartToken,
+        currentUser
       }}
     >
       {children}

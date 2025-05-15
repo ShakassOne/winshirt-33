@@ -12,10 +12,12 @@ export type Database = {
       cart_items: {
         Row: {
           cart_session_id: string
+          cart_token_id: string | null
           color: string | null
           created_at: string
           customization: Json | null
           id: string
+          migrated: boolean | null
           price: number
           product_id: string
           quantity: number
@@ -24,10 +26,12 @@ export type Database = {
         }
         Insert: {
           cart_session_id: string
+          cart_token_id?: string | null
           color?: string | null
           created_at?: string
           customization?: Json | null
           id?: string
+          migrated?: boolean | null
           price: number
           product_id: string
           quantity?: number
@@ -36,10 +40,12 @@ export type Database = {
         }
         Update: {
           cart_session_id?: string
+          cart_token_id?: string | null
           color?: string | null
           created_at?: string
           customization?: Json | null
           id?: string
+          migrated?: boolean | null
           price?: number
           product_id?: string
           quantity?: number
@@ -48,10 +54,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "cart_items_cart_session_id_fkey"
-            columns: ["cart_session_id"]
+            foreignKeyName: "cart_items_cart_token_id_fkey"
+            columns: ["cart_token_id"]
             isOneToOne: false
-            referencedRelation: "cart_sessions"
+            referencedRelation: "cart_tokens"
             referencedColumns: ["id"]
           },
           {
@@ -85,6 +91,30 @@ export type Database = {
           guest_email?: string | null
           id?: string
           session_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      cart_tokens: {
+        Row: {
+          created_at: string
+          id: string
+          token: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          token: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          token?: string
           updated_at?: string
           user_id?: string | null
         }
@@ -519,7 +549,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      migrate_cart_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

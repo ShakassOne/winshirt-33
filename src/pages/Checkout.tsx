@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -10,6 +9,7 @@ import Footer from '@/components/layout/Footer';
 import { useCart } from '@/context/CartContext';
 import { CheckoutFormData } from '@/types/cart.types';
 import { createOrder } from '@/services/order.service';
+import { migrateCartToUser } from '@/services/cart.service';
 import { 
   Form, 
   FormControl, 
@@ -21,7 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
 
 // Schéma de validation pour le formulaire de checkout
@@ -44,7 +44,7 @@ const checkoutSchema = z.object({
 });
 
 const Checkout = () => {
-  const { items, total, sessionId, clearCart } = useCart();
+  const { items, total, cartToken, currentUser, clearCart } = useCart();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -125,6 +125,15 @@ const Checkout = () => {
         
         userId = authData.user?.id;
         
+        // Migrate the cart to the new user
+        if (userId && cartToken) {
+          await migrateCartToUser(userId, cartToken);
+          toast({
+            title: "Panier migrée",
+            description: "Votre panier a été associé à votre nouveau compte",
+          });
+        }
+        
         // Crée ou met à jour le profil utilisateur
         if (userId) {
           const { error: profileError } = await supabase
@@ -146,7 +155,7 @@ const Checkout = () => {
       }
       
       // Crée la commande
-      const order = await createOrder(data, items, sessionId, userId);
+      const order = await createOrder(data, items, cartToken, userId);
       
       // Redirige vers la page de paiement
       navigate(`/payment/${order.id}`);
@@ -154,10 +163,17 @@ const Checkout = () => {
       // Vide le panier après la création de la commande
       await clearCart();
       
-      toast.success("Commande créée avec succès!");
+      toast({
+        title: "Commande créée avec succès!",
+        description: "Vous allez être redirigé vers la page de paiement.",
+      });
     } catch (error) {
       console.error("Erreur lors de la création de la commande:", error);
-      toast.error("Une erreur est survenue lors de la création de la commande");
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la création de la commande",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
