@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
 import { CartItem, Order, OrderItem } from "@/types/supabase.types";
@@ -60,6 +59,33 @@ export const createOrder = async (
   }
 };
 
+// Define a proper type for the customization data
+export interface CustomizationType {
+  designId?: string;
+  designName?: string;
+  designUrl?: string;
+  printPosition?: 'front' | 'back';
+  printSize?: string;
+  transform?: {
+    position: { x: number; y: number };
+    scale: number;
+    rotation: number;
+  };
+  text?: {
+    content: string;
+    font: string;
+    color: string;
+    printPosition: 'front' | 'back';
+    transform?: {
+      position: { x: number; y: number };
+      scale: number;
+      rotation: number;
+    };
+  };
+  color?: string;
+  size?: string;
+}
+
 // Define a proper type for the order item with design
 interface ExtendedOrderItem extends OrderItem {
   design?: {
@@ -83,6 +109,7 @@ interface ExtendedOrderItem extends OrderItem {
     available_sizes: string[];
     mockup_id: string;
   };
+  customization?: CustomizationType;
 }
 
 // Define a type for the order with items
@@ -126,32 +153,8 @@ export const getOrderById = async (orderId: string): Promise<ExtendedOrder> => {
     // For each customized item, fetch the design details if available
     const itemsWithDesigns = await Promise.all(
       orderItems.map(async (item) => {
-        // Cast item.customization to a proper type to avoid type errors
-        const customization = item.customization as {
-          designId?: string;
-          designName?: string;
-          designUrl?: string;
-          printPosition?: 'front' | 'back';
-          printSize?: string;
-          transform?: {
-            position: { x: number; y: number };
-            scale: number;
-            rotation: number;
-          };
-          text?: {
-            content: string;
-            font: string;
-            color: string;
-            printPosition: 'front' | 'back';
-            transform?: {
-              position: { x: number; y: number };
-              scale: number;
-              rotation: number;
-            };
-          };
-          color?: string;
-          size?: string;
-        } | null;
+        // Process customization data to ensure it's properly typed
+        const customization = item.customization ? (item.customization as unknown as CustomizationType) : null;
         
         if (customization && customization.designId) {
           const { data: design } = await supabase
@@ -162,14 +165,14 @@ export const getOrderById = async (orderId: string): Promise<ExtendedOrder> => {
             
           return {
             ...item,
-            customization, // Use the properly typed customization
-            design: design || null
+            customization,
+            design: design || undefined
           } as ExtendedOrderItem;
         }
         
         return {
           ...item,
-          customization // Use the properly typed customization
+          customization
         } as ExtendedOrderItem;
       })
     );

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -539,7 +538,8 @@ const OrderDetail = () => {
       
       <Footer />
       
-      <style jsx="true">{`
+      <style>
+        {`
         @media print {
           nav, footer, button, .bg-gradient-to-b {
             display: none !important;
@@ -565,7 +565,8 @@ const OrderDetail = () => {
             margin: 1.5cm;
           }
         }
-      `}</style>
+      `}
+      </style>
     </div>
   );
 };
