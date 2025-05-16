@@ -1,6 +1,6 @@
 
 // Mockup color variants type
-import { Mockup as BaseMockup } from '@/types/supabase.types';
+import { Mockup } from '@/types/supabase.types';
 
 export interface MockupColor {
   id?: string;
@@ -22,6 +22,6 @@ export interface PrintArea {
   y?: number;
 }
 
-export interface MockupWithColors extends BaseMockup {
+export interface MockupWithColors extends Mockup {
   colors: MockupColor[];
 }

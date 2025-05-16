@@ -31,6 +31,11 @@ export const useLotterySelection = ({
   const getFirstLotteryIndex = (lotteryId: string) => {
     return selectedLotteries.findIndex(id => id === lotteryId);
   };
+  
+  // Compter combien de fois une loterie spécifique est sélectionnée
+  const getLotteryCount = (lotteryId: string) => {
+    return selectedLotteries.filter(id => id === lotteryId).length;
+  };
 
   // Vérifier si on peut ajouter plus de loteries
   const canAddMoreLotteries = () => {
@@ -101,6 +106,7 @@ export const useLotterySelection = ({
     setSelectedLotteries,
     isLotterySelected,
     getFirstLotteryIndex,
+    getLotteryCount,
     toggleLotteryAtIndex,
     replaceLotteryAtIndex,
     removeLotteryAtIndex,

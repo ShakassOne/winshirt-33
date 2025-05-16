@@ -24,7 +24,8 @@ const LotterySelector: React.FC<LotterySelectorProps> = ({
     isLotterySelected,
     toggleLotteryAtIndex,
     remainingTickets,
-    removeLotteryAtIndex
+    removeLotteryAtIndex,
+    getLotteryCount
   } = useLotterySelection({
     maxTickets,
     initialSelectedLotteries
@@ -45,7 +46,7 @@ const LotterySelector: React.FC<LotterySelectorProps> = ({
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Choisissez vos loteries</h3>
         <Badge variant="outline">
-          {maxTickets - selectedLotteries.length} ticket{remainingTickets !== 1 ? 's' : ''} restant{remainingTickets !== 1 ? 's' : ''}
+          {remainingTickets} ticket{remainingTickets !== 1 ? 's' : ''} restant{remainingTickets !== 1 ? 's' : ''}
         </Badge>
       </div>
 
@@ -86,27 +87,35 @@ const LotterySelector: React.FC<LotterySelectorProps> = ({
 
       {/* Liste des loteries disponibles */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {availableLotteries.map(lottery => (
-          <Button
-            key={lottery.id}
-            variant={isLotterySelected(lottery.id) ? "default" : "outline"}
-            className={`justify-start p-2 h-auto ${
-              isLotterySelected(lottery.id) 
-                ? "bg-winshirt-purple text-white" 
-                : "bg-black/10 text-white hover:bg-black/20"
-            }`}
-            onClick={() => toggleLotteryAtIndex(lottery.id)}
-            disabled={remainingTickets === 0 && !isLotterySelected(lottery.id)}
-          >
-            <img src={lottery.image_url} alt={lottery.title} className="w-8 h-8 rounded-full object-cover mr-2" />
-            <div className="text-left">
-              <p className="text-sm font-medium">{lottery.title}</p>
-              <p className="text-xs opacity-70">
-                {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(lottery.value)}
-              </p>
-            </div>
-          </Button>
-        ))}
+        {availableLotteries.map(lottery => {
+          const count = getLotteryCount(lottery.id);
+          return (
+            <Button
+              key={lottery.id}
+              variant={isLotterySelected(lottery.id) ? "default" : "outline"}
+              className={`justify-start p-2 h-auto ${
+                isLotterySelected(lottery.id) 
+                  ? "bg-winshirt-purple text-white" 
+                  : "bg-black/10 text-white hover:bg-black/20"
+              }`}
+              onClick={() => toggleLotteryAtIndex(lottery.id)}
+              disabled={remainingTickets === 0 && !isLotterySelected(lottery.id)}
+            >
+              <img src={lottery.image_url} alt={lottery.title} className="w-8 h-8 rounded-full object-cover mr-2" />
+              <div className="text-left flex-grow">
+                <p className="text-sm font-medium">{lottery.title}</p>
+                <p className="text-xs opacity-70">
+                  {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(lottery.value)}
+                </p>
+              </div>
+              {count > 0 && (
+                <Badge className="ml-2 bg-white/20">
+                  {count}
+                </Badge>
+              )}
+            </Button>
+          );
+        })}
       </div>
 
       {availableLotteries.length === 0 && (

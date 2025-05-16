@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -222,18 +223,20 @@ export interface Database {
 
 export type Tables<
   PublicTableNameOrOptions extends
-    | keyof (Database["public"]["Tables"] & { row: any })
+    | keyof (Database["public"]["Tables"] & { Row: any })
     | { schema: keyof Database },
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
     ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
     : never = never
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName]["Row"]
-  : PublicTableNameOrOptions extends keyof (Database["public"]["Tables"] & { row: any })
-    ? (Database["public"]["Tables"] & { row: any })[PublicTableNameOrOptions]["Row"]
-  : never
+  : PublicTableNameOrOptions extends keyof (Database["public"]["Tables"] & { Row: any })
+    ? (Database["public"]["Tables"] & { Row: any })[PublicTableNameOrOptions]["Row"]
+    : never
 
-// Ajout du type pour les loteries
+// Types additionnels pour l'application
+
+// Type pour les loteries
 export interface LotteryItem {
   id: string;
   title: string;
@@ -247,6 +250,76 @@ export interface LotteryItem {
   is_featured?: boolean;
 }
 
+// Type complet pour Lottery
+export interface Lottery extends LotteryItem {
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Type pour les produits
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: string;
+  category: string;
+  rating?: number;
+  available_colors?: string[];
+  available_sizes?: string[];
+  is_customizable?: boolean;
+  tickets_offered?: number;
+  created_at?: string;
+  color?: string;
+  mockup_id?: string;
+  is_active?: boolean;
+}
+
+// Type pour les designs
+export interface Design {
+  id: string;
+  name: string;
+  category: string;
+  image_url: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Type pour les mockups
+export interface Mockup {
+  id: string;
+  name: string;
+  category: string;
+  svg_front_url: string;
+  svg_back_url?: string;
+  print_areas: PrintArea[];
+  colors?: any[];
+  price_a3: number;
+  price_a4: number;
+  price_a5: number;
+  price_a6: number;
+  text_price_front: number;
+  text_price_back: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Type pour les zones d'impression
+export interface PrintArea {
+  id: string;
+  name: string;
+  width: number;
+  height: number;
+  position_x: number;
+  position_y: number;
+  side: 'front' | 'back';
+  x?: number; // Alias pour position_x
+  y?: number; // Alias pour position_y
+}
+
+// Type pour les éléments du panier
 export interface CartItem {
   productId: string;
   name: string;
