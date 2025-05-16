@@ -16,6 +16,8 @@ import LotteriesAdmin from "./pages/admin/LotteriesAdmin";
 import MockupsAdmin from "./pages/admin/MockupsAdmin";
 import DesignsAdmin from "./pages/admin/DesignsAdmin";
 import ThemeSettings from "./pages/admin/ThemeSettings";
+import OrdersAdmin from "./pages/admin/OrdersAdmin";
+import OrderDetail from "./pages/admin/OrderDetail";
 import { useScrollReset } from "./hooks/useScrollReset";
 import { ThemeProvider } from "./components/theme-provider";
 import { CartProvider } from "./context/CartContext";
@@ -64,6 +66,8 @@ const App = () => (
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/products" element={<ProductsAdmin />} />
               <Route path="/admin/lotteries" element={<LotteriesAdmin />} />
+              <Route path="/admin/orders" element={<OrdersAdmin />} />
+              <Route path="/admin/orders/:orderId" element={<OrderDetail />} />
               <Route path="/admin/mockups" element={<MockupsAdmin />} />
               <Route path="/admin/designs" element={<DesignsAdmin />} />
               <Route path="/admin/theme" element={<ThemeSettings />} />

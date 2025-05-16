@@ -1,7 +1,62 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
-import { CartItem } from "@/types/supabase.types";
+import { CartItem, Order } from "@/types/supabase.types";
+
+// Types pour la personnalisation
+export type TextCustomization = {
+  content: string;
+  font: string;
+  color: string;
+  printPosition: 'front' | 'back';
+  transform?: {
+    position: { x: number; y: number };
+    scale: number;
+    rotation: number;
+  };
+};
+
+export type CustomizationType = {
+  designId: string;
+  designName?: string;
+  designUrl: string;
+  printPosition: 'front' | 'back';
+  printSize: string;
+  transform?: {
+    position: { x: number; y: number };
+    scale: number;
+    rotation: number;
+  };
+  text?: TextCustomization;
+};
+
+// Extend OrderItem with products relation
+export interface ExtendedOrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  price: number;
+  customization?: CustomizationType;
+  created_at?: string;
+  products?: {
+    id: string;
+    name: string;
+    description: string;
+    image_url: string;
+    price: number;
+    category: string;
+    is_customizable: boolean;
+    available_colors: string[];
+    available_sizes: string[];
+    mockup_id?: string;
+  };
+}
+
+// Extended order type including items
+export interface ExtendedOrder extends Order {
+  items?: ExtendedOrderItem[];
+}
 
 export const createOrder = async (
   checkoutData: CheckoutFormData,
@@ -60,7 +115,7 @@ export const createOrder = async (
   }
 };
 
-export const getOrderById = async (orderId: string) => {
+export const getOrderById = async (orderId: string): Promise<ExtendedOrder> => {
   try {
     const { data: order, error: orderError } = await supabase
       .from('orders')
@@ -86,6 +141,22 @@ export const getOrderById = async (orderId: string) => {
     };
   } catch (error) {
     console.error("Error in getOrderById:", error);
+    throw error;
+  }
+};
+
+export const fetchAllOrders = async (): Promise<Order[]> => {
+  try {
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    if (error) throw error;
+    
+    return orders;
+  } catch (error) {
+    console.error("Error in fetchAllOrders:", error);
     throw error;
   }
 };
@@ -125,6 +196,23 @@ export const updateOrderPaymentStatus = async (
     if (error) throw error;
   } catch (error) {
     console.error("Error in updateOrderPaymentStatus:", error);
+    throw error;
+  }
+};
+
+export const updateOrderStatus = async (
+  orderId: string,
+  status: Order['status']
+) => {
+  try {
+    const { error } = await supabase
+      .from('orders')
+      .update({ status })
+      .eq('id', orderId);
+      
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error in updateOrderStatus:", error);
     throw error;
   }
 };
