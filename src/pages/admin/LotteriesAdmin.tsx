@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
@@ -317,7 +316,6 @@ const LotteriesAdmin = () => {
             setSelectedLottery(null);
           }}
           lotteryId={selectedLottery.id}
-          lotteryTitle={selectedLottery.title}
           onSuccess={handleDrawSuccess}
         />
       )}

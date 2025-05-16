@@ -1,5 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { Design, Lottery, Mockup, Product } from "@/types/supabase.types";
+import { Design, Lottery, Mockup, Product, PrintArea } from "@/types/supabase.types";
+import { MockupColor } from '@/types/mockup.types';
 
 // Function to upload a file to Supabase storage
 export const uploadFileToStorage = async (file: File, folder: string = 'uploads'): Promise<string> => {
@@ -133,7 +135,7 @@ export const deleteDesign = async (id: string): Promise<boolean> => {
 };
 
 // Function to fetch all mockups
-export const fetchAllMockups = async (): Promise<Mockup[]> => {
+export const fetchAllMockups = async (): Promise<any[]> => {
   try {
     const { data: mockups, error } = await supabase
       .from('mockups')
@@ -151,7 +153,7 @@ export const fetchAllMockups = async (): Promise<Mockup[]> => {
 };
 
 // Function to fetch a single mockup by ID
-export const fetchMockupById = async (id: string): Promise<Mockup | null> => {
+export const fetchMockupById = async (id: string): Promise<any | null> => {
   try {
     const { data: mockup, error } = await supabase
       .from('mockups')
@@ -171,7 +173,7 @@ export const fetchMockupById = async (id: string): Promise<Mockup | null> => {
 };
 
 // Function to create a new mockup
-export const createMockup = async (mockup: Omit<Mockup, 'id' | 'created_at' | 'updated_at'>): Promise<Mockup | null> => {
+export const createMockup = async (mockup: any): Promise<any | null> => {
   try {
     const { data, error } = await supabase
       .from('mockups')
@@ -191,7 +193,7 @@ export const createMockup = async (mockup: Omit<Mockup, 'id' | 'created_at' | 'u
 };
 
 // Function to update an existing mockup
-export const updateMockup = async (id: string, updates: Partial<Mockup>): Promise<Mockup | null> => {
+export const updateMockup = async (id: string, updates: any): Promise<any | null> => {
   try {
     const { data, error } = await supabase
       .from('mockups')
@@ -465,22 +467,46 @@ export const getLotteryEntries = async (lotteryId: string) => {
 // Function to get lottery entries with user details
 export const getLotteryEntriesWithUserDetails = async (lotteryId: string) => {
   try {
-    const { data, error } = await supabase
+    // Use a direct query instead of a join that might cause errors
+    const { data: entries, error } = await supabase
       .from('lottery_entries')
-      .select(`
-        *,
-        profiles:user_id(first_name, last_name, email)
-      `)
+      .select('*')
       .eq('lottery_id', lotteryId);
     
     if (error) throw error;
     
-    // Transform data to add name and email fields for easy access
-    return data.map(entry => ({
-      ...entry,
-      name: entry.profiles ? `${entry.profiles.first_name || ''} ${entry.profiles.last_name || ''}`.trim() : 'Anonyme',
-      email: entry.profiles ? entry.profiles.email : 'Non disponible'
-    }));
+    // Get all unique user IDs
+    const userIds = entries.map(entry => entry.user_id).filter(Boolean);
+    
+    // Fetch user profiles separately if we have user IDs
+    let profiles = {};
+    if (userIds.length > 0) {
+      const { data: userProfiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email')
+        .in('id', userIds);
+      
+      if (!profilesError && userProfiles) {
+        // Create a map of user profiles by ID for easier lookup
+        profiles = Object.fromEntries(
+          userProfiles.map(profile => [profile.id, profile])
+        );
+      }
+    }
+    
+    // Transform data to add name and email fields
+    return entries.map(entry => {
+      const profile = entry.user_id ? (profiles[entry.user_id] || null) : null;
+      
+      return {
+        ...entry,
+        name: profile 
+          ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() 
+          : 'Anonyme',
+        email: profile ? profile.email : 'Non disponible',
+        profiles: profile
+      };
+    });
   } catch (error) {
     console.error('Error fetching lottery entries with user details:', error);
     throw error;

@@ -67,8 +67,13 @@ const OrderDetail = () => {
     setIsUpdating(true);
     try {
       await updateOrderStatus(orderId, newStatus);
+      
       toast.success(`Statut mis à jour: ${newStatus}`);
-      refetch();
+      
+      if (refetch) {
+        refetch();
+      }
+      
     } catch (error) {
       console.error('Erreur lors de la mise à jour du statut:', error);
       toast.error('Erreur lors de la mise à jour du statut');
@@ -106,7 +111,7 @@ const OrderDetail = () => {
     return customization as CustomizationType;
   };
 
-  // Corrected comparison for order status
+  // Fixed comparison for order status
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -239,7 +244,7 @@ const OrderDetail = () => {
                     </Button>
                   )}
                   
-                  {order.status !== 'cancelled' && (
+                  {(order.status === 'pending' || order.status === 'processing' || order.status === 'shipped') && (
                     <Button 
                       variant="destructive" 
                       size="sm"

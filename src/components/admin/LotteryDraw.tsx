@@ -20,7 +20,7 @@ interface Participant {
     first_name?: string;
     last_name?: string;
     email?: string;
-  };
+  } | null;
 }
 
 interface LotteryDrawProps {
@@ -48,7 +48,18 @@ const LotteryDraw = ({ isOpen, onClose, lotteryId, onSuccess }: LotteryDrawProps
         setIsLoading(true);
         try {
           const entries = await getLotteryEntriesWithUserDetails(lotteryId);
-          setParticipants(entries);
+          // Ensure the data matches our Participant type
+          const typedEntries = entries.map(entry => ({
+            id: entry.id,
+            user_id: entry.user_id,
+            lottery_id: entry.lottery_id,
+            order_item_id: entry.order_item_id,
+            created_at: entry.created_at,
+            name: entry.name || 'Anonymous',
+            email: entry.email || 'No email',
+            profiles: entry.profiles || null
+          }));
+          setParticipants(typedEntries);
         } catch (error) {
           console.error('Error fetching lottery entries:', error);
           toastNotification({
