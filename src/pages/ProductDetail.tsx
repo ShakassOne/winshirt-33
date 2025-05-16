@@ -68,8 +68,7 @@ const ProductDetail: React.FC = () => {
           setAvailableSizes(fetchedProduct.available_sizes || []);
           setIsCustomizationEnabled(fetchedProduct.is_customizable || false);
         } else {
-          toast({
-            title: "Erreur",
+          toast("Erreur", {
             description: "Produit non trouvé."
           });
           navigate('/products');
@@ -179,24 +178,21 @@ const ProductDetail: React.FC = () => {
 
   const handleAddToCart = async () => {
     if (!product) {
-      toast({
-        title: "Erreur",
+      toast("Erreur", {
         description: "Produit non trouvé."
       });
       return;
     }
 
     if (!selectedColor && availableColors.length > 0) {
-      toast({
-        title: "Erreur",
+      toast("Erreur", {
         description: "Veuillez sélectionner une couleur."
       });
       return;
     }
 
     if (!selectedSize && availableSizes.length > 0) {
-      toast({
-        title: "Erreur",
+      toast("Erreur", {
         description: "Veuillez sélectionner une taille."
       });
       return;
@@ -224,14 +220,12 @@ const ProductDetail: React.FC = () => {
         customization: customizationData
       });
 
-      toast({
-        title: "Succès",
+      toast("Succès", {
         description: "Produit ajouté au panier!"
       });
     } catch (error) {
       console.error("Error adding to cart:", error);
-      toast({
-        title: "Erreur",
+      toast("Erreur", {
         description: "Erreur lors de l'ajout au panier."
       });
     } finally {
