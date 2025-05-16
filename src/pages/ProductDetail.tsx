@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useShoppingCart } from '@/context/ShoppingCartContext';
 import { useToast } from '@/hooks/use-toast';
 import { Product as ProductType, LotteryItem, Design } from '@/types/supabase.types';
-import { getProductById, getActiveLotteries, getActiveDesigns } from '@/services/api.service';
+import { fetchProductById, fetchAllLotteries, fetchAllDesigns } from '@/services/api.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -61,7 +61,7 @@ const ProductDetail: React.FC = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       if (productId) {
-        const fetchedProduct = await getProductById(productId);
+        const fetchedProduct = await fetchProductById(productId);
         if (fetchedProduct) {
           setProduct(fetchedProduct);
           setAvailableColors(fetchedProduct.available_colors || []);
@@ -70,8 +70,7 @@ const ProductDetail: React.FC = () => {
         } else {
           toast({
             title: "Erreur",
-            description: "Produit non trouvé.",
-            variant: "destructive",
+            description: "Produit non trouvé."
           });
           navigate('/products');
         }
@@ -83,8 +82,10 @@ const ProductDetail: React.FC = () => {
 
   useEffect(() => {
     const fetchLotteries = async () => {
-      const activeLotteries = await getActiveLotteries();
-      setLotteries(activeLotteries || []);
+      const activeLotteries = await fetchAllLotteries();
+      // Filter active lotteries
+      const filteredLotteries = activeLotteries.filter(lottery => lottery.is_active);
+      setLotteries(filteredLotteries || []);
     };
 
     fetchLotteries();
@@ -92,8 +93,10 @@ const ProductDetail: React.FC = () => {
 
   useEffect(() => {
     const fetchDesigns = async () => {
-      const activeDesigns = await getActiveDesigns();
-      setDesigns(activeDesigns || []);
+      const activeDesigns = await fetchAllDesigns();
+      // Filter active designs
+      const filteredDesigns = activeDesigns.filter(design => design.is_active);
+      setDesigns(filteredDesigns || []);
     };
 
     fetchDesigns();
@@ -178,8 +181,7 @@ const ProductDetail: React.FC = () => {
     if (!product) {
       toast({
         title: "Erreur",
-        description: "Produit non trouvé.",
-        variant: "destructive",
+        description: "Produit non trouvé."
       });
       return;
     }
@@ -187,8 +189,7 @@ const ProductDetail: React.FC = () => {
     if (!selectedColor && availableColors.length > 0) {
       toast({
         title: "Erreur",
-        description: "Veuillez sélectionner une couleur.",
-        variant: "destructive",
+        description: "Veuillez sélectionner une couleur."
       });
       return;
     }
@@ -196,8 +197,7 @@ const ProductDetail: React.FC = () => {
     if (!selectedSize && availableSizes.length > 0) {
       toast({
         title: "Erreur",
-        description: "Veuillez sélectionner une taille.",
-        variant: "destructive",
+        description: "Veuillez sélectionner une taille."
       });
       return;
     }
@@ -207,6 +207,7 @@ const ProductDetail: React.FC = () => {
       text_back: textBack,
       design_id: designId,
       design_url: designUrl || uploadedDesignUrl,
+      selectedLotteries: selectedLotteries.map(l => l.id)
     };
 
     setIsAddingProductToCart(true);
@@ -220,22 +221,18 @@ const ProductDetail: React.FC = () => {
         color: selectedColor,
         size: selectedSize,
         image_url: product.image_url,
-        customization: {
-          ...customizationData,
-          selectedLotteries: selectedLotteries.map(l => l.id),
-        }
+        customization: customizationData
       });
 
       toast({
         title: "Succès",
-        description: "Produit ajouté au panier!",
+        description: "Produit ajouté au panier!"
       });
     } catch (error) {
       console.error("Error adding to cart:", error);
       toast({
         title: "Erreur",
-        description: "Erreur lors de l'ajout au panier.",
-        variant: "destructive",
+        description: "Erreur lors de l'ajout au panier."
       });
     } finally {
       setIsAddingProductToCart(false);
@@ -246,6 +243,7 @@ const ProductDetail: React.FC = () => {
     return <div>Chargement du produit...</div>;
   }
 
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
