@@ -19,14 +19,7 @@ const useToast = () => {
 
   return {
     toasts,
-    toast: (titleOrOptions: string | ToastProps, options?: Omit<ToastProps, "title">) => {
-      if (typeof titleOrOptions === 'string') {
-        return sonnerToast(titleOrOptions, options);
-      } else {
-        const { title, description, ...rest } = titleOrOptions;
-        return sonnerToast(title || "", { description, ...rest });
-      }
-    },
+    toast: (title: string, options?: Omit<ToastProps, "title">) => sonnerToast(title, options),
     dismiss: (toastId?: string) => sonnerToast.dismiss(toastId),
   };
 };

@@ -1,249 +1,53 @@
 
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
-
-export interface Database {
-  public: {
-    Tables: {
-      cart_items: {
-        Row: {
-          cart_session_id: string | null
-          cart_token_id: string | null
-          color: string | null
-          created_at: string
-          customization: Json | null
-          id: string
-          migrated: boolean | null
-          price: number | null
-          product_id: string | null
-          quantity: number | null
-          size: string | null
-        }
-        Insert: {
-          cart_session_id?: string | null
-          cart_token_id?: string | null
-          color?: string | null
-          created_at?: string
-          customization?: Json | null
-          id?: string
-          migrated?: boolean | null
-          price?: number | null
-          product_id?: string | null
-          quantity?: number | null
-          size?: string | null
-        }
-        Update: {
-          cart_session_id?: string | null
-          cart_token_id?: string | null
-          color?: string | null
-          created_at?: string
-          customization?: Json | null
-          id?: string
-          migrated?: boolean | null
-          price?: number | null
-          product_id?: string | null
-          quantity?: number | null
-          size?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cart_items_product_id_fkey"
-            columns: ["product_id"]
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      categories: {
-        Row: {
-          created_at: string
-          id: string
-          name: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string | null
-        }
-        Relationships: []
-      }
-      lotteries: {
-        Row: {
-          created_at: string
-          description: string | null
-          draw_date: string | null
-          goal: number | null
-          id: string
-          image_url: string | null
-          is_active: boolean | null
-          is_featured: boolean | null
-          participants: number | null
-          title: string | null
-          value: number | null
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          draw_date?: string | null
-          goal?: number | null
-          id?: string
-          image_url?: string | null
-          is_active?: boolean | null
-          is_featured?: boolean | null
-          participants?: number | null
-          title?: string | null
-          value?: number | null
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          draw_date?: string | null
-          goal?: number | null
-          id?: string
-          image_url?: string | null
-          is_active?: boolean | null
-          is_featured?: boolean | null
-          participants?: number | null
-          title?: string | null
-          value?: number | null
-        }
-        Relationships: []
-      }
-      products: {
-        Row: {
-          available_colors: string[] | null
-          available_sizes: string[] | null
-          category: string | null
-          created_at: string
-          description: string | null
-          id: string
-          image_url: string | null
-          is_customizable: boolean | null
-          name: string | null
-          price: number | null
-          rating: number | null
-          tickets_offered: number | null
-        }
-        Insert: {
-          available_colors?: string[] | null
-          available_sizes?: string[] | null
-          category?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          is_customizable?: boolean | null
-          name?: string | null
-          price?: number | null
-          rating?: number | null
-          tickets_offered?: number | null
-        }
-        Update: {
-          available_colors?: string[] | null
-          available_sizes?: string[] | null
-          category?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          is_customizable?: boolean | null
-          name?: string | null
-          price?: number | null
-          rating?: number | null
-          tickets_offered?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "products_category_fkey"
-            columns: ["category"]
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          full_name: string | null
-          id: string
-          updated_at: string | null
-          username: string | null
-          website: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          full_name?: string | null
-          id: string
-          updated_at?: string | null
-          username?: string | null
-          website?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          full_name?: string | null
-          id?: string
-          updated_at?: string | null
-          username?: string | null
-          website?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      [_ in never]: never
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
-
-// Types additionnels pour l'application
-
-// Type pour les loteries
-export interface LotteryItem {
+// Design
+export interface Design {
   id: string;
-  title: string;
-  value: number;
+  name: string;
   image_url: string;
-  description?: string;
-  draw_date?: string;
-  participants?: number;
-  goal?: number;
+  category: string;
   is_active?: boolean;
-  is_featured?: boolean;
-}
-
-// Type complet pour Lottery
-export interface Lottery extends LotteryItem {
   created_at?: string;
   updated_at?: string;
 }
 
-// Type pour les produits
+// PrintArea
+export interface PrintArea {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  side: 'front' | 'back';
+  // Add position_x and position_y as aliases for x and y
+  position_x?: number;
+  position_y?: number;
+}
+
+// Import the MockupColor type from mockup.types to resolve circular dependency
+import { MockupColor } from '@/types/mockup.types';
+
+// Mockup
+export interface Mockup {
+  id: string;
+  name: string;
+  category: string;
+  svg_front_url: string;
+  svg_back_url?: string;
+  price_a3: number;
+  price_a4: number;
+  price_a5: number;
+  price_a6: number;
+  text_price_front: number;
+  text_price_back: number;
+  print_areas: PrintArea[];
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  colors?: MockupColor[]; // Add colors property for mockup color variants
+}
+
+// Product
 export interface Product {
   id: string;
   name: string;
@@ -251,75 +55,134 @@ export interface Product {
   price: number;
   image_url: string;
   category: string;
-  rating?: number;
-  available_colors?: string[];
-  available_sizes?: string[];
-  is_customizable?: boolean;
-  tickets_offered?: number;
-  created_at?: string;
+  is_customizable: boolean;
+  available_colors: string[];
+  available_sizes: string[];
   color?: string;
+  tickets_offered?: number;
+  is_active?: boolean;
   mockup_id?: string;
-  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
-// Type pour les designs
-export interface Design {
+// Lottery
+export interface Lottery {
   id: string;
-  name: string;
-  category: string;
+  title: string;
+  description: string;
   image_url: string;
+  value: number;
+  goal: number;
+  participants: number;
+  draw_date: string;
   is_active?: boolean;
+  is_featured?: boolean;
   created_at?: string;
   updated_at?: string;
 }
 
-// Type pour les mockups
-export interface Mockup {
-  id: string;
-  name: string;
-  category: string;
-  svg_front_url: string;
-  svg_back_url?: string;
-  print_areas: PrintArea[];
-  colors?: any[];
-  price_a3: number;
-  price_a4: number;
-  price_a5: number;
-  price_a6: number;
-  text_price_front: number;
-  text_price_back: number;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// Type pour les zones d'impression
-export interface PrintArea {
-  id: string;
-  name: string;
-  width: number;
-  height: number;
-  position_x: number;
-  position_y: number;
-  side: 'front' | 'back';
-  x?: number; // Alias pour position_x
-  y?: number; // Alias pour position_y
-}
-
-// Type pour les éléments du panier
+// Cart Item
 export interface CartItem {
   productId: string;
   name: string;
   price: number;
   quantity: number;
-  color?: string;
-  size?: string;
+  color?: string | null;
+  size?: string | null;
   image_url: string;
   customization?: {
-    selectedLotteries?: string[];
-    text_front?: string;
-    text_back?: string;
-    design_id?: string;
-    design_url?: string;
+    designId: string;
+    designName?: string;
+    designUrl: string;
+    printPosition: 'front' | 'back';
+    printSize: string;
+    transform?: {
+      position: { x: number; y: number };
+      scale: number;
+      rotation: number;
+    };
+    text?: {
+      content: string;
+      font: string;
+      color: string;
+      printPosition: 'front' | 'back';
+      transform?: {
+        position: { x: number; y: number };
+        scale: number;
+        rotation: number;
+      };
+    };
   };
+  lotteries?: string[];
+}
+
+// Order
+export interface Order {
+  id: string;
+  user_id?: string;
+  guest_email?: string;
+  session_id?: string;
+  total_amount: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  payment_status?: 'pending' | 'paid' | 'failed';
+  payment_intent_id?: string;
+  shipping_first_name: string;
+  shipping_last_name: string;
+  shipping_email: string;
+  shipping_phone: string;
+  shipping_address: string;
+  shipping_city: string;
+  shipping_postal_code: string;
+  shipping_country: string;
+  delivery_notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// OrderItem
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  price: number;
+  customization?: {
+    designId: string;
+    designUrl: string;
+    printPosition: 'front' | 'back';
+    printSize: string;
+    text?: {
+      content: string;
+      font: string;
+      color: string;
+    };
+  };
+  created_at?: string;
+}
+
+// UserProfile
+export interface UserProfile {
+  id: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
+  avatar_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// CartSession
+export interface CartSession {
+  id: string;
+  user_id?: string;
+  guest_email?: string;
+  session_id: string;
+  created_at?: string;
+  updated_at?: string;
 }

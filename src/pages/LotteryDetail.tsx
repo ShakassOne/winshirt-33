@@ -9,10 +9,9 @@ import GlassCard from '@/components/ui/GlassCard';
 import ProductCard from '@/components/ui/ProductCard';
 import { CalendarIcon, Users, Clock, Gift, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { Slider } from "@/components/ui/slider";
-import { useCart } from '@/context/CartContext';
-import { toast } from '@/hooks/use-toast';
 
 const LotteryDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,8 +21,6 @@ const LotteryDetail = () => {
     minutes: number;
     seconds: number;
   }>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  
-  const { addItem } = useCart();
   
   const { data: lottery, isLoading: lotteryLoading, error: lotteryError } = useQuery({
     queryKey: ['lottery', id],
@@ -67,38 +64,6 @@ const LotteryDetail = () => {
     
     return () => clearInterval(interval);
   }, [lottery]);
-
-  // Fonction pour participer directement à partir de cette page en ajoutant un produit approprié au panier
-  const handleParticipate = () => {
-    if (!lottery || !relatedProducts || relatedProducts.length === 0) {
-      toast("Impossible de participer", {
-        description: "Aucun produit disponible pour cette loterie",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Sélectionner le premier produit qui offre des tickets
-    const product = relatedProducts[0];
-    
-    // Ajouter ce produit au panier avec cette loterie présélectionnée
-    addItem({
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      quantity: 1,
-      image_url: product.image_url,
-      color: product.available_colors && product.available_colors.length > 0 ? product.available_colors[0] : undefined,
-      size: product.available_sizes && product.available_sizes.length > 0 ? product.available_sizes[0] : undefined,
-      customization: {
-        selectedLotteries: [lottery.id]
-      }
-    });
-
-    toast("Produit ajouté au panier", {
-      description: `${product.name} a été ajouté avec un ticket pour ${lottery.title}. Procédez au paiement pour finaliser votre participation.`
-    });
-  };
 
   if (lotteryLoading) {
     return (
@@ -294,10 +259,7 @@ const LotteryDetail = () => {
                   </div>
                 
                   {lottery.is_active && (
-                    <Button 
-                      className="w-full bg-gradient-purple hover:opacity-90"
-                      onClick={handleParticipate}
-                    >
+                    <Button className="w-full bg-gradient-purple hover:opacity-90">
                       Participer maintenant
                     </Button>
                   )}
