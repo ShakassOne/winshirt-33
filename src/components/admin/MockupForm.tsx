@@ -122,6 +122,8 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
     const newArea: PrintArea = {
       id: `${Date.now()}`,
       side,
+      position_x: 100,
+      position_y: 100,
       x: 100,
       y: 100,
       width: 200,
@@ -141,9 +143,13 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
       if (area.id === areaId) {
         // Handle both x/y and position_x/position_y
         if (field === 'position_x') {
-          return { ...area, x: value };
+          return { ...area, position_x: value, x: value };
         } else if (field === 'position_y') {
-          return { ...area, y: value };
+          return { ...area, position_y: value, y: value };
+        } else if (field === 'x') {
+          return { ...area, x: value, position_x: value };
+        } else if (field === 'y') {
+          return { ...area, y: value, position_y: value };
         }
         return { ...area, [field]: value };
       }
@@ -192,8 +198,10 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
         name: area.name,
         width: area.width,
         height: area.height,
-        x: area.position_x !== undefined ? area.position_x : area.x,
-        y: area.position_y !== undefined ? area.position_y : area.y,
+        position_x: area.x !== undefined ? area.x : area.position_x,
+        position_y: area.y !== undefined ? area.y : area.position_y,
+        x: area.x !== undefined ? area.x : area.position_x,
+        y: area.y !== undefined ? area.y : area.position_y,
         side: area.side
       }));
 

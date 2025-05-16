@@ -22,7 +22,7 @@ export interface PrintArea {
   y?: number;
 }
 
-export interface MockupWithColors extends Mockup {
+export interface MockupWithColors extends Omit<Mockup, 'print_areas'> {
   colors: MockupColor[];
   print_areas?: PrintArea[];
   svg_front_url: string;
