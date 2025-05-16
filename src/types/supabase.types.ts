@@ -221,19 +221,6 @@ export interface Database {
   }
 }
 
-export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (Database["public"]["Tables"] & { Row: any })
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName]["Row"]
-  : PublicTableNameOrOptions extends keyof (Database["public"]["Tables"] & { Row: any })
-    ? (Database["public"]["Tables"] & { Row: any })[PublicTableNameOrOptions]["Row"]
-    : never
-
 // Types additionnels pour l'application
 
 // Type pour les loteries
