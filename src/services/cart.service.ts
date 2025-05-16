@@ -256,7 +256,7 @@ export const migrateCartToUser = async (userId: string, token: string) => {
       .update({ user_id: userId })
       .eq('id', tokenData.id);
       
-    if (updateError throw updateError;
+    if (updateError) throw updateError;
     
     // Check if there are other tokens for this user
     const { data: otherTokens, error: otherError } = await supabase
