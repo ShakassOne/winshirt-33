@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
 import { CartItem, Order, OrderItem } from "@/types/supabase.types";
@@ -59,13 +60,13 @@ export const createOrder = async (
   }
 };
 
-// Define a proper type for the customization data
+// Define a proper type for the customization data that's compatible with OrderItem
 export interface CustomizationType {
-  designId?: string;
+  designId: string;  // Changed from optional to required
   designName?: string;
-  designUrl?: string;
-  printPosition?: 'front' | 'back';
-  printSize?: string;
+  designUrl: string; // Changed from optional to required
+  printPosition: 'front' | 'back'; // Changed from optional to required
+  printSize: string; // Changed from optional to required
   transform?: {
     position: { x: number; y: number };
     scale: number;
@@ -75,7 +76,7 @@ export interface CustomizationType {
     content: string;
     font: string;
     color: string;
-    printPosition: 'front' | 'back';
+    printPosition?: 'front' | 'back';
     transform?: {
       position: { x: number; y: number };
       scale: number;
@@ -154,7 +155,9 @@ export const getOrderById = async (orderId: string): Promise<ExtendedOrder> => {
     const itemsWithDesigns = await Promise.all(
       orderItems.map(async (item) => {
         // Process customization data to ensure it's properly typed
-        const customization = item.customization ? (item.customization as unknown as CustomizationType) : null;
+        const customization = item.customization ? 
+          (item.customization as unknown as CustomizationType) : 
+          undefined;
         
         if (customization && customization.designId) {
           const { data: design } = await supabase

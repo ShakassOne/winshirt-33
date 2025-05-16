@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getOrderById, updateOrderStatus } from '@/services/order.service';
+import { getOrderById, updateOrderStatus, CustomizationType } from '@/services/order.service';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import {
@@ -39,33 +39,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
 import { CalendarIcon, PackageIcon, TruckIcon, CheckIcon, XIcon, InfoIcon, PrinterIcon } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
-
-// Type for the customization data
-interface CustomizationType {
-  designId?: string;
-  designName?: string;
-  designUrl?: string;
-  printPosition?: 'front' | 'back';
-  printSize?: string;
-  transform?: {
-    position: { x: number; y: number };
-    scale: number;
-    rotation: number;
-  };
-  text?: {
-    content: string;
-    font: string;
-    color: string;
-    printPosition: 'front' | 'back';
-    transform?: {
-      position: { x: number; y: number };
-      scale: number;
-      rotation: number;
-    };
-  };
-  color?: string;
-  size?: string;
-}
 
 const OrderDetail = () => {
   const { orderId } = useParams<{ orderId: string }>();
@@ -132,14 +105,14 @@ const OrderDetail = () => {
   };
 
   // Helper function to safely access customization data
-  const getCustomizationData = (customization: unknown): CustomizationType | null => {
-    if (!customization) return null;
+  const getCustomizationData = (customization: unknown): CustomizationType | undefined => {
+    if (!customization) return undefined;
     return customization as CustomizationType;
   };
 
   // Helper function to open a modal dialog
   const openModal = (modalId: string) => {
-    const dialog = document.getElementById(modalId) as HTMLDialogElement;
+    const dialog = document.getElementById(modalId) as HTMLDialogElement | null;
     if (dialog) dialog.showModal();
   };
 
@@ -548,11 +521,11 @@ const OrderDetail = () => {
             background: white !important;
             color: black !important;
           }
-          .bg-black\/40, .bg-white\/5, .bg-white\/10 {
+          .bg-black/40, .bg-white/5, .bg-white/10 {
             background: white !important;
             border: 1px solid #eee !important;
           }
-          .text-white\/60, .text-white\/70 {
+          .text-white/60, .text-white/70 {
             color: #444 !important;
           }
           * {
@@ -565,7 +538,7 @@ const OrderDetail = () => {
             margin: 1.5cm;
           }
         }
-      `}
+        `}
       </style>
     </div>
   );
