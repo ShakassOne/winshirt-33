@@ -16,6 +16,10 @@ import LotteriesAdmin from "./pages/admin/LotteriesAdmin";
 import MockupsAdmin from "./pages/admin/MockupsAdmin";
 import DesignsAdmin from "./pages/admin/DesignsAdmin";
 import ThemeSettings from "./pages/admin/ThemeSettings";
+import UsersAdmin from "./pages/admin/UsersAdmin";
+import OrdersAdmin from "./pages/admin/OrdersAdmin";
+import InventoryAdmin from "./pages/admin/InventoryAdmin";
+import WinnersAdmin from "./pages/admin/WinnersAdmin";
 import { useScrollReset } from "./hooks/useScrollReset";
 import { ThemeProvider } from "./components/theme-provider";
 import { CartProvider } from "./context/CartContext";
@@ -23,6 +27,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import Account from "./pages/Account";
 
 // ScrollToTop component to reset scroll position
 const ScrollToTop = () => {
@@ -59,6 +64,7 @@ const App = () => (
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/payment/:orderId" element={<Payment />} />
               <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+              <Route path="/account" element={<Account />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminDashboard />} />
@@ -67,6 +73,10 @@ const App = () => (
               <Route path="/admin/mockups" element={<MockupsAdmin />} />
               <Route path="/admin/designs" element={<DesignsAdmin />} />
               <Route path="/admin/theme" element={<ThemeSettings />} />
+              <Route path="/admin/users" element={<UsersAdmin />} />
+              <Route path="/admin/orders" element={<OrdersAdmin />} />
+              <Route path="/admin/inventory" element={<InventoryAdmin />} />
+              <Route path="/admin/winners" element={<WinnersAdmin />} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
