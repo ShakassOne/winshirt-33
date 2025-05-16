@@ -135,9 +135,33 @@ export const getOrderById = async (orderId: string): Promise<ExtendedOrder> => {
       
     if (itemsError) throw itemsError;
     
+    // Process the items to convert customization from JSON
+    const processedItems: ExtendedOrderItem[] = orderItems.map(item => {
+      // Parse customization if it's a string
+      let parsedCustomization: CustomizationType | undefined = undefined;
+      
+      if (item.customization) {
+        if (typeof item.customization === 'string') {
+          try {
+            parsedCustomization = JSON.parse(item.customization);
+          } catch (e) {
+            console.error("Error parsing customization:", e);
+          }
+        } else {
+          // It's already an object
+          parsedCustomization = item.customization as unknown as CustomizationType;
+        }
+      }
+      
+      return {
+        ...item,
+        customization: parsedCustomization
+      };
+    });
+    
     return {
       ...order,
-      items: orderItems
+      items: processedItems
     };
   } catch (error) {
     console.error("Error in getOrderById:", error);
@@ -154,7 +178,28 @@ export const fetchAllOrders = async (): Promise<Order[]> => {
       
     if (error) throw error;
     
-    return orders;
+    // Ensure the order status is one of the valid types
+    const typedOrders = orders.map(order => {
+      // Make sure the status is one of the valid types
+      let safeStatus: Order['status'] = 'pending'; // Default to pending
+      
+      if (
+        order.status === 'pending' || 
+        order.status === 'processing' || 
+        order.status === 'shipped' || 
+        order.status === 'delivered' || 
+        order.status === 'cancelled'
+      ) {
+        safeStatus = order.status as Order['status'];
+      }
+      
+      return {
+        ...order,
+        status: safeStatus
+      };
+    });
+    
+    return typedOrders;
   } catch (error) {
     console.error("Error in fetchAllOrders:", error);
     throw error;
