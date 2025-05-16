@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Eye } from 'lucide-react';
+import { updateOrderStatus } from '@/services/order.service';
 import { supabase } from '@/integrations/supabase/client';
 
 type Order = {
@@ -50,8 +52,9 @@ type Order = {
 const OrdersAdmin = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentTab, setCurrentTab] = useState('all');
+  const navigate = useNavigate();
 
-  const { data: orders, isLoading, error } = useQuery({
+  const { data: orders, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-orders'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -91,11 +94,30 @@ const OrdersAdmin = () => {
 
   const filteredOrders = filterOrdersBySearch(filterOrdersByStatus(orders, currentTab));
 
-  const updateOrderStatus = (orderId: string, status: string) => {
-    toast({
-      title: "Statut modifié",
-      description: `Commande ${orderId} mise à jour avec le statut: ${status}`,
-    });
+  const handleOrderStatusUpdate = async (orderId: string, status: string) => {
+    try {
+      await updateOrderStatus(
+        orderId,
+        status as 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+      );
+      
+      toast({
+        title: "Statut modifié",
+        description: `Commande ${orderId} mise à jour avec le statut: ${status}`,
+      });
+      
+      refetch();
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut de la commande",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const viewOrderDetails = (orderId: string) => {
+    navigate(`/admin/orders/${orderId}`);
   };
 
   const getStatusBadgeClass = (status: string) => {
@@ -220,34 +242,44 @@ const OrdersAdmin = () => {
                               )}
                             </TableCell>
                             <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    className="flex items-center gap-1"
-                                  >
-                                    Actions <ChevronDown className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="bg-black/90 border-white/10">
-                                  <DropdownMenuItem onClick={() => toast({ title: "Fonctionnalité à venir" })}>
-                                    Voir les détails
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'processing')}>
-                                    Marquer en traitement
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'shipped')}>
-                                    Marquer comme expédiée
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'delivered')}>
-                                    Marquer comme livrée
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'cancelled')}>
-                                    Annuler la commande
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => viewOrderDetails(order.id)}
+                                  className="flex items-center gap-1"
+                                >
+                                  <Eye className="h-4 w-4" /> Détails
+                                </Button>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      className="flex items-center gap-1"
+                                    >
+                                      Actions <ChevronDown className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="bg-black/90 border-white/10">
+                                    <DropdownMenuItem onClick={() => viewOrderDetails(order.id)}>
+                                      Voir les détails
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleOrderStatusUpdate(order.id, 'processing')}>
+                                      Marquer en traitement
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleOrderStatusUpdate(order.id, 'shipped')}>
+                                      Marquer comme expédiée
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleOrderStatusUpdate(order.id, 'delivered')}>
+                                      Marquer comme livrée
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleOrderStatusUpdate(order.id, 'cancelled')}>
+                                      Annuler la commande
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))

@@ -18,6 +18,7 @@ import DesignsAdmin from "./pages/admin/DesignsAdmin";
 import ThemeSettings from "./pages/admin/ThemeSettings";
 import UsersAdmin from "./pages/admin/UsersAdmin";
 import OrdersAdmin from "./pages/admin/OrdersAdmin";
+import OrderDetail from "./pages/admin/OrderDetail";
 import InventoryAdmin from "./pages/admin/InventoryAdmin";
 import WinnersAdmin from "./pages/admin/WinnersAdmin";
 import { useScrollReset } from "./hooks/useScrollReset";
@@ -75,6 +76,7 @@ const App = () => (
               <Route path="/admin/theme" element={<ThemeSettings />} />
               <Route path="/admin/users" element={<UsersAdmin />} />
               <Route path="/admin/orders" element={<OrdersAdmin />} />
+              <Route path="/admin/orders/:orderId" element={<OrderDetail />} />
               <Route path="/admin/inventory" element={<InventoryAdmin />} />
               <Route path="/admin/winners" element={<WinnersAdmin />} />
               
