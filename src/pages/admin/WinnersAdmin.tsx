@@ -28,6 +28,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Award, Mail } from 'lucide-react';
 
+// Update the Winner type to better match what we'll get from the database
 type Winner = {
   id: string;
   lottery_id: string;
@@ -39,29 +40,57 @@ type Winner = {
     value: number;
     image_url: string;
   };
-  profile: {
-    first_name: string;
-    last_name: string;
-    email: string;
+  profile?: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
     avatar_url?: string;
-  };
+  } | null;
 };
 
 const WinnersAdmin = () => {
   const { data: winners, isLoading, error } = useQuery({
     queryKey: ['admin-winners'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get the winners with lottery data
+      const { data: winnersData, error: winnersError } = await supabase
         .from('winners')
         .select(`
           *,
-          lottery:lottery_id (title, value, image_url),
-          profile:user_id (first_name, last_name, email, avatar_url)
+          lottery:lottery_id (title, value, image_url)
         `)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data as Winner[];
+      if (winnersError) throw winnersError;
+      
+      // If we have winners data, fetch the profiles separately for each winner
+      if (winnersData && winnersData.length > 0) {
+        const enhancedWinners = await Promise.all(
+          winnersData.map(async (winner) => {
+            if (winner.user_id) {
+              // Get profile information for each winner
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', winner.user_id)
+                .single();
+                
+              return {
+                ...winner,
+                profile: profileData || null
+              };
+            }
+            return {
+              ...winner,
+              profile: null
+            };
+          })
+        );
+        
+        return enhancedWinners as Winner[];
+      }
+      
+      return [] as Winner[];
     }
   });
 
@@ -153,15 +182,15 @@ const WinnersAdmin = () => {
                                 <Avatar className="h-9 w-9 border border-white/10">
                                   <AvatarImage src={winner.profile?.avatar_url} />
                                   <AvatarFallback className="bg-yellow-500/30 text-yellow-500">
-                                    {winner.profile?.first_name?.[0]}
-                                    {winner.profile?.last_name?.[0]}
+                                    {winner.profile?.first_name?.[0] || '?'}
+                                    {winner.profile?.last_name?.[0] || ''}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div>
                                   <div className="font-medium">
-                                    {winner.profile?.first_name} {winner.profile?.last_name}
+                                    {winner.profile?.first_name || 'Utilisateur'} {winner.profile?.last_name || 'Inconnu'}
                                   </div>
-                                  <div className="text-xs text-white/60">{winner.profile?.email}</div>
+                                  <div className="text-xs text-white/60">{winner.profile?.email || 'Email non disponible'}</div>
                                 </div>
                               </div>
                             </TableCell>
@@ -193,7 +222,8 @@ const WinnersAdmin = () => {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => contactWinner(winner.profile?.email)}
+                                  onClick={() => contactWinner(winner.profile?.email || '')}
+                                  disabled={!winner.profile?.email}
                                 >
                                   <Mail className="h-4 w-4 mr-1" /> Contacter
                                 </Button>
