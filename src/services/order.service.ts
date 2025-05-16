@@ -60,7 +60,37 @@ export const createOrder = async (
   }
 };
 
-export const getOrderById = async (orderId: string) => {
+// Define a proper type for the order item with design
+interface ExtendedOrderItem extends OrderItem {
+  design?: {
+    id: string;
+    name: string;
+    image_url: string;
+    category: string;
+    is_active?: boolean;
+    created_at?: string;
+    updated_at?: string;
+  };
+  products?: {
+    id: string;
+    name: string;
+    description: string;
+    image_url: string;
+    price: number;
+    category: string;
+    is_customizable: boolean;
+    available_colors: string[];
+    available_sizes: string[];
+    mockup_id: string;
+  };
+}
+
+// Define a type for the order with items
+interface ExtendedOrder extends Order {
+  items: ExtendedOrderItem[];
+}
+
+export const getOrderById = async (orderId: string): Promise<ExtendedOrder> => {
   try {
     // Fetch the order details
     const { data: order, error: orderError } = await supabase
@@ -96,26 +126,58 @@ export const getOrderById = async (orderId: string) => {
     // For each customized item, fetch the design details if available
     const itemsWithDesigns = await Promise.all(
       orderItems.map(async (item) => {
-        if (item.customization && item.customization.designId) {
+        // Cast item.customization to a proper type to avoid type errors
+        const customization = item.customization as {
+          designId?: string;
+          designName?: string;
+          designUrl?: string;
+          printPosition?: 'front' | 'back';
+          printSize?: string;
+          transform?: {
+            position: { x: number; y: number };
+            scale: number;
+            rotation: number;
+          };
+          text?: {
+            content: string;
+            font: string;
+            color: string;
+            printPosition: 'front' | 'back';
+            transform?: {
+              position: { x: number; y: number };
+              scale: number;
+              rotation: number;
+            };
+          };
+          color?: string;
+          size?: string;
+        } | null;
+        
+        if (customization && customization.designId) {
           const { data: design } = await supabase
             .from('designs')
             .select('*')
-            .eq('id', item.customization.designId)
+            .eq('id', customization.designId)
             .single();
             
           return {
             ...item,
+            customization, // Use the properly typed customization
             design: design || null
-          };
+          } as ExtendedOrderItem;
         }
-        return item;
+        
+        return {
+          ...item,
+          customization // Use the properly typed customization
+        } as ExtendedOrderItem;
       })
     );
     
     return {
       ...order,
       items: itemsWithDesigns
-    };
+    } as ExtendedOrder;
   } catch (error) {
     console.error("Error in getOrderById:", error);
     throw error;
