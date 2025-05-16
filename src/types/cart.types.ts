@@ -11,7 +11,8 @@ export interface CartContextType {
   error: string | null;
   total: number;
   itemCount: number;
-  sessionId: string;
+  cartToken: string;
+  currentUser: { id: string } | null;
 }
 
 export interface CheckoutFormData {
