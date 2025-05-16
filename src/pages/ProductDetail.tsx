@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useShoppingCart } from '@/context/ShoppingCartContext';
@@ -26,7 +27,7 @@ import { cn } from "@/lib/utils"
 import { ExternalLink } from 'lucide-react';
 
 const ProductDetail: React.FC = () => {
-  const { productId } = useParams<{ productId: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addItemToCart } = useShoppingCart();
   const { toast } = useToast();
@@ -57,49 +58,80 @@ const ProductDetail: React.FC = () => {
   const [isMockupAvailable, setIsMockupAvailable] = useState<boolean>(false);
   const [isDesignSelectionOpen, setIsDesignSelectionOpen] = useState<boolean>(false);
   const [isLotterySelectionOpen, setIsLotterySelectionOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
-      if (productId) {
-        const fetchedProduct = await fetchProductById(productId);
-        if (fetchedProduct) {
-          setProduct(fetchedProduct);
-          setAvailableColors(fetchedProduct.available_colors || []);
-          setAvailableSizes(fetchedProduct.available_sizes || []);
-          setIsCustomizationEnabled(fetchedProduct.is_customizable || false);
-        } else {
-          toast("Erreur", {
-            description: "Produit non trouvé."
-          });
-          navigate('/products');
+      setIsLoading(true);
+      try {
+        if (id) {
+          const fetchedProduct = await fetchProductById(id);
+          if (fetchedProduct) {
+            setProduct(fetchedProduct);
+            setAvailableColors(fetchedProduct.available_colors || []);
+            setAvailableSizes(fetchedProduct.available_sizes || []);
+            setIsCustomizationEnabled(fetchedProduct.is_customizable || false);
+          } else {
+            toast({
+              title: "Erreur",
+              description: "Produit non trouvé."
+            });
+            navigate('/products');
+          }
         }
+      } catch (err) {
+        console.error("Error fetching product:", err);
+        setError("Erreur lors du chargement du produit");
+        toast({
+          title: "Erreur",
+          description: "Erreur lors du chargement du produit."
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchProduct();
-  }, [productId, navigate, toast]);
+  }, [id, navigate, toast]);
 
   useEffect(() => {
     const fetchLotteries = async () => {
-      const activeLotteries = await fetchAllLotteries();
-      // Filter active lotteries
-      const filteredLotteries = activeLotteries.filter(lottery => lottery.is_active);
-      setLotteries(filteredLotteries || []);
+      try {
+        const activeLotteries = await fetchAllLotteries();
+        // Filter active lotteries
+        const filteredLotteries = activeLotteries.filter(lottery => lottery.is_active);
+        setLotteries(filteredLotteries || []);
+      } catch (err) {
+        console.error("Error fetching lotteries:", err);
+        toast({
+          title: "Erreur",
+          description: "Erreur lors du chargement des loteries."
+        });
+      }
     };
 
     fetchLotteries();
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     const fetchDesigns = async () => {
-      const activeDesigns = await fetchAllDesigns();
-      // Filter active designs
-      const filteredDesigns = activeDesigns.filter(design => design.is_active);
-      setDesigns(filteredDesigns || []);
+      try {
+        const activeDesigns = await fetchAllDesigns();
+        // Filter active designs
+        const filteredDesigns = activeDesigns.filter(design => design.is_active);
+        setDesigns(filteredDesigns || []);
+      } catch (err) {
+        console.error("Error fetching designs:", err);
+        toast({
+          title: "Erreur",
+          description: "Erreur lors du chargement des designs."
+        });
+      }
     };
 
     fetchDesigns();
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (product?.mockup_id) {
@@ -178,21 +210,24 @@ const ProductDetail: React.FC = () => {
 
   const handleAddToCart = async () => {
     if (!product) {
-      toast("Erreur", {
+      toast({
+        title: "Erreur",
         description: "Produit non trouvé."
       });
       return;
     }
 
     if (!selectedColor && availableColors.length > 0) {
-      toast("Erreur", {
+      toast({
+        title: "Erreur",
         description: "Veuillez sélectionner une couleur."
       });
       return;
     }
 
     if (!selectedSize && availableSizes.length > 0) {
-      toast("Erreur", {
+      toast({
+        title: "Erreur",
         description: "Veuillez sélectionner une taille."
       });
       return;
@@ -220,12 +255,14 @@ const ProductDetail: React.FC = () => {
         customization: customizationData
       });
 
-      toast("Succès", {
+      toast({
+        title: "Succès",
         description: "Produit ajouté au panier!"
       });
     } catch (error) {
       console.error("Error adding to cart:", error);
-      toast("Erreur", {
+      toast({
+        title: "Erreur",
         description: "Erreur lors de l'ajout au panier."
       });
     } finally {
@@ -233,10 +270,26 @@ const ProductDetail: React.FC = () => {
     }
   };
 
-  if (!product) {
-    return <div>Chargement du produit...</div>;
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-32 text-center">
+        <div className="flex flex-col items-center justify-center">
+          <div className="w-12 h-12 rounded-full border-4 border-t-transparent border-primary animate-spin mb-4"></div>
+          <p className="text-lg">Chargement du produit...</p>
+        </div>
+      </div>
+    );
   }
 
+  if (error || !product) {
+    return (
+      <div className="container mx-auto px-4 py-32 text-center">
+        <h2 className="text-xl font-semibold mb-4">Une erreur est survenue</h2>
+        <p className="mb-8">{error || "Impossible de charger les détails du produit"}</p>
+        <Button onClick={() => navigate('/products')}>Retourner aux produits</Button>
+      </div>
+    );
+  }
   
   return (
     <div className="container mx-auto px-4 py-8">
