@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -107,6 +106,7 @@ const OrderDetail = () => {
     return customization as CustomizationType;
   };
 
+  // Corrected comparison for order status
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -340,7 +340,12 @@ const OrderDetail = () => {
                             {customization?.designUrl && (
                               <p>
                                 <button 
-                                  onClick={() => document.getElementById(`modal-${item.id}`)?.showModal()}
+                                  onClick={() => {
+                                    const modal = document.getElementById(`modal-${item.id}`);
+                                    if (modal instanceof HTMLDialogElement) {
+                                      modal.showModal();
+                                    }
+                                  }}
                                   className="text-winshirt-blue underline"
                                 >
                                   Voir la personnalisation

@@ -1,221 +1,234 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import GlassCard from '@/components/ui/GlassCard';
-import { Trophy, User, X, Check } from 'lucide-react';
+import { Loader2, Trophy } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { getLotteryEntriesWithUserDetails, setLotteryWinner } from '@/services/api.service';
+import { Confetti } from '@/components/ui/Confetti';
 import { toast } from 'sonner';
-import { getLotteryEntries, setLotteryWinner } from '@/services/api.service';
-import { useQuery } from '@tanstack/react-query';
+
+interface Participant {
+  id: string;
+  user_id: string;
+  lottery_id: string;
+  order_item_id: string;
+  created_at: string;
+  name: string;
+  email: string;
+  profiles?: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+  };
+}
 
 interface LotteryDrawProps {
   isOpen: boolean;
   onClose: () => void;
   lotteryId: string;
-  lotteryTitle: string;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
-interface Participant {
-  id: string;
-  user_id: string | null;
-  email?: string;
-  name?: string;
-}
-
-const LotteryDraw: React.FC<LotteryDrawProps> = ({ isOpen, onClose, lotteryId, lotteryTitle, onSuccess }) => {
-  const [drawState, setDrawState] = useState<'ready' | 'drawing' | 'complete'>('ready');
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [winnerId, setWinnerId] = useState<string | null>(null);
+const LotteryDraw = ({ isOpen, onClose, lotteryId, onSuccess }: LotteryDrawProps) => {
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [winner, setWinner] = useState<Participant | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const { toast: toastNotification } = useToast();
+  
   const intervalRef = useRef<number | null>(null);
-
-  const { data: participants, isLoading, error } = useQuery({
-    queryKey: ['lotteryEntries', lotteryId],
-    queryFn: () => getLotteryEntries(lotteryId),
-    enabled: isOpen,
-  });
-
-  // Clean up interval on unmount
+  
+  // Fetch participants
   useEffect(() => {
+    const fetchParticipants = async () => {
+      if (isOpen && lotteryId) {
+        setIsLoading(true);
+        try {
+          const entries = await getLotteryEntriesWithUserDetails(lotteryId);
+          setParticipants(entries);
+        } catch (error) {
+          console.error('Error fetching lottery entries:', error);
+          toastNotification({
+            title: "Erreur",
+            description: "Impossible de charger les participants à la loterie",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    fetchParticipants();
+    
     return () => {
-      if (intervalRef.current !== null) {
+      if (intervalRef.current) {
         window.clearInterval(intervalRef.current);
       }
     };
-  }, []);
-
+  }, [isOpen, lotteryId, toastNotification]);
+  
   const startDraw = () => {
-    if (!participants || participants.length === 0) {
-      toast.error('Aucun participant à cette loterie');
-      return;
-    }
-
-    setDrawState('drawing');
-
-    // Shuffle effect
-    let shuffleCount = 0;
+    if (participants.length === 0) return;
+    
+    setIsDrawing(true);
+    setSelectedIndex(Math.floor(Math.random() * participants.length));
+    
+    // Start animation
     intervalRef.current = window.setInterval(() => {
       setSelectedIndex(Math.floor(Math.random() * participants.length));
-      shuffleCount += 1;
-
-      // After 30 shuffles, slow down
-      if (shuffleCount === 30) {
-        window.clearInterval(intervalRef.current!);
-        intervalRef.current = window.setInterval(() => {
-          setSelectedIndex(Math.floor(Math.random() * participants.length));
-          shuffleCount += 1;
-
-          // After 40 shuffles, slow down more
-          if (shuffleCount === 40) {
-            window.clearInterval(intervalRef.current!);
-            intervalRef.current = window.setInterval(() => {
-              setSelectedIndex(Math.floor(Math.random() * participants.length));
-              shuffleCount += 1;
-
-              // After 50 shuffles, stop and select winner
-              if (shuffleCount === 50) {
-                window.clearInterval(intervalRef.current!);
-                const finalIndex = Math.floor(Math.random() * participants.length);
-                setSelectedIndex(finalIndex);
-                setWinnerId(participants[finalIndex].id);
-                setDrawState('complete');
-              }
-            }, 300); // Even slower
-          }
-        }, 150); // Slower
+    }, 100);
+    
+    // Stop after 3 seconds and select winner
+    setTimeout(() => {
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
-    }, 80); // Fast
+      
+      const winnerIndex = Math.floor(Math.random() * participants.length);
+      setSelectedIndex(winnerIndex);
+      setWinner(participants[winnerIndex]);
+      setShowConfetti(true);
+      
+      // Hide confetti after 5 seconds
+      setTimeout(() => {
+        setShowConfetti(false);
+      }, 5000);
+    }, 3000);
   };
-
+  
   const confirmWinner = async () => {
-    if (!winnerId) return;
-
+    if (!winner) return;
+    
     try {
-      await setLotteryWinner(lotteryId, winnerId);
-      toast.success('Gagnant enregistré avec succès!');
-      onSuccess();
+      await setLotteryWinner(lotteryId, winner.id);
+      
+      toast.success("Le gagnant a été enregistré avec succès !");
+      
+      if (onSuccess) {
+        onSuccess();
+      }
+      
       onClose();
     } catch (error) {
-      console.error('Error setting winner:', error);
-      toast.error('Erreur lors de l\'enregistrement du gagnant');
+      console.error('Error setting lottery winner:', error);
+      toastNotification({
+        title: "Erreur",
+        description: "Impossible d'enregistrer le gagnant",
+        variant: "destructive",
+      });
     }
   };
-
-  if (!isOpen) return null;
-
+  
+  const resetDraw = () => {
+    setIsDrawing(false);
+    setSelectedIndex(null);
+    setWinner(null);
+  };
+  
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/50">
-      <div className="w-full max-w-3xl p-6 animate-in zoom-in-95">
-        <GlassCard className="p-6 relative overflow-hidden">
-          {/* Close button */}
-          <button 
-            onClick={onClose}
-            className="absolute top-4 right-4 p-1 rounded-full bg-white/10 hover:bg-white/20"
-          >
-            <X className="h-5 w-5" />
-          </button>
-
-          {/* Header */}
-          <div className="text-center mb-6">
-            <Trophy className="h-12 w-12 text-yellow-400 mx-auto mb-2" />
-            <h2 className="text-2xl font-bold mb-1">Tirage au sort</h2>
-            <p className="text-white/70">Loterie: {lotteryTitle}</p>
-          </div>
-
-          {isLoading && (
-            <div className="text-center py-10">
-              <p>Chargement des participants...</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="text-center py-10">
-              <p className="text-red-500">Erreur lors du chargement des participants</p>
-              <Button onClick={onClose} className="mt-4">Fermer</Button>
-            </div>
-          )}
-
-          {participants && participants.length === 0 && (
-            <div className="text-center py-10">
-              <p>Aucun participant à cette loterie</p>
-              <Button onClick={onClose} className="mt-4">Fermer</Button>
-            </div>
-          )}
-
-          {participants && participants.length > 0 && (
-            <>
-              {/* Participants grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-6 max-h-64 overflow-y-auto p-2">
-                {participants.map((participant, index) => (
-                  <div 
-                    key={participant.id}
-                    className={`p-2 rounded-lg flex flex-col items-center justify-center text-center 
-                      ${index === selectedIndex 
-                        ? 'bg-winshirt-purple/80 ring-2 ring-winshirt-purple animate-pulse shadow-lg' 
-                        : 'bg-white/10'}`}
-                  >
-                    <User className="h-8 w-8 mb-2" />
-                    <p className="text-xs truncate w-full">
-                      {participant.name || participant.email || 'Participant #' + (index + 1)}
-                    </p>
-                  </div>
-                ))}
+    <>
+      {showConfetti && <Confetti />}
+      
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="bg-black/90 backdrop-blur-xl border-white/20 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">
+              Tirage au sort de la loterie
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-white/70" />
+                <p className="ml-2">Chargement des participants...</p>
               </div>
-
-              {/* Selected participant */}
-              {drawState !== 'ready' && (
-                <div className="mb-6 text-center p-4 bg-white/5 rounded-lg">
-                  <p className="text-lg mb-2">
-                    {drawState === 'drawing' ? 'Sélection en cours...' : 'Gagnant sélectionné!'}
-                  </p>
-                  <div className="p-3 rounded-lg inline-block bg-winshirt-purple/30">
-                    <User className="h-10 w-10 mx-auto mb-2" />
-                    <p className="font-bold">
-                      {participants[selectedIndex]?.name || 
-                       participants[selectedIndex]?.email || 
-                       'Participant #' + (selectedIndex + 1)}
+            ) : participants.length === 0 ? (
+              <div className="text-center py-8">
+                <p>Aucun participant à cette loterie</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {!winner ? (
+                  <>
+                    <div className="text-center mb-4">
+                      <p className="text-lg">{participants.length} participants</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 py-4">
+                      {participants.map((participant, index) => (
+                        <div 
+                          key={participant.id}
+                          className={`
+                            p-3 rounded-lg border text-center
+                            ${selectedIndex === index ? 'border-winshirt-purple bg-winshirt-purple/30 scale-110' : 'border-white/20 bg-black/30'}
+                            transition-all duration-200
+                          `}
+                        >
+                          <div className="font-medium truncate">{participant.name}</div>
+                          <div className="text-xs text-white/70 truncate">{participant.email}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <div className="w-32 h-32 rounded-full bg-winshirt-purple/30 flex items-center justify-center mb-6">
+                      <Trophy className="h-16 w-16 text-yellow-500" />
+                    </div>
+                    
+                    <h3 className="text-2xl font-bold mb-2">Félicitations !</h3>
+                    <p className="text-xl mb-1">{winner.name}</p>
+                    <p className="text-white/70 mb-6">{winner.email}</p>
+                    
+                    <p className="text-center text-white/70 max-w-md mb-4">
+                      Ce participant a été sélectionné comme le gagnant de cette loterie.
+                      Confirmez pour enregistrer ce résultat ou tirez à nouveau.
                     </p>
                   </div>
-                </div>
-              )}
-
-              {/* Controls */}
-              <div className="flex justify-center space-x-4">
-                {drawState === 'ready' && (
-                  <Button onClick={startDraw} className="bg-gradient-purple">
-                    <Trophy className="mr-2 h-4 w-4" />
-                    Lancer le tirage
-                  </Button>
                 )}
-                
-                {drawState === 'drawing' && (
-                  <Badge variant="outline" className="bg-white/10 px-3 py-1 text-md animate-pulse">
-                    Tirage en cours...
-                  </Badge>
-                )}
-                
-                {drawState === 'complete' && (
-                  <div className="flex gap-4">
-                    <Button onClick={() => {
-                      setDrawState('ready');
-                      setWinnerId(null);
-                    }} variant="outline">
-                      Recommencer
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-between">
+            <div>
+              <Button variant="outline" onClick={onClose}>
+                Annuler
+              </Button>
+            </div>
+            
+            <div className="flex gap-2">
+              {!isLoading && participants.length > 0 && (
+                winner ? (
+                  <>
+                    <Button variant="outline" onClick={resetDraw}>
+                      Nouveau tirage
                     </Button>
-                    <Button onClick={confirmWinner}>
-                      <Check className="mr-2 h-4 w-4" />
+                    <Button variant="default" onClick={confirmWinner}>
                       Confirmer le gagnant
                     </Button>
-                  </div>
-                )}
-                
-                <Button onClick={onClose} variant="ghost">Annuler</Button>
-              </div>
-            </>
-          )}
-        </GlassCard>
-      </div>
-    </div>
+                  </>
+                ) : (
+                  <Button 
+                    variant="default"
+                    onClick={startDraw}
+                    disabled={isDrawing}
+                  >
+                    {isDrawing ? 'Tirage en cours...' : 'Lancer le tirage'}
+                  </Button>
+                )
+              )}
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

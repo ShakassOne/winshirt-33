@@ -1,6 +1,39 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Design, Lottery, Mockup, Product } from "@/types/supabase.types";
 
+// Function to upload a file to Supabase storage
+export const uploadFileToStorage = async (file: File, folder: string = 'uploads'): Promise<string> => {
+  try {
+    // Create a unique file name with timestamp
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+    const filePath = `${folder}/${fileName}`;
+    
+    // Upload the file to Supabase storage
+    const { data, error } = await supabase.storage
+      .from('public')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+      
+    if (error) {
+      console.error("Error uploading file:", error);
+      throw error;
+    }
+    
+    // Get the public URL for the uploaded file
+    const { data: { publicUrl } } = supabase.storage
+      .from('public')
+      .getPublicUrl(filePath);
+      
+    return publicUrl;
+  } catch (error) {
+    console.error("Error in uploadFileToStorage:", error);
+    throw error;
+  }
+};
+
 // Function to fetch all designs
 export const fetchAllDesigns = async (): Promise<Design[]> => {
   try {
@@ -313,6 +346,26 @@ export const fetchAllLotteries = async (): Promise<Lottery[]> => {
   }
 };
 
+// Function to fetch featured lotteries
+export const fetchFeaturedLotteries = async (): Promise<Lottery[]> => {
+  try {
+    const { data: lotteries, error } = await supabase
+      .from('lotteries')
+      .select('*')
+      .eq('is_featured', true)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+    return lotteries || [];
+  } catch (error) {
+    console.error("Error fetching featured lotteries:", error);
+    throw error;
+  }
+};
+
 // Function to fetch a single lottery by ID
 export const fetchLotteryById = async (id: string): Promise<Lottery | null> => {
   try {
@@ -405,6 +458,31 @@ export const getLotteryEntries = async (lotteryId: string) => {
     return data;
   } catch (error) {
     console.error('Error fetching lottery entries:', error);
+    throw error;
+  }
+};
+
+// Function to get lottery entries with user details
+export const getLotteryEntriesWithUserDetails = async (lotteryId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('lottery_entries')
+      .select(`
+        *,
+        profiles:user_id(first_name, last_name, email)
+      `)
+      .eq('lottery_id', lotteryId);
+    
+    if (error) throw error;
+    
+    // Transform data to add name and email fields for easy access
+    return data.map(entry => ({
+      ...entry,
+      name: entry.profiles ? `${entry.profiles.first_name || ''} ${entry.profiles.last_name || ''}`.trim() : 'Anonyme',
+      email: entry.profiles ? entry.profiles.email : 'Non disponible'
+    }));
+  } catch (error) {
+    console.error('Error fetching lottery entries with user details:', error);
     throw error;
   }
 };
