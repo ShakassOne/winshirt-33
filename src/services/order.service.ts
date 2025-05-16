@@ -58,6 +58,24 @@ export interface ExtendedOrder extends Order {
   items?: ExtendedOrderItem[];
 }
 
+// Helper function to validate order status
+const validateOrderStatus = (status: string): Order['status'] => {
+  const validStatuses: Order['status'][] = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+  return validStatuses.includes(status as Order['status']) 
+    ? status as Order['status'] 
+    : 'pending';
+};
+
+// Helper function to validate payment status
+const validatePaymentStatus = (status: string | null | undefined): Order['payment_status'] => {
+  if (!status) return 'pending';
+  
+  const validStatuses: Order['payment_status'][] = ['pending', 'paid', 'failed'];
+  return validStatuses.includes(status as Order['payment_status']) 
+    ? status as Order['payment_status'] 
+    : 'pending';
+};
+
 export const createOrder = async (
   checkoutData: CheckoutFormData,
   items: CartItem[],
@@ -159,8 +177,11 @@ export const getOrderById = async (orderId: string): Promise<ExtendedOrder> => {
       };
     });
     
+    // Validate the status fields against our type definitions
     return {
       ...order,
+      status: validateOrderStatus(order.status),
+      payment_status: validatePaymentStatus(order.payment_status),
       items: processedItems
     };
   } catch (error) {
@@ -180,22 +201,10 @@ export const fetchAllOrders = async (): Promise<Order[]> => {
     
     // Ensure the order status is one of the valid types
     const typedOrders = orders.map(order => {
-      // Make sure the status is one of the valid types
-      let safeStatus: Order['status'] = 'pending'; // Default to pending
-      
-      if (
-        order.status === 'pending' || 
-        order.status === 'processing' || 
-        order.status === 'shipped' || 
-        order.status === 'delivered' || 
-        order.status === 'cancelled'
-      ) {
-        safeStatus = order.status as Order['status'];
-      }
-      
       return {
         ...order,
-        status: safeStatus
+        status: validateOrderStatus(order.status),
+        payment_status: validatePaymentStatus(order.payment_status)
       };
     });
     
@@ -216,7 +225,11 @@ export const getUserOrders = async (userId: string) => {
       
     if (error) throw error;
     
-    return orders;
+    return orders.map(order => ({
+      ...order,
+      status: validateOrderStatus(order.status),
+      payment_status: validatePaymentStatus(order.payment_status)
+    }));
   } catch (error) {
     console.error("Error in getUserOrders:", error);
     throw error;
