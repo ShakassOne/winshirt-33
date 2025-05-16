@@ -1,278 +1,253 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  fetchAllProducts as fetchProducts, createProduct, updateProduct, deleteProduct
-} from '@/services/api.service';
-import { Product } from '@/types/supabase.types';
+
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
+import { fetchAllProducts, deleteProduct } from '@/services/api.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash } from 'lucide-react';
+import GlassCard from '@/components/ui/GlassCard';
+import { Edit, Trash, Eye, Plus, Search } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import ProductForm from '@/components/admin/ProductForm';
 import { useToast } from '@/hooks/use-toast';
-import { UploadButton } from '@/components/ui/upload-button';
+import { toast } from 'sonner';
+import { Product } from '@/types/supabase.types';
 
 const ProductsAdmin = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [price, setPrice] = useState(0);
-  const [category, setCategory] = useState('');
-  const [isActive, setIsActive] = useState(true);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const { data: products, isLoading, error } = useQuery({
-    queryKey: ['products'],
-    queryFn: fetchProducts,
+  const { toast: toastHook } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  
+  const { data: products, isLoading, error, refetch } = useQuery({
+    queryKey: ['adminProducts'],
+    queryFn: fetchAllProducts,
   });
 
-  const createProductMutation = useMutation({
-    mutationFn: (productData: any) => createProduct(productData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      closeDialog();
-      toast("Succès", { 
-        description: "Operation réussie" 
-      });
-    },
-    onError: () => {
-      toast("Erreur", {
-        description: "Une erreur s'est produite lors de la création du produit"
-      });
+  const handleCreateSuccess = () => {
+    refetch();
+    toastHook({
+      title: "Produit créé",
+      description: "Le nouveau produit a été ajouté avec succès",
+    });
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setShowProductForm(true);
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
+      try {
+        await deleteProduct(productId);
+        toast.success('Produit supprimé avec succès');
+        refetch();
+      } catch (error) {
+        toast.error('Erreur lors de la suppression du produit');
+      }
     }
+  };
+
+  const filteredProducts = products?.filter((product: Product) => {
+    const matchesSearch = 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = !activeCategory || product.category === activeCategory;
+    
+    return matchesSearch && matchesCategory;
   });
 
-  const updateProductMutation = useMutation({
-    mutationFn: (productData: { id: string; data: any }) =>
-      updateProduct(productData.id, productData.data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      closeDialog();
-      toast("Succès", { 
-        description: "Operation réussie" 
-      });
-    },
-    onError: () => {
-      toast("Erreur", {
-        description: "Une erreur s'est produite lors de la mise à jour du produit"
-      });
-    }
-  });
-
-  const deleteProductMutation = useMutation({
-    mutationFn: (id: string) => deleteProduct(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast("Succès", { 
-        description: "Operation réussie" 
-      });
-    },
-    onError: () => {
-      toast("Erreur", {
-        description: "Une erreur s'est produite lors de la suppression du produit"
-      });
-    }
-  });
-
-  useEffect(() => {
-    if (selectedProduct) {
-      setName(selectedProduct.name);
-      setDescription(selectedProduct.description);
-      setImageUrl(selectedProduct.image_url);
-      setPrice(selectedProduct.price);
-      setCategory(selectedProduct.category);
-      setIsActive(selectedProduct.is_active !== false);
-    }
-  }, [selectedProduct]);
-
-  const openDialog = () => {
-    setIsDialogOpen(true);
-  };
-
-  const closeDialog = () => {
-    setIsDialogOpen(false);
-    setIsEditing(false);
-    setSelectedProduct(null);
-    setName('');
-    setDescription('');
-    setImageUrl('');
-    setPrice(0);
-    setCategory('');
-    setIsActive(true);
-  };
-
-  const handleCreate = () => {
-    setIsEditing(false);
-    setSelectedProduct(null);
-    openDialog();
-  };
-
-  const handleEdit = (product: Product) => {
-    setIsEditing(true);
-    setSelectedProduct(product);
-    openDialog();
-  };
-
-  const handleDelete = async (id: string) => {
-    await deleteProductMutation.mutateAsync(id);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const productData = {
-      name,
-      description,
-      image_url: imageUrl,
-      price,
-      category,
-      is_active: isActive,
-    };
-
-    if (isEditing && selectedProduct) {
-      await updateProductMutation.mutateAsync({ id: selectedProduct.id, data: productData });
-    } else {
-      await createProductMutation.mutateAsync(productData);
-    }
-  };
-
-  const handleImageUpload = (url: string) => {
-    setImageUrl(url);
-  };
-
-  if (isLoading) return <div>Chargement des produits...</div>;
-  if (error) return <div>Une erreur est survenue lors du chargement des produits.</div>;
+  const categories = products ? [...new Set(products.map((product: Product) => product.category))] : [];
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Gestion des Produits</h1>
-        <Button onClick={handleCreate}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nouveau Produit
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {products?.map((product) => (
-          <div key={product.id} className="relative bg-white/5 rounded-lg shadow-md p-4">
-            <img src={product.image_url} alt={product.name} className="w-full h-32 object-contain mb-4" />
-            <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
-            <p className="text-sm text-gray-500 mb-2">Catégorie: {product.category}</p>
-            <div className="flex items-center justify-between">
-              <Switch
-                id={`product-active-${product.id}`}
-                checked={product.is_active !== false}
-                onCheckedChange={(checked) => {
-                  updateProductMutation.mutate({
-                    id: product.id,
-                    data: { is_active: checked },
-                  });
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      
+      <main className="flex-grow mt-16 pb-20">
+        {/* Header Section */}
+        <section className="relative py-16 bg-gradient-to-b from-winshirt-blue/20 to-transparent">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold">
+                  Gestion des <span className="text-gradient">Produits</span>
+                </h1>
+                <p className="text-white/70 mt-2">
+                  Ajoutez, modifiez et supprimez les produits de votre boutique
+                </p>
+              </div>
+              
+              <Button 
+                className="bg-gradient-purple mt-4 md:mt-0" 
+                size="lg"
+                onClick={() => {
+                  setEditingProduct(null);
+                  setShowProductForm(true);
                 }}
-              />
-              <Label htmlFor={`product-active-${product.id}`} className="text-sm">
-                {product.is_active !== false ? 'Actif' : 'Inactif'}
-              </Label>
-            </div>
-            <div className="absolute top-2 right-2 flex gap-2">
-              <Button variant="outline" size="icon" onClick={() => handleEdit(product)}>
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button variant="destructive" size="icon" onClick={() => handleDelete(product.id)}>
-                <Trash className="h-4 w-4" />
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Nouveau produit
               </Button>
             </div>
           </div>
-        ))}
-      </div>
+        </section>
 
-      <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
-        <DialogContent className="bg-black/50 backdrop-blur-xl border-white/20 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle>{isEditing ? 'Modifier Produit' : 'Nouveau Produit'}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="name">Nom</Label>
-              <Input
-                type="text"
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="imageUrl">URL de l'image</Label>
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  id="imageUrl"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  required
-                  className="flex-1"
-                />
-                <UploadButton
-                  onUpload={handleImageUpload}
-                  variant="outline"
-                  targetFolder="products"
-                />
+        {/* Search and Filters */}
+        <section className="py-6">
+          <div className="container mx-auto px-4">
+            <GlassCard className="p-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50" size={18} />
+                  <Input
+                    placeholder="Rechercher un produit..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                
+                <div className="flex gap-2 flex-wrap">
+                  <Button 
+                    variant={activeCategory === null ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setActiveCategory(null)}
+                  >
+                    Tous
+                  </Button>
+                  
+                  {categories.map((category: string) => (
+                    <Button 
+                      key={category} 
+                      variant={activeCategory === category ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => setActiveCategory(category)}
+                    >
+                      {category}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div>
-              <Label htmlFor="price">Prix</Label>
-              <Input
-                type="number"
-                id="price"
-                value={price}
-                onChange={(e) => setPrice(Number(e.target.value))}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="category">Catégorie</Label>
-              <Input
-                type="text"
-                id="category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="is_active"
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                />
-                <Label htmlFor="is_active">Produit actif</Label>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit">
-                {isEditing ? 'Mettre à jour' : 'Créer'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+            </GlassCard>
+          </div>
+        </section>
+
+        {/* Products Table */}
+        <section className="py-6">
+          <div className="container mx-auto px-4">
+            <GlassCard className="p-0 overflow-hidden">
+              {isLoading ? (
+                <div className="p-10 text-center">Chargement des produits...</div>
+              ) : error ? (
+                <div className="p-10 text-center">Erreur lors du chargement des produits</div>
+              ) : filteredProducts?.length === 0 ? (
+                <div className="p-10 text-center">Aucun produit ne correspond à votre recherche</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-black/20">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">Image</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">Nom</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">Catégorie</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">Prix</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">Caractéristiques</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">Statut</th>
+                        <th className="px-6 py-3 text-xs font-medium text-white/70 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/10">
+                      {filteredProducts?.map((product: Product) => (
+                        <tr key={product.id} className="hover:bg-white/5">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="w-12 h-12 rounded overflow-hidden">
+                              <img 
+                                src={product.image_url} 
+                                alt={product.name} 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="font-medium">{product.name}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {product.category}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {product.price.toFixed(2)} €
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-wrap gap-1">
+                              {product.is_customizable && (
+                                <Badge variant="outline" className="bg-winshirt-purple/20 text-xs">Personnalisable</Badge>
+                              )}
+                              {product.tickets_offered > 0 && (
+                                <Badge variant="outline" className="bg-winshirt-blue/20 text-xs">
+                                  {product.tickets_offered} {product.tickets_offered > 1 ? 'tickets' : 'ticket'}
+                                </Badge>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Badge variant={product.is_active ? "default" : "secondary"} className={product.is_active ? "bg-green-500" : ""}>
+                              {product.is_active ? 'Actif' : 'Inactif'}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button variant="ghost" size="icon" asChild>
+                                <Link to={`/products/${product.id}`}>
+                                  <Eye className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleEditProduct(product)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="text-red-500 hover:text-red-600"
+                                onClick={() => handleDeleteProduct(product.id)}
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </GlassCard>
+          </div>
+        </section>
+      </main>
+      
+      <Footer />
+      
+      {showProductForm && (
+        <ProductForm 
+          isOpen={showProductForm} 
+          onClose={() => {
+            setShowProductForm(false);
+            setEditingProduct(null);
+          }} 
+          onSuccess={handleCreateSuccess}
+          initialData={editingProduct}
+        />
+      )}
     </div>
   );
 };

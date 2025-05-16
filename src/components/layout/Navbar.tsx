@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { X, Menu, ChevronDown, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -14,36 +14,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import CartIcon from "@/components/cart/CartIcon";
-import { supabase } from "@/integrations/supabase/client";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
-  const location = useLocation();
-  const [user, setUser] = useState<any>(null);
-  
-  useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null);
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
-  };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
   };
 
   return (
@@ -77,33 +54,25 @@ const Navbar = () => {
             <nav className="hidden md:flex space-x-4">
               <Link
                 to="/"
-                className={`text-white/80 hover:text-white transition-colors px-3 py-1 ${
-                  location.pathname === "/" ? "text-white font-medium" : ""
-                }`}
+                className="text-white/80 hover:text-white transition-colors px-3 py-1"
               >
                 Accueil
               </Link>
               <Link
                 to="/products"
-                className={`text-white/80 hover:text-white transition-colors px-3 py-1 ${
-                  location.pathname === "/products" ? "text-white font-medium" : ""
-                }`}
+                className="text-white/80 hover:text-white transition-colors px-3 py-1"
               >
                 Shop
               </Link>
               <Link
                 to="/lotteries"
-                className={`text-white/80 hover:text-white transition-colors px-3 py-1 ${
-                  location.pathname === "/lotteries" ? "text-white font-medium" : ""
-                }`}
+                className="text-white/80 hover:text-white transition-colors px-3 py-1"
               >
                 Loteries
               </Link>
               <Link
                 to="/admin"
-                className={`text-white/80 hover:text-white transition-colors px-3 py-1 ${
-                  location.pathname.startsWith("/admin") ? "text-white font-medium" : ""
-                }`}
+                className="text-white/80 hover:text-white transition-colors px-3 py-1"
               >
                 Admin
               </Link>
@@ -121,29 +90,22 @@ const Navbar = () => {
                 <DropdownMenuContent align="end" className="bg-black/90 border-white/20">
                   <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-white/10" />
-                  {user ? (
-                    <>
-                      <DropdownMenuItem className="hover:bg-white/5">
-                        <Link to="/account" className="flex w-full">Profil</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="hover:bg-white/5">
-                        <Link to="/account?tab=orders" className="flex w-full">Mes commandes</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="hover:bg-white/5">
-                        <Link to="/admin" className="flex w-full">Administration</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-white/10" />
-                      <DropdownMenuItem className="hover:bg-white/5" onClick={handleSignOut}>
-                        Déconnexion
-                      </DropdownMenuItem>
-                    </>
-                  ) : (
-                    <>
-                      <DropdownMenuItem className="hover:bg-white/5">
-                        <Link to="/account" className="flex w-full">Connexion</Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
+                  <DropdownMenuItem className="hover:bg-white/5">
+                    <Link to="/profile" className="flex w-full">Profil</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="hover:bg-white/5">
+                    <Link to="/orders" className="flex w-full">Mes commandes</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="hover:bg-white/5">
+                    <Link to="/admin" className="flex w-full">Administration</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="hover:bg-white/5">
+                    <Link to="/admin/mockups" className="flex w-full">Mockups Admin</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuItem className="hover:bg-white/5">
+                    Déconnexion
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               <CartIcon />
@@ -156,70 +118,46 @@ const Navbar = () => {
           <div className="md:hidden py-4 mt-2 glass-card max-w-4xl mx-auto px-4">
             <Link
               to="/"
-              className={`block px-3 py-2 rounded-md ${
-                location.pathname === "/" 
-                  ? "text-white font-medium bg-white/10" 
-                  : "text-white/70 hover:text-white"
-              }`}
+              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
               onClick={toggleMenu}
             >
               Accueil
             </Link>
             <Link
               to="/products"
-              className={`block px-3 py-2 rounded-md ${
-                location.pathname === "/products" 
-                  ? "text-white font-medium bg-white/10" 
-                  : "text-white/70 hover:text-white"
-              }`}
+              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
               onClick={toggleMenu}
             >
               Shop
             </Link>
             <Link
               to="/lotteries"
-              className={`block px-3 py-2 rounded-md ${
-                location.pathname === "/lotteries" 
-                  ? "text-white font-medium bg-white/10" 
-                  : "text-white/70 hover:text-white"
-              }`}
+              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
               onClick={toggleMenu}
             >
               Loteries
             </Link>
             <Link
-              to="/account"
-              className={`block px-3 py-2 rounded-md ${
-                location.pathname === "/account" 
-                  ? "text-white font-medium bg-white/10" 
-                  : "text-white/70 hover:text-white"
-              }`}
-              onClick={toggleMenu}
-            >
-              Mon compte
-            </Link>
-            <Link
               to="/admin"
-              className={`block px-3 py-2 rounded-md ${
-                location.pathname.startsWith("/admin") 
-                  ? "text-white font-medium bg-white/10" 
-                  : "text-white/70 hover:text-white"
-              }`}
+              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
               onClick={toggleMenu}
             >
               Admin
             </Link>
-            {user && (
-              <button
-                className="block w-full text-left text-white/70 hover:text-white px-3 py-2 rounded-md"
-                onClick={() => {
-                  handleSignOut();
-                  toggleMenu();
-                }}
-              >
-                Déconnexion
-              </button>
-            )}
+            <Link
+              to="/admin/mockups"
+              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+              onClick={toggleMenu}
+            >
+              Gestion des mockups
+            </Link>
+            <Link
+              to="/admin/theme"
+              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+              onClick={toggleMenu}
+            >
+              Réglages du thème
+            </Link>
           </div>
         )}
       </div>

@@ -30,7 +30,7 @@ const Cart = () => {
             </div>
           ) : itemCount === 0 ? (
             <div className="text-center py-12 glass-card">
-              <ShoppingCart className="mx-auto h-16 w-16 text-gray-400 mb-4" aria-hidden="true" />
+              <ShoppingCart className="mx-auto h-16 w-16 text-gray-400 mb-4" />
               <h2 className="text-xl font-semibold mb-2">Votre panier est vide</h2>
               <p className="text-gray-400 mb-6">Ajoutez des articles à votre panier pour continuer vos achats</p>
               <Button asChild>
@@ -80,7 +80,7 @@ const Cart = () => {
                   
                   <Button className="w-full" size="lg" asChild>
                     <Link to="/checkout">
-                      Passer à la caisse <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                      Passer à la caisse <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
                   

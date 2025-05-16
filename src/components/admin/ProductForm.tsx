@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -146,13 +147,17 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormPro
       
       if (initialData) {
         await updateProduct(initialData.id, productData);
-        toast("Succès", {
-          description: "Le produit a été mis à jour avec succès"
+        toast({
+          title: "Succès",
+          description: "Le produit a été mis à jour avec succès",
+          variant: "default"
         });
       } else {
         await createProduct(productData);
-        toast("Succès", {
-          description: "Le produit a été créé avec succès"
+        toast({
+          title: "Succès",
+          description: "Le produit a été créé avec succès",
+          variant: "default"
         });
       }
       
@@ -163,7 +168,8 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormPro
       onClose();
     } catch (error) {
       console.error("Erreur lors de l'opération sur le produit:", error);
-      toast("Erreur", {
+      toast({
+        title: "Erreur",
         description: "Une erreur s'est produite lors de l'opération",
         variant: "destructive"
       });

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -78,7 +79,8 @@ const LotteryForm = ({ isOpen, onClose, onSuccess, initialData }: LotteryFormPro
 
   const onSubmit = async (data: LotteryFormValues) => {
     if (!drawDate) {
-      toast("Erreur", {
+      toast({
+        title: "Erreur",
         description: "Veuillez sélectionner une date de tirage",
         variant: "destructive"
       });
@@ -103,13 +105,17 @@ const LotteryForm = ({ isOpen, onClose, onSuccess, initialData }: LotteryFormPro
       
       if (initialData) {
         await updateLottery(initialData.id, lotteryData);
-        toast("Succès", {
-          description: "La loterie a été mise à jour avec succès"
+        toast({
+          title: "Succès",
+          description: "La loterie a été mise à jour avec succès",
+          variant: "default"
         });
       } else {
         await createLottery(lotteryData);
-        toast("Succès", {
-          description: "La loterie a été créée avec succès"
+        toast({
+          title: "Succès",
+          description: "La loterie a été créée avec succès",
+          variant: "default"
         });
       }
       
@@ -119,7 +125,8 @@ const LotteryForm = ({ isOpen, onClose, onSuccess, initialData }: LotteryFormPro
       onClose();
     } catch (error) {
       console.error("Erreur lors de l'opération sur la loterie:", error);
-      toast("Erreur", {
+      toast({
+        title: "Erreur",
         description: "Une erreur s'est produite lors de l'opération",
         variant: "destructive"
       });

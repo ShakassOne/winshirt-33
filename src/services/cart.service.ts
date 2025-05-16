@@ -1,197 +1,257 @@
-import { supabase } from '@/integrations/supabase/client';
-import { CartItem } from '@/types/supabase.types';
-import { Json } from '@/integrations/supabase/types';
 
-// Define CartItemInsert interface to match the database requirements
-interface CartItemInsert {
-  cart_token_id: string;
-  product_id: string;
-  quantity: number;
-  price: number;
-  color?: string | null;
-  size?: string | null;
-  customization?: any;
-  cart_session_id: string; // Required in the database schema
-}
+import { supabase } from "@/integrations/supabase/client";
+import { CartItem } from "@/types/supabase.types";
 
-export const migrateCartToUser = async (userId: string, cartToken: string): Promise<void> => {
+// Get or create cart session
+export const getOrCreateCartSession = async (sessionId: string, guestEmail?: string) => {
   try {
-    // Update cart items to associate them with the user using the additional field
+    // Check if session exists
+    const { data: existingSession, error: fetchError } = await supabase
+      .from('cart_sessions')
+      .select('*')
+      .eq('session_id', sessionId)
+      .single();
+      
+    if (!fetchError && existingSession) {
+      return existingSession;
+    }
+    
+    // Create a new session if doesn't exist
+    const { data: newSession, error: insertError } = await supabase
+      .from('cart_sessions')
+      .insert([
+        { 
+          session_id: sessionId,
+          guest_email: guestEmail,
+        }
+      ])
+      .select()
+      .single();
+      
+    if (insertError) {
+      throw insertError;
+    }
+    
+    return newSession;
+    
+  } catch (error) {
+    console.error("Error in getOrCreateCartSession:", error);
+    throw error;
+  }
+};
+
+// Add item to cart
+export const addToCart = async (sessionId: string, item: CartItem) => {
+  try {
+    // Get or create cart session
+    const cartSession = await getOrCreateCartSession(sessionId);
+    
+    // Check if item already exists in cart
+    const { data: existingItem, error: fetchError } = await supabase
+      .from('cart_items')
+      .select('*')
+      .eq('cart_session_id', cartSession.id)
+      .eq('product_id', item.productId)
+      .single();
+    
+    if (!fetchError && existingItem) {
+      // Update quantity if item exists
+      const { error: updateError } = await supabase
+        .from('cart_items')
+        .update({ 
+          quantity: existingItem.quantity + item.quantity,
+          customization: item.customization || existingItem.customization,
+          color: item.color || existingItem.color,
+          size: item.size || existingItem.size
+        })
+        .eq('id', existingItem.id);
+        
+      if (updateError) throw updateError;
+    } else {
+      // Insert new item
+      const { error: insertError } = await supabase
+        .from('cart_items')
+        .insert([
+          {
+            cart_session_id: cartSession.id,
+            product_id: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+            color: item.color,
+            size: item.size,
+            customization: item.customization
+          }
+        ]);
+        
+      if (insertError) throw insertError;
+    }
+  } catch (error) {
+    console.error("Error in addToCart:", error);
+    throw error;
+  }
+};
+
+// Get cart items
+export const getCartItems = async (sessionId: string): Promise<CartItem[]> => {
+  try {
+    // Get cart session
+    const { data: sessionData } = await supabase
+      .from('cart_sessions')
+      .select('id')
+      .eq('session_id', sessionId)
+      .single();
+      
+    if (!sessionData) {
+      // Create new session if doesn't exist
+      const cartSession = await getOrCreateCartSession(sessionId);
+      return [];
+    }
+    
+    // Get cart items with product details
+    const { data: cartItems, error } = await supabase
+      .from('cart_items')
+      .select(`
+        id,
+        quantity,
+        color,
+        size,
+        price,
+        customization,
+        products:product_id (id, name, image_url, price, description)
+      `)
+      .eq('cart_session_id', sessionData.id);
+      
+    if (error) {
+      console.error("Error fetching cart items:", error);
+      throw error;
+    }
+    
+    if (!cartItems || cartItems.length === 0) {
+      return [];
+    }
+    
+    // Map to CartItem type
+    return cartItems.map(item => ({
+      productId: item.products?.id,
+      name: item.products?.name,
+      price: parseFloat(item.price as unknown as string),
+      quantity: item.quantity,
+      color: item.color || null,
+      size: item.size || null,
+      image_url: item.products?.image_url,
+      customization: item.customization as unknown as CartItem['customization']
+    }));
+    
+  } catch (error) {
+    console.error("Error in getCartItems:", error);
+    throw error;
+  }
+};
+
+// Remove item from cart
+export const removeFromCart = async (sessionId: string, productId: string) => {
+  try {
+    // Get cart session
+    const { data: sessionData } = await supabase
+      .from('cart_sessions')
+      .select('id')
+      .eq('session_id', sessionId)
+      .single();
+      
+    if (!sessionData) {
+      throw new Error("Cart session not found");
+    }
+    
+    // Find the cart item
+    const { data: cartItem } = await supabase
+      .from('cart_items')
+      .select('id')
+      .eq('cart_session_id', sessionData.id)
+      .eq('product_id', productId)
+      .single();
+      
+    if (!cartItem) {
+      throw new Error("Cart item not found");
+    }
+    
+    // Delete the item
     const { error } = await supabase
       .from('cart_items')
-      .update({ migrated: true })  // Using migrated instead of user_id
-      .eq('cart_token_id', cartToken);
-
-    if (error) {
-      console.error('Error migrating cart to user:', error);
-      throw error;
-    }
-  } catch (error) {
-    console.error('Error migrating cart to user:', error);
-    throw error;
-  }
-};
-
-// Fetch cart items by either cart token or user ID
-export const getCartItems = async (cartToken: string, userId?: string | null): Promise<CartItem[]> => {
-  try {
-    // Query cart items by cart token or user ID
-    const query = supabase
-      .from('cart_items')
-      .select('*, products(name, image_url)');
-
-    if (userId) {
-      query.eq('migrated', true); // Use migrated flag instead of user_id
-    } else if (cartToken) {
-      query.eq('cart_token_id', cartToken);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error getting cart items:', error);
-      throw error;
-    }
-
-    // Transform database items to CartItem format
-    return (data || []).map(item => {
-      const product = item.products as any;
-      return {
-        productId: item.product_id,
-        name: product?.name || '',
-        price: item.price,
-        quantity: item.quantity,
-        color: item.color,
-        size: item.size,
-        image_url: product?.image_url || '',
-        customization: item.customization ? 
-          (typeof item.customization === 'string' ? 
-            JSON.parse(item.customization) : item.customization) : undefined
-      } as CartItem;
-    });
-  } catch (error) {
-    console.error('Error getting cart items:', error);
-    throw error;
-  }
-};
-
-export const addToCart = async (cartToken: string, item: CartItem, userId?: string | null): Promise<void> => {
-  try {
-    const cartItem = {
-      cart_token_id: cartToken,
-      product_id: item.productId,
-      quantity: item.quantity,
-      price: item.price,
-      color: item.color,
-      size: item.size,
-      customization: item.customization,
-      cart_session_id: 'deprecated', // Providing dummy value for required field
-      migrated: userId ? true : false // Use migrated instead of user_id
-    };
-
-    const { error } = await supabase.from('cart_items').upsert(cartItem);
-
-    if (error) {
-      console.error('Error adding to cart:', error);
-      throw error;
-    }
-  } catch (error) {
-    console.error('Error adding to cart:', error);
-    throw error;
-  }
-};
-
-// Keep existing functions (removeFromCart, updateCartItemQuantity) implementation the same
-
-export const removeFromCart = async (cartToken: string, productId: string, userId?: string | null): Promise<void> => {
-  try {
-    const query = supabase.from('cart_items').delete();
-    
-    if (userId) {
-      query.eq('migrated', true).eq('product_id', productId); // Use migrated instead of user_id
-    } else {
-      query.eq('cart_token_id', cartToken).eq('product_id', productId);
-    }
-
-    const { error } = await query;
-
-    if (error) {
-      console.error('Error removing from cart:', error);
-      throw error;
-    }
-  } catch (error) {
-    console.error('Error removing from cart:', error);
-    throw error;
-  }
-};
-
-export const updateCartItemQuantity = async (
-  cartToken: string, 
-  productId: string, 
-  quantity: number, 
-  userId?: string | null
-): Promise<void> => {
-  try {
-    const query = supabase
-      .from('cart_items')
-      .update({ quantity });
-    
-    if (userId) {
-      query.eq('migrated', true).eq('product_id', productId); // Use migrated instead of user_id
-    } else {
-      query.eq('cart_token_id', cartToken).eq('product_id', productId);
-    }
-
-    const { error } = await query;
-
-    if (error) {
-      console.error('Error updating cart item quantity:', error);
-      throw error;
-    }
-  } catch (error) {
-    console.error('Error updating cart item quantity:', error);
-    throw error;
-  }
-};
-
-export const clearCart = async (cartToken: string, userId?: string | null): Promise<void> => {
-  try {
-    const query = supabase.from('cart_items').delete();
-    
-    if (userId) {
-      query.eq('migrated', true); // Use migrated instead of user_id
-    } else {
-      query.eq('cart_token_id', cartToken);
-    }
-
-    const { error } = await query;
-
-    if (error) {
-      console.error('Error clearing cart:', error);
-      throw error;
-    }
-  } catch (error) {
-    console.error('Error clearing cart:', error);
-    throw error;
-  }
-};
-
-export const saveCartItems = async (items: CartItemInsert[], cartToken: string): Promise<void> => {
-  try {
-    for (const item of items) {
-      // Process each item individually to avoid array issues
-      const itemToSave = {
-        ...item,
-        cart_token_id: cartToken,
-        cart_session_id: 'deprecated',
-        price: item.price || 0,
-        product_id: item.product_id || ''
-      };
+      .delete()
+      .eq('id', cartItem.id);
       
-      await supabase.from('cart_items').upsert(itemToSave);
-    }
+    if (error) throw error;
+    
   } catch (error) {
-    console.error('Error saving cart items:', error);
+    console.error("Error in removeFromCart:", error);
+    throw error;
+  }
+};
+
+// Update cart item quantity
+export const updateCartItemQuantity = async (sessionId: string, productId: string, quantity: number) => {
+  try {
+    // Get cart session
+    const { data: sessionData } = await supabase
+      .from('cart_sessions')
+      .select('id')
+      .eq('session_id', sessionId)
+      .single();
+      
+    if (!sessionData) {
+      throw new Error("Cart session not found");
+    }
+    
+    // Find the cart item
+    const { data: cartItem } = await supabase
+      .from('cart_items')
+      .select('id')
+      .eq('cart_session_id', sessionData.id)
+      .eq('product_id', productId)
+      .single();
+      
+    if (!cartItem) {
+      throw new Error("Cart item not found");
+    }
+    
+    // Update the quantity
+    const { error } = await supabase
+      .from('cart_items')
+      .update({ quantity })
+      .eq('id', cartItem.id);
+      
+    if (error) throw error;
+    
+  } catch (error) {
+    console.error("Error in updateCartItemQuantity:", error);
+    throw error;
+  }
+};
+
+// Clear cart
+export const clearCart = async (sessionId: string) => {
+  try {
+    // Get cart session
+    const { data: sessionData } = await supabase
+      .from('cart_sessions')
+      .select('id')
+      .eq('session_id', sessionId)
+      .single();
+      
+    if (!sessionData) {
+      return; // No items to clear
+    }
+    
+    // Delete all items
+    const { error } = await supabase
+      .from('cart_items')
+      .delete()
+      .eq('cart_session_id', sessionData.id);
+      
+    if (error) throw error;
+    
+  } catch (error) {
+    console.error("Error in clearCart:", error);
     throw error;
   }
 };

@@ -11,7 +11,7 @@ const CartIcon = () => {
   return (
     <Button variant="ghost" size="icon" className="text-white/80 hover:text-white relative" asChild>
       <Link to="/cart">
-        <ShoppingCart className="h-5 w-5" aria-hidden="true" />
+        <ShoppingCart className="h-5 w-5" />
         {itemCount > 0 && (
           <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-winshirt-purple text-[10px]">
             {itemCount > 99 ? '99+' : itemCount}
