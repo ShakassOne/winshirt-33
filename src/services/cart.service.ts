@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { CartItem } from "@/types/supabase.types";
 
@@ -79,19 +80,20 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
         
       if (updateError) throw updateError;
     } else {
-      // Insert new item - Fix: adding cart_session_id as null since we're using cart_token_id now
+      // Insert new item
       const { error: insertError } = await supabase
         .from('cart_items')
-        .insert({
-          cart_session_id: null, // This is required by the schema but we're not using it
-          cart_token_id: cartToken.id,
-          product_id: item.productId,
-          quantity: item.quantity,
-          price: item.price,
-          color: item.color || null,
-          size: item.size || null,
-          customization: item.customization || null
-        });
+        .insert([
+          {
+            cart_token_id: cartToken.id,
+            product_id: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+            color: item.color,
+            size: item.size,
+            customization: item.customization
+          }
+        ]);
         
       if (insertError) throw insertError;
     }

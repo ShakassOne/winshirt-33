@@ -1,80 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
-import { CartItem, Order } from "@/types/supabase.types";
-
-// Types pour la personnalisation
-export type TextCustomization = {
-  content: string;
-  font: string;
-  color: string;
-  printPosition: 'front' | 'back';
-  transform?: {
-    position: { x: number; y: number };
-    scale: number;
-    rotation: number;
-  };
-};
-
-export type CustomizationType = {
-  designId: string;
-  designName?: string;
-  designUrl: string;
-  printPosition: 'front' | 'back';
-  printSize: string;
-  transform?: {
-    position: { x: number; y: number };
-    scale: number;
-    rotation: number;
-  };
-  text?: TextCustomization;
-};
-
-// Extend OrderItem with products relation
-export interface ExtendedOrderItem {
-  id: string;
-  order_id: string;
-  product_id: string;
-  quantity: number;
-  price: number;
-  customization?: CustomizationType;
-  created_at?: string;
-  products?: {
-    id: string;
-    name: string;
-    description: string;
-    image_url: string;
-    price: number;
-    category: string;
-    is_customizable: boolean;
-    available_colors: string[];
-    available_sizes: string[];
-    mockup_id?: string;
-  };
-}
-
-// Extended order type including items
-export interface ExtendedOrder extends Order {
-  items?: ExtendedOrderItem[];
-}
-
-// Helper function to validate order status
-const validateOrderStatus = (status: string): Order['status'] => {
-  const validStatuses: Order['status'][] = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
-  return validStatuses.includes(status as Order['status']) 
-    ? status as Order['status'] 
-    : 'pending';
-};
-
-// Helper function to validate payment status
-const validatePaymentStatus = (status: string | null | undefined): Order['payment_status'] => {
-  if (!status) return 'pending';
-  
-  const validStatuses: Order['payment_status'][] = ['pending', 'paid', 'failed'];
-  return validStatuses.includes(status as Order['payment_status']) 
-    ? status as Order['payment_status'] 
-    : 'pending';
-};
+import { CartItem } from "@/types/supabase.types";
 
 export const createOrder = async (
   checkoutData: CheckoutFormData,
@@ -133,7 +60,7 @@ export const createOrder = async (
   }
 };
 
-export const getOrderById = async (orderId: string): Promise<ExtendedOrder> => {
+export const getOrderById = async (orderId: string) => {
   try {
     const { data: order, error: orderError } = await supabase
       .from('orders')
@@ -153,64 +80,12 @@ export const getOrderById = async (orderId: string): Promise<ExtendedOrder> => {
       
     if (itemsError) throw itemsError;
     
-    // Process the items to convert customization from JSON
-    const processedItems: ExtendedOrderItem[] = orderItems.map(item => {
-      // Parse customization if it's a string
-      let parsedCustomization: CustomizationType | undefined = undefined;
-      
-      if (item.customization) {
-        if (typeof item.customization === 'string') {
-          try {
-            parsedCustomization = JSON.parse(item.customization);
-          } catch (e) {
-            console.error("Error parsing customization:", e);
-          }
-        } else {
-          // It's already an object
-          parsedCustomization = item.customization as unknown as CustomizationType;
-        }
-      }
-      
-      return {
-        ...item,
-        customization: parsedCustomization
-      };
-    });
-    
-    // Validate the status fields against our type definitions
     return {
       ...order,
-      status: validateOrderStatus(order.status),
-      payment_status: validatePaymentStatus(order.payment_status),
-      items: processedItems
+      items: orderItems
     };
   } catch (error) {
     console.error("Error in getOrderById:", error);
-    throw error;
-  }
-};
-
-export const fetchAllOrders = async (): Promise<Order[]> => {
-  try {
-    const { data: orders, error } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false });
-      
-    if (error) throw error;
-    
-    // Ensure the order status is one of the valid types
-    const typedOrders = orders.map(order => {
-      return {
-        ...order,
-        status: validateOrderStatus(order.status),
-        payment_status: validatePaymentStatus(order.payment_status)
-      };
-    });
-    
-    return typedOrders;
-  } catch (error) {
-    console.error("Error in fetchAllOrders:", error);
     throw error;
   }
 };
@@ -225,11 +100,7 @@ export const getUserOrders = async (userId: string) => {
       
     if (error) throw error;
     
-    return orders.map(order => ({
-      ...order,
-      status: validateOrderStatus(order.status),
-      payment_status: validatePaymentStatus(order.payment_status)
-    }));
+    return orders;
   } catch (error) {
     console.error("Error in getUserOrders:", error);
     throw error;
@@ -254,23 +125,6 @@ export const updateOrderPaymentStatus = async (
     if (error) throw error;
   } catch (error) {
     console.error("Error in updateOrderPaymentStatus:", error);
-    throw error;
-  }
-};
-
-export const updateOrderStatus = async (
-  orderId: string,
-  status: Order['status']
-) => {
-  try {
-    const { error } = await supabase
-      .from('orders')
-      .update({ status })
-      .eq('id', orderId);
-      
-    if (error) throw error;
-  } catch (error) {
-    console.error("Error in updateOrderStatus:", error);
     throw error;
   }
 };

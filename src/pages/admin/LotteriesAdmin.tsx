@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
@@ -13,7 +14,6 @@ import LotteryForm from '@/components/admin/LotteryForm';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
 import { Lottery } from '@/types/supabase.types';
-import LotteryDraw from '@/components/admin/LotteryDraw';
 
 const LotteriesAdmin = () => {
   const { toast: toastHook } = useToast();
@@ -21,8 +21,6 @@ const LotteriesAdmin = () => {
   const [showLotteryForm, setShowLotteryForm] = useState(false);
   const [editingLottery, setEditingLottery] = useState<Lottery | null>(null);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
-  const [showDrawModal, setShowDrawModal] = useState(false);
-  const [selectedLottery, setSelectedLottery] = useState<Lottery | null>(null);
   
   const { data: lotteries, isLoading, error, refetch } = useQuery({
     queryKey: ['adminLotteries'],
@@ -53,15 +51,6 @@ const LotteriesAdmin = () => {
       }
     }
   };
-  
-  const handleDrawLottery = (lottery: Lottery) => {
-    setSelectedLottery(lottery);
-    setShowDrawModal(true);
-  };
-  
-  const handleDrawSuccess = () => {
-    refetch();
-  };
 
   const filteredLotteries = lotteries?.filter((lottery: Lottery) => {
     const matchesSearch = 
@@ -84,18 +73,6 @@ const LotteriesAdmin = () => {
       month: 'short', 
       year: 'numeric' 
     }).format(date);
-  };
-  
-  const canDrawLottery = (lottery: Lottery) => {
-    // On peut tirer au sort si:
-    // 1. La loterie est active
-    // 2. La date de tirage est passée OU l'objectif de participants est atteint
-    if (!lottery.is_active) return false;
-    
-    const drawDatePassed = new Date(lottery.draw_date) <= new Date();
-    const goalReached = lottery.participants >= lottery.goal;
-    
-    return drawDatePassed || goalReached;
   };
 
   return (
@@ -263,15 +240,8 @@ const LotteriesAdmin = () => {
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                className={`text-yellow-500 hover:text-yellow-600 ${!canDrawLottery(lottery) && 'opacity-50 cursor-not-allowed'}`}
-                                onClick={() => canDrawLottery(lottery) && handleDrawLottery(lottery)}
-                                disabled={!canDrawLottery(lottery)}
-                                title={canDrawLottery(lottery) ? "Lancer le tirage au sort" : "Tirage impossible (Loterie inactive ou conditions non remplies)"}
-                              >
-                                <Award className="h-4 w-4" />
+                              <Button variant="ghost" size="icon">
+                                <Award className="h-4 w-4 text-yellow-500" />
                               </Button>
                               <Button 
                                 variant="ghost" 
@@ -305,18 +275,6 @@ const LotteriesAdmin = () => {
           }}
           onSuccess={handleCreateSuccess}
           initialData={editingLottery}
-        />
-      )}
-      
-      {showDrawModal && selectedLottery && (
-        <LotteryDraw
-          isOpen={showDrawModal}
-          onClose={() => {
-            setShowDrawModal(false);
-            setSelectedLottery(null);
-          }}
-          lotteryId={selectedLottery.id}
-          onSuccess={handleDrawSuccess}
         />
       )}
     </div>
