@@ -1,3 +1,4 @@
+
 import React, {
   createContext,
   useContext,
@@ -31,7 +32,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         if (user) {
           // Fetch cart items from the database based on user_id
           const { data: cartData, error: dbError } = await supabase
-            .from('carts')
+            .from('cart_tokens')
             .select('*')
             .eq('user_id', user.id);
 
@@ -40,16 +41,41 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           }
 
           if (cartData && cartData.length > 0) {
-            // Assuming each user has only one cart, get the items from the first cart
-            const cartItems = cartData[0].items || [];
-            setItems(cartItems);
-            setCartToken(cartData[0].cart_token || uuidv4());
+            // Get the cart token
+            const token = cartData[0].token;
+            setCartToken(token);
+            
+            // Get cart items for this token
+            const { data: cartItems, error: itemsError } = await supabase
+              .from('cart_items')
+              .select('*, products(*)')
+              .eq('cart_token_id', cartData[0].id);
+            
+            if (itemsError) {
+              throw new Error(`Failed to load cart items: ${itemsError.message}`);
+            }
+            
+            // Transform cart items to match the expected format
+            if (cartItems) {
+              const transformedItems: BaseCartItem[] = cartItems.map(item => ({
+                productId: item.product_id,
+                name: item.products?.name || '',
+                price: parseFloat(item.price as unknown as string),
+                quantity: item.quantity,
+                image_url: item.products?.image_url,
+                color: item.color || null,
+                size: item.size || null,
+                customization: item.customization as unknown as BaseCartItem['customization']
+              }));
+              
+              setItems(transformedItems);
+            }
           } else {
-            // If no cart exists for the user, create a new cart in the database
+            // If no cart exists for the user, create a new cart token in the database
             const newCartToken = uuidv4();
             const { error: createError } = await supabase
-              .from('carts')
-              .insert([{ user_id: user.id, items: [], cart_token: newCartToken }]);
+              .from('cart_tokens')
+              .insert([{ user_id: user.id, token: newCartToken }]);
 
             if (createError) {
               throw new Error(`Failed to create cart in database: ${createError.message}`);
@@ -94,19 +120,62 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   // Function to update cart in the database
   const updateCartInDatabase = useCallback(
     async (updatedItems: BaseCartItem[]) => {
-      if (user) {
-        const { error: updateError } = await supabase
-          .from('carts')
-          .update({ items: updatedItems })
-          .eq('user_id', user.id);
-
-        if (updateError) {
-          console.error('Failed to update cart in database:', updateError.message);
-          setError(`Failed to update cart: ${updateError.message}`);
+      if (user && cartToken) {
+        try {
+          // First, get the cart token ID
+          const { data: tokenData, error: tokenError } = await supabase
+            .from('cart_tokens')
+            .select('id')
+            .eq('token', cartToken)
+            .single();
+            
+          if (tokenError) {
+            console.error('Failed to get cart token:', tokenError.message);
+            setError(`Failed to update cart: ${tokenError.message}`);
+            return;
+          }
+          
+          // Remove existing cart items
+          const { error: deleteError } = await supabase
+            .from('cart_items')
+            .delete()
+            .eq('cart_token_id', tokenData.id);
+            
+          if (deleteError) {
+            console.error('Failed to clear cart items:', deleteError.message);
+            setError(`Failed to update cart: ${deleteError.message}`);
+            return;
+          }
+          
+          // Add new cart items if there are any
+          if (updatedItems.length > 0) {
+            const cartItems = updatedItems.map(item => ({
+              cart_token_id: tokenData.id,
+              product_id: item.productId,
+              quantity: item.quantity,
+              price: item.price,
+              color: item.color || null,
+              size: item.size || null,
+              customization: item.customization || null
+            }));
+            
+            const { error: insertError } = await supabase
+              .from('cart_items')
+              .insert(cartItems);
+              
+            if (insertError) {
+              console.error('Failed to add cart items:', insertError.message);
+              setError(`Failed to update cart: ${insertError.message}`);
+              return;
+            }
+          }
+        } catch (error: any) {
+          console.error('Error updating cart in database:', error);
+          setError(`Failed to update cart: ${error.message}`);
         }
       }
     },
-    [user]
+    [user, cartToken]
   );
 
   // Add item to cart
@@ -163,6 +232,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     return items.reduce((total, item) => total + item.price * item.quantity, 0);
   }, [items]);
 
+  const itemCount = items.reduce((count, item) => count + item.quantity, 0);
+  const total = getCartTotal();
+
   const value: CartContextType = {
     items,
     addItem,
@@ -171,12 +243,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     updateItemQuantity: updateQuantity, // Add this alias
     clearCart,
     getCartTotal,
-    total: getCartTotal(),
-    itemCount: items.reduce((count, item) => count + item.quantity, 0),
+    total,
+    itemCount,
     isLoading,
     error,
     cartToken,
-    currentUser: user
+    currentUser: user ? { id: user.id } : null
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

@@ -1,12 +1,11 @@
-// Import the CartItemProps
+
 import { CartItem as CartItemComponent } from '@/components/cart/CartItem';
-import { CartItemProps } from '@/components/cart/CartItemProps';
 import { useCart } from '@/context/CartContext';
 import { formatCurrency } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 
 const Cart = () => {
-  const { items, removeItem, updateQuantity: updateItemQuantity, total, itemCount, isLoading } = useCart();
+  const { items, removeItem, updateQuantity, total, itemCount, isLoading } = useCart();
   const navigate = useNavigate();
 
   const handleCheckout = () => {
@@ -34,7 +33,7 @@ const Cart = () => {
                   key={item.productId} 
                   item={item} 
                   onRemove={removeItem} 
-                  onUpdateQuantity={updateItemQuantity}
+                  onUpdateQuantity={updateQuantity}
                 />
               ))}
             </ul>

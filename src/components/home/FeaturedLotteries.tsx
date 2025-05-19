@@ -29,7 +29,7 @@ const FeaturedLotteries = () => {
           {lotteries.slice(0, 3).map((lottery: Lottery) => (
             <LotteryCard 
               key={lottery.id} 
-              lottery={lottery} 
+              lottery={lottery}
             />
           ))}
         </div>
