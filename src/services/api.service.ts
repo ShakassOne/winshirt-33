@@ -1,470 +1,377 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { Design, Lottery, Mockup, Product } from "@/types/supabase.types";
-import { PrintArea } from "@/types/mockup.types";
-import { Json } from "@/integrations/supabase/types";
+import { Product, Lottery, Mockup } from "@/types/supabase.types";
+import { MockupWithColors, MockupColor } from "@/types/mockup.types";
 
-// Fetch all products
-export const fetchAllProducts = async (): Promise<Product[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
+// Products
+export const fetchAllProducts = async () => {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching products:", error);
-      throw error;
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error("Error in fetchAllProducts:", error);
+  if (error) {
+    console.error("Error fetching products:", error);
     throw error;
   }
+
+  return data || [];
 };
 
-// Fetch a product by ID
-export const fetchProductById = async (id: string): Promise<Product | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('id', id)
-      .single();
+export const fetchProductById = async (id: string) => {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-    if (error) {
-      console.error(`Error fetching product with ID ${id}:`, error);
-      throw error;
-    }
-
-    return data || null;
-  } catch (error) {
-    console.error(`Error in fetchProductById for ID ${id}:`, error);
-    return null;
-  }
-};
-
-// Fetch all lotteries
-export const fetchAllLotteries = async (): Promise<Lottery[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('lotteries')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error("Error fetching lotteries:", error);
-      throw error;
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error("Error in fetchAllLotteries:", error);
+  if (error) {
+    console.error(`Error fetching product with ID ${id}:`, error);
     throw error;
   }
+
+  return data;
 };
 
-// Fetch a lottery by ID
-export const fetchLotteryById = async (id: string): Promise<Lottery | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('lotteries')
-      .select('*')
-      .eq('id', id)
-      .single();
+export const createProduct = async (productData: Partial<Product>) => {
+  const { data, error } = await supabase
+    .from("products")
+    .insert([productData as any]) // Cast to any to avoid type errors
+    .select()
+    .single();
 
-    if (error) {
-      console.error(`Error fetching lottery with ID ${id}:`, error);
-      throw error;
-    }
-
-    return data || null;
-  } catch (error) {
-    console.error(`Error in fetchLotteryById for ID ${id}:`, error);
-    return null;
-  }
-};
-
-// Fetch all designs
-export const fetchAllDesigns = async () => {
-  try {
-    const { data, error } = await supabase
-      .from('designs')
-      .select('*')
-      .order('created_at', { ascending: false });
-      
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error("Error fetching designs:", error);
-    throw error;
-  }
-};
-
-// Create a new design
-export const createDesign = async (design: Omit<Design, 'id'>) => {
-  try {
-    const { data, error } = await supabase
-      .from('designs')
-      .insert([design])
-      .select()
-      .single();
-      
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error("Error creating design:", error);
-    throw error;
-  }
-};
-
-// Update an existing design
-export const updateDesign = async (id: string, updates: Partial<Design>) => {
-  try {
-    const { data, error } = await supabase
-      .from('designs')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error("Error updating design:", error);
-    throw error;
-  }
-};
-
-// Delete a design
-export const deleteDesign = async (id: string) => {
-  try {
-    const { error } = await supabase
-      .from('designs')
-      .delete()
-      .eq('id', id);
-      
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error("Error deleting design:", error);
-    throw error;
-  }
-};
-
-// Fetch featured lotteries
-export const fetchFeaturedLotteries = async () => {
-  try {
-    const { data, error } = await supabase
-      .from('lotteries')
-      .select('*')
-      .eq('is_featured', true)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
-      
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error("Error fetching featured lotteries:", error);
-    throw error;
-  }
-};
-
-// Fetch all mockups
-export const fetchAllMockups = async () => {
-  try {
-    const { data, error } = await supabase
-      .from('mockups')
-      .select('*')
-      .order('created_at', { ascending: false });
-      
-    if (error) throw error;
-    
-    // Convert the data to proper format
-    const mockups = data?.map(mockup => ({
-      ...mockup,
-      print_areas: typeof mockup.print_areas === 'string' 
-        ? JSON.parse(mockup.print_areas as string) 
-        : mockup.print_areas,
-      colors: typeof mockup.colors === 'string' 
-        ? JSON.parse(mockup.colors as string) 
-        : mockup.colors
-    })) as unknown as Mockup[];
-    
-    return mockups || [];
-  } catch (error) {
-    console.error("Error fetching mockups:", error);
-    throw error;
-  }
-};
-
-export const fetchMockupById = async (id: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('mockups')
-      .select('*')
-      .eq('id', id)
-      .single();
-      
-    if (error) throw error;
-    
-    // Convert the data to proper format
-    const mockup = {
-      ...data,
-      print_areas: typeof data.print_areas === 'string' 
-        ? JSON.parse(data.print_areas as string) 
-        : data.print_areas,
-      colors: typeof data.colors === 'string' 
-        ? JSON.parse(data.colors as string) 
-        : data.colors
-    } as unknown as Mockup;
-    
-    return mockup;
-  } catch (error) {
-    console.error("Error fetching mockup:", error);
-    throw error;
-  }
-};
-
-// Upload file to storage
-export const uploadFileToStorage = async (
-  file: File, 
-  bucket: string = 'designs', 
-  path: string = ''
-): Promise<string> => {
-  try {
-    // Generate a unique file name
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-    const filePath = path ? `${path}/${fileName}` : fileName;
-    
-    // Upload the file
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
-      
-    if (error) throw error;
-    
-    // Get the public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(data.path);
-      
-    return publicUrl;
-  } catch (error) {
-    console.error("Error uploading file:", error);
-    throw error;
-  }
-};
-
-// Create a new product
-export const createProduct = async (product: Partial<Product>): Promise<Product> => {
-  try {
-    // Make sure required fields are present
-    if (!product.name || !product.description || !product.price || !product.category || !product.image_url) {
-      throw new Error("Missing required product fields");
-    }
-    
-    // Create a valid product object with all required fields
-    const productData = {
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      category: product.category,
-      image_url: product.image_url,
-      is_active: product.is_active !== undefined ? product.is_active : true,
-      is_customizable: product.is_customizable !== undefined ? product.is_customizable : false,
-      color: product.color || null,
-      available_colors: product.available_colors || [],
-      available_sizes: product.available_sizes || [],
-      mockup_id: product.mockup_id || null,
-      use_3d_viewer: product.use_3d_viewer || false,
-      model_3d_url: product.model_3d_url || null,
-      tickets_offered: product.tickets_offered || 0
-    };
-    
-    const { data, error } = await supabase
-      .from('products')
-      .insert([productData])
-      .select()
-      .single();
-      
-    if (error) throw error;
-    return data;
-  } catch (error) {
+  if (error) {
     console.error("Error creating product:", error);
     throw error;
   }
+
+  return data;
 };
 
-// Update an existing product
-export const updateProduct = async (id: string, updates: Partial<Product>): Promise<Product> => {
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error("Error updating product:", error);
+export const updateProduct = async (id: string, productData: Partial<Product>) => {
+  const { data, error } = await supabase
+    .from("products")
+    .update(productData as any) // Cast to any to avoid type errors
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(`Error updating product with ID ${id}:`, error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const deleteProduct = async (id: string) => {
+  const { error } = await supabase
+    .from("products")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error(`Error deleting product with ID ${id}:`, error);
     throw error;
   }
 };
 
-// Delete a product
-export const deleteProduct = async (id: string): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('id', id);
-      
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error("Error deleting product:", error);
+// Lotteries
+export const fetchAllLotteries = async () => {
+  const { data, error } = await supabase
+    .from("lotteries")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching lotteries:", error);
     throw error;
   }
+
+  return data || [];
 };
 
-// Create a new lottery
-export const createLottery = async (lottery: Partial<Lottery>): Promise<Lottery> => {
-  try {
-    // Make sure required fields are present
-    if (!lottery.title || !lottery.description || !lottery.value || 
-        !lottery.goal || !lottery.draw_date || !lottery.image_url) {
-      throw new Error("Missing required lottery fields");
-    }
+export const fetchFeaturedLotteries = async () => {
+  const { data, error } = await supabase
+    .from("lotteries")
+    .select("*")
+    .eq("is_featured", true)
+    .order("created_at", { ascending: false });
 
-    // Create a valid lottery object with all required fields
-    const lotteryData = {
-      title: lottery.title,
-      description: lottery.description,
-      image_url: lottery.image_url,
-      value: lottery.value,
-      goal: lottery.goal,
-      draw_date: lottery.draw_date,
-      is_active: lottery.is_active !== undefined ? lottery.is_active : true,
-      is_featured: lottery.is_featured !== undefined ? lottery.is_featured : false,
-      participants: lottery.participants || 0
-    };
+  if (error) {
+    console.error("Error fetching featured lotteries:", error);
+    throw error;
+  }
 
-    const { data, error } = await supabase
-      .from('lotteries')
-      .insert([lotteryData])
-      .select()
-      .single();
-      
-    if (error) throw error;
-    return data;
-  } catch (error) {
+  return data || [];
+};
+
+export const fetchLotteryById = async (id: string) => {
+  const { data, error } = await supabase
+    .from("lotteries")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    console.error(`Error fetching lottery with ID ${id}:`, error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const createLottery = async (lotteryData: Partial<Lottery>) => {
+  const { data, error } = await supabase
+    .from("lotteries")
+    .insert([lotteryData as any]) // Cast to any to avoid type errors
+    .select()
+    .single();
+
+  if (error) {
     console.error("Error creating lottery:", error);
     throw error;
   }
+
+  return data;
 };
 
-// Update an existing lottery
-export const updateLottery = async (id: string, updates: Partial<Lottery>): Promise<Lottery> => {
-  try {
-    const { data, error } = await supabase
-      .from('lotteries')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error("Error updating lottery:", error);
+export const updateLottery = async (id: string, lotteryData: Partial<Lottery>) => {
+  const { data, error } = await supabase
+    .from("lotteries")
+    .update(lotteryData as any) // Cast to any to avoid type errors
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(`Error updating lottery with ID ${id}:`, error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const deleteLottery = async (id: string) => {
+  const { error } = await supabase
+    .from("lotteries")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error(`Error deleting lottery with ID ${id}:`, error);
     throw error;
   }
 };
 
-// Delete a lottery
-export const deleteLottery = async (id: string): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('lotteries')
-      .delete()
-      .eq('id', id);
-      
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error("Error deleting lottery:", error);
+// Mockups
+export const fetchAllMockups = async () => {
+  const { data, error } = await supabase
+    .from("mockups")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching mockups:", error);
     throw error;
   }
+
+  return data || [];
 };
 
-// Create a new mockup
-export const createMockup = async (mockup: any): Promise<Mockup> => {
-  try {
-    // Transform mockup data if needed
-    const mockupData = {
-      ...mockup,
-      print_areas: Array.isArray(mockup.print_areas) ? JSON.stringify(mockup.print_areas) : mockup.print_areas,
-      colors: mockup.colors ? JSON.stringify(mockup.colors) : null
-    };
-    
-    const { data, error } = await supabase
-      .from('mockups')
-      .insert([mockupData])
-      .select()
-      .single();
-      
-    if (error) throw error;
-    
-    // Convert the data to proper format
-    const result = {
-      ...data,
-      print_areas: typeof data.print_areas === 'string' ? JSON.parse(data.print_areas as string) : data.print_areas,
-      colors: typeof data.colors === 'string' ? JSON.parse(data.colors as string) : data.colors
-    } as unknown as Mockup;
-    
-    return result;
-  } catch (error) {
+export const fetchMockupById = async (id: string): Promise<MockupWithColors> => {
+  const { data, error } = await supabase
+    .from("mockups")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    console.error(`Error fetching mockup with ID ${id}:`, error);
+    throw error;
+  }
+
+  // Process the print_areas from JSON to array
+  let printAreas: any[] = [];
+  if (data.print_areas) {
+    try {
+      printAreas = Array.isArray(data.print_areas) 
+        ? data.print_areas 
+        : (typeof data.print_areas === 'string' ? JSON.parse(data.print_areas) : []);
+    } catch (e) {
+      console.error("Error parsing mockup print_areas:", e);
+    }
+  }
+
+  // Handle colors property
+  let colorsArray: MockupColor[] = [];
+  // Add safe check for colors property 
+  const rawColors = (data as any).colors;
+  if (rawColors) {
+    try {
+      colorsArray = Array.isArray(rawColors) 
+        ? rawColors 
+        : (typeof rawColors === 'string' ? JSON.parse(rawColors) : []);
+    } catch (e) {
+      console.error("Error parsing mockup colors:", e);
+    }
+  }
+  
+  return {
+    ...data,
+    print_areas: printAreas,
+    colors: colorsArray
+  } as MockupWithColors;
+};
+
+export const createMockup = async (mockupData: Partial<MockupWithColors>) => {
+  // Need to ensure the data structure is compatible with Supabase
+  const supabaseData = {
+    ...mockupData,
+    print_areas: Array.isArray(mockupData.print_areas) ? mockupData.print_areas : [],
+    colors: Array.isArray(mockupData.colors) ? mockupData.colors : []
+  };
+
+  const { data, error } = await supabase
+    .from("mockups")
+    .insert([supabaseData as any]) // Cast to any to avoid type errors
+    .select()
+    .single();
+
+  if (error) {
     console.error("Error creating mockup:", error);
     throw error;
   }
+
+  return data;
 };
 
-// Update an existing mockup
-export const updateMockup = async (id: string, mockup: any): Promise<Mockup> => {
-  try {
-    // Transform mockup data if needed
-    const mockupData = {
-      ...mockup,
-      print_areas: Array.isArray(mockup.print_areas) ? JSON.stringify(mockup.print_areas) : mockup.print_areas,
-      colors: mockup.colors ? JSON.stringify(mockup.colors) : null
-    };
-    
-    const { data, error } = await supabase
-      .from('mockups')
-      .update(mockupData)
-      .eq('id', id)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    
-    // Convert the data to proper format
-    const result = {
-      ...data,
-      print_areas: typeof data.print_areas === 'string' ? JSON.parse(data.print_areas as string) : data.print_areas,
-      colors: typeof data.colors === 'string' ? JSON.parse(data.colors as string) : data.colors
-    } as unknown as Mockup;
-    
-    return result;
-  } catch (error) {
-    console.error("Error updating mockup:", error);
+export const updateMockup = async (id: string, mockupData: Partial<MockupWithColors>) => {
+  // Need to ensure the data structure is compatible with Supabase
+  const supabaseData = {
+    ...mockupData,
+    print_areas: Array.isArray(mockupData.print_areas) ? mockupData.print_areas : [],
+    colors: Array.isArray(mockupData.colors) ? mockupData.colors : []
+  };
+
+  const { data, error } = await supabase
+    .from("mockups")
+    .update(supabaseData as any) // Cast to any to avoid type errors
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(`Error updating mockup with ID ${id}:`, error);
     throw error;
   }
+
+  return data;
+};
+
+export const deleteMockup = async (id: string) => {
+  const { error } = await supabase
+    .from("mockups")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error(`Error deleting mockup with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+// Designs
+export const fetchAllDesigns = async () => {
+  const { data, error } = await supabase
+    .from("designs")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching designs:", error);
+    throw error;
+  }
+
+  return data || [];
+};
+
+export const fetchDesignById = async (id: string) => {
+  const { data, error } = await supabase
+    .from("designs")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    console.error(`Error fetching design with ID ${id}:`, error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const createDesign = async (designData: any) => {
+  const { data, error } = await supabase
+    .from("designs")
+    .insert([designData])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating design:", error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const updateDesign = async (id: string, designData: any) => {
+  const { data, error } = await supabase
+    .from("designs")
+    .update(designData)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(`Error updating design with ID ${id}:`, error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const deleteDesign = async (id: string) => {
+  const { error } = await supabase
+    .from("designs")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error(`Error deleting design with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+// File upload
+export const uploadFileToStorage = async (file: File, folder: string = "uploads"): Promise<string> => {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Math.random().toString(36).substring(2, 15)}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+  const filePath = `${folder}/${fileName}`;
+
+  const { data, error } = await supabase.storage
+    .from("public")
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: false
+    });
+
+  if (error) {
+    console.error("Error uploading file:", error);
+    throw error;
+  }
+
+  const { data: { publicUrl } } = supabase.storage.from("public").getPublicUrl(filePath);
+  return publicUrl;
 };

@@ -3,18 +3,15 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { uploadFileToStorage } from '@/lib/utils';
+import { uploadFileToStorage } from '@/services/api.service';
 
-export interface UploadButtonProps {
+interface UploadButtonProps {
   onUpload: (url: string) => void;
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   targetFolder?: string;
   acceptTypes?: string;
   className?: string;
-  endpoint?: string; // Add this to support the endpoint prop from ProductDetail
-  onClientUploadComplete?: (res: any) => void; // Add these props for compatibility
-  onUploadError?: (error: Error) => void;
 }
 
 export function UploadButton({
@@ -23,10 +20,7 @@ export function UploadButton({
   size = 'default',
   targetFolder = 'uploads',
   acceptTypes = 'image/*',
-  className,
-  endpoint,
-  onClientUploadComplete,
-  onUploadError
+  className
 }: UploadButtonProps) {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -46,11 +40,6 @@ export function UploadButton({
     try {
       const url = await uploadFileToStorage(file, targetFolder);
       onUpload(url);
-      
-      if (onClientUploadComplete) {
-        onClientUploadComplete([{ url, name: file.name }]);
-      }
-      
       toast({
         title: "Téléchargement réussi",
         description: "Le fichier a été téléchargé avec succès",
@@ -61,11 +50,6 @@ export function UploadButton({
         description: "Une erreur est survenue lors du téléchargement",
         variant: "destructive",
       });
-      
-      if (onUploadError && error instanceof Error) {
-        onUploadError(error);
-      }
-      
       console.error("Upload error:", error);
     } finally {
       setIsUploading(false);

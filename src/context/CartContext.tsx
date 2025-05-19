@@ -1,262 +1,249 @@
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { CartItem as BaseCartItem } from '@/types/supabase.types';
 import { CartContextType } from '@/types/cart.types';
+import { CartItem } from '@/types/supabase.types';
+import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './AuthContext';
+import { 
+  addToCart, 
+  getCartItems, 
+  removeFromCart, 
+  updateCartItemQuantity, 
+  clearCart as clearCartService,
+  migrateCartToUser
+} from '@/services/cart.service';
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [items, setItems] = useState<BaseCartItem[]>([]);
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  const [items, setItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [cartToken, setCartToken] = useState<string | null>(null);
-  const { currentUser } = useAuth();
-
-  // Load cart data from localStorage on component mount
+  const [cartToken, setCartToken] = useState<string>('');
+  const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
+  
+  // Generate a cart token if not exists
   useEffect(() => {
-    const loadCart = async () => {
-      setIsLoading(true);
-      try {
-        // Check if the user is authenticated
-        if (currentUser) {
-          // Fetch cart items from the database based on user_id
-          const { data: cartData, error: dbError } = await supabase
-            .from('cart_tokens')
-            .select('*')
-            .eq('user_id', currentUser.id);
-
-          if (dbError) {
-            throw new Error(`Failed to load cart from database: ${dbError.message}`);
-          }
-
-          if (cartData && cartData.length > 0) {
-            // Get the cart token
-            const token = cartData[0].token;
-            setCartToken(token);
-            
-            // Get cart items for this token
-            const { data: cartItems, error: itemsError } = await supabase
-              .from('cart_items')
-              .select('*, products(*)')
-              .eq('cart_token_id', cartData[0].id);
-            
-            if (itemsError) {
-              throw new Error(`Failed to load cart items: ${itemsError.message}`);
-            }
-            
-            // Transform cart items to match the expected format
-            if (cartItems) {
-              const transformedItems: BaseCartItem[] = cartItems.map(item => ({
-                productId: item.product_id,
-                name: item.products?.name || '',
-                price: parseFloat(item.price as unknown as string),
-                quantity: item.quantity,
-                image_url: item.products?.image_url,
-                color: item.color || null,
-                size: item.size || null,
-                customization: item.customization as unknown as BaseCartItem['customization']
-              }));
-              
-              setItems(transformedItems);
-            }
-          } else {
-            // If no cart exists for the user, create a new cart token in the database
-            const newCartToken = uuidv4();
-            const { error: createError } = await supabase
-              .from('cart_tokens')
-              .insert([{ user_id: currentUser.id, token: newCartToken }]);
-
-            if (createError) {
-              throw new Error(`Failed to create cart in database: ${createError.message}`);
-            }
-
-            setCartToken(newCartToken);
-          }
-        } else {
-          // If the user is not authenticated, load cart items from localStorage
-          const storedCart = localStorage.getItem('cart');
-          const storedCartToken = localStorage.getItem('cartToken');
-
-          if (storedCart) {
-            setItems(JSON.parse(storedCart));
-          }
-
-          if (storedCartToken) {
-            setCartToken(storedCartToken);
-          } else {
-            const newCartToken = uuidv4();
-            setCartToken(newCartToken);
-            localStorage.setItem('cartToken', newCartToken);
-          }
-        }
-      } catch (e: any) {
-        setError(e.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadCart();
-  }, [currentUser]);
-
-  // Save cart data to localStorage whenever items change (if guest)
-  useEffect(() => {
-    if (!currentUser) {
-      localStorage.setItem('cart', JSON.stringify(items));
+    const storedCartToken = localStorage.getItem('cart_token');
+    if (!storedCartToken) {
+      const newCartToken = uuidv4();
+      localStorage.setItem('cart_token', newCartToken);
+      setCartToken(newCartToken);
+      console.log("Created new cart token:", newCartToken);
+    } else {
+      setCartToken(storedCartToken);
+      console.log("Using existing cart token:", storedCartToken);
     }
-  }, [items, currentUser]);
-
-  // Function to update cart in the database
-  const updateCartInDatabase = useCallback(
-    async (updatedItems: BaseCartItem[]) => {
-      if (currentUser && cartToken) {
-        try {
-          // First, get the cart token ID
-          const { data: tokenData, error: tokenError } = await supabase
-            .from('cart_tokens')
-            .select('id')
-            .eq('token', cartToken)
-            .single();
-            
-          if (tokenError) {
-            console.error('Failed to get cart token:', tokenError.message);
-            setError(`Failed to update cart: ${tokenError.message}`);
-            return;
-          }
-          
-          // Remove existing cart items
-          const { error: deleteError } = await supabase
-            .from('cart_items')
-            .delete()
-            .eq('cart_token_id', tokenData.id);
-            
-          if (deleteError) {
-            console.error('Failed to clear cart items:', deleteError.message);
-            setError(`Failed to update cart: ${deleteError.message}`);
-            return;
-          }
-          
-          // Add new cart items if there are any
-          if (updatedItems.length > 0) {
-            const cartItems = updatedItems.map(item => ({
-              cart_token_id: tokenData.id,
-              product_id: item.productId,
-              quantity: item.quantity,
-              price: item.price,
-              color: item.color || null,
-              size: item.size || null,
-              customization: item.customization || null
-            }));
-            
-            const { error: insertError } = await supabase
-              .from('cart_items')
-              .insert(cartItems);
-              
-            if (insertError) {
-              console.error('Failed to add cart items:', insertError.message);
-              setError(`Failed to update cart: ${insertError.message}`);
-              return;
-            }
-          }
-        } catch (error: any) {
-          console.error('Error updating cart in database:', error);
-          setError(`Failed to update cart: ${error.message}`);
-        }
+  }, []);
+  
+  // Check for auth state changes
+  useEffect(() => {
+    // Get current auth status
+    const checkCurrentUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setCurrentUser(session?.user || null);
+      console.log("Current user:", session?.user ? session.user.id : "not logged in");
+    };
+    
+    checkCurrentUser();
+    
+    // Set up auth state change listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const user = session?.user || null;
+      setCurrentUser(user);
+      console.log("Auth state changed:", event, user ? user.id : "no user");
+      
+      // Handle sign in - migrate cart if user just signed in
+      if (event === 'SIGNED_IN' && user && cartToken) {
+        console.log("User signed in, migrating cart");
+        await handleCartMigration(user.id, cartToken);
       }
-    },
-    [currentUser, cartToken]
-  );
+    });
 
-  // Add item to cart
-  const addItem = useCallback(
-    (item: BaseCartItem) => {
-      const existingItemIndex = items.findIndex(
-        (i) => i.productId === item.productId
-      );
-
-      if (existingItemIndex !== -1) {
-        const updatedItems = [...items];
-        updatedItems[existingItemIndex].quantity += item.quantity;
-        setItems(updatedItems);
-        updateCartInDatabase(updatedItems);
-      } else {
-        const updatedItems = [...items, item];
-        setItems(updatedItems);
-        updateCartInDatabase(updatedItems);
-      }
-    },
-    [items, updateCartInDatabase]
-  );
-
-  // Remove item from cart
-  const removeItem = useCallback(
-    (productId: string) => {
-      const updatedItems = items.filter((item) => item.productId !== productId);
-      setItems(updatedItems);
-      updateCartInDatabase(updatedItems);
-    },
-    [items, updateCartInDatabase]
-  );
-
-  // Update item quantity in cart
-  const updateQuantity = useCallback(
-    (productId: string, quantity: number) => {
-      const updatedItems = items.map((item) =>
-        item.productId === productId ? { ...item, quantity } : item
-      );
-      setItems(updatedItems);
-      updateCartInDatabase(updatedItems);
-    },
-    [items, updateCartInDatabase]
-  );
-
-  // Clear cart
-  const clearCart = useCallback(() => {
-    setItems([]);
-    updateCartInDatabase([]);
-  }, [updateCartInDatabase]);
-
-  // Get cart total
-  const getCartTotal = useCallback(() => {
-    return items.reduce((total, item) => total + item.price * item.quantity, 0);
-  }, [items]);
-
-  const itemCount = items.reduce((count, item) => count + item.quantity, 0);
-  const total = getCartTotal();
-
-  const value: CartContextType = {
-    items,
-    addItem,
-    removeItem,
-    updateQuantity,
-    clearCart,
-    getCartTotal,
-    total,
-    itemCount,
-    isLoading,
-    error,
-    cartToken,
-    currentUser: currentUser ? { id: currentUser.id } : null
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [cartToken]);
+  
+  // Load cart items when cartToken is available or user changes
+  useEffect(() => {
+    if (cartToken) {
+      console.log("Loading cart items for token:", cartToken);
+      loadCartItems();
+    }
+  }, [cartToken, currentUser]);
+  
+  const handleCartMigration = async (userId: string, token: string) => {
+    setIsLoading(true);
+    try {
+      console.log("Starting cart migration for user:", userId);
+      await migrateCartToUser(userId, token);
+      toast({
+        title: "Panier transféré",
+        description: "Votre panier a été associé à votre compte",
+      });
+      await loadCartItems(); // Reload cart after migration
+      console.log("Cart migration completed");
+    } catch (err: any) {
+      console.error("Error migrating cart:", err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
+  
+  const loadCartItems = async () => {
+    if (!cartToken) return;
+    
+    console.log("Loading cart items for token:", cartToken);
+    setIsLoading(true);
+    try {
+      const cartItems = await getCartItems(cartToken, currentUser?.id);
+      console.log("Loaded cart items:", cartItems);
+      setItems(cartItems);
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error loading cart items:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const addItem = async (item: CartItem) => {
+    if (!cartToken) return;
+    
+    console.log("Adding item to cart:", item);
+    setIsLoading(true);
+    try {
+      await addToCart(cartToken, item, currentUser?.id);
+      toast({
+        title: "Produit ajouté au panier",
+        description: `${item.name} a été ajouté à votre panier`,
+      });
+      // Reload cart items after adding
+      await loadCartItems();
+      console.log("Item added successfully");
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error adding to cart:", err);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de l'ajout au panier",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const removeItem = async (productId: string) => {
+    if (!cartToken) return;
+    
+    console.log("Removing item from cart:", productId);
+    setIsLoading(true);
+    try {
+      await removeFromCart(cartToken, productId, currentUser?.id);
+      toast({
+        title: "Produit retiré du panier",
+        description: "Le produit a été retiré de votre panier",
+      });
+      // Reload cart items after removal
+      await loadCartItems();
+      console.log("Item removed successfully");
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error removing from cart:", err);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors du retrait du produit",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const updateItemQuantity = async (productId: string, quantity: number) => {
+    if (!cartToken || quantity < 1) return;
+    
+    console.log("Updating item quantity:", productId, quantity);
+    setIsLoading(true);
+    try {
+      await updateCartItemQuantity(cartToken, productId, quantity, currentUser?.id);
+      // Reload cart items after update
+      await loadCartItems();
+      console.log("Item quantity updated successfully");
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error updating quantity:", err);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la mise à jour de la quantité",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const clearCart = async () => {
+    if (!cartToken) return;
+    
+    console.log("Clearing cart");
+    setIsLoading(true);
+    try {
+      await clearCartService(cartToken, currentUser?.id);
+      toast({
+        title: "Panier vidé",
+        description: "Votre panier a été vidé",
+      });
+      // Reload cart items after clearing
+      await loadCartItems();
+      console.log("Cart cleared successfully");
+    } catch (err: any) {
+      setError(err.message);
+      console.error("Error clearing cart:", err);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors du vidage du panier",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Calculate total price of items in cart
+  const total = items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  
+  // Calculate total number of items in cart
+  const itemCount = items.reduce((count, item) => count + item.quantity, 0);
+  
+  return (
+    <CartContext.Provider
+      value={{
+        items,
+        addItem,
+        removeItem,
+        updateItemQuantity,
+        clearCart,
+        isLoading,
+        error,
+        total,
+        itemCount,
+        cartToken,
+        currentUser
+      }}
+    >
+      {children}
+    </CartContext.Provider>
+  );
+}
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
-};
-
-// Custom hook to use the cart context
 export const useCart = () => {
   const context = useContext(CartContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useCart must be used within a CartProvider');
   }
   return context;

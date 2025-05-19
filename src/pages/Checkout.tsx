@@ -1,328 +1,451 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import { useCart } from '@/context/CartContext';
-import { formatCurrency } from '@/lib/utils';
-import { createOrder } from '@/services/order.service';
-import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
-import { CartItem } from '@/types/supabase.types';
 import { CheckoutFormData } from '@/types/cart.types';
+import { createOrder } from '@/services/order.service';
+import { migrateCartToUser } from '@/services/cart.service';
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/use-toast';
+import { Checkbox } from '@/components/ui/checkbox';
 
-const Icons = {
-  spinner: Loader2,
-};
-
+// Schéma de validation pour le formulaire de checkout
 const checkoutSchema = z.object({
-  shipping_first_name: z.string().min(2, { message: 'Le prénom doit contenir au moins 2 caractères' }),
-  shipping_last_name: z.string().min(2, { message: 'Le nom doit contenir au moins 2 caractères' }),
-  shipping_email: z.string().email({ message: 'Adresse e-mail invalide' }),
-  shipping_phone: z.string().regex(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/, { message: 'Numéro de téléphone invalide' }),
-  shipping_address: z.string().min(5, { message: 'L\'adresse doit contenir au moins 5 caractères' }),
-  shipping_city: z.string().min(2, { message: 'La ville doit contenir au moins 2 caractères' }),
-  shipping_postal_code: z.string().regex(/^[0-9]{5}$/, { message: 'Code postal invalide' }),
-  shipping_country: z.string().min(2, { message: 'Le pays doit contenir au moins 2 caractères' }),
-  delivery_notes: z.string().optional(),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  email: z.string().optional(),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  postalCode: z.string().optional(),
-  country: z.string().optional(),
+  firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
+  lastName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
+  email: z.string().email("Email invalide"),
+  phone: z.string().min(10, "Numéro de téléphone invalide"),
+  address: z.string().min(5, "Adresse invalide"),
+  city: z.string().min(2, "Ville invalide"),
+  postalCode: z.string().min(5, "Code postal invalide"),
+  country: z.string().min(2, "Pays invalide"),
+  deliveryNotes: z.string().optional(),
   createAccount: z.boolean().default(false),
-  password: z.string().min(6).optional(),
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").optional()
+    .refine(
+      (pw) => !z.boolean().parse(z.object({ createAccount: z.boolean() }).shape.createAccount) || (pw && pw.length >= 6),
+      { message: "Le mot de passe est requis pour créer un compte" }
+    ),
 });
 
-const defaultValues = {
-  shipping_first_name: '',
-  shipping_last_name: '',
-  shipping_email: '',
-  shipping_phone: '',
-  shipping_address: '',
-  shipping_city: '',
-  shipping_postal_code: '',
-  shipping_country: '',
-  delivery_notes: '',
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  address: '',
-  city: '',
-  postalCode: '',
-  country: '',
-  createAccount: false,
-  password: ''
-};
-
 const Checkout = () => {
+  const { items, total, cartToken, currentUser, clearCart } = useCart();
   const navigate = useNavigate();
-  const { items, clearCart, total } = useCart();
-  const { currentUser, signUp } = useAuth();
-  const { toast } = useToast();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [cartToken, setCartToken] = useState<string | null>(localStorage.getItem('cartToken'));
-  const [showCreateAccount, setShowCreateAccount] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    watch,
-  } = useForm<CheckoutFormData>({
+  // Vérifie si l'utilisateur est connecté
+  React.useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        setUser(data.session.user);
+        
+        // Récupère les informations du profil pour pré-remplir le formulaire
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.session.user.id)
+          .single();
+          
+        if (profileData) {
+          form.reset({
+            firstName: profileData.first_name || '',
+            lastName: profileData.last_name || '',
+            email: data.session.user.email || '',
+            phone: profileData.phone || '',
+            address: profileData.address || '',
+            city: profileData.city || '',
+            postalCode: profileData.postal_code || '',
+            country: profileData.country || '',
+            deliveryNotes: '',
+            createAccount: false
+          });
+        }
+      }
+    };
+    
+    checkUser();
+  }, []);
+
+  const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
-    defaultValues: defaultValues,
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      address: '',
+      city: '',
+      postalCode: '',
+      country: '',
+      deliveryNotes: '',
+      createAccount: false,
+      password: ''
+    }
   });
 
-  useEffect(() => {
-    if (!cartToken) {
-      const newToken = Math.random().toString(36).substring(2, 15);
-      setCartToken(newToken);
-      localStorage.setItem('cartToken', newToken);
-    }
-  }, [cartToken]);
+  const createAccount = form.watch('createAccount');
 
-  const createAccount = watch("createAccount");
-
-  const handleCreateOrder = async (formData: CheckoutFormData) => {
+  const onSubmit = async (data: CheckoutFormData) => {
     try {
-      setIsProcessing(true);
+      setIsLoading(true);
       
-      // Create new user account if requested
-      if (formData.createAccount && formData.email && formData.password) {
-        try {
-          const { error } = await signUp({
-            email: formData.email,
-            password: formData.password,
-            options: {
-              data: {
-                firstName: formData.firstName,
-                lastName: formData.lastName,
-                phone: formData.phone,
-                address: formData.address,
-                city: formData.city,
-                postalCode: formData.postalCode,
-                country: formData.country,
-              },
-            },
-          });
-          if (error) {
-            throw error;
+      let userId = user?.id;
+      
+      // Si l'utilisateur veut créer un compte et n'est pas connecté
+      if (data.createAccount && !user) {
+        const { error, data: authData } = await supabase.auth.signUp({
+          email: data.email,
+          password: data.password as string,
+          options: {
+            data: {
+              first_name: data.firstName,
+              last_name: data.lastName
+            }
           }
+        });
+        
+        if (error) throw error;
+        
+        userId = authData.user?.id;
+        
+        // Migrate the cart to the new user
+        if (userId && cartToken) {
+          await migrateCartToUser(userId, cartToken);
           toast({
-            title: "Compte créé avec succès",
-            description: "Vous pouvez maintenant vous connecter avec votre nouveau compte.",
+            title: "Panier migrée",
+            description: "Votre panier a été associé à votre nouveau compte",
           });
-        } catch (signUpError: any) {
-          console.error("Error signing up:", signUpError);
-          toast({
-            title: "Erreur lors de la création du compte",
-            description: signUpError.message || "Une erreur s'est produite lors de la création du compte.",
-            variant: "destructive",
-          });
-          setIsProcessing(false);
-          return;
+        }
+        
+        // Crée ou met à jour le profil utilisateur
+        if (userId) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: userId,
+              first_name: data.firstName,
+              last_name: data.lastName,
+              email: data.email,
+              phone: data.phone,
+              address: data.address,
+              city: data.city,
+              postal_code: data.postalCode,
+              country: data.country
+            });
+            
+          if (profileError) console.error("Erreur lors de la création du profil:", profileError);
         }
       }
       
-      // Create the order in the database
-      const result = await createOrder(
-        {
-          shipping_first_name: formData.shipping_first_name || formData.firstName || '',
-          shipping_last_name: formData.shipping_last_name || formData.lastName || '',
-          shipping_email: formData.shipping_email || formData.email || '',
-          shipping_phone: formData.shipping_phone || formData.phone || '',
-          shipping_address: formData.shipping_address || formData.address || '',
-          shipping_city: formData.shipping_city || formData.city || '',
-          shipping_postal_code: formData.shipping_postal_code || formData.postalCode || '',
-          shipping_country: formData.shipping_country || formData.country || '',
-          delivery_notes: formData.delivery_notes || '',
-          // Add other required fields
-          firstName: formData.firstName || formData.shipping_first_name || '',
-          lastName: formData.lastName || formData.shipping_last_name || '',
-          email: formData.email || formData.shipping_email || '',
-          phone: formData.phone || formData.shipping_phone || '',
-          address: formData.address || formData.shipping_address || '',
-          city: formData.city || formData.shipping_city || '',
-          postalCode: formData.postalCode || formData.shipping_postal_code || '',
-          country: formData.country || formData.shipping_country || ''
-        },
-        items,
-        total || 0,
-        cartToken || 'guest',
-        currentUser?.id
-      );
+      // Crée la commande
+      const order = await createOrder(data, items, cartToken, userId);
       
-      if (result && result.success) {
-        toast({
-          title: "Commande créée",
-          description: "Votre commande a été créée avec succès. Vous allez être redirigé vers la page de paiement.",
-        });
-        clearCart();
-        navigate(`/order-confirmation/${result.orderId}`);
-      } else {
-        toast({
-          title: "Erreur lors de la création de la commande",
-          description: "Une erreur s'est produite lors de la création de la commande.",
-          variant: "destructive",
-        });
-      }
-    } catch (error: any) {
-      console.error("Error creating order:", error);
+      // Redirige vers la page de paiement avec les données nécessaires
+      navigate('/payment', { 
+        state: { 
+          checkoutData: data, 
+          orderId: order.id,
+          orderTotal: total
+        } 
+      });
+      
+      // Vide le panier après la création de la commande
+      await clearCart();
+      
       toast({
-        title: "Erreur lors de la création de la commande",
-        description: error.message || "Une erreur s'est produite lors de la création de la commande.",
+        title: "Commande créée avec succès!",
+        description: "Vous allez être redirigé vers la page de paiement.",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la création de la commande:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la création de la commande",
         variant: "destructive",
       });
     } finally {
-      setIsProcessing(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4">Checkout</h1>
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Order Summary */}
-        <div>
-          <h2 className="text-lg font-semibold mb-3">Order Summary</h2>
-          {items.map((item: CartItem) => (
-            <div key={item.productId} className="flex items-center justify-between py-2 border-b border-gray-200">
-              <div className="flex items-center">
-                <img src={item.image_url || '/placeholder-image.png'} alt={item.name} className="w-12 h-12 object-cover rounded mr-2" />
-                <div>
-                  <p className="text-sm font-medium">{item.name}</p>
-                  <p className="text-xs text-gray-500">Quantity: {item.quantity}</p>
+      <div className="container mx-auto px-4 py-8 mt-16 flex-grow">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold mb-6">Finaliser votre commande</h1>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <div className="glass-card p-6">
+                <h2 className="text-xl font-semibold mb-4">Informations de livraison</h2>
+                
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Prénom</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Prénom" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nom</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Nom" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Email" type="email" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Téléphone</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Téléphone" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Adresse</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Adresse" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ville</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Ville" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="postalCode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Code Postal</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Code Postal" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="country"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Pays</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Pays" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="deliveryNotes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Instructions de livraison (optionnel)</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Instructions spéciales pour la livraison..." 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {!user && (
+                      <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="createAccount"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>Créer un compte</FormLabel>
+                                <p className="text-sm text-muted-foreground">
+                                  Créez un compte pour suivre vos commandes et conserver vos informations
+                                </p>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        {createAccount && (
+                          <FormField
+                            control={form.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Mot de passe</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="Mot de passe" 
+                                    type="password" 
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="pt-4">
+                      <Button 
+                        type="submit" 
+                        className="w-full" 
+                        size="lg"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Traitement en cours..." : "Procéder au paiement"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </div>
+            </div>
+            
+            <div className="lg:col-span-1">
+              <div className="glass-card p-6">
+                <h2 className="text-lg font-semibold mb-4">Résumé de la commande</h2>
+                
+                <div className="space-y-4">
+                  {items.map((item) => (
+                    <div key={item.productId} className="flex gap-3">
+                      <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
+                        <img 
+                          src={item.image_url} 
+                          alt={item.name} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-grow">
+                        <div className="flex justify-between">
+                          <p className="font-medium">{item.name}</p>
+                          <p>{(item.price * item.quantity).toFixed(2)} €</p>
+                        </div>
+                        <div className="text-sm text-gray-400">
+                          Qté: {item.quantity}
+                          {item.color && ` • ${item.color}`}
+                          {item.size && ` • ${item.size}`}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-6 pt-4 border-t border-gray-100/10 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Sous-total</span>
+                    <span>{total.toFixed(2)} €</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Livraison</span>
+                    <span>Gratuite</span>
+                  </div>
+                  <div className="flex justify-between font-semibold pt-2">
+                    <span>Total</span>
+                    <span>{total.toFixed(2)} €</span>
+                  </div>
                 </div>
               </div>
-              <div className="text-sm font-medium">{formatCurrency(item.price * item.quantity)}</div>
             </div>
-          ))}
-          <div className="flex items-center justify-between mt-4">
-            <div className="text-lg font-semibold">Total</div>
-            <div className="text-lg font-semibold">{formatCurrency(total || 0)}</div>
           </div>
         </div>
-        
-        {/* Checkout Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Shipping Information</CardTitle>
-            <CardDescription>Enter your shipping details below:</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="shipping_first_name">First Name</Label>
-                <Input id="shipping_first_name" placeholder="John" {...register('shipping_first_name')} />
-                {errors.shipping_first_name && (
-                  <p className="text-red-500 text-sm">{errors.shipping_first_name.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="shipping_last_name">Last Name</Label>
-                <Input id="shipping_last_name" placeholder="Doe" {...register('shipping_last_name')} />
-                {errors.shipping_last_name && (
-                  <p className="text-red-500 text-sm">{errors.shipping_last_name.message}</p>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="shipping_email">Email</Label>
-              <Input id="shipping_email" placeholder="john.doe@example.com" {...register('shipping_email')} />
-              {errors.shipping_email && (
-                <p className="text-red-500 text-sm">{errors.shipping_email.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="shipping_phone">Phone</Label>
-              <Input id="shipping_phone" placeholder="+33612345678" {...register('shipping_phone')} />
-              {errors.shipping_phone && (
-                <p className="text-red-500 text-sm">{errors.shipping_phone.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="shipping_address">Address</Label>
-              <Input id="shipping_address" placeholder="123 Main St" {...register('shipping_address')} />
-              {errors.shipping_address && (
-                <p className="text-red-500 text-sm">{errors.shipping_address.message}</p>
-              )}
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="shipping_city">City</Label>
-                <Input id="shipping_city" placeholder="Anytown" {...register('shipping_city')} />
-                {errors.shipping_city && (
-                  <p className="text-red-500 text-sm">{errors.shipping_city.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="shipping_postal_code">Postal Code</Label>
-                <Input id="shipping_postal_code" placeholder="12345" {...register('shipping_postal_code')} />
-                {errors.shipping_postal_code && (
-                  <p className="text-red-500 text-sm">{errors.shipping_postal_code.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="shipping_country">Country</Label>
-                <Input id="shipping_country" placeholder="USA" {...register('shipping_country')} />
-                {errors.shipping_country && (
-                  <p className="text-red-500 text-sm">{errors.shipping_country.message}</p>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="delivery_notes">Delivery Notes</Label>
-              <Textarea
-                id="delivery_notes"
-                {...register('delivery_notes')}
-                placeholder="Instructions spéciales pour la livraison"
-                className="w-full p-2 border rounded"
-              />
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button disabled={isProcessing} onClick={handleSubmit(handleCreateOrder)}>
-              {isProcessing ? (
-                <>
-                  <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                  Processing
-                </>
-              ) : (
-                "Create Order"
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
       </div>
+      
+      <Footer />
     </div>
   );
 };

@@ -6,10 +6,7 @@ import { useCart } from '@/context/CartContext';
 import { Link } from 'react-router-dom';
 
 const CartIcon = () => {
-  const { items } = useCart();
-  
-  // Calculate item count from items if itemCount is not available
-  const itemCount = items.reduce((count, item) => count + item.quantity, 0);
+  const { itemCount } = useCart();
 
   return (
     <Button variant="ghost" size="icon" className="text-white/80 hover:text-white relative" asChild>
