@@ -5,6 +5,8 @@ import { CartItem } from "@/types/supabase.types";
 // Create or get cart token from the database
 export const getOrCreateCartToken = async (token: string, userId?: string) => {
   try {
+    console.log("Getting or creating cart token:", { token, userId });
+    
     // Check if token exists
     const { data: existingToken, error: fetchError } = await supabase
       .from('cart_tokens')
@@ -13,8 +15,12 @@ export const getOrCreateCartToken = async (token: string, userId?: string) => {
       .single();
       
     if (!fetchError && existingToken) {
+      console.log("Found existing token:", existingToken);
+      
       // If token exists but we now have a user ID, update the token
       if (userId && !existingToken.user_id) {
+        console.log("Updating token with user ID:", userId);
+        
         const { data: updatedToken, error: updateError } = await supabase
           .from('cart_tokens')
           .update({ user_id: userId })
@@ -22,13 +28,20 @@ export const getOrCreateCartToken = async (token: string, userId?: string) => {
           .select()
           .single();
           
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error("Error updating token with user ID:", updateError);
+          throw updateError;
+        }
+        
+        console.log("Token updated successfully:", updatedToken);
         return updatedToken;
       }
       return existingToken;
     }
     
     // Create a new token if doesn't exist
+    console.log("Creating new token:", { token, userId });
+    
     const { data: newToken, error: insertError } = await supabase
       .from('cart_tokens')
       .insert([
@@ -40,8 +53,12 @@ export const getOrCreateCartToken = async (token: string, userId?: string) => {
       .select()
       .single();
       
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.error("Error creating new token:", insertError);
+      throw insertError;
+    }
     
+    console.log("New token created successfully:", newToken);
     return newToken;
     
   } catch (error) {
@@ -50,9 +67,11 @@ export const getOrCreateCartToken = async (token: string, userId?: string) => {
   }
 };
 
-// Create or get cart session from the database
+// Create or get cart session from the database - legacy support
 export const getOrCreateCartSession = async (token: string, userId?: string) => {
   try {
+    console.log("Getting or creating cart session:", { token, userId });
+    
     // Check if session exists
     const { data: existingSession, error: fetchError } = await supabase
       .from('cart_sessions')
@@ -61,19 +80,28 @@ export const getOrCreateCartSession = async (token: string, userId?: string) => 
       .single();
       
     if (!fetchError && existingSession) {
+      console.log("Found existing session:", existingSession);
+      
       // If session exists but we now have a user ID, update the session
       if (userId && !existingSession.user_id) {
+        console.log("Updating session with user ID:", userId);
+        
         const { data: updatedSession, error: updateError } = await supabase
           .from('cart_sessions')
           .update({ user_id: userId })
           .eq('id', existingSession.id);
           
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error("Error updating session with user ID:", updateError);
+          throw updateError;
+        }
       }
       return existingSession;
     }
     
     // Create a new session if doesn't exist
+    console.log("Creating new session:", { token, userId });
+    
     const { data: newSession, error: insertError } = await supabase
       .from('cart_sessions')
       .insert([
@@ -85,8 +113,12 @@ export const getOrCreateCartSession = async (token: string, userId?: string) => 
       .select()
       .single();
       
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.error("Error creating new session:", insertError);
+      throw insertError;
+    }
     
+    console.log("New session created successfully:", newSession);
     return newSession;
     
   } catch (error) {
@@ -116,7 +148,10 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
       .eq('cart_token_id', cartToken.id)
       .eq('product_id', item.productId);
     
-    if (fetchError) throw fetchError;
+    if (fetchError) {
+      console.error("Error checking for existing items:", fetchError);
+      throw fetchError;
+    }
     
     console.log("Existing items:", existingItems);
     
@@ -141,13 +176,13 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
       }
     } else {
       console.log("Inserting new item");
-      // Insert new item
+      // Insert new item - now cart_session_id is nullable so we can provide only cart_token_id
       const { error: insertError } = await supabase
         .from('cart_items')
         .insert([
           {
             cart_token_id: cartToken.id,
-            cart_session_id: cartSession.id, // Use the session ID for backward compatibility
+            cart_session_id: cartSession.id, // Provide cart_session_id for backward compatibility
             product_id: item.productId,
             quantity: item.quantity,
             price: item.price,

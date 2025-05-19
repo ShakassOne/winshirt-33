@@ -11,7 +11,7 @@ export type Database = {
     Tables: {
       cart_items: {
         Row: {
-          cart_session_id: string
+          cart_session_id: string | null
           cart_token_id: string | null
           color: string | null
           created_at: string
@@ -25,7 +25,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          cart_session_id: string
+          cart_session_id?: string | null
           cart_token_id?: string | null
           color?: string | null
           created_at?: string
@@ -39,7 +39,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          cart_session_id?: string
+          cart_session_id?: string | null
           cart_token_id?: string | null
           color?: string | null
           created_at?: string

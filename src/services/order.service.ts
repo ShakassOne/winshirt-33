@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
-import { CartItem, Order, OrderStatus, PaymentStatus } from "@/types/supabase.types";
+import { CartItem, Order, OrderStatus, PaymentStatus, ExtendedOrder } from "@/types/supabase.types";
 
 export const createOrder = async (
   checkoutData: CheckoutFormData,
@@ -11,6 +11,8 @@ export const createOrder = async (
 ) => {
   try {
     const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    
+    console.log("Creating order with data:", { checkoutData, userId, totalAmount, items });
     
     // Create order
     const { data: order, error: orderError } = await supabase
@@ -36,7 +38,12 @@ export const createOrder = async (
       .select()
       .single();
       
-    if (orderError) throw orderError;
+    if (orderError) {
+      console.error("Error creating order:", orderError);
+      throw orderError;
+    }
+    
+    console.log("Order created:", order);
     
     // Create order items
     const orderItems = items.map(item => ({
@@ -47,11 +54,18 @@ export const createOrder = async (
       customization: item.customization || null
     }));
     
+    console.log("Creating order items:", orderItems);
+    
     const { error: itemsError } = await supabase
       .from('order_items')
       .insert(orderItems);
       
-    if (itemsError) throw itemsError;
+    if (itemsError) {
+      console.error("Error creating order items:", itemsError);
+      throw itemsError;
+    }
+    
+    console.log("Order items created successfully");
     
     return order;
   } catch (error) {
@@ -60,15 +74,22 @@ export const createOrder = async (
   }
 };
 
-export const getOrderById = async (orderId: string) => {
+export const getOrderById = async (orderId: string): Promise<ExtendedOrder> => {
   try {
+    console.log("Getting order by ID:", orderId);
+    
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select('*')
       .eq('id', orderId)
       .single();
       
-    if (orderError) throw orderError;
+    if (orderError) {
+      console.error("Error getting order:", orderError);
+      throw orderError;
+    }
+    
+    console.log("Order retrieved:", order);
     
     const { data: orderItems, error: itemsError } = await supabase
       .from('order_items')
@@ -78,17 +99,22 @@ export const getOrderById = async (orderId: string) => {
       `)
       .eq('order_id', orderId);
       
-    if (itemsError) throw itemsError;
+    if (itemsError) {
+      console.error("Error getting order items:", itemsError);
+      throw itemsError;
+    }
+    
+    console.log("Order items retrieved:", orderItems);
     
     // Ensure status is valid
-    const validStatus = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(order.status) 
+    const validStatus = (['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(order.status) 
       ? order.status as OrderStatus 
-      : 'pending' as OrderStatus;
+      : 'pending') as OrderStatus;
     
     // Ensure payment_status is valid
-    const validPaymentStatus = ['pending', 'paid', 'failed'].includes(order.payment_status) 
+    const validPaymentStatus = (['pending', 'paid', 'failed'].includes(order.payment_status) 
       ? order.payment_status as PaymentStatus 
-      : 'pending' as PaymentStatus;
+      : 'pending') as PaymentStatus;
     
     return {
       ...order,
@@ -102,15 +128,22 @@ export const getOrderById = async (orderId: string) => {
   }
 };
 
-export const getUserOrders = async (userId: string) => {
+export const getUserOrders = async (userId: string): Promise<Order[]> => {
   try {
+    console.log("Getting orders for user:", userId);
+    
     const { data: ordersData, error } = await supabase
       .from('orders')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
       
-    if (error) throw error;
+    if (error) {
+      console.error("Error getting user orders:", error);
+      throw error;
+    }
+    
+    console.log("User orders retrieved:", ordersData);
     
     // Validate each order's status and payment_status
     const orders = ordersData.map(order => ({
@@ -136,6 +169,8 @@ export const updateOrderPaymentStatus = async (
   status: PaymentStatus
 ) => {
   try {
+    console.log("Updating order payment status:", { orderId, paymentIntentId, status });
+    
     const { error } = await supabase
       .from('orders')
       .update({ 
@@ -145,9 +180,81 @@ export const updateOrderPaymentStatus = async (
       })
       .eq('id', orderId);
       
-    if (error) throw error;
+    if (error) {
+      console.error("Error updating order payment status:", error);
+      throw error;
+    }
+    
+    console.log("Order payment status updated successfully");
   } catch (error) {
     console.error("Error in updateOrderPaymentStatus:", error);
+    throw error;
+  }
+};
+
+// Create account from checkout information
+export const createAccount = async (checkoutData: CheckoutFormData): Promise<{ userId: string }> => {
+  try {
+    console.log("Creating account from checkout data:", { 
+      email: checkoutData.email, 
+      createAccount: checkoutData.createAccount 
+    });
+    
+    // Check if the user wants to create an account and has provided a password
+    if (!checkoutData.createAccount || !checkoutData.password) {
+      console.warn("Account creation skipped - createAccount is false or password is missing");
+      throw new Error("Account creation data is incomplete");
+    }
+
+    // Create a new user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: checkoutData.email,
+      password: checkoutData.password,
+      options: {
+        data: {
+          first_name: checkoutData.firstName,
+          last_name: checkoutData.lastName
+        }
+      }
+    });
+    
+    if (authError) {
+      console.error("Error creating user account:", authError);
+      throw authError;
+    }
+    
+    if (!authData.user) {
+      console.error("User account creation returned no user");
+      throw new Error("Failed to create user account");
+    }
+    
+    console.log("User account created:", authData.user.id);
+    
+    // Create or update user profile
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert([{
+        id: authData.user.id,
+        first_name: checkoutData.firstName,
+        last_name: checkoutData.lastName,
+        email: checkoutData.email,
+        phone: checkoutData.phone,
+        address: checkoutData.address,
+        city: checkoutData.city,
+        postal_code: checkoutData.postalCode,
+        country: checkoutData.country
+      }]);
+      
+    if (profileError) {
+      console.error("Error creating user profile:", profileError);
+      throw profileError;
+    }
+    
+    console.log("User profile created/updated successfully");
+    
+    return { userId: authData.user.id };
+  } catch (error) {
+    console.error("Error in createAccount:", error);
     throw error;
   }
 };
