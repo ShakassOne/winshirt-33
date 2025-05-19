@@ -1,16 +1,19 @@
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getOrderById, updateOrderPaymentStatus } from '@/services/order.service';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CreditCard, Check, AlertCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 const Payment = () => {
-  const { orderId } = useParams<{ orderId: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
+  const { state } = location;
+  const orderId = state?.orderId;
+  
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +53,7 @@ const Payment = () => {
       
       // Mise à jour du statut de la commande
       const paymentIntentId = `pi_${Math.random().toString(36).substring(2, 15)}`;
-      await updateOrderPaymentStatus(orderId!, paymentIntentId, 'paid');
+      await updateOrderPaymentStatus(orderId, paymentIntentId, 'paid');
       
       // Envoyer un email de confirmation (simulation)
       if (order.shipping_email) {
@@ -65,7 +68,7 @@ const Payment = () => {
   };
 
   const handleCompleteOrder = () => {
-    navigate('/');
+    navigate(`/order-confirmation/${orderId}`);
   };
 
   if (loading) {

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -157,8 +158,14 @@ const Checkout = () => {
       // Crée la commande
       const order = await createOrder(data, items, cartToken, userId);
       
-      // Redirige vers la page de paiement
-      navigate(`/payment/${order.id}`);
+      // Redirige vers la page de paiement avec les données nécessaires
+      navigate('/payment', { 
+        state: { 
+          checkoutData: data, 
+          orderId: order.id,
+          orderTotal: total
+        } 
+      });
       
       // Vide le panier après la création de la commande
       await clearCart();
