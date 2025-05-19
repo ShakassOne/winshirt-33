@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Design, Lottery, Mockup, Product } from "@/types/supabase.types";
 import { PrintArea } from "@/types/mockup.types";
-import { Json } from "@/types/supabase";
+import { Json } from "@/integrations/supabase/types";
 
 // Fetch all products
 export const fetchAllProducts = async (): Promise<Product[]> => {
@@ -256,6 +256,173 @@ export const uploadFileToStorage = async (
     return publicUrl;
   } catch (error) {
     console.error("Error uploading file:", error);
+    throw error;
+  }
+};
+
+// Create a new product
+export const createProduct = async (product: Partial<Product>): Promise<Product> => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .insert([product])
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error creating product:", error);
+    throw error;
+  }
+};
+
+// Update an existing product
+export const updateProduct = async (id: string, updates: Partial<Product>): Promise<Product> => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error updating product:", error);
+    throw error;
+  }
+};
+
+// Delete a product
+export const deleteProduct = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+      
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    throw error;
+  }
+};
+
+// Create a new lottery
+export const createLottery = async (lottery: Partial<Lottery>): Promise<Lottery> => {
+  try {
+    const { data, error } = await supabase
+      .from('lotteries')
+      .insert([lottery])
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error creating lottery:", error);
+    throw error;
+  }
+};
+
+// Update an existing lottery
+export const updateLottery = async (id: string, updates: Partial<Lottery>): Promise<Lottery> => {
+  try {
+    const { data, error } = await supabase
+      .from('lotteries')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error updating lottery:", error);
+    throw error;
+  }
+};
+
+// Delete a lottery
+export const deleteLottery = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('lotteries')
+      .delete()
+      .eq('id', id);
+      
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error("Error deleting lottery:", error);
+    throw error;
+  }
+};
+
+// Create a new mockup
+export const createMockup = async (mockup: any): Promise<Mockup> => {
+  try {
+    // Transform mockup data if needed
+    const mockupData = {
+      ...mockup,
+      print_areas: Array.isArray(mockup.print_areas) ? JSON.stringify(mockup.print_areas) : mockup.print_areas,
+      colors: mockup.colors ? JSON.stringify(mockup.colors) : null
+    };
+    
+    const { data, error } = await supabase
+      .from('mockups')
+      .insert([mockupData])
+      .select()
+      .single();
+      
+    if (error) throw error;
+    
+    // Convert the data to proper format
+    const result = {
+      ...data,
+      print_areas: typeof data.print_areas === 'string' ? JSON.parse(data.print_areas as string) : data.print_areas,
+      colors: typeof data.colors === 'string' ? JSON.parse(data.colors as string) : data.colors
+    } as unknown as Mockup;
+    
+    return result;
+  } catch (error) {
+    console.error("Error creating mockup:", error);
+    throw error;
+  }
+};
+
+// Update an existing mockup
+export const updateMockup = async (id: string, mockup: any): Promise<Mockup> => {
+  try {
+    // Transform mockup data if needed
+    const mockupData = {
+      ...mockup,
+      print_areas: Array.isArray(mockup.print_areas) ? JSON.stringify(mockup.print_areas) : mockup.print_areas,
+      colors: mockup.colors ? JSON.stringify(mockup.colors) : null
+    };
+    
+    const { data, error } = await supabase
+      .from('mockups')
+      .update(mockupData)
+      .eq('id', id)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    
+    // Convert the data to proper format
+    const result = {
+      ...data,
+      print_areas: typeof data.print_areas === 'string' ? JSON.parse(data.print_areas as string) : data.print_areas,
+      colors: typeof data.colors === 'string' ? JSON.parse(data.colors as string) : data.colors
+    } as unknown as Mockup;
+    
+    return result;
+  } catch (error) {
+    console.error("Error updating mockup:", error);
     throw error;
   }
 };

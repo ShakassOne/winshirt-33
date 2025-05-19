@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -237,6 +236,7 @@ const Lotteries = () => {
                 {filteredLotteries?.map(lottery => (
                   <LotteryCard 
                     key={lottery.id}
+                    lottery={lottery}
                     id={lottery.id}
                     title={lottery.title}
                     image={lottery.image_url}
