@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Design, Lottery, Mockup, Product } from "@/types/supabase.types";
 import { PrintArea } from "@/types/mockup.types";
@@ -269,9 +268,27 @@ export const createProduct = async (product: Partial<Product>): Promise<Product>
       throw new Error("Missing required product fields");
     }
     
+    // Create a valid product object with all required fields
+    const productData = {
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      category: product.category,
+      image_url: product.image_url,
+      is_active: product.is_active !== undefined ? product.is_active : true,
+      is_customizable: product.is_customizable !== undefined ? product.is_customizable : false,
+      color: product.color || null,
+      available_colors: product.available_colors || [],
+      available_sizes: product.available_sizes || [],
+      mockup_id: product.mockup_id || null,
+      use_3d_viewer: product.use_3d_viewer || false,
+      model_3d_url: product.model_3d_url || null,
+      tickets_offered: product.tickets_offered || 0
+    };
+    
     const { data, error } = await supabase
       .from('products')
-      .insert([product])
+      .insert([productData])
       .select()
       .single();
       
@@ -326,9 +343,22 @@ export const createLottery = async (lottery: Partial<Lottery>): Promise<Lottery>
       throw new Error("Missing required lottery fields");
     }
 
+    // Create a valid lottery object with all required fields
+    const lotteryData = {
+      title: lottery.title,
+      description: lottery.description,
+      image_url: lottery.image_url,
+      value: lottery.value,
+      goal: lottery.goal,
+      draw_date: lottery.draw_date,
+      is_active: lottery.is_active !== undefined ? lottery.is_active : true,
+      is_featured: lottery.is_featured !== undefined ? lottery.is_featured : false,
+      participants: lottery.participants || 0
+    };
+
     const { data, error } = await supabase
       .from('lotteries')
-      .insert([lottery])
+      .insert([lotteryData])
       .select()
       .single();
       
