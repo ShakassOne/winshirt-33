@@ -50,11 +50,64 @@ export const getOrCreateCartToken = async (token: string, userId?: string) => {
   }
 };
 
+// Create or get cart session from the database
+export const getOrCreateCartSession = async (token: string, userId?: string) => {
+  try {
+    // Check if session exists
+    const { data: existingSession, error: fetchError } = await supabase
+      .from('cart_sessions')
+      .select('*')
+      .eq('session_id', token)
+      .single();
+      
+    if (!fetchError && existingSession) {
+      // If session exists but we now have a user ID, update the session
+      if (userId && !existingSession.user_id) {
+        const { data: updatedSession, error: updateError } = await supabase
+          .from('cart_sessions')
+          .update({ user_id: userId })
+          .eq('id', existingSession.id);
+          
+        if (updateError) throw updateError;
+      }
+      return existingSession;
+    }
+    
+    // Create a new session if doesn't exist
+    const { data: newSession, error: insertError } = await supabase
+      .from('cart_sessions')
+      .insert([
+        { 
+          session_id: token,
+          user_id: userId || null,
+        }
+      ])
+      .select()
+      .single();
+      
+    if (insertError) throw insertError;
+    
+    return newSession;
+    
+  } catch (error) {
+    console.error("Error in getOrCreateCartSession:", error);
+    throw error;
+  }
+};
+
 // Add item to cart
 export const addToCart = async (token: string, item: CartItem, userId?: string) => {
   try {
     // Get or create cart token
     const cartToken = await getOrCreateCartToken(token, userId);
+    
+    // Get or create cart session for backward compatibility
+    const cartSession = await getOrCreateCartSession(token, userId);
+
+    console.log("Adding to cart with token:", token);
+    console.log("Cart token:", cartToken);
+    console.log("Cart session:", cartSession);
+    console.log("Item to add:", item);
     
     // Check if item already exists in cart
     const { data: existingItems, error: fetchError } = await supabase
@@ -65,8 +118,12 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
     
     if (fetchError) throw fetchError;
     
+    console.log("Existing items:", existingItems);
+    
     if (existingItems && existingItems.length > 0) {
       const existingItem = existingItems[0];
+      console.log("Updating existing item:", existingItem);
+      
       // Update quantity if item exists
       const { error: updateError } = await supabase
         .from('cart_items')
@@ -78,25 +135,35 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
         })
         .eq('id', existingItem.id);
         
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Error updating cart item:", updateError);
+        throw updateError;
+      }
     } else {
+      console.log("Inserting new item");
       // Insert new item
       const { error: insertError } = await supabase
         .from('cart_items')
         .insert([
           {
             cart_token_id: cartToken.id,
+            cart_session_id: cartSession.id, // Use the session ID for backward compatibility
             product_id: item.productId,
             quantity: item.quantity,
             price: item.price,
-            color: item.color,
-            size: item.size,
-            customization: item.customization
+            color: item.color || null,
+            size: item.size || null,
+            customization: item.customization || null
           }
         ]);
         
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("Error inserting cart item:", insertError);
+        throw insertError;
+      }
     }
+    
+    console.log("Item added to cart successfully");
   } catch (error) {
     console.error("Error in addToCart:", error);
     throw error;
@@ -108,6 +175,9 @@ export const getCartItems = async (token: string, userId?: string): Promise<Cart
   try {
     // Get cart token
     const cartToken = await getOrCreateCartToken(token, userId);
+    
+    console.log("Getting cart items for token:", token);
+    console.log("Cart token:", cartToken);
     
     // Get cart items with product details
     const { data: cartItems, error } = await supabase
@@ -127,6 +197,8 @@ export const getCartItems = async (token: string, userId?: string): Promise<Cart
       console.error("Error fetching cart items:", error);
       throw error;
     }
+    
+    console.log("Cart items retrieved:", cartItems);
     
     if (!cartItems || cartItems.length === 0) {
       return [];
@@ -156,6 +228,10 @@ export const removeFromCart = async (token: string, productId: string, userId?: 
     // Get cart token
     const cartToken = await getOrCreateCartToken(token, userId);
     
+    console.log("Removing item from cart for token:", token);
+    console.log("Cart token:", cartToken);
+    console.log("Product ID to remove:", productId);
+    
     // Find the cart item
     const { data: cartItems, error: fetchError } = await supabase
       .from('cart_items')
@@ -164,6 +240,8 @@ export const removeFromCart = async (token: string, productId: string, userId?: 
       .eq('product_id', productId);
       
     if (fetchError) throw fetchError;
+    
+    console.log("Found cart items to remove:", cartItems);
     
     if (!cartItems || cartItems.length === 0) {
       throw new Error("Cart item not found");
@@ -177,6 +255,8 @@ export const removeFromCart = async (token: string, productId: string, userId?: 
       
     if (error) throw error;
     
+    console.log("Item removed successfully");
+    
   } catch (error) {
     console.error("Error in removeFromCart:", error);
     throw error;
@@ -189,6 +269,11 @@ export const updateCartItemQuantity = async (token: string, productId: string, q
     // Get cart token
     const cartToken = await getOrCreateCartToken(token, userId);
     
+    console.log("Updating cart item quantity for token:", token);
+    console.log("Cart token:", cartToken);
+    console.log("Product ID:", productId);
+    console.log("New quantity:", quantity);
+    
     // Find the cart item
     const { data: cartItems, error: fetchError } = await supabase
       .from('cart_items')
@@ -197,6 +282,8 @@ export const updateCartItemQuantity = async (token: string, productId: string, q
       .eq('product_id', productId);
       
     if (fetchError) throw fetchError;
+    
+    console.log("Found cart items to update:", cartItems);
     
     if (!cartItems || cartItems.length === 0) {
       throw new Error("Cart item not found");
@@ -210,6 +297,8 @@ export const updateCartItemQuantity = async (token: string, productId: string, q
       
     if (error) throw error;
     
+    console.log("Item quantity updated successfully");
+    
   } catch (error) {
     console.error("Error in updateCartItemQuantity:", error);
     throw error;
@@ -222,6 +311,9 @@ export const clearCart = async (token: string, userId?: string) => {
     // Get cart token
     const cartToken = await getOrCreateCartToken(token, userId);
     
+    console.log("Clearing cart for token:", token);
+    console.log("Cart token:", cartToken);
+    
     // Delete all items
     const { error } = await supabase
       .from('cart_items')
@@ -229,6 +321,8 @@ export const clearCart = async (token: string, userId?: string) => {
       .eq('cart_token_id', cartToken.id);
       
     if (error) throw error;
+    
+    console.log("Cart cleared successfully");
     
   } catch (error) {
     console.error("Error in clearCart:", error);
@@ -239,6 +333,8 @@ export const clearCart = async (token: string, userId?: string) => {
 // Migrate cart from token to user
 export const migrateCartToUser = async (userId: string, token: string) => {
   try {
+    console.log("Migrating cart for token:", token, "to user:", userId);
+    
     // Find token entry
     const { data: tokenData, error: tokenError } = await supabase
       .from('cart_tokens')
@@ -252,6 +348,8 @@ export const migrateCartToUser = async (userId: string, token: string) => {
       throw tokenError;
     }
     
+    console.log("Found token data:", tokenData);
+    
     // Update token with user_id
     const { error: updateError } = await supabase
       .from('cart_tokens')
@@ -259,6 +357,8 @@ export const migrateCartToUser = async (userId: string, token: string) => {
       .eq('id', tokenData.id);
       
     if (updateError) throw updateError;
+    
+    console.log("Updated token with user ID");
     
     // Check if there are other tokens for this user
     const { data: otherTokens, error: otherError } = await supabase
@@ -269,9 +369,13 @@ export const migrateCartToUser = async (userId: string, token: string) => {
       
     if (otherError) throw otherError;
     
+    console.log("Found other tokens for user:", otherTokens);
+    
     // If user has other tokens, merge the cart items
     if (otherTokens && otherTokens.length > 0) {
       for (const otherToken of otherTokens) {
+        console.log("Processing other token:", otherToken);
+        
         // Get items from other token
         const { data: otherItems, error: itemsError } = await supabase
           .from('cart_items')
@@ -280,9 +384,13 @@ export const migrateCartToUser = async (userId: string, token: string) => {
           
         if (itemsError) throw itemsError;
         
+        console.log("Found items in other token:", otherItems);
+        
         if (otherItems && otherItems.length > 0) {
           // For each item in other token, transfer to current token
           for (const item of otherItems) {
+            console.log("Processing item from other token:", item);
+            
             // Check if item already exists in current token
             const { data: existingItems, error: checkError } = await supabase
               .from('cart_items')
@@ -292,7 +400,11 @@ export const migrateCartToUser = async (userId: string, token: string) => {
               
             if (checkError) throw checkError;
             
+            console.log("Existing items in current token:", existingItems);
+            
             if (existingItems && existingItems.length > 0) {
+              console.log("Updating quantity of existing item");
+              
               // Update quantity if item exists
               const { error: updateQuantityError } = await supabase
                 .from('cart_items')
@@ -301,12 +413,18 @@ export const migrateCartToUser = async (userId: string, token: string) => {
                 
               if (updateQuantityError) throw updateQuantityError;
               
+              console.log("Updated quantity of existing item");
+              
               // Delete item from other token
               await supabase
                 .from('cart_items')
                 .delete()
                 .eq('id', item.id);
+                
+              console.log("Deleted item from other token");
             } else {
+              console.log("Moving item to current token");
+              
               // Update item to point to current token
               const { error: moveError } = await supabase
                 .from('cart_items')
@@ -314,17 +432,25 @@ export const migrateCartToUser = async (userId: string, token: string) => {
                 .eq('id', item.id);
                 
               if (moveError) throw moveError;
+              
+              console.log("Moved item to current token");
             }
           }
         }
+        
+        console.log("Deleting other token:", otherToken.id);
         
         // Delete the other token
         await supabase
           .from('cart_tokens')
           .delete()
           .eq('id', otherToken.id);
+          
+        console.log("Deleted other token");
       }
     }
+    
+    console.log("Cart migration completed successfully");
     
   } catch (error) {
     console.error("Error in migrateCartToUser:", error);

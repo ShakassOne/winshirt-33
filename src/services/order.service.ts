@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
-import { CartItem } from "@/types/supabase.types";
+import { CartItem, Order, OrderStatus, PaymentStatus } from "@/types/supabase.types";
 
 export const createOrder = async (
   checkoutData: CheckoutFormData,
@@ -30,7 +30,7 @@ export const createOrder = async (
           shipping_postal_code: checkoutData.postalCode,
           shipping_country: checkoutData.country,
           delivery_notes: checkoutData.deliveryNotes,
-          status: 'pending'
+          status: 'pending' as OrderStatus
         }
       ])
       .select()
@@ -80,8 +80,20 @@ export const getOrderById = async (orderId: string) => {
       
     if (itemsError) throw itemsError;
     
+    // Ensure status is valid
+    const validStatus = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(order.status) 
+      ? order.status as OrderStatus 
+      : 'pending' as OrderStatus;
+    
+    // Ensure payment_status is valid
+    const validPaymentStatus = ['pending', 'paid', 'failed'].includes(order.payment_status) 
+      ? order.payment_status as PaymentStatus 
+      : 'pending' as PaymentStatus;
+    
     return {
       ...order,
+      status: validStatus,
+      payment_status: validPaymentStatus,
       items: orderItems
     };
   } catch (error) {
@@ -92,13 +104,24 @@ export const getOrderById = async (orderId: string) => {
 
 export const getUserOrders = async (userId: string) => {
   try {
-    const { data: orders, error } = await supabase
+    const { data: ordersData, error } = await supabase
       .from('orders')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
       
     if (error) throw error;
+    
+    // Validate each order's status and payment_status
+    const orders = ordersData.map(order => ({
+      ...order,
+      status: (['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(order.status) 
+        ? order.status 
+        : 'pending') as OrderStatus,
+      payment_status: (['pending', 'paid', 'failed'].includes(order.payment_status) 
+        ? order.payment_status 
+        : 'pending') as PaymentStatus
+    }));
     
     return orders;
   } catch (error) {
@@ -110,7 +133,7 @@ export const getUserOrders = async (userId: string) => {
 export const updateOrderPaymentStatus = async (
   orderId: string, 
   paymentIntentId: string, 
-  status: 'paid' | 'failed' | 'pending'
+  status: PaymentStatus
 ) => {
   try {
     const { error } = await supabase
@@ -118,7 +141,7 @@ export const updateOrderPaymentStatus = async (
       .update({ 
         payment_intent_id: paymentIntentId,
         payment_status: status,
-        status: status === 'paid' ? 'processing' : 'pending'
+        status: status === 'paid' ? 'processing' as OrderStatus : 'pending' as OrderStatus
       })
       .eq('id', orderId);
       

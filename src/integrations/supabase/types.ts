@@ -415,10 +415,12 @@ export type Database = {
           is_active: boolean | null
           is_customizable: boolean | null
           mockup_id: string | null
+          model_3d_url: string | null
           name: string
           price: number
           tickets_offered: number | null
           updated_at: string | null
+          use_3d_viewer: boolean | null
         }
         Insert: {
           available_colors?: string[] | null
@@ -432,10 +434,12 @@ export type Database = {
           is_active?: boolean | null
           is_customizable?: boolean | null
           mockup_id?: string | null
+          model_3d_url?: string | null
           name: string
           price: number
           tickets_offered?: number | null
           updated_at?: string | null
+          use_3d_viewer?: boolean | null
         }
         Update: {
           available_colors?: string[] | null
@@ -449,10 +453,12 @@ export type Database = {
           is_active?: boolean | null
           is_customizable?: boolean | null
           mockup_id?: string | null
+          model_3d_url?: string | null
           name?: string
           price?: number
           tickets_offered?: number | null
           updated_at?: string | null
+          use_3d_viewer?: boolean | null
         }
         Relationships: [
           {

@@ -3,10 +3,10 @@ import { CartItem } from './supabase.types';
 
 export interface CartContextType {
   items: CartItem[];
-  addItem: (item: CartItem) => void;
-  removeItem: (itemId: string) => void;
-  updateItemQuantity: (productId: string, quantity: number) => void;
-  clearCart: () => void;
+  addItem: (item: CartItem) => Promise<void>;
+  removeItem: (itemId: string) => Promise<void>;
+  updateItemQuantity: (productId: string, quantity: number) => Promise<void>;
+  clearCart: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
   total: number;

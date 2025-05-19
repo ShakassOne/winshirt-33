@@ -30,8 +30,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const newCartToken = uuidv4();
       localStorage.setItem('cart_token', newCartToken);
       setCartToken(newCartToken);
+      console.log("Created new cart token:", newCartToken);
     } else {
       setCartToken(storedCartToken);
+      console.log("Using existing cart token:", storedCartToken);
     }
   }, []);
   
@@ -41,6 +43,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const checkCurrentUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setCurrentUser(session?.user || null);
+      console.log("Current user:", session?.user ? session.user.id : "not logged in");
     };
     
     checkCurrentUser();
@@ -49,9 +52,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       const user = session?.user || null;
       setCurrentUser(user);
+      console.log("Auth state changed:", event, user ? user.id : "no user");
       
       // Handle sign in - migrate cart if user just signed in
       if (event === 'SIGNED_IN' && user && cartToken) {
+        console.log("User signed in, migrating cart");
         await handleCartMigration(user.id, cartToken);
       }
     });
@@ -64,6 +69,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Load cart items when cartToken is available or user changes
   useEffect(() => {
     if (cartToken) {
+      console.log("Loading cart items for token:", cartToken);
       loadCartItems();
     }
   }, [cartToken, currentUser]);
@@ -71,12 +77,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const handleCartMigration = async (userId: string, token: string) => {
     setIsLoading(true);
     try {
+      console.log("Starting cart migration for user:", userId);
       await migrateCartToUser(userId, token);
       toast({
         title: "Panier transféré",
         description: "Votre panier a été associé à votre compte",
       });
       await loadCartItems(); // Reload cart after migration
+      console.log("Cart migration completed");
     } catch (err: any) {
       console.error("Error migrating cart:", err);
       setError(err.message);
@@ -88,9 +96,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const loadCartItems = async () => {
     if (!cartToken) return;
     
+    console.log("Loading cart items for token:", cartToken);
     setIsLoading(true);
     try {
       const cartItems = await getCartItems(cartToken, currentUser?.id);
+      console.log("Loaded cart items:", cartItems);
       setItems(cartItems);
     } catch (err: any) {
       setError(err.message);
@@ -103,6 +113,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const addItem = async (item: CartItem) => {
     if (!cartToken) return;
     
+    console.log("Adding item to cart:", item);
     setIsLoading(true);
     try {
       await addToCart(cartToken, item, currentUser?.id);
@@ -112,6 +123,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       });
       // Reload cart items after adding
       await loadCartItems();
+      console.log("Item added successfully");
     } catch (err: any) {
       setError(err.message);
       console.error("Error adding to cart:", err);
@@ -128,6 +140,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const removeItem = async (productId: string) => {
     if (!cartToken) return;
     
+    console.log("Removing item from cart:", productId);
     setIsLoading(true);
     try {
       await removeFromCart(cartToken, productId, currentUser?.id);
@@ -137,6 +150,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       });
       // Reload cart items after removal
       await loadCartItems();
+      console.log("Item removed successfully");
     } catch (err: any) {
       setError(err.message);
       console.error("Error removing from cart:", err);
@@ -153,11 +167,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const updateItemQuantity = async (productId: string, quantity: number) => {
     if (!cartToken || quantity < 1) return;
     
+    console.log("Updating item quantity:", productId, quantity);
     setIsLoading(true);
     try {
       await updateCartItemQuantity(cartToken, productId, quantity, currentUser?.id);
       // Reload cart items after update
       await loadCartItems();
+      console.log("Item quantity updated successfully");
     } catch (err: any) {
       setError(err.message);
       console.error("Error updating quantity:", err);
@@ -174,6 +190,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = async () => {
     if (!cartToken) return;
     
+    console.log("Clearing cart");
     setIsLoading(true);
     try {
       await clearCartService(cartToken, currentUser?.id);
@@ -183,6 +200,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       });
       // Reload cart items after clearing
       await loadCartItems();
+      console.log("Cart cleared successfully");
     } catch (err: any) {
       setError(err.message);
       console.error("Error clearing cart:", err);
