@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { useCart } from '@/context/CartContext';
-import { createOrder, createAccount } from '@/services/order.service';
+import { createOrder, createAccount, updateOrderPaymentStatus } from '@/services/order.service';
 import { CheckoutFormData } from '@/types/cart.types';
 
 const Payment = () => {
@@ -18,12 +18,13 @@ const Payment = () => {
 
   // Get form data from location state
   const checkoutData: CheckoutFormData = location.state?.checkoutData;
+  const orderId: string = location.state?.orderId;
 
   useEffect(() => {
-    if (!checkoutData || items.length === 0) {
+    if (!checkoutData || items.length === 0 || !orderId) {
       navigate('/checkout');
     }
-  }, [checkoutData, items, navigate]);
+  }, [checkoutData, items, orderId, navigate]);
 
   const handlePayment = async () => {
     if (!checkoutData) {
@@ -43,43 +44,21 @@ const Payment = () => {
         checkoutData,
         items,
         currentUser,
-        cartToken
+        cartToken,
+        orderId
       });
 
-      // First create a user account if requested
-      let userId = currentUser?.id;
+      // Generate a fake payment intent ID for demo purposes
+      const paymentIntentId = `pi_${Math.random().toString(36).substring(2, 15)}`;
       
-      if (checkoutData.createAccount && checkoutData.password && !userId) {
-        try {
-          console.log("Creating user account during checkout");
-          const result = await createAccount(checkoutData);
-          userId = result.userId;
-          console.log("Account created successfully:", userId);
-          
-          toast({
-            title: "Compte créé",
-            description: "Votre compte a été créé avec succès.",
-          });
-        } catch (accountError) {
-          console.error("Error creating account:", accountError);
-          // Continue with order creation even if account creation fails
-        }
-      }
-
-      // Create order
-      const order = await createOrder(checkoutData, items, cartToken, userId);
-      
-      console.log("Order created successfully:", order);
+      // Update order payment status to 'paid'
+      await updateOrderPaymentStatus(orderId, paymentIntentId, 'paid');
 
       // Simulate payment processing
-      // In a real app, you would integrate with a payment gateway here
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Clear cart after successful order
-      await clearCart();
-
       // Redirect to confirmation page
-      navigate(`/order-confirmation/${order.id}`);
+      navigate(`/order-confirmation/${orderId}`);
     } catch (err: any) {
       console.error("Error processing payment:", err);
       setError(err.message || "Une erreur s'est produite lors du traitement du paiement.");
