@@ -1,11 +1,9 @@
+
 import React from 'react';
 import { CartItem as CartItemType } from '@/types/supabase.types';
 import { X } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { formatCurrency } from '@/lib/utils';
-import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Link, useLocation } from 'react-router-dom';
 
 interface CartItemProps {
   item: CartItemType;
@@ -13,7 +11,8 @@ interface CartItemProps {
 
 const CartItem: React.FC<CartItemProps> = ({ item }) => {
   const { removeItem, updateQuantity } = useCart();
-  const pathname = usePathname();
+  const location = useLocation();
+  const pathname = location.pathname;
 
   const handleRemove = () => {
     removeItem(item.productId);
@@ -23,14 +22,20 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
     updateQuantity(item.productId, newQuantity);
   };
 
+  // Format currency helper function
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(amount);
+  };
+
   return (
     <li key={item.productId} className="flex py-6">
       <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
-        <Image
-          src={item.image_url || '/placeholder-image.png'} // Use a placeholder if no image
+        <img
+          src={item.image_url || '/placeholder-image.png'}
           alt={item.name}
-          width={96}
-          height={96}
           className="h-full w-full object-cover object-center"
         />
       </div>
@@ -39,7 +44,7 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
         <div>
           <div className="flex justify-between text-base font-medium text-white">
             <h3>
-              <Link href={`/products/${item.productId}`} className="hover:text-gray-400">
+              <Link to={`/products/${item.productId}`} className="hover:text-gray-400">
                 {item.name}
               </Link>
             </h3>
@@ -49,7 +54,7 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
             {item.color && <p>Color: {item.color}</p>}
             {item.size && <p>Size: {item.size}</p>}
           </div>
-           {item.customization?.customText && (
+          {item.customization?.customText && (
             <p className="mt-1 text-sm text-gray-500">Text: {item.customization.customText}</p>
           )}
         </div>
@@ -80,7 +85,7 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
           </div>
           {pathname !== '/checkout' && (
             <div className="flex">
-              <button type="button" className="-m-2 inline-flex p-2 text-gray-500 hover:text-gray-400">
+              <button type="button" className="-m-2 inline-flex p-2 text-gray-500 hover:text-gray-400" onClick={handleRemove}>
                 <span className="sr-only">Remove</span>
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>

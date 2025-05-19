@@ -1,6 +1,6 @@
 import { Product, Lottery, Mockup } from '@/types/supabase.types';
 import { MockupWithColors } from '@/types/mockup.types';
-import { supabase } from '../integrations/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 // Products
 export const fetchAllProducts = async (): Promise<Product[]> => {
@@ -389,7 +389,7 @@ export const updateMockupWithColors = async (id: string, updates: Partial<Mockup
   try {
     // Ensure print_areas is handled correctly before updating
     const printAreas = (updates as any).print_areas ? 
-      (typeof (updates as any).print_areas === 'string' ? JSON.parse((updates as any).print_areas) : (updates as any).print_areas) 
+      (typeof (updates as any).print_areas === 'string' ? JSON.parse(updates.print_areas) : updates.print_areas) 
       : [];
 
     const { data, error } = await supabase

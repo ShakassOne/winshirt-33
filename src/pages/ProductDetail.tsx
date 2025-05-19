@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  getProductById,
+  fetchProductById,
   fetchAllDesigns,
   fetchAllLotteries,
   fetchMockupById,
@@ -17,11 +17,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useCart } from '@/hooks/use-cart';
+import { useCart } from '@/context/CartContext';
 import { toast } from '@/components/ui/use-toast';
 import { Plus, Minus, ShoppingCart, CheckCircle, AlertTriangle } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
-import { Slider } from '@/components/ui/slider';
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { UploadButton } from "@/components/ui/upload-button"
 import { useToast as useSonner } from "@/components/ui/use-toast"
@@ -41,6 +39,23 @@ import {
 } from "@/components/ui/accordion"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+
+// Format currency helper function (temporary until we fix the import)
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR'
+  }).format(amount);
+};
+
+// Simple GlassCard component to fix the reference
+const GlassCard: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ children, className, ...props }) => {
+  return (
+    <div className={cn("bg-black/30 backdrop-blur-md border border-white/10 rounded-lg shadow-lg", className)} {...props}>
+      {children}
+    </div>
+  );
+};
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
