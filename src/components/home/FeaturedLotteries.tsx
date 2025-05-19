@@ -5,6 +5,7 @@ import { fetchFeaturedLotteries } from '@/hooks/useLotteries';
 import LotteryCard from '@/components/ui/LotteryCard';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { Lottery } from '@/types/supabase.types';
 
 const FeaturedLotteries = () => {
   const { data: lotteries, isLoading, error } = useQuery({
@@ -25,8 +26,11 @@ const FeaturedLotteries = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {lotteries.slice(0, 3).map((lottery) => (
-            <LotteryCard key={lottery.id} lottery={lottery} />
+          {lotteries.slice(0, 3).map((lottery: Lottery) => (
+            <LotteryCard 
+              key={lottery.id} 
+              lottery={lottery} 
+            />
           ))}
         </div>
 

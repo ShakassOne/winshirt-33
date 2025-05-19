@@ -8,21 +8,22 @@ import {
 } from '@/services/api.service';
 import { Design, Lottery, Product } from '@/types/supabase.types';
 import { ExtendedCartItem } from '@/types/cart.types';
-import { MockupWithColors } from '@/types/mockup.types';
+import { MockupWithColors, convertJsonToMockupColors, convertJsonToPrintAreas } from '@/types/mockup.types';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Checkbox } from "@/components/ui/checkbox"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useCart } from '@/context/CartContext';
 import { toast } from '@/components/ui/use-toast';
 import { Plus, Minus, ShoppingCart, CheckCircle, AlertTriangle } from 'lucide-react';
-import { AspectRatio } from "@/components/ui/aspect-ratio"
-import { UploadButton } from "@/components/ui/upload-button"
-import { useToast as useSonner } from "@/components/ui/use-toast"
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { UploadButton } from "@/components/ui/upload-button";
+import { useToast as useSonner } from "@/components/ui/use-toast";
+import { Slider } from "@/components/ui/slider"; // Import the Slider component
 import {
   Dialog,
   DialogContent,
@@ -30,25 +31,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
-import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
+} from "@/components/ui/accordion";
+import { cn, formatCurrency } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
-// Format currency helper function (temporary until we fix the import)
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(amount);
-};
-
-// Simple GlassCard component to fix the reference
+// Import or define the GlassCard component
 const GlassCard: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ children, className, ...props }) => {
   return (
     <div className={cn("bg-black/30 backdrop-blur-md border border-white/10 rounded-lg shadow-lg", className)} {...props}>
@@ -96,7 +89,7 @@ const ProductDetail = () => {
 
     const fetchData = async () => {
       try {
-        const productData = await getProductById(id);
+        const productData = await fetchProductById(id);
         if (productData) {
           setProduct(productData);
           setSelectedColor(productData.color || null);
@@ -114,7 +107,14 @@ const ProductDetail = () => {
             setLotteries(lotteriesData);
 
             if (mockupData) {
-              setMockup(mockupData);
+              // Convert the mockup data
+              const convertedMockup = {
+                ...mockupData,
+                colors: convertJsonToMockupColors(mockupData.colors),
+                print_areas: convertJsonToPrintAreas(mockupData.print_areas)
+              } as MockupWithColors;
+              
+              setMockup(convertedMockup);
             }
           }
         } else {
@@ -225,6 +225,11 @@ const ProductDetail = () => {
     setIsMockupFront(prev => !prev);
   };
 
+  // For the checkbox component, we need to convert directly to boolean
+  const handleCheckboxChange = (checked: boolean) => {
+    setIsCustomizationEnabled(checked);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -267,7 +272,7 @@ const ProductDetail = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Product Image and Mockup */}
           <div className="relative">
-            {product.is_customizable && mockup ? (
+            {product && product.is_customizable && mockup ? (
               <>
                 <div className="relative rounded-lg overflow-hidden glass-card">
                   <AspectRatio ratio={1 / 1}>
@@ -290,8 +295,8 @@ const ProductDetail = () => {
               <div className="relative rounded-lg overflow-hidden glass-card">
                 <AspectRatio ratio={1 / 1}>
                   <img
-                    src={product.image_url}
-                    alt={product.name}
+                    src={product?.image_url}
+                    alt={product?.name}
                     className="object-contain absolute inset-0 w-full h-full"
                   />
                 </AspectRatio>
@@ -302,8 +307,8 @@ const ProductDetail = () => {
           {/* Product Details */}
           <div>
             <GlassCard className="p-6">
-              <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
-              <p className="text-gray-400 mb-6">{product.description}</p>
+              <h1 className="text-3xl font-bold mb-4">{product?.name}</h1>
+              <p className="text-gray-400 mb-6">{product?.description}</p>
 
               <div className="flex items-center justify-between mb-4">
                 <div className="text-2xl font-semibold">{formatCurrency(calculateTotalPrice())}</div>
@@ -324,7 +329,7 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {product.available_colors && product.available_colors.length > 0 && (
+              {product?.available_colors && product.available_colors.length > 0 && (
                 <div className="mb-4">
                   <Label className="block text-sm font-medium mb-2">Couleur:</Label>
                   <RadioGroup defaultValue={selectedColor || undefined} className="flex gap-2">
@@ -340,7 +345,7 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {product.available_sizes && product.available_sizes.length > 0 && (
+              {product?.available_sizes && product.available_sizes.length > 0 && (
                 <div className="mb-6">
                   <Label className="block text-sm font-medium mb-2">Taille:</Label>
                   <div className="flex gap-2">
@@ -357,7 +362,7 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {product.is_customizable && mockup && (
+              {product?.is_customizable && mockup && (
                 <Accordion type="single" collapsible className="w-full mb-4">
                   <AccordionItem value="customization">
                     <AccordionTrigger>Personnalisation</AccordionTrigger>
@@ -365,7 +370,7 @@ const ProductDetail = () => {
                       <div className="py-4">
                         <div className="mb-4">
                           <Label className="inline-flex items-center space-x-2">
-                            <Checkbox id="is_customizable" checked={isCustomizationEnabled} onCheckedChange={setIsCustomizationEnabled} />
+                            <Checkbox id="is_customizable" checked={isCustomizationEnabled} onCheckedChange={handleCheckboxChange} />
                             <span className="text-sm font-medium leading-none">Activer la personnalisation</span>
                           </Label>
                         </div>
@@ -423,39 +428,38 @@ const ProductDetail = () => {
                               </Select>
                             </div>
 
-														<div className="mb-4">
-															<Label className="block text-sm font-medium mb-2">Taille de la zone d'impression:</Label>
-															<Slider
-																defaultValue={[printAreaScale]}
-																max={200}
-																min={50}
-																step={1}
-																onValueChange={handlePrintAreaScale}
-															/>
-															<p className="text-sm text-gray-500 mt-1">
-																Taille: {printAreaScale}%
-															</p>
-														</div>
+                            <div className="mb-4">
+                              <Label className="block text-sm font-medium mb-2">Taille de la zone d'impression:</Label>
+                              <Slider
+                                defaultValue={[printAreaScale]}
+                                max={200}
+                                min={50}
+                                step={1}
+                                onValueChange={handlePrintAreaScale}
+                              />
+                              <p className="text-sm text-gray-500 mt-1">
+                                Taille: {printAreaScale}%
+                              </p>
+                            </div>
 
                             <div className="mb-4">
                               <Label className="block text-sm font-medium mb-2">Télécharger votre propre motif:</Label>
                               <UploadButton
-                                endpoint="/api/uploadthing"
+                                onUpload={(url) => {
+                                  setDesignUrl(url);
+                                  setDesignName("Custom design");
+                                  toast({
+                                    title: "Téléchargement réussi",
+                                    description: "Votre motif a été téléchargé avec succès.",
+                                  });
+                                }}
                                 onClientUploadComplete={(res) => {
-                                  // Do something with the response
-                                  console.log("Files: ", res);
-                                  if (res) {
+                                  if (res && res.length > 0) {
                                     setDesignUrl(res[0].url);
                                     setDesignName(res[0].name);
-                                    toast({
-                                      title: "Téléchargement réussi",
-                                      description: "Votre motif a été téléchargé avec succès.",
-                                    });
                                   }
-                                  // alert("Upload Completed!");
                                 }}
-                                onUploadError={(error: Error) => {
-                                  // Do something with the error.
+                                onUploadError={(error) => {
                                   alert(`ERROR! ${error?.message}`);
                                 }}
                               />
@@ -476,15 +480,15 @@ const ProductDetail = () => {
                   const totalPrice = calculateTotalPrice();
 
                   const cartItem: ExtendedCartItem = {
-                    productId: product.id,
-                    name: product.name,
+                    productId: product?.id || '',
+                    name: product?.name || '',
                     price: totalPrice,
                     quantity: quantity,
-                    image_url: product.image_url,
+                    image_url: product?.image_url,
                     color: selectedColor,
                     size: selectedSize,
                     customization: customization,
-                    // lotteries: selectedLotteries,
+                    // Remove lotteries property as it's not in the CartItem type
                   };
 
                   handleAddToCart(cartItem);

@@ -44,6 +44,7 @@ export interface CheckoutFormData {
   city?: string;
   postalCode?: string;
   country?: string;
+  deliveryNotes?: string;
   createAccount?: boolean;
   password?: string;
 }

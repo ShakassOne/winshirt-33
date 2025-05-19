@@ -18,18 +18,18 @@ export const createOrder = async (
       .insert([
         {
           user_id: userId || null,
-          guest_email: !userId ? checkoutData.email : null,
+          guest_email: !userId ? checkoutData.shipping_email : null,
           session_id: sessionId,
           total_amount: totalAmount,
-          shipping_first_name: checkoutData.firstName,
-          shipping_last_name: checkoutData.lastName,
-          shipping_email: checkoutData.email,
-          shipping_phone: checkoutData.phone,
-          shipping_address: checkoutData.address,
-          shipping_city: checkoutData.city,
-          shipping_postal_code: checkoutData.postalCode,
-          shipping_country: checkoutData.country,
-          delivery_notes: checkoutData.deliveryNotes,
+          shipping_first_name: checkoutData.shipping_first_name || checkoutData.firstName,
+          shipping_last_name: checkoutData.shipping_last_name || checkoutData.lastName,
+          shipping_email: checkoutData.shipping_email || checkoutData.email,
+          shipping_phone: checkoutData.shipping_phone || checkoutData.phone,
+          shipping_address: checkoutData.shipping_address || checkoutData.address,
+          shipping_city: checkoutData.shipping_city || checkoutData.city,
+          shipping_postal_code: checkoutData.shipping_postal_code || checkoutData.postalCode,
+          shipping_country: checkoutData.shipping_country || checkoutData.country,
+          delivery_notes: checkoutData.delivery_notes || checkoutData.deliveryNotes,
           status: 'pending' as OrderStatus
         }
       ])
