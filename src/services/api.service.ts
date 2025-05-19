@@ -1,34 +1,54 @@
+import { supabase } from '@/integrations/supabase/client';
 import { Product, Lottery, Mockup } from '@/types/supabase.types';
 import { MockupWithColors } from '@/types/mockup.types';
-import { supabase } from '@/integrations/supabase/client';
+import { uploadFileToStorage } from '@/lib/utils';
+
+// Re-export the upload utility to maintain compatibility
+export { uploadFileToStorage };
 
 // Products
-export const fetchAllProducts = async (): Promise<Product[]> => {
+export const fetchAllProducts = async () => {
   try {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('is_active', true);
-
+      .order('created_at', { ascending: false });
     if (error) {
-      console.error("Error fetching products:", error);
+      console.error('Error fetching products:', error);
       return [];
     }
     return data || [];
   } catch (error) {
-    console.error("Unexpected error fetching products:", error);
+    console.error('Unexpected error fetching products:', error);
     return [];
   }
 };
 
-export const fetchProductById = async (id: string): Promise<Product | null> => {
+export const fetchActiveProducts = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching active products:', error);
+      return [];
+    }
+    return data || [];
+  } catch (error) {
+    console.error('Unexpected error fetching active products:', error);
+    return [];
+  }
+};
+
+export const fetchProductById = async (id: string) => {
   try {
     const { data, error } = await supabase
       .from('products')
       .select('*')
       .eq('id', id)
       .single();
-
     if (error) {
       console.error(`Error fetching product with id ${id}:`, error);
       return null;
@@ -40,26 +60,25 @@ export const fetchProductById = async (id: string): Promise<Product | null> => {
   }
 };
 
-export const createProduct = async (product: Omit<Product, 'id'>): Promise<Product | null> => {
+export const createProduct = async (product: Omit<Product, 'id'>) => {
   try {
     const { data, error } = await supabase
       .from('products')
       .insert([product])
       .select()
       .single();
-
     if (error) {
-      console.error("Error creating product:", error);
+      console.error('Error creating product:', error);
       return null;
     }
     return data;
   } catch (error) {
-    console.error("Unexpected error creating product:", error);
+    console.error('Unexpected error creating product:', error);
     return null;
   }
 };
 
-export const updateProduct = async (id: string, updates: Partial<Product>): Promise<Product | null> => {
+export const updateProduct = async (id: string, updates: Partial<Product>) => {
   try {
     const { data, error } = await supabase
       .from('products')
@@ -67,7 +86,6 @@ export const updateProduct = async (id: string, updates: Partial<Product>): Prom
       .eq('id', id)
       .select()
       .single();
-
     if (error) {
       console.error(`Error updating product with id ${id}:`, error);
       return null;
@@ -79,13 +97,12 @@ export const updateProduct = async (id: string, updates: Partial<Product>): Prom
   }
 };
 
-export const deleteProduct = async (id: string): Promise<boolean> => {
+export const deleteProduct = async (id: string) => {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('products')
       .delete()
       .eq('id', id);
-
     if (error) {
       console.error(`Error deleting product with id ${id}:`, error);
       return false;
@@ -97,33 +114,139 @@ export const deleteProduct = async (id: string): Promise<boolean> => {
   }
 };
 
-// Lotteries
-export const fetchAllLotteries = async (): Promise<Lottery[]> => {
+// Designs
+export const fetchAllDesigns = async () => {
   try {
     const { data, error } = await supabase
-      .from('lotteries')
+      .from('designs')
       .select('*')
-      .eq('is_active', true);
-
+      .order('created_at', { ascending: false });
     if (error) {
-      console.error("Error fetching lotteries:", error);
+      console.error('Error fetching designs:', error);
       return [];
     }
     return data || [];
   } catch (error) {
-    console.error("Unexpected error fetching lotteries:", error);
+    console.error('Unexpected error fetching designs:', error);
     return [];
   }
 };
 
-export const fetchLotteryById = async (id: string): Promise<Lottery | null> => {
+export const fetchActiveDesigns = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('designs')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching active designs:', error);
+      return [];
+    }
+    return data || [];
+  } catch (error) {
+    console.error('Unexpected error fetching active designs:', error);
+    return [];
+  }
+};
+
+export const fetchDesignById = async (id: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('designs')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (error) {
+      console.error(`Error fetching design with id ${id}:`, error);
+      return null;
+    }
+    return data;
+  } catch (error) {
+    console.error(`Unexpected error fetching design with id ${id}:`, error);
+    return null;
+  }
+};
+
+export const createDesign = async (design: Omit<Product, 'id'>) => {
+  try {
+    const { data, error } = await supabase
+      .from('designs')
+      .insert([design])
+      .select()
+      .single();
+    if (error) {
+      console.error('Error creating design:', error);
+      return null;
+    }
+    return data;
+  } catch (error) {
+    console.error('Unexpected error creating design:', error);
+    return null;
+  }
+};
+
+export const updateDesign = async (id: string, updates: Partial<Product>) => {
+  try {
+    const { data, error } = await supabase
+      .from('designs')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) {
+      console.error(`Error updating design with id ${id}:`, error);
+      return null;
+    }
+    return data;
+  } catch (error) {
+    console.error(`Unexpected error updating design with id ${id}:`, error);
+    return null;
+  }
+};
+
+export const deleteDesign = async (id: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('designs')
+      .delete()
+      .eq('id', id);
+    if (error) {
+      console.error(`Error deleting design with id ${id}:`, error);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error(`Unexpected error deleting design with id ${id}:`, error);
+    return false;
+  }
+};
+
+// Lotteries
+export const fetchAllLotteries = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('lotteries')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching lotteries:', error);
+      return [];
+    }
+    return data || [];
+  } catch (error) {
+    console.error('Unexpected error fetching lotteries:', error);
+    return [];
+  }
+};
+
+export const fetchLotteryById = async (id: string) => {
   try {
     const { data, error } = await supabase
       .from('lotteries')
       .select('*')
       .eq('id', id)
       .single();
-
     if (error) {
       console.error(`Error fetching lottery with id ${id}:`, error);
       return null;
@@ -135,26 +258,25 @@ export const fetchLotteryById = async (id: string): Promise<Lottery | null> => {
   }
 };
 
-export const createLottery = async (lottery: Omit<Lottery, 'id'>): Promise<Lottery | null> => {
+export const createLottery = async (lottery: Omit<Lottery, 'id'>) => {
   try {
     const { data, error } = await supabase
       .from('lotteries')
       .insert([lottery])
       .select()
       .single();
-
     if (error) {
-      console.error("Error creating lottery:", error);
+      console.error('Error creating lottery:', error);
       return null;
     }
     return data;
   } catch (error) {
-    console.error("Unexpected error creating lottery:", error);
+    console.error('Unexpected error creating lottery:', error);
     return null;
   }
 };
 
-export const updateLottery = async (id: string, updates: Partial<Lottery>): Promise<Lottery | null> => {
+export const updateLottery = async (id: string, updates: Partial<Lottery>) => {
   try {
     const { data, error } = await supabase
       .from('lotteries')
@@ -162,7 +284,6 @@ export const updateLottery = async (id: string, updates: Partial<Lottery>): Prom
       .eq('id', id)
       .select()
       .single();
-
     if (error) {
       console.error(`Error updating lottery with id ${id}:`, error);
       return null;
@@ -174,13 +295,12 @@ export const updateLottery = async (id: string, updates: Partial<Lottery>): Prom
   }
 };
 
-export const deleteLottery = async (id: string): Promise<boolean> => {
+export const deleteLottery = async (id: string) => {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('lotteries')
       .delete()
       .eq('id', id);
-
     if (error) {
       console.error(`Error deleting lottery with id ${id}:`, error);
       return false;
@@ -193,32 +313,30 @@ export const deleteLottery = async (id: string): Promise<boolean> => {
 };
 
 // Mockups
-export const fetchAllMockups = async (): Promise<Mockup[]> => {
+export const fetchAllMockups = async () => {
   try {
     const { data, error } = await supabase
       .from('mockups')
       .select('*')
-      .eq('is_active', true);
-
+      .order('created_at', { ascending: false });
     if (error) {
-      console.error("Error fetching mockups:", error);
+      console.error('Error fetching mockups:', error);
       return [];
     }
     return data || [];
   } catch (error) {
-    console.error("Unexpected error fetching mockups:", error);
+    console.error('Unexpected error fetching mockups:', error);
     return [];
   }
 };
 
-export const fetchMockupById = async (id: string): Promise<Mockup | null> => {
+export const fetchMockupById = async (id: string) => {
   try {
     const { data, error } = await supabase
       .from('mockups')
       .select('*')
       .eq('id', id)
       .single();
-
     if (error) {
       console.error(`Error fetching mockup with id ${id}:`, error);
       return null;
@@ -230,26 +348,25 @@ export const fetchMockupById = async (id: string): Promise<Mockup | null> => {
   }
 };
 
-export const createMockup = async (mockup: Omit<Mockup, 'id'>): Promise<Mockup | null> => {
+export const createMockup = async (mockup: Omit<Mockup, 'id'>) => {
   try {
     const { data, error } = await supabase
       .from('mockups')
       .insert([mockup])
       .select()
       .single();
-
     if (error) {
-      console.error("Error creating mockup:", error);
+      console.error('Error creating mockup:', error);
       return null;
     }
     return data;
   } catch (error) {
-    console.error("Unexpected error creating mockup:", error);
+    console.error('Unexpected error creating mockup:', error);
     return null;
   }
 };
 
-export const updateMockup = async (id: string, updates: Partial<Mockup>): Promise<Mockup | null> => {
+export const updateMockup = async (id: string, updates: Partial<Mockup>) => {
   try {
     const { data, error } = await supabase
       .from('mockups')
@@ -257,7 +374,6 @@ export const updateMockup = async (id: string, updates: Partial<Mockup>): Promis
       .eq('id', id)
       .select()
       .single();
-
     if (error) {
       console.error(`Error updating mockup with id ${id}:`, error);
       return null;
@@ -269,13 +385,12 @@ export const updateMockup = async (id: string, updates: Partial<Mockup>): Promis
   }
 };
 
-export const deleteMockup = async (id: string): Promise<boolean> => {
+export const deleteMockup = async (id: string) => {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('mockups')
       .delete()
       .eq('id', id);
-
     if (error) {
       console.error(`Error deleting mockup with id ${id}:`, error);
       return false;
@@ -287,97 +402,21 @@ export const deleteMockup = async (id: string): Promise<boolean> => {
   }
 };
 
-export const uploadMockupImage = async (file: File, fileName: string): Promise<string | null> => {
+export const fetchMockupWithColorsById = async (id: string) => {
   try {
-    const { data, error } = await supabase.storage
-      .from('mockups')
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
-
-    if (error) {
-      console.error("Error uploading image:", error);
-      return null;
-    }
-
-    const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${data.path}`;
-    return imageUrl;
-  } catch (error) {
-    console.error("Unexpected error uploading image:", error);
-    return null;
-  }
-};
-
-export const updateMockupImage = async (file: File, fileName: string): Promise<string | null> => {
-  try {
-    // Delete the old image first
-    const { data: listResult, error: listError } = await supabase.storage
-      .from('mockups')
-      .list('', { search: fileName });
-
-    if (listError) {
-      console.error("Error listing files:", listError);
-      return null;
-    }
-
-    if (listResult && listResult.length > 0) {
-      const { error: deleteError } = await supabase.storage
-        .from('mockups')
-        .remove([`${listResult[0].name}`]);
-
-      if (deleteError) {
-        console.error("Error deleting old image:", deleteError);
-        return null;
-      }
-    }
-
-    // Upload the new image
-    const { data, error } = await supabase.storage
-      .from('mockups')
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
-
-    if (error) {
-      console.error("Error uploading image:", error);
-      return null;
-    }
-
-    const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${data.path}`;
-    return imageUrl;
-  } catch (error) {
-    console.error("Unexpected error uploading image:", error);
-    return null;
-  }
-};
-
-export const fetchMockupWithColorsById = async (id: string): Promise<MockupWithColors | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('mockups')
-      .select('*')
-      .eq('id', id)
-      .single();
-
+    const { data, error } = await supabase.from('mockups').select('*').eq('id', id).single();
     if (error) {
       console.error(`Error fetching mockup with id ${id}:`, error);
       return null;
     }
-
     if (!data) {
       return null;
     }
-
     // Ensure print_areas is handled correctly
-    const printAreas = (data as any).print_areas ? 
-      (typeof (data as any).print_areas === 'string' ? JSON.parse((data as any).print_areas) : (data as any).print_areas) 
-      : [];
-
+    const printAreas = data.print_areas ? typeof data.print_areas === 'string' ? JSON.parse(data.print_areas) : data.print_areas : [];
     return {
       ...data,
-      print_areas: printAreas,
+      print_areas: printAreas
     } as MockupWithColors;
   } catch (error) {
     console.error(`Unexpected error fetching mockup with id ${id}:`, error);
@@ -385,28 +424,22 @@ export const fetchMockupWithColorsById = async (id: string): Promise<MockupWithC
   }
 };
 
-export const updateMockupWithColors = async (id: string, updates: Partial<MockupWithColors>): Promise<MockupWithColors | null> => {
+export const updateMockupWithColors = async (id: string, updates: Partial<MockupWithColors>) => {
   try {
     // Ensure print_areas is handled correctly before updating
-    const printAreas = (updates as any).print_areas ? 
-      (typeof (updates as any).print_areas === 'string' ? JSON.parse(updates.print_areas) : updates.print_areas) 
-      : [];
-
-    const { data, error } = await supabase
-      .from('mockups')
-      .update({ ...updates, print_areas: printAreas }) // Update with the processed print_areas
-      .eq('id', id)
-      .select()
-      .single();
-
+    const printAreas = updates.print_areas ? typeof updates.print_areas === 'string' ? JSON.parse(updates.print_areas) : updates.print_areas : [];
+    const { data, error } = await supabase.from('mockups').update({
+      ...updates,
+      print_areas: printAreas
+    } as any) // Use type assertion here to avoid TypeScript error
+      .eq('id', id).select().single();
     if (error) {
       console.error(`Error updating mockup with id ${id}:`, error);
       return null;
     }
-
     return {
       ...data,
-      print_areas: printAreas,
+      print_areas: printAreas
     } as MockupWithColors;
   } catch (error) {
     console.error(`Unexpected error updating mockup with id ${id}:`, error);

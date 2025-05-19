@@ -4,6 +4,7 @@ import { CartItem as CartItemType } from '@/types/supabase.types';
 import { X } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { Link, useLocation } from 'react-router-dom';
+import { formatCurrency } from '@/lib/utils';
 
 interface CartItemProps {
   item: CartItemType;
@@ -20,14 +21,6 @@ const CartItem: React.FC<CartItemProps> = ({ item }) => {
 
   const handleQuantityChange = (newQuantity: number) => {
     updateQuantity(item.productId, newQuantity);
-  };
-
-  // Format currency helper function
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
   };
 
   return (

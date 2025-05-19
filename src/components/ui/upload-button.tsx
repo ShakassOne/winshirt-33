@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { uploadFileToStorage } from '@/services/api.service';
+import { uploadFileToStorage } from '@/lib/utils';
 
 interface UploadButtonProps {
   onUpload: (url: string) => void;

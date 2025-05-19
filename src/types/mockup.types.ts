@@ -18,7 +18,8 @@ export interface PrintArea {
   position_x: number;
   position_y: number;
   side: 'front' | 'back';
-  x?: number; // Add x and y as aliases for position_x and position_y
+  // Allow both naming conventions
+  x?: number; 
   y?: number;
 }
 

@@ -1,5 +1,5 @@
 
-// If this file doesn't exist, we'll create it
+// Cart related types
 import { CartItem as BaseCartItem } from './supabase.types';
 
 export interface ExtendedCartItem extends BaseCartItem {
@@ -11,8 +11,17 @@ export interface CartContextType {
   addItem: (item: BaseCartItem) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
+  updateItemQuantity?: (productId: string, quantity: number) => void; // Add alias for compatibility
   clearCart: () => void;
   getCartTotal: () => number;
+  
+  // Add missing properties from CartContext
+  total?: number;
+  itemCount?: number;
+  isLoading?: boolean;
+  error?: string | null;
+  cartToken?: string;
+  currentUser?: { id: string } | null;
 }
 
 export interface CheckoutFormData {
@@ -25,4 +34,16 @@ export interface CheckoutFormData {
   shipping_postal_code: string;
   shipping_country: string;
   delivery_notes?: string;
+  
+  // Add these fields for compatibility with existing code
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string;
+  createAccount?: boolean;
+  password?: string;
 }

@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { createMockup, updateMockup, uploadFileToStorage } from '@/services/api.service';
+import { createMockup, updateMockup } from '@/services/api.service';
+import { uploadFileToStorage } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -12,10 +12,10 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { X, Plus, Trash } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mockup, PrintArea } from '@/types/supabase.types';
+import { Mockup } from '@/types/supabase.types';
 import { UploadButton } from '@/components/ui/upload-button';
 import MockupColorForm from './MockupColorForm';
-import { MockupColor } from '@/types/mockup.types';
+import { MockupColor, PrintArea } from '@/types/mockup.types';
 
 const mockupSchema = z.object({
   name: z.string().min(3, { message: 'Le nom doit contenir au moins 3 caractères' }),
@@ -123,11 +123,14 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
     const newArea: PrintArea = {
       id: `${Date.now()}`,
       side,
-      x: 100,
-      y: 100,
+      position_x: 100,
+      position_y: 100,
       width: 200,
       height: 200,
-      name: `Zone ${side === 'front' ? 'avant' : 'arrière'} ${printAreas.filter(a => a.side === side).length + 1}`
+      name: `Zone ${side === 'front' ? 'avant' : 'arrière'} ${printAreas.filter(a => a.side === side).length + 1}`,
+      // Add x and y as aliases
+      x: 100,
+      y: 100
     };
 
     setPrintAreas([...printAreas, newArea]);
@@ -141,10 +144,10 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
     setPrintAreas(areas => areas.map(area => {
       if (area.id === areaId) {
         // Handle both x/y and position_x/position_y
-        if (field === 'position_x') {
-          return { ...area, x: value };
-        } else if (field === 'position_y') {
-          return { ...area, y: value };
+        if (field === 'x' || field === 'position_x') {
+          return { ...area, position_x: value, x: value };
+        } else if (field === 'y' || field === 'position_y') {
+          return { ...area, position_y: value, y: value };
         }
         return { ...area, [field]: value };
       }
@@ -187,19 +190,21 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
     try {
       setIsSubmitting(true);
 
-      // Make sure we convert position_x/position_y to x/y in print areas
+      // Make sure we convert the print areas to have both x/y and position_x/position_y
       const convertedPrintAreas = printAreas.map(area => ({
         id: area.id,
         name: area.name,
         width: area.width,
         height: area.height,
-        x: area.position_x !== undefined ? area.position_x : area.x,
-        y: area.position_y !== undefined ? area.position_y : area.y,
+        position_x: area.x !== undefined ? area.x : area.position_x,
+        position_y: area.y !== undefined ? area.y : area.position_y,
+        x: area.x !== undefined ? area.x : area.position_x,
+        y: area.y !== undefined ? area.y : area.position_y,
         side: area.side
       }));
 
-      // Ensure required fields are present
-      const mockupData = {
+      // Prepare the mockup data
+      const mockupData: any = {
         name: data.name,
         category: data.category,
         svg_front_url: data.svg_front_url,
@@ -247,6 +252,12 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
       setIsSubmitting(false);
     }
   };
+
+  // In the print area edit forms, update these parts:
+  // In the front and back tab content sections, where we render print area input fields:
+  // Replace all instances of area.x with area.position_x
+  // Replace all instances of area.y with area.position_y
+  // Or add proper value assignments that handle both format
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

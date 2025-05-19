@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { CartContextType } from '@/types/cart.types';
@@ -164,7 +163,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
   
-  const updateItemQuantity = async (productId: string, quantity: number) => {
+  const updateQuantity = async (productId: string, quantity: number) => {
     if (!cartToken || quantity < 1) return;
     
     console.log("Updating item quantity:", productId, quantity);
@@ -220,14 +219,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Calculate total number of items in cart
   const itemCount = items.reduce((count, item) => count + item.quantity, 0);
   
+  // Function to get cart total - this is needed for the CartContextType interface
+  const getCartTotal = () => {
+    return total;
+  };
+  
   return (
     <CartContext.Provider
       value={{
         items,
         addItem,
         removeItem,
-        updateItemQuantity,
+        updateQuantity,
+        updateItemQuantity: updateQuantity, // Alias for compatibility
         clearCart,
+        getCartTotal,
         isLoading,
         error,
         total,
