@@ -1,4 +1,3 @@
-
 export type CartItem = {
   productId: string;
   name: string;
@@ -52,7 +51,7 @@ export type OrderItem = {
   quantity: number;
   price: number;
   customization: CartItem['customization'] | JsonObject | null;
-  created_at?: string;
+  created_at: string;
 };
 
 export type ExtendedOrderItem = OrderItem & {

@@ -1,6 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
-import { CartItem, Order, OrderStatus, PaymentStatus, ExtendedOrder, Json, JsonObject } from "@/types/supabase.types";
+import { CartItem, Order, OrderStatus, PaymentStatus, ExtendedOrder, Json, JsonObject, ExtendedOrderItem } from "@/types/supabase.types";
 
 export const createOrder = async (
   checkoutData: CheckoutFormData,
@@ -116,22 +117,32 @@ export const getOrderById = async (orderId: string): Promise<ExtendedOrder> => {
       : 'pending') as PaymentStatus;
     
     // Process order items to convert Json customization to expected format
-    const processedItems = orderItems.map(item => {
+    const processedItems: ExtendedOrderItem[] = orderItems.map(item => {
       // Convert the customization JSON to the expected structure
-      let processedCustomization = item.customization;
+      let processedCustomization: CartItem['customization'] | JsonObject | null = null;
       
-      if (typeof processedCustomization === 'string') {
-        try {
-          processedCustomization = JSON.parse(processedCustomization);
-        } catch (e) {
-          console.error("Failed to parse customization JSON:", e);
-          processedCustomization = null;
+      if (item.customization) {
+        if (typeof item.customization === 'string') {
+          try {
+            processedCustomization = JSON.parse(item.customization) as JsonObject;
+          } catch (e) {
+            console.error("Failed to parse customization JSON:", e);
+          }
+        } else {
+          // Already an object, use as is
+          processedCustomization = item.customization as JsonObject;
         }
       }
       
       return {
-        ...item,
-        customization: processedCustomization
+        id: item.id,
+        order_id: item.order_id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: item.price,
+        customization: processedCustomization,
+        created_at: item.created_at || '',
+        products: item.products
       };
     });
     
