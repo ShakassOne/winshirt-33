@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Design, Lottery, Mockup, Product } from "@/types/supabase.types";
 import { PrintArea } from "@/types/mockup.types";
@@ -263,6 +264,11 @@ export const uploadFileToStorage = async (
 // Create a new product
 export const createProduct = async (product: Partial<Product>): Promise<Product> => {
   try {
+    // Make sure required fields are present
+    if (!product.name || !product.description || !product.price || !product.category || !product.image_url) {
+      throw new Error("Missing required product fields");
+    }
+    
     const { data, error } = await supabase
       .from('products')
       .insert([product])
@@ -314,6 +320,12 @@ export const deleteProduct = async (id: string): Promise<boolean> => {
 // Create a new lottery
 export const createLottery = async (lottery: Partial<Lottery>): Promise<Lottery> => {
   try {
+    // Make sure required fields are present
+    if (!lottery.title || !lottery.description || !lottery.value || 
+        !lottery.goal || !lottery.draw_date || !lottery.image_url) {
+      throw new Error("Missing required lottery fields");
+    }
+
     const { data, error } = await supabase
       .from('lotteries')
       .insert([lottery])
