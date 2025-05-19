@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -158,13 +157,8 @@ const Checkout = () => {
       // Crée la commande
       const order = await createOrder(data, items, cartToken, userId);
       
-      // FIX: Changed the navigation to use the router state instead of path parameter
-      navigate('/payment', { 
-        state: { 
-          checkoutData: data,
-          orderId: order.id 
-        }
-      });
+      // Redirige vers la page de paiement
+      navigate(`/payment/${order.id}`);
       
       // Vide le panier après la création de la commande
       await clearCart();

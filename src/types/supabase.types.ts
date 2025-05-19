@@ -1,3 +1,4 @@
+
 export type CartItem = {
   productId: string;
   name: string;
@@ -41,17 +42,13 @@ export type Order = {
   payment_status: PaymentStatus;
 };
 
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
-export type JsonObject = { [key: string]: Json | undefined };
-
 export type OrderItem = {
   id: string;
   order_id: string;
   product_id: string;
   quantity: number;
   price: number;
-  customization: CartItem['customization'] | JsonObject | null;
-  created_at: string;
+  customization: CartItem['customization'] | null;
 };
 
 export type ExtendedOrderItem = OrderItem & {
@@ -67,79 +64,4 @@ export type ExtendedOrderItem = OrderItem & {
 
 export type ExtendedOrder = Order & {
   items: ExtendedOrderItem[];
-};
-
-// Additional needed types for the application
-export type Product = {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image_url: string;
-  category: string;
-  is_active?: boolean;
-  color?: string | null;
-  available_colors?: string[];
-  available_sizes?: string[];
-  created_at?: string;
-  updated_at?: string;
-  is_customizable?: boolean;
-  mockup_id?: string | null;
-  model_3d_url?: string | null;
-  use_3d_viewer?: boolean;
-  tickets_offered?: number | null;
-};
-
-export type Lottery = {
-  id: string;
-  title: string;
-  description: string;
-  image_url: string;
-  value: number;
-  goal: number;
-  participants?: number;
-  draw_date: string;
-  created_at?: string;
-  updated_at?: string;
-  is_active?: boolean;
-  is_featured?: boolean;
-};
-
-export type Mockup = {
-  id: string;
-  name: string;
-  category: string;
-  svg_front_url: string;
-  svg_back_url?: string | null;
-  price_a3: number;
-  price_a4: number;
-  price_a5: number;
-  price_a6: number;
-  text_price_front: number;
-  text_price_back: number;
-  print_areas: any;
-  colors?: any;
-  created_at?: string;
-  updated_at?: string;
-  is_active: boolean;
-};
-
-export type PrintArea = {
-  id: string;
-  name: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  side: 'front' | 'back';
-};
-
-export type Design = {
-  id: string;
-  name: string;
-  category: string;
-  image_url: string;
-  created_at?: string;
-  updated_at?: string;
-  is_active?: boolean;
 };

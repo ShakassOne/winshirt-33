@@ -1,61 +1,81 @@
-import React from "react";
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Layout } from "@/components/Layout";
-import Index from "@/pages/Index";
-import Products from "@/pages/Products";
-import ProductDetail from "@/pages/ProductDetail";
-import Lotteries from "@/pages/Lotteries";
-import LotteryDetail from "@/pages/LotteryDetail";
-import Cart from "@/pages/Cart";
-import Checkout from "@/pages/Checkout";
-import Payment from "@/pages/Payment";
-import OrderConfirmation from "@/pages/OrderConfirmation";
-import NotFound from "@/pages/NotFound";
-import Dashboard from "@/pages/admin/Dashboard";
-import ProductsAdmin from "@/pages/admin/ProductsAdmin";
-import LotteriesAdmin from "@/pages/admin/LotteriesAdmin";
-import DesignsAdmin from "@/pages/admin/DesignsAdmin";
-import MockupsAdmin from "@/pages/admin/MockupsAdmin";
-import ThemeSettings from "@/pages/admin/ThemeSettings";
-import { CartProvider } from "@/context/CartContext";
-import OrderDetail from "./pages/OrderDetail";
 
-function App() {
-  return (
-    <Router>
-      <ThemeProvider>
-        <CartProvider>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Index />} />
-              <Route path="products" element={<Products />} />
-              <Route path="products/:productId" element={<ProductDetail />} />
-              <Route path="lotteries" element={<Lotteries />} />
-              <Route path="lotteries/:lotteryId" element={<LotteryDetail />} />
-              <Route path="cart" element={<Cart />} />
-              <Route path="checkout" element={<Checkout />} />
-              <Route path="payment" element={<Payment />} />
-              <Route path="order-confirmation/:orderId" element={<OrderConfirmation />} />
-              <Route path="order/:orderId" element={<OrderDetail />} />
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import Index from "./pages/Index";
+import Products from "./pages/Products";
+import Lotteries from "./pages/Lotteries";
+import ProductDetail from "./pages/ProductDetail";
+import LotteryDetail from "./pages/LotteryDetail";
+import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/admin/Dashboard";
+import ProductsAdmin from "./pages/admin/ProductsAdmin";
+import LotteriesAdmin from "./pages/admin/LotteriesAdmin";
+import MockupsAdmin from "./pages/admin/MockupsAdmin";
+import DesignsAdmin from "./pages/admin/DesignsAdmin";
+import ThemeSettings from "./pages/admin/ThemeSettings";
+import { useScrollReset } from "./hooks/useScrollReset";
+import { ThemeProvider } from "./components/theme-provider";
+import { CartProvider } from "./context/CartContext";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import Payment from "./pages/Payment";
+import OrderConfirmation from "./pages/OrderConfirmation";
+
+// ScrollToTop component to reset scroll position
+const ScrollToTop = () => {
+  useScrollReset();
+  return null;
+};
+
+// Create a client for React Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30000,
+    },
+  },
+});
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
+      <CartProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/products/:id" element={<ProductDetail />} />
+              <Route path="/lotteries" element={<Lotteries />} />
+              <Route path="/lotteries/:id" element={<LotteryDetail />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/payment/:orderId" element={<Payment />} />
+              <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
               
-              {/* Admin routes */}
-              <Route path="admin" element={<Navigate to="/admin/dashboard" replace />} />
-              <Route path="admin/dashboard" element={<Dashboard />} />
-              <Route path="admin/products" element={<ProductsAdmin />} />
-              <Route path="admin/lotteries" element={<LotteriesAdmin />} />
-              <Route path="admin/designs" element={<DesignsAdmin />} />
-              <Route path="admin/mockups" element={<MockupsAdmin />} />
-              <Route path="admin/theme" element={<ThemeSettings />} />
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/products" element={<ProductsAdmin />} />
+              <Route path="/admin/lotteries" element={<LotteriesAdmin />} />
+              <Route path="/admin/mockups" element={<MockupsAdmin />} />
+              <Route path="/admin/designs" element={<DesignsAdmin />} />
+              <Route path="/admin/theme" element={<ThemeSettings />} />
               
-              {/* 404 route */}
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
-        </CartProvider>
-      </ThemeProvider>
-    </Router>
-  );
-}
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </CartProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
+);
 
 export default App;

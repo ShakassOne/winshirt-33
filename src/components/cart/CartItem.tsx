@@ -69,7 +69,7 @@ const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity })
               {item.customization.designId && (
                 <div className="text-xs text-gray-400">Design appliqué</div>
               )}
-              {item.customization.customText && (
+              {item.customization.text?.content && (
                 <div className="text-xs text-gray-400">Texte personnalisé</div>
               )}
             </div>
