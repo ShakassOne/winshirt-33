@@ -1,107 +1,94 @@
-
 import React from 'react';
-import { TrashIcon, Minus, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { CartItem as CartItemType } from '@/types/supabase.types';
-import { Link } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
+import { formatCurrency } from '@/lib/utils';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 interface CartItemProps {
   item: CartItemType;
-  onRemove: (productId: string) => void;
-  onUpdateQuantity: (productId: string, quantity: number) => void;
 }
 
-const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity }) => {
-  const handleQuantityChange = (change: number) => {
-    const newQuantity = item.quantity + change;
-    if (newQuantity >= 1) {
-      onUpdateQuantity(item.productId, newQuantity);
-    }
+const CartItem: React.FC<CartItemProps> = ({ item }) => {
+  const { removeItem, updateQuantity } = useCart();
+  const pathname = usePathname();
+
+  const handleRemove = () => {
+    removeItem(item.productId);
+  };
+
+  const handleQuantityChange = (newQuantity: number) => {
+    updateQuantity(item.productId, newQuantity);
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 p-4 border-b border-gray-100/10">
-      <div className="flex-shrink-0 w-full sm:w-24 h-24 rounded-md overflow-hidden">
-        <img 
-          src={item.image_url} 
-          alt={item.name} 
-          className="w-full h-full object-cover"
+    <li key={item.productId} className="flex py-6">
+      <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
+        <Image
+          src={item.image_url || '/placeholder-image.png'} // Use a placeholder if no image
+          alt={item.name}
+          width={96}
+          height={96}
+          className="h-full w-full object-cover object-center"
         />
       </div>
-      
-      <div className="flex-grow">
-        <div className="flex justify-between">
-          <Link to={`/products/${item.productId}`} className="text-lg font-medium hover:text-winshirt-blue transition-colors">
-            {item.name}
-          </Link>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 text-gray-500 hover:text-red-500"
-            onClick={() => onRemove(item.productId)}
-          >
-            <TrashIcon className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        <div className="mt-1 space-y-1">
-          {item.color && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400">Couleur:</span>
-              <span 
-                className="h-4 w-4 rounded-full border border-white/30" 
-                style={{ backgroundColor: item.color }}
-              />
-            </div>
-          )}
-          
-          {item.size && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400">Taille:</span>
-              <span className="text-sm">{item.size}</span>
-            </div>
-          )}
-          
-          {item.customization && (
-            <div className="mt-2">
-              <Badge variant="outline" className="mb-1">Personnalisé</Badge>
-              {item.customization.designId && (
-                <div className="text-xs text-gray-400">Design appliqué</div>
-              )}
-              {item.customization.text?.content && (
-                <div className="text-xs text-gray-400">Texte personnalisé</div>
-              )}
-            </div>
-          )}
-        </div>
-        
-        <div className="mt-4 flex items-center justify-between">
-          <div className="flex items-center border border-gray-200/20 rounded-md">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 rounded-r-none"
-              onClick={() => handleQuantityChange(-1)}
-              disabled={item.quantity <= 1}
-            >
-              <Minus className="h-3 w-3" />
-            </Button>
-            <span className="w-10 text-center">{item.quantity}</span>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 rounded-l-none"
-              onClick={() => handleQuantityChange(1)}
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
+
+      <div className="ml-4 flex flex-1 flex-col">
+        <div>
+          <div className="flex justify-between text-base font-medium text-white">
+            <h3>
+              <Link href={`/products/${item.productId}`} className="hover:text-gray-400">
+                {item.name}
+              </Link>
+            </h3>
+            <p className="ml-4">{formatCurrency(item.price)}</p>
           </div>
-          
-          <div className="font-semibold">{(item.price * item.quantity).toFixed(2)} €</div>
+          <div className="flex gap-2 mt-1 text-sm text-gray-500">
+            {item.color && <p>Color: {item.color}</p>}
+            {item.size && <p>Size: {item.size}</p>}
+          </div>
+           {item.customization?.customText && (
+            <p className="mt-1 text-sm text-gray-500">Text: {item.customization.customText}</p>
+          )}
+        </div>
+        <div className="flex flex-1 items-end justify-between text-sm">
+          <div className="flex gap-4">
+            <div className="max-w-[120px]">
+              <label htmlFor={`quantity-${item.productId}`} className="sr-only">
+                Quantity
+              </label>
+              <select
+                id={`quantity-${item.productId}`}
+                className="rounded-md border border-gray-700 bg-gray-900 py-1.5 pl-3 pr-5 text-white focus:border-indigo-500 focus:text-gray-900 sm:text-sm"
+                value={item.quantity}
+                onChange={(e) => handleQuantityChange(parseInt(e.target.value))}
+              >
+                {[...Array(10)].map((_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {i + 1}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {pathname !== '/checkout' && (
+              <button type="button" className="font-medium text-winshirt-purple hover:text-indigo-500" onClick={handleRemove}>
+                Remove
+              </button>
+            )}
+          </div>
+          {pathname !== '/checkout' && (
+            <div className="flex">
+              <button type="button" className="-m-2 inline-flex p-2 text-gray-500 hover:text-gray-400">
+                <span className="sr-only">Remove</span>
+                <X className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </li>
   );
 };
 

@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Mockup } from '@/types/supabase.types';
 import { UploadButton } from '@/components/ui/upload-button';
 
+// Update the interface to properly extend Mockup
 interface NormalizedMockup extends Mockup {
   print_areas: any[];
 }

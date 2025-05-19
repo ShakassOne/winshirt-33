@@ -1,30 +1,7 @@
 
-import { CartItem } from './supabase.types';
+// If this file doesn't exist, we'll create it
+import { CartItem as BaseCartItem } from './supabase.types';
 
-export interface CartContextType {
-  items: CartItem[];
-  addItem: (item: CartItem) => Promise<void>;
-  removeItem: (itemId: string) => Promise<void>;
-  updateItemQuantity: (productId: string, quantity: number) => Promise<void>;
-  clearCart: () => Promise<void>;
-  isLoading: boolean;
-  error: string | null;
-  total: number;
-  itemCount: number;
-  cartToken: string;
-  currentUser: { id: string } | null;
-}
-
-export interface CheckoutFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  postalCode: string;
-  country: string;
-  deliveryNotes: string;
-  createAccount: boolean;
-  password?: string;
+export interface ExtendedCartItem extends BaseCartItem {
+  lotteries?: any[]; // Add the lotteries property that appears to be used in ProductDetail.tsx
 }
