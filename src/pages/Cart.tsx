@@ -1,5 +1,5 @@
 
-import { CartItem as CartItemComponent } from '@/components/cart/CartItem';
+import CartItem from '@/components/cart/CartItem';
 import { useCart } from '@/context/CartContext';
 import { formatCurrency } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -29,7 +29,7 @@ const Cart = () => {
           <div>
             <ul>
               {items.map((item) => (
-                <CartItemComponent 
+                <CartItem 
                   key={item.productId} 
                   item={item} 
                   onRemove={removeItem} 

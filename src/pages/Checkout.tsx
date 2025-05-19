@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -12,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from "@/components/ui/checkbox"
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Card,
   CardContent,
@@ -28,10 +29,14 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Icons } from "@/components/ui/icons"
+} from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import { CartItem } from '@/types/supabase.types';
 import { CheckoutFormData } from '@/types/cart.types';
+
+const Icons = {
+  spinner: Loader2,
+};
 
 const checkoutSchema = z.object({
   shipping_first_name: z.string().min(2, { message: 'Le prénom doit contenir au moins 2 caractères' }),
@@ -64,8 +69,7 @@ const defaultValues = {
   shipping_city: '',
   shipping_postal_code: '',
   shipping_country: '',
-  delivery_notes: '', // Use delivery_notes instead of deliveryNotes
-  // Additional backwards compatibility fields
+  delivery_notes: '',
   firstName: '',
   lastName: '',
   email: '',
@@ -149,7 +153,7 @@ const Checkout = () => {
       }
       
       // Create the order in the database
-      const order = await createOrder(
+      const result = await createOrder(
         {
           shipping_first_name: formData.shipping_first_name || formData.firstName || '',
           shipping_last_name: formData.shipping_last_name || formData.lastName || '',
@@ -159,7 +163,7 @@ const Checkout = () => {
           shipping_city: formData.shipping_city || formData.city || '',
           shipping_postal_code: formData.shipping_postal_code || formData.postalCode || '',
           shipping_country: formData.shipping_country || formData.country || '',
-          delivery_notes: formData.delivery_notes || formData.deliveryNotes || '', // Use both for compatibility
+          delivery_notes: formData.delivery_notes || '',
           // Add other required fields
           firstName: formData.firstName || formData.shipping_first_name || '',
           lastName: formData.lastName || formData.shipping_last_name || '',
@@ -168,21 +172,21 @@ const Checkout = () => {
           address: formData.address || formData.shipping_address || '',
           city: formData.city || formData.shipping_city || '',
           postalCode: formData.postalCode || formData.shipping_postal_code || '',
-          country: formData.country || formData.shipping_country || '',
-          deliveryNotes: formData.deliveryNotes || formData.delivery_notes || '' // For backwards compatibility
+          country: formData.country || formData.shipping_country || ''
         },
         items,
+        total || 0,
         cartToken || 'guest',
         currentUser?.id
       );
       
-      if (order) {
+      if (result && result.success) {
         toast({
           title: "Commande créée",
           description: "Votre commande a été créée avec succès. Vous allez être redirigé vers la page de paiement.",
         });
         clearCart();
-        navigate(`/order-confirmation/${order.id}`);
+        navigate(`/order-confirmation/${result.orderId}`);
       } else {
         toast({
           title: "Erreur lors de la création de la commande",
@@ -298,6 +302,7 @@ const Checkout = () => {
             <div className="space-y-2">
               <Label htmlFor="delivery_notes">Delivery Notes</Label>
               <Textarea
+                id="delivery_notes"
                 {...register('delivery_notes')}
                 placeholder="Instructions spéciales pour la livraison"
                 className="w-full p-2 border rounded"

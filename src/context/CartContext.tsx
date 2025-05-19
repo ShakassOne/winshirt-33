@@ -9,8 +9,8 @@ import React, {
 import { v4 as uuidv4 } from 'uuid';
 import { CartItem as BaseCartItem } from '@/types/supabase.types';
 import { CartContextType } from '@/types/cart.types';
-import { useUser } from '@supabase/auth-helpers-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
@@ -21,7 +21,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cartToken, setCartToken] = useState<string | null>(null);
-  const { user } = useUser();
+  const { currentUser } = useAuth();
 
   // Load cart data from localStorage on component mount
   useEffect(() => {
@@ -29,12 +29,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsLoading(true);
       try {
         // Check if the user is authenticated
-        if (user) {
+        if (currentUser) {
           // Fetch cart items from the database based on user_id
           const { data: cartData, error: dbError } = await supabase
             .from('cart_tokens')
             .select('*')
-            .eq('user_id', user.id);
+            .eq('user_id', currentUser.id);
 
           if (dbError) {
             throw new Error(`Failed to load cart from database: ${dbError.message}`);
@@ -75,7 +75,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
             const newCartToken = uuidv4();
             const { error: createError } = await supabase
               .from('cart_tokens')
-              .insert([{ user_id: user.id, token: newCartToken }]);
+              .insert([{ user_id: currentUser.id, token: newCartToken }]);
 
             if (createError) {
               throw new Error(`Failed to create cart in database: ${createError.message}`);
@@ -108,19 +108,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     loadCart();
-  }, [user]);
+  }, [currentUser]);
 
   // Save cart data to localStorage whenever items change (if guest)
   useEffect(() => {
-    if (!user) {
+    if (!currentUser) {
       localStorage.setItem('cart', JSON.stringify(items));
     }
-  }, [items, user]);
+  }, [items, currentUser]);
 
   // Function to update cart in the database
   const updateCartInDatabase = useCallback(
     async (updatedItems: BaseCartItem[]) => {
-      if (user && cartToken) {
+      if (currentUser && cartToken) {
         try {
           // First, get the cart token ID
           const { data: tokenData, error: tokenError } = await supabase
@@ -175,7 +175,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       }
     },
-    [user, cartToken]
+    [currentUser, cartToken]
   );
 
   // Add item to cart
@@ -240,7 +240,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     addItem,
     removeItem,
     updateQuantity,
-    updateItemQuantity: updateQuantity, // Add this alias
     clearCart,
     getCartTotal,
     total,
@@ -248,7 +247,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     isLoading,
     error,
     cartToken,
-    currentUser: user ? { id: user.id } : null
+    currentUser: currentUser ? { id: currentUser.id } : null
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

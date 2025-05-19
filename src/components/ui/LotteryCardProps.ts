@@ -1,6 +1,7 @@
 
-import { Lottery } from "@/types/supabase.types";
+import { Lottery } from '@/types/supabase.types';
 
 export interface LotteryCardProps {
   lottery: Lottery;
+  key?: string;
 }

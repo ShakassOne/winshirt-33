@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import { CartItemProps } from './CartItemProps';
 import { formatCurrency } from '@/lib/utils';
 
-const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity }) => {
+export const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity }) => {
   const handleRemove = () => {
     onRemove(item.productId);
   };

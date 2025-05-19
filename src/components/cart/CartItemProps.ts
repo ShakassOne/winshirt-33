@@ -1,8 +1,8 @@
 
-import { CartItem } from "@/types/supabase.types";
+import { CartItem as BaseCartItem } from '@/types/supabase.types';
 
 export interface CartItemProps {
-  item: CartItem;
+  item: BaseCartItem;
   onRemove: (productId: string) => void;
   onUpdateQuantity: (productId: string, quantity: number) => void;
 }

@@ -458,6 +458,53 @@ export const migrateCartToUser = async (userId: string, token: string) => {
   }
 };
 
+// Get order by ID
+export const getOrderById = async (orderId: string) => {
+  try {
+    const { data: order, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        items:order_items(*, products:product_id(*))
+      `)
+      .eq('id', orderId)
+      .single();
+      
+    if (error) {
+      console.error("Error fetching order:", error);
+      throw error;
+    }
+    
+    return order;
+    
+  } catch (error) {
+    console.error("Error in getOrderById:", error);
+    throw error;
+  }
+};
+
+// Update order payment status
+export const updateOrderPaymentStatus = async (orderId: string, paymentIntentId: string, status: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .update({
+        payment_intent_id: paymentIntentId,
+        payment_status: status,
+        status: status === 'paid' ? 'processing' : 'pending'
+      })
+      .eq('id', orderId)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error updating order payment status:", error);
+    throw error;
+  }
+};
+
 // Update this function to use the correct property names
 export const createOrder = async (formData: CheckoutFormData, items: any[], total: number, cartToken: string, userId?: string) => {
   try {
