@@ -5,14 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UploadButton } from "@/components/ui/upload-button";
 import { Trash } from "lucide-react";
-
-interface MockupColor {
-  id?: string;
-  name: string;
-  color_code: string;
-  front_image_url: string;
-  back_image_url: string;
-}
+import { MockupColor } from "@/types/mockup.types";
 
 interface MockupColorFormProps {
   color: MockupColor;
@@ -62,17 +55,17 @@ const MockupColorForm = ({
         </div>
         
         <div>
-          <Label htmlFor={`color-code-${index}`}>Code couleur (hex)</Label>
+          <Label htmlFor={`color-hex-${index}`}>Code couleur (hex)</Label>
           <div className="flex gap-2 mt-1">
             <Input
-              id={`color-code-${index}`}
-              value={color.color_code}
-              onChange={(e) => handleChange('color_code', e.target.value)}
+              id={`color-hex-${index}`}
+              value={color.hex || color.color_code || '#FFFFFF'}
+              onChange={(e) => handleChange('hex', e.target.value)}
               placeholder="#FF0000"
             />
             <div 
               className="h-10 w-10 rounded border border-white/20"
-              style={{ backgroundColor: color.color_code || '#FFFFFF' }}
+              style={{ backgroundColor: color.hex || color.color_code || '#FFFFFF' }}
             />
           </div>
         </div>
@@ -83,7 +76,7 @@ const MockupColorForm = ({
         <div className="flex mt-1 gap-2">
           <Input
             id={`front-image-${index}`}
-            value={color.front_image_url}
+            value={color.front_image_url || ''}
             onChange={(e) => handleChange('front_image_url', e.target.value)}
             placeholder="URL de l'image recto"
             className="flex-1"
@@ -101,7 +94,7 @@ const MockupColorForm = ({
         <div className="flex mt-1 gap-2">
           <Input
             id={`back-image-${index}`}
-            value={color.back_image_url}
+            value={color.back_image_url || ''}
             onChange={(e) => handleChange('back_image_url', e.target.value)}
             placeholder="URL de l'image verso"
             className="flex-1"

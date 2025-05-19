@@ -6,6 +6,9 @@ export type MockupColor = {
   name: string;
   hex: string;
   product_image?: string;
+  color_code?: string;
+  front_image_url?: string;
+  back_image_url?: string;
 };
 
 export interface MockupWithColors extends Mockup {
@@ -20,3 +23,16 @@ export interface MockupWithColors extends Mockup {
   text_price_front: number;
   text_price_back: number;
 }
+
+// Update PrintArea to include position_x and position_y fields
+export type PrintArea = {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  side: 'front' | 'back';
+  position_x?: number;
+  position_y?: number;
+};

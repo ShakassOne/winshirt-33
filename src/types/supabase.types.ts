@@ -42,13 +42,17 @@ export type Order = {
   payment_status: PaymentStatus;
 };
 
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type JsonObject = { [key: string]: Json | undefined };
+
 export type OrderItem = {
   id: string;
   order_id: string;
   product_id: string;
   quantity: number;
   price: number;
-  customization: CartItem['customization'] | null;
+  customization: CartItem['customization'] | JsonObject | null;
+  created_at?: string;
 };
 
 export type ExtendedOrderItem = OrderItem & {

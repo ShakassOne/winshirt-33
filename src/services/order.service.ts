@@ -1,7 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
-import { CartItem, Order, OrderStatus, PaymentStatus, ExtendedOrder } from "@/types/supabase.types";
+import { CartItem, Order, OrderStatus, PaymentStatus, ExtendedOrder, Json, JsonObject } from "@/types/supabase.types";
 
 export const createOrder = async (
   checkoutData: CheckoutFormData,
@@ -116,11 +115,31 @@ export const getOrderById = async (orderId: string): Promise<ExtendedOrder> => {
       ? order.payment_status as PaymentStatus 
       : 'pending') as PaymentStatus;
     
+    // Process order items to convert Json customization to expected format
+    const processedItems = orderItems.map(item => {
+      // Convert the customization JSON to the expected structure
+      let processedCustomization = item.customization;
+      
+      if (typeof processedCustomization === 'string') {
+        try {
+          processedCustomization = JSON.parse(processedCustomization);
+        } catch (e) {
+          console.error("Failed to parse customization JSON:", e);
+          processedCustomization = null;
+        }
+      }
+      
+      return {
+        ...item,
+        customization: processedCustomization
+      };
+    });
+    
     return {
       ...order,
       status: validStatus,
       payment_status: validPaymentStatus,
-      items: orderItems
+      items: processedItems
     };
   } catch (error) {
     console.error("Error in getOrderById:", error);

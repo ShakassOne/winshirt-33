@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,10 +11,10 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { X, Plus, Trash } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mockup, PrintArea } from '@/types/supabase.types';
+import { Mockup } from '@/types/supabase.types';
+import { PrintArea, MockupColor } from '@/types/mockup.types';
 import { UploadButton } from '@/components/ui/upload-button';
 import MockupColorForm from './MockupColorForm';
-import { MockupColor } from '@/types/mockup.types';
 
 const mockupSchema = z.object({
   name: z.string().min(3, { message: 'Le nom doit contenir au moins 3 caractères' }),
@@ -140,11 +139,9 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
   const updatePrintArea = (areaId: string, field: keyof PrintArea, value: any) => {
     setPrintAreas(areas => areas.map(area => {
       if (area.id === areaId) {
-        // Handle both x/y and position_x/position_y
-        if (field === 'position_x') {
-          return { ...area, x: value };
-        } else if (field === 'position_y') {
-          return { ...area, y: value };
+        // Handle x/y values specifically
+        if (field === 'x' || field === 'y') {
+          return { ...area, [field]: value };
         }
         return { ...area, [field]: value };
       }
@@ -155,8 +152,9 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
   // Color variant management
   const addMockupColor = () => {
     const newColor: MockupColor = {
+      id: `color-${Date.now()}`,
       name: `Couleur ${mockupColors.length + 1}`,
-      color_code: '#000000',
+      hex: '#000000',
       front_image_url: '',
       back_image_url: ''
     };
@@ -187,14 +185,14 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
     try {
       setIsSubmitting(true);
 
-      // Make sure we convert position_x/position_y to x/y in print areas
+      // Make sure we handle x and y in print areas
       const convertedPrintAreas = printAreas.map(area => ({
         id: area.id,
         name: area.name,
         width: area.width,
         height: area.height,
-        x: area.position_x !== undefined ? area.position_x : area.x,
-        y: area.position_y !== undefined ? area.position_y : area.y,
+        x: area.x,
+        y: area.y,
         side: area.side
       }));
 
@@ -248,6 +246,7 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
     }
   };
 
+  // Update the print area form inputs to use x and y instead of position_x and position_y
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-black/50 backdrop-blur-xl border-white/20 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -474,7 +473,7 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
                                   id={`area-x-${area.id}`} 
                                   type="number" 
                                   value={area.x} 
-                                  onChange={(e) => updatePrintArea(area.id, 'position_x', Number(e.target.value))}
+                                  onChange={(e) => updatePrintArea(area.id, 'x', Number(e.target.value))}
                                 />
                               </div>
                               
@@ -484,7 +483,7 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
                                   id={`area-y-${area.id}`} 
                                   type="number" 
                                   value={area.y} 
-                                  onChange={(e) => updatePrintArea(area.id, 'position_y', Number(e.target.value))}
+                                  onChange={(e) => updatePrintArea(area.id, 'y', Number(e.target.value))}
                                 />
                               </div>
                             </div>
@@ -562,7 +561,7 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
                                   id={`area-x-${area.id}`} 
                                   type="number" 
                                   value={area.x} 
-                                  onChange={(e) => updatePrintArea(area.id, 'position_x', Number(e.target.value))}
+                                  onChange={(e) => updatePrintArea(area.id, 'x', Number(e.target.value))}
                                 />
                               </div>
                               
@@ -572,7 +571,7 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
                                   id={`area-y-${area.id}`} 
                                   type="number" 
                                   value={area.y} 
-                                  onChange={(e) => updatePrintArea(area.id, 'position_y', Number(e.target.value))}
+                                  onChange={(e) => updatePrintArea(area.id, 'y', Number(e.target.value))}
                                 />
                               </div>
                             </div>
