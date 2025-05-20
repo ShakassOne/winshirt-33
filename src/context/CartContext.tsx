@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { CartContextType } from '@/types/cart.types';
@@ -110,9 +111,48 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
   
   const addItem = async (item: CartItem) => {
-    if (!cartToken) return;
+    if (!cartToken) {
+      console.error("Cannot add item to cart - no cart token available");
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter au panier - problème d'identification",
+        variant: "destructive",
+      });
+      return;
+    }
     
     console.log("Adding item to cart:", item);
+    // Validate item before adding
+    if (!item.productId) {
+      console.error("Cannot add item - missing productId");
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter un produit sans identifiant",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!item.size && item.requiredSize) {
+      console.error("Cannot add item - size required but not selected");
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner une taille pour ce produit",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!item.color && item.requiredColor) {
+      console.error("Cannot add item - color required but not selected");
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner une couleur pour ce produit",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
     try {
       await addToCart(cartToken, item, currentUser?.id);
