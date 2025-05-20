@@ -122,6 +122,8 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
     const newArea: PrintArea = {
       id: `${Date.now()}`,
       side,
+      position_x: 100,
+      position_y: 100,
       x: 100,
       y: 100,
       width: 200,
