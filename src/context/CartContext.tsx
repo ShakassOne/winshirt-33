@@ -133,7 +133,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (!item.size && item.requiredSize) {
+    // Check if size is required based on available_sizes
+    if (item.available_sizes && item.available_sizes.length > 0 && !item.size) {
       console.error("Cannot add item - size required but not selected");
       toast({
         title: "Erreur",
@@ -143,7 +144,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (!item.color && item.requiredColor) {
+    // Check if color is required based on available_colors
+    if (item.available_colors && item.available_colors.length > 0 && !item.color) {
       console.error("Cannot add item - color required but not selected");
       toast({
         title: "Erreur",

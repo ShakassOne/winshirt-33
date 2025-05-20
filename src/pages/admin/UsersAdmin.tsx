@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/layout/Navbar';
@@ -115,8 +114,9 @@ const UsersAdmin = () => {
 
   const handleToggleBan = async (userId: string, currentBanStatus: boolean) => {
     try {
+      // Use the 'ban' property for the updateUserById method
       const { error } = await supabase.auth.admin.updateUserById(userId, {
-        banned: !currentBanStatus
+        ban_duration: currentBanStatus ? '0 seconds' : 'none'
       });
       
       if (error) throw error;

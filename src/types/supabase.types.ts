@@ -1,4 +1,3 @@
-
 export type CartItem = {
   productId: string;
   name: string;
@@ -8,6 +7,8 @@ export type CartItem = {
   color?: string | null;
   size?: string | null;
   lotteries?: any; // Ajout de la propriété manquante
+  available_colors?: string[] | null;
+  available_sizes?: string[] | null;
   customization?: {
     designId?: string;
     designUrl?: string;
