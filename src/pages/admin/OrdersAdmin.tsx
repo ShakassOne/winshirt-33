@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ExtendedOrder, OrderStatus, PaymentStatus } from '@/types/supabase.types';
+import { ExtendedOrder, OrderStatus, PaymentStatus, CartItem } from '@/types/supabase.types';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { ArrowLeft, ChevronRight, Search, Calendar, Package, CheckCircle, AlertCircle } from 'lucide-react';
@@ -70,11 +71,43 @@ const OrdersAdmin = () => {
             ? order.payment_status as PaymentStatus 
             : 'pending';
         
+        // Process order items with proper type conversion for customization
+        const processedItems = (order.items || []).map(item => {
+          // Convert Json customization to the expected CartItem['customization'] type or null
+          let typedCustomization: CartItem['customization'] | null = null;
+          
+          if (item.customization) {
+            try {
+              // If it's already an object, use it directly, otherwise parse it if it's a string
+              const customObj = typeof item.customization === 'string' 
+                ? JSON.parse(item.customization) 
+                : item.customization;
+              
+              typedCustomization = {
+                designId: customObj.designId || customObj.design_id,
+                designUrl: customObj.designUrl || customObj.design_url,
+                designName: customObj.designName || customObj.design_name,
+                customText: customObj.customText || customObj.custom_text,
+                textColor: customObj.textColor || customObj.text_color,
+                textFont: customObj.textFont || customObj.text_font
+              };
+            } catch (e) {
+              console.error('Error parsing customization:', e);
+              typedCustomization = null;
+            }
+          }
+          
+          return {
+            ...item,
+            customization: typedCustomization
+          };
+        });
+        
         return {
           ...order,
           status: validStatus,
           payment_status: validPaymentStatus,
-          items: order.items || []
+          items: processedItems
         };
       });
       
