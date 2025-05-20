@@ -111,6 +111,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
   
   const addItem = async (item: CartItem) => {
+    console.log("Starting addItem function with item:", JSON.stringify(item, null, 2));
+    
     if (!cartToken) {
       console.error("Cannot add item to cart - no cart token available");
       toast({
@@ -121,7 +123,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    console.log("Adding item to cart:", item);
     // Validate item before adding
     if (!item.productId) {
       console.error("Cannot add item - missing productId");
@@ -157,6 +158,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     
     setIsLoading(true);
     try {
+      console.log("About to call addToCart with:", { cartToken, item, currentUser });
       await addToCart(cartToken, item, currentUser?.id);
       toast({
         title: "Produit ajouté au panier",
@@ -170,7 +172,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       console.error("Error adding to cart:", err);
       toast({
         title: "Erreur",
-        description: "Erreur lors de l'ajout au panier",
+        description: `Erreur lors de l'ajout au panier: ${err.message}`,
         variant: "destructive",
       });
     } finally {

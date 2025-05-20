@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/layout/Navbar';
@@ -34,6 +35,7 @@ const UsersAdmin = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -41,33 +43,101 @@ const UsersAdmin = () => {
 
   const loadUsers = async () => {
     setIsLoading(true);
+    setError(null);
     try {
-      const { data, error } = await supabase.auth.admin.listUsers();
+      // Utilisons une requête à la table des utilisateurs
+      const { data: authUsers, error: authError } = await supabase
+        .from('profiles')
+        .select('*');
       
-      if (error) {
-        throw error;
+      if (authError) {
+        throw authError;
       }
 
-      if (data && data.users) {
-        console.log("Loaded users:", data.users.length);
-        setUsers(data.users.map(user => ({
-          id: user.id,
-          email: user.email || 'Email inconnu',
-          created_at: user.created_at,
-          last_sign_in_at: user.last_sign_in_at,
-          user_metadata: user.user_metadata,
-          is_banned: user.banned || false,
-          role: (user.app_metadata?.role || 'user') as string
-        })));
+      if (authUsers) {
+        console.log("Loaded profiles:", authUsers.length);
+        
+        // Get additional user data for each profile
+        const usersWithData = await Promise.all(
+          authUsers.map(async (profile) => {
+            try {
+              // Try to get user data - this might fail if not admin
+              const { data: userData, error: userError } = await supabase.auth
+                .admin.getUserById(profile.id);
+                
+              if (userError) {
+                console.log(`Could not get detailed user info for ${profile.id}:`, userError);
+                // Return basic profile data
+                return {
+                  id: profile.id,
+                  email: profile.email || 'Email inconnu',
+                  created_at: profile.created_at || new Date().toISOString(),
+                  last_sign_in_at: null,
+                  user_metadata: {
+                    first_name: profile.first_name,
+                    last_name: profile.last_name,
+                  },
+                  is_banned: false,
+                  role: 'user'
+                };
+              }
+              
+              if (userData) {
+                return {
+                  id: userData.user.id,
+                  email: userData.user.email || 'Email inconnu',
+                  created_at: userData.user.created_at,
+                  last_sign_in_at: userData.user.last_sign_in_at,
+                  user_metadata: userData.user.user_metadata,
+                  // Check if there's ban duration to determine if banned
+                  is_banned: userData.user.banned || false,
+                  role: (userData.user.app_metadata?.role || 'user') as string
+                };
+              }
+              
+              // Fallback
+              return {
+                id: profile.id,
+                email: profile.email || 'Email inconnu',
+                created_at: profile.created_at || new Date().toISOString(),
+                last_sign_in_at: null,
+                user_metadata: {
+                  first_name: profile.first_name,
+                  last_name: profile.last_name,
+                },
+                is_banned: false,
+                role: 'user'
+              };
+            } catch (e) {
+              console.error(`Error fetching user data for ${profile.id}:`, e);
+              // Return basic profile data on error
+              return {
+                id: profile.id,
+                email: profile.email || 'Email inconnu',
+                created_at: profile.created_at || new Date().toISOString(),
+                last_sign_in_at: null,
+                user_metadata: {
+                  first_name: profile.first_name,
+                  last_name: profile.last_name,
+                },
+                is_banned: false,
+                role: 'user'
+              };
+            }
+          })
+        );
+        
+        setUsers(usersWithData);
       } else {
         console.log("No users found or not authorized");
         setUsers([]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading users:", error);
+      setError(error.message || "Erreur lors du chargement des utilisateurs");
       toast({
         title: "Erreur",
-        description: "Impossible de charger les utilisateurs. Vérifiez que vous avez les droits d'administrateur.",
+        description: "Impossible de charger les utilisateurs. Vous n'avez peut-être pas les droits d'administrateur.",
         variant: "destructive",
       });
     } finally {
@@ -102,11 +172,11 @@ const UsersAdmin = () => {
         title: "Rôle modifié",
         description: `Le rôle a été changé en ${newRole}`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating role:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de modifier le rôle de l'utilisateur",
+        description: "Impossible de modifier le rôle de l'utilisateur. Vérifiez que vous avez les droits d'administration.",
         variant: "destructive",
       });
     }
@@ -114,7 +184,7 @@ const UsersAdmin = () => {
 
   const handleToggleBan = async (userId: string, currentBanStatus: boolean) => {
     try {
-      // Use the 'ban' property for the updateUserById method
+      // Use the ban_duration parameter for the updateUserById method
       const { error } = await supabase.auth.admin.updateUserById(userId, {
         ban_duration: currentBanStatus ? '0 seconds' : 'none'
       });
@@ -131,11 +201,11 @@ const UsersAdmin = () => {
       });
       
       setOpenDialog(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error toggling ban status:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de modifier le statut de l'utilisateur",
+        description: "Impossible de modifier le statut de l'utilisateur. Vérifiez que vous avez les droits d'administration.",
         variant: "destructive",
       });
     }
@@ -149,13 +219,27 @@ const UsersAdmin = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="flex-1 container mx-auto px-4 py-8">
+      <div className="flex-1 container mx-auto px-4 py-8 mt-16">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Gestion des utilisateurs</h1>
           <Button onClick={loadUsers} disabled={isLoading}>
             {isLoading ? "Chargement..." : "Actualiser"}
           </Button>
         </div>
+
+        {error && (
+          <div className="bg-red-500/20 border border-red-500 rounded-md p-4 mb-6">
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 mr-2 text-red-500" />
+              <p className="text-red-500 font-medium">Erreur</p>
+            </div>
+            <p className="mt-2 text-red-500/90">{error}</p>
+            <p className="mt-2 text-red-500/90">
+              Pour accéder à l'API d'administration des utilisateurs, vous devez utiliser une clé de service
+              dans votre application. Les utilisateurs normaux ne peuvent pas accéder à cette fonctionnalité.
+            </p>
+          </div>
+        )}
 
         <div className="mb-6">
           <div className="relative">

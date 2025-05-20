@@ -14,10 +14,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import CartIcon from "@/components/cart/CartIcon";
+import SignOutButton from "@/components/auth/SignOutButton";
+import { useAuth } from "@/context/AuthContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { isAuthenticated } = useAuth();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -100,12 +103,10 @@ const Navbar = () => {
                     <Link to="/admin" className="flex w-full">Administration</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="hover:bg-white/5">
-                    <Link to="/admin/mockups" className="flex w-full">Mockups Admin</Link>
+                    <Link to="/admin/users" className="flex w-full">Utilisateurs</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-white/10" />
-                  <DropdownMenuItem className="hover:bg-white/5">
-                    Déconnexion
-                  </DropdownMenuItem>
+                  <SignOutButton variant="ghost" className="w-full justify-start px-2" />
                 </DropdownMenuContent>
               </DropdownMenu>
               <CartIcon />
@@ -145,19 +146,15 @@ const Navbar = () => {
               Admin
             </Link>
             <Link
-              to="/admin/mockups"
+              to="/admin/users"
               className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
               onClick={toggleMenu}
             >
-              Gestion des mockups
+              Utilisateurs
             </Link>
-            <Link
-              to="/admin/theme"
-              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
-              onClick={toggleMenu}
-            >
-              Réglages du thème
-            </Link>
+            <div className="px-3 py-2">
+              <SignOutButton variant="outline" className="w-full" />
+            </div>
           </div>
         )}
       </div>

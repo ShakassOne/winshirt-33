@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/context/AuthContext';
@@ -20,12 +19,16 @@ const SignOutButton: React.FC<SignOutButtonProps> = ({ variant = 'default', clas
       console.log("Signing out user...");
       await signOut();
       
+      // Forcer l'actualisation de la page après la déconnexion
       toast({
         title: "Déconnecté avec succès",
         description: "Vous avez été déconnecté de votre compte",
       });
       
-      navigate('/');
+      // Rediriger vers la page d'accueil et forcer un rechargement
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
     } catch (error) {
       console.error("Error signing out:", error);
       toast({

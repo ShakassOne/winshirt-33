@@ -10,6 +10,7 @@ import Lotteries from "./pages/Lotteries";
 import ProductDetail from "./pages/ProductDetail";
 import LotteryDetail from "./pages/LotteryDetail";
 import NotFound from "./pages/NotFound";
+import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/admin/Dashboard";
 import ProductsAdmin from "./pages/admin/ProductsAdmin";
 import LotteriesAdmin from "./pages/admin/LotteriesAdmin";
@@ -62,6 +63,7 @@ const App = () => (
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/payment" element={<Payment />} />
+                <Route path="/auth" element={<Auth />} />
                 <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
                 
                 {/* Admin Routes */}

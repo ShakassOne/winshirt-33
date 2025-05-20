@@ -129,6 +129,9 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
       console.error("Cannot add to cart: No product ID provided");
       throw new Error("No product ID provided");
     }
+
+    // Log item details for debugging
+    console.log("Adding item to cart with full details:", JSON.stringify(item, null, 2));
     
     // Get or create cart token
     const cartToken = await getOrCreateCartToken(token, userId);
@@ -144,10 +147,8 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
       throw new Error("Failed to create cart session");
     }
 
-    console.log("Adding to cart with token:", token);
     console.log("Cart token:", cartToken);
     console.log("Cart session:", cartSession);
-    console.log("Item to add:", item);
     
     // Check if item already exists in cart
     const { data: existingItems, error: fetchError } = await supabase
@@ -192,14 +193,26 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
       if (customizationData) {
         console.log("Item has customization:", customizationData);
       }
+
+      // Log insertion attempt
+      console.log("Attempting to insert cart item with:", {
+        cart_token_id: cartToken.id,
+        cart_session_id: cartSession.id,
+        product_id: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+        color: item.color || null,
+        size: item.size || null,
+        customization: customizationData || null
+      });
       
       // Insert new item
-      const { error: insertError } = await supabase
+      const { data: insertedItem, error: insertError } = await supabase
         .from('cart_items')
         .insert([
           {
             cart_token_id: cartToken.id,
-            cart_session_id: cartSession.id, // Use the session ID for backward compatibility
+            cart_session_id: cartSession.id,
             product_id: item.productId,
             quantity: item.quantity,
             price: item.price,
@@ -207,17 +220,19 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
             size: item.size || null,
             customization: customizationData || null
           }
-        ]);
+        ])
+        .select();
         
       if (insertError) {
         console.error("Error inserting cart item:", insertError);
         throw insertError;
       }
       
-      console.log("New item added to cart successfully");
+      console.log("New item added to cart successfully:", insertedItem);
     }
     
     console.log("Item added to cart successfully");
+    return true;
   } catch (error) {
     console.error("Error in addToCart:", error);
     throw error;
