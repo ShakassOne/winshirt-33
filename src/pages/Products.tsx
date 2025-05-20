@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Filter } from 'lucide-react';
 import { Product } from '@/types/supabase.types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 
 const Products = () => {
   const [category, setCategory] = useState<string | null>(null);
@@ -17,8 +18,11 @@ const Products = () => {
   const { data: products, isLoading, error, refetch } = useQuery({
     queryKey: ['products'],
     queryFn: fetchAllProducts,
-    onError: (error) => {
-      console.error("Failed to fetch products:", error);
+    meta: {
+      onError: (error: Error) => {
+        console.error("Failed to fetch products:", error);
+        toast.error("Erreur lors du chargement des produits");
+      }
     }
   });
 
