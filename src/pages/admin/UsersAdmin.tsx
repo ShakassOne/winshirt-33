@@ -83,14 +83,19 @@ const UsersAdmin = () => {
               }
               
               if (userData) {
+                // Check if the user has ban_duration set to indicate they are banned
+                const isBanned = userData.user.ban_duration !== null && 
+                                userData.user.ban_duration !== undefined && 
+                                userData.user.ban_duration !== '0 seconds';
+                
                 return {
                   id: userData.user.id,
                   email: userData.user.email || 'Email inconnu',
                   created_at: userData.user.created_at,
                   last_sign_in_at: userData.user.last_sign_in_at,
                   user_metadata: userData.user.user_metadata,
-                  // Check if there's ban duration to determine if banned
-                  is_banned: userData.user.banned || false,
+                  // Use the ban_duration to determine if banned
+                  is_banned: isBanned,
                   role: (userData.user.app_metadata?.role || 'user') as string
                 };
               }
