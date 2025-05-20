@@ -7,6 +7,7 @@ export type CartItem = {
   image_url?: string;
   color?: string | null;
   size?: string | null;
+  lotteries?: any; // Ajout de la propriété manquante
   customization?: {
     designId?: string;
     designUrl?: string;

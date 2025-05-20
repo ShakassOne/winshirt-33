@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,10 +11,10 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { X, Plus, Trash } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mockup, PrintArea } from '@/types/supabase.types';
+import { Mockup } from '@/types/supabase.types';
+import { PrintArea, MockupColor } from '@/types/mockup.types';
 import { UploadButton } from '@/components/ui/upload-button';
 import MockupColorForm from './MockupColorForm';
-import { MockupColor } from '@/types/mockup.types';
 
 const mockupSchema = z.object({
   name: z.string().min(3, { message: 'Le nom doit contenir au moins 3 caractères' }),
