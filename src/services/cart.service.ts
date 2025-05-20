@@ -5,6 +5,7 @@ import { CartItem } from "@/types/supabase.types";
 // Create or get cart token from the database
 export const getOrCreateCartToken = async (token: string, userId?: string) => {
   try {
+    console.log("Getting or creating cart token:", token);
     // Check if token exists
     const { data: existingToken, error: fetchError } = await supabase
       .from('cart_tokens')
@@ -13,6 +14,7 @@ export const getOrCreateCartToken = async (token: string, userId?: string) => {
       .single();
       
     if (!fetchError && existingToken) {
+      console.log("Found existing token:", existingToken);
       // If token exists but we now have a user ID, update the token
       if (userId && !existingToken.user_id) {
         const { data: updatedToken, error: updateError } = await supabase
@@ -28,6 +30,7 @@ export const getOrCreateCartToken = async (token: string, userId?: string) => {
       return existingToken;
     }
     
+    console.log("Creating new token:", token);
     // Create a new token if doesn't exist
     const { data: newToken, error: insertError } = await supabase
       .from('cart_tokens')
@@ -40,8 +43,12 @@ export const getOrCreateCartToken = async (token: string, userId?: string) => {
       .select()
       .single();
       
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.error("Error inserting token:", insertError);
+      throw insertError;
+    }
     
+    console.log("New token created:", newToken);
     return newToken;
     
   } catch (error) {
@@ -116,7 +123,10 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
       .eq('cart_token_id', cartToken.id)
       .eq('product_id', item.productId);
     
-    if (fetchError) throw fetchError;
+    if (fetchError) {
+      console.error("Error fetching existing items:", fetchError);
+      throw fetchError;
+    }
     
     console.log("Existing items:", existingItems);
     

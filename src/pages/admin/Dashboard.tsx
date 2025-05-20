@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import GlassCard from '@/components/ui/GlassCard';
-import { ShoppingBag, Ticket, Award, ShoppingCart, Package, Users, Image, Palette, Settings } from 'lucide-react';
+import { ShoppingBag, Ticket, Award, ShoppingCart, Users, Image, Palette, Settings } from 'lucide-react';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -51,13 +51,6 @@ const AdminDashboard = () => {
       icon: <ShoppingCart className="h-8 w-8 text-rose-500" />,
       route: '/admin/orders',
       color: 'from-rose-500/20 to-rose-500/5'
-    },
-    {
-      title: 'Stock',
-      description: 'Gérez le stock de produits',
-      icon: <Package className="h-8 w-8 text-cyan-500" />,
-      route: '/admin/inventory',
-      color: 'from-cyan-500/20 to-cyan-500/5'
     },
     {
       title: 'Utilisateurs',
