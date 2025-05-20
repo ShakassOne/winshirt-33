@@ -8,28 +8,39 @@ import ProductCard from '@/components/ui/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Search, Filter } from 'lucide-react';
 import { Product } from '@/types/supabase.types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Products = () => {
   const [category, setCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
-  const { data: products, isLoading, error } = useQuery({
+  const { data: products, isLoading, error, refetch } = useQuery({
     queryKey: ['products'],
     queryFn: fetchAllProducts,
+    onError: (error) => {
+      console.error("Failed to fetch products:", error);
+    }
   });
 
-  const categories = products 
+  // Extract categories from products if they exist
+  const categories = products && products.length 
     ? [...new Set(products.map((product: Product) => product.category))] 
     : [];
 
+  // Filter products based on search term and category
   const filteredProducts = products?.filter((product: Product) => {
-    const matchesCategory = category ? product.category === category : true;
-    const matchesSearch = searchTerm 
-      ? product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        product.description.toLowerCase().includes(searchTerm.toLowerCase())
-      : true;
+    const matchesCategory = !category || product.category === category;
+    const matchesSearch = !searchTerm 
+      ? true 
+      : product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
+
+  // Function to retry fetching products
+  const handleRetry = () => {
+    refetch();
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -90,12 +101,20 @@ const Products = () => {
         <section className="py-8">
           <div className="container mx-auto px-4">
             {isLoading ? (
-              <div className="text-center py-20">
-                <p>Chargement des produits...</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {Array(8).fill(0).map((_, index) => (
+                  <div key={index} className="flex flex-col space-y-3">
+                    <Skeleton className="h-64 w-full rounded-md" />
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ))}
               </div>
             ) : error ? (
               <div className="text-center py-20">
-                <p>Une erreur est survenue lors du chargement des produits.</p>
+                <p className="text-lg mb-4">Une erreur est survenue lors du chargement des produits.</p>
+                <Button onClick={handleRetry}>Réessayer</Button>
               </div>
             ) : filteredProducts?.length === 0 ? (
               <div className="text-center py-20">
