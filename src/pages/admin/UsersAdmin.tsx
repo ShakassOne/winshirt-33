@@ -83,10 +83,12 @@ const UsersAdmin = () => {
               }
               
               if (userData) {
-                // Check if the user has ban_duration set to indicate they are banned
-                const isBanned = userData.user.ban_duration !== null && 
-                                userData.user.ban_duration !== undefined && 
-                                userData.user.ban_duration !== '0 seconds';
+                // Check if the user has ban information to indicate they are banned
+                // Access the ban_duration using type assertion since it's not in the type definition
+                const banDuration = (userData.user as any).ban_duration;
+                const isBanned = banDuration !== null && 
+                                banDuration !== undefined && 
+                                banDuration !== '0 seconds';
                 
                 return {
                   id: userData.user.id,
@@ -260,7 +262,11 @@ const UsersAdmin = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Utilisateurs ({filteredUsers.length})</CardTitle>
+            <CardTitle>Utilisateurs ({users.filter(user => 
+              user.email.toLowerCase().includes(searchQuery.toLowerCase()) || 
+              (user.user_metadata?.first_name && user.user_metadata.first_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (user.user_metadata?.last_name && user.user_metadata.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
+            ).length})</CardTitle>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[60vh]">
@@ -283,14 +289,22 @@ const UsersAdmin = () => {
                         Chargement des utilisateurs...
                       </TableCell>
                     </TableRow>
-                  ) : filteredUsers.length === 0 ? (
+                  ) : users.filter(user => 
+                      user.email.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                      (user.user_metadata?.first_name && user.user_metadata.first_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                      (user.user_metadata?.last_name && user.user_metadata.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
+                    ).length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-8">
                         {searchQuery ? "Aucun utilisateur ne correspond à votre recherche" : "Aucun utilisateur trouvé"}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredUsers.map((user) => (
+                    users.filter(user => 
+                      user.email.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                      (user.user_metadata?.first_name && user.user_metadata.first_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                      (user.user_metadata?.last_name && user.user_metadata.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
+                    ).map((user) => (
                       <TableRow 
                         key={user.id}
                         className="cursor-pointer hover:bg-muted/50"
