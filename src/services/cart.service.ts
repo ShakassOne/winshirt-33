@@ -5,7 +5,7 @@ import { CartItem } from "@/types/supabase.types";
 // Create or get cart token from the database
 export const getOrCreateCartToken = async (token: string, userId?: string) => {
   try {
-    console.log("Getting or creating cart token:", token);
+    console.log("Getting or creating cart token:", token, userId ? `for user: ${userId}` : "anonymous");
     // Check if token exists
     const { data: existingToken, error: fetchError } = await supabase
       .from('cart_tokens')
@@ -34,7 +34,7 @@ export const getOrCreateCartToken = async (token: string, userId?: string) => {
       return existingToken;
     }
     
-    console.log("Creating new token:", token);
+    console.log("Creating new token:", token, userId ? `for user: ${userId}` : "anonymous");
     // Create a new token if doesn't exist
     const { data: newToken, error: insertError } = await supabase
       .from('cart_tokens')
@@ -131,7 +131,14 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
     }
 
     // Log item details for debugging
-    console.log("Adding item to cart with full details:", JSON.stringify(item, null, 2));
+    console.log("Adding item to cart with details:", {
+      product_id: item.productId,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      color: item.color || "N/A",
+      size: item.size || "N/A"
+    });
     
     // Get or create cart token
     const cartToken = await getOrCreateCartToken(token, userId);
@@ -258,7 +265,7 @@ export const getCartItems = async (token: string, userId?: string): Promise<Cart
         size,
         price,
         customization,
-        products:product_id (id, name, image_url, price, description)
+        products:product_id (id, name, image_url, price, description, available_colors, available_sizes)
       `)
       .eq('cart_token_id', cartToken.id);
       
@@ -282,6 +289,8 @@ export const getCartItems = async (token: string, userId?: string): Promise<Cart
       color: item.color || null,
       size: item.size || null,
       image_url: item.products?.image_url,
+      available_colors: item.products?.available_colors,
+      available_sizes: item.products?.available_sizes,
       customization: item.customization as unknown as CartItem['customization']
     }));
     

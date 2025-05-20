@@ -29,62 +29,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchSession = async () => {
+    const setupAuth = async () => {
+      setIsLoading(true);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
-        console.log("Current auth session:", session ? "Logged in" : "Not logged in");
+        // Set up auth state listener FIRST to avoid race conditions
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          (event, currentSession) => {
+            console.log("Auth state changed:", event);
+            console.log("Session status:", currentSession ? "Active" : "None");
+            
+            setSession(currentSession);
+            setUser(currentSession?.user ?? null);
+          }
+        );
+
+        // THEN check for existing session
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        console.log("Initial session check:", initialSession ? "Logged in" : "Not logged in");
+        
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+        
+        return () => {
+          subscription.unsubscribe();
+        };
       } catch (error) {
-        console.error('Error fetching session:', error);
+        console.error('Error setting up auth:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed:", event);
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Use setTimeout to avoid potential Supabase deadlocks
-          setTimeout(() => {
-            // Fetch additional user data if needed
-          }, 0);
-        }
-      }
-    );
-
-    // THEN check for existing session
-    fetchSession();
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    setupAuth();
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log("Signing in user:", email);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log("Attempting to sign in user:", email);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
       if (error) {
         console.error("Sign in error:", error);
       } else {
-        console.log("User signed in successfully");
+        console.log("User signed in successfully:", data?.user?.id);
       }
+      
       return { error };
     } catch (error) {
-      console.error("Erreur lors de la connexion:", error);
+      console.error("Error during sign in:", error);
       return { error };
     }
   };
 
   const signUp = async (email: string, password: string, metadata?: any) => {
     try {
-      console.log("Signing up user:", email);
+      console.log("Attempting to sign up user:", email);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -94,27 +93,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         console.error("Sign up error:", error);
       } else {
-        console.log("User signed up successfully");
+        console.log("User signed up successfully:", data?.user?.id);
       }
       
       return { error, user: data?.user || null };
     } catch (error) {
-      console.error("Erreur lors de l'inscription:", error);
+      console.error("Error during sign up:", error);
       return { error, user: null };
     }
   };
 
   const signOut = async () => {
     try {
-      console.log("Signing out user");
+      console.log("Attempting to sign out user");
       const { error } = await supabase.auth.signOut();
+      
       if (error) {
         console.error("Sign out error:", error);
         throw error;
       }
+      
+      // Explicitly clear user and session state
+      setUser(null);
+      setSession(null);
+      
       console.log("User signed out successfully");
     } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
+      console.error("Error during sign out:", error);
       throw error;
     }
   };

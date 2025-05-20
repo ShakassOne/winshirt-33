@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/context/AuthContext';
@@ -11,24 +10,20 @@ interface SignOutButtonProps {
 }
 
 const SignOutButton: React.FC<SignOutButtonProps> = ({ variant = 'default', className = '' }) => {
-  const navigate = useNavigate();
   const { signOut } = useAuth();
   
   const handleSignOut = async () => {
     try {
-      console.log("Signing out user...");
+      console.log("Initiating sign out process...");
       await signOut();
       
-      // Forcer l'actualisation de la page après la déconnexion
       toast({
         title: "Déconnecté avec succès",
         description: "Vous avez été déconnecté de votre compte",
       });
       
-      // Rediriger vers la page d'accueil et forcer un rechargement
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 500);
+      // Force page refresh to ensure all auth state is cleared
+      window.location.href = '/';
     } catch (error) {
       console.error("Error signing out:", error);
       toast({

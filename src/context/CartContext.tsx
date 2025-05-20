@@ -42,8 +42,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     // Get current auth status
     const checkCurrentUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setCurrentUser(session?.user || null);
-      console.log("Current user:", session?.user ? session.user.id : "not logged in");
+      const userFromSession = session?.user || null;
+      setCurrentUser(userFromSession);
+      console.log("Current user:", userFromSession ? userFromSession.id : "not logged in");
     };
     
     checkCurrentUser();
@@ -51,13 +52,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     // Set up auth state change listener
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       const user = session?.user || null;
+      console.log("Auth state changed in cart context:", event, user ? user.id : "no user");
       setCurrentUser(user);
-      console.log("Auth state changed:", event, user ? user.id : "no user");
       
       // Handle sign in - migrate cart if user just signed in
       if (event === 'SIGNED_IN' && user && cartToken) {
         console.log("User signed in, migrating cart");
         await handleCartMigration(user.id, cartToken);
+      }
+      
+      // Handle sign out - reload cart with anonymous data
+      if (event === 'SIGNED_OUT' && cartToken) {
+        console.log("User signed out, reloading anonymous cart");
+        await loadCartItems();
       }
     });
 
@@ -123,7 +130,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    // Validate item before adding
+    // Basic validation to ensure we have at least a productId
     if (!item.productId) {
       console.error("Cannot add item - missing productId");
       toast({
@@ -138,7 +145,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (item.available_sizes && item.available_sizes.length > 0 && !item.size) {
       console.error("Cannot add item - size required but not selected");
       toast({
-        title: "Erreur",
+        title: "Taille requise",
         description: "Veuillez sélectionner une taille pour ce produit",
         variant: "destructive",
       });
@@ -149,7 +156,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (item.available_colors && item.available_colors.length > 0 && !item.color) {
       console.error("Cannot add item - color required but not selected");
       toast({
-        title: "Erreur",
+        title: "Couleur requise",
         description: "Veuillez sélectionner une couleur pour ce produit",
         variant: "destructive",
       });
@@ -158,15 +165,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     
     setIsLoading(true);
     try {
-      console.log("About to call addToCart with:", { cartToken, item, currentUser });
+      console.log("About to call addToCart with:", { 
+        cartToken, 
+        item, 
+        currentUser: currentUser ? `User ID: ${currentUser.id}` : 'No user'
+      });
+      
       await addToCart(cartToken, item, currentUser?.id);
+      
+      // Explicitly refresh cart items to ensure the UI is updated
+      await loadCartItems();
+      
       toast({
         title: "Produit ajouté au panier",
         description: `${item.name} a été ajouté à votre panier`,
       });
-      // Reload cart items after adding
-      await loadCartItems();
-      console.log("Item added successfully");
+      
+      console.log("Item added successfully, cart now has", items.length + 1, "items");
     } catch (err: any) {
       setError(err.message);
       console.error("Error adding to cart:", err);
