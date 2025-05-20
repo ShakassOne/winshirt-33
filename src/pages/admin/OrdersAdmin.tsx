@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ExtendedOrder, OrderStatus, PaymentStatus } from '@/types/supabase.types';
@@ -57,7 +56,29 @@ const OrdersAdmin = () => {
         
       if (error) throw error;
       
-      setOrders(data || []);
+      // Convert each order to match the ExtendedOrder type
+      const typedOrders: ExtendedOrder[] = (data || []).map(order => {
+        // Ensure status is valid OrderStatus
+        const validStatus: OrderStatus = 
+          ['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(order.status) 
+            ? order.status as OrderStatus 
+            : 'pending';
+            
+        // Ensure payment_status is valid PaymentStatus
+        const validPaymentStatus: PaymentStatus = 
+          ['pending', 'paid', 'failed'].includes(order.payment_status) 
+            ? order.payment_status as PaymentStatus 
+            : 'pending';
+        
+        return {
+          ...order,
+          status: validStatus,
+          payment_status: validPaymentStatus,
+          items: order.items || []
+        };
+      });
+      
+      setOrders(typedOrders);
     } catch (error) {
       console.error('Error fetching orders:', error);
       toast({
