@@ -1,7 +1,6 @@
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import GlassCard from './GlassCard';
 import { CalendarIcon, Clock, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from './button';
@@ -30,6 +29,9 @@ const LotteryCard: React.FC<LotteryCardProps> = ({
   isFeatured = false,
   drawDate,
 }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  
   const progress = Math.min((participants / goal) * 100, 100);
   const formattedValue = new Intl.NumberFormat('fr-FR', { 
     style: 'currency', 
@@ -58,24 +60,88 @@ const LotteryCard: React.FC<LotteryCardProps> = ({
   };
 
   const timeLeft = getTimeRemaining();
+  
+  useEffect(() => {
+    const card = cardRef.current;
+    const img = imageRef.current;
+    if (!card || !img) return;
+    
+    let target = { x: 0, y: 0 };
+    let current = { x: 0, y: 0 };
+    let raf: number | null = null;
+    
+    function animate() {
+      current.x += (target.x - current.x) * 0.10;
+      current.y += (target.y - current.y) * 0.10;
+      
+      if (card && img) {
+        card.style.transform = `perspective(1000px) rotateY(${current.x}deg) rotateX(${current.y}deg) scale3d(1.04,1.04,1)`;
+        img.style.transform = `translate(-50%, -50%) translateX(${-current.x * 4}px) translateY(${current.y * 4}px) scale(1.15)`;
+      }
+      
+      if (Math.abs(current.x - target.x) > 0.1 || Math.abs(current.y - target.y) > 0.1) {
+        raf = requestAnimationFrame(animate);
+      } else {
+        raf = null;
+      }
+    }
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const normX = ((x / rect.width) - 0.5) * 2;
+      const normY = ((y / rect.height) - 0.5) * 2;
+      target.x = normX * 18;
+      target.y = -normY * 18;
+      if (!raf) animate();
+    };
+    
+    const handleMouseEnter = () => {
+      card.classList.add('flash');
+      setTimeout(() => {
+        card.classList.remove('flash');
+      }, 1000);
+    };
+    
+    const handleMouseLeave = () => {
+      target.x = 0;
+      target.y = 0;
+      card.classList.remove('flash');
+      if (!raf) animate();
+    };
+    
+    card.addEventListener('mousemove', handleMouseMove);
+    card.addEventListener('mouseleave', handleMouseLeave);
+    card.addEventListener('mouseenter', handleMouseEnter);
+    
+    return () => {
+      card.removeEventListener('mousemove', handleMouseMove);
+      card.removeEventListener('mouseleave', handleMouseLeave);
+      card.removeEventListener('mouseenter', handleMouseEnter);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
 
   return (
     <Link to={`/lotteries/${id}`}>
-      <GlassCard 
+      <div 
+        ref={cardRef} 
         className={cn(
-          "overflow-hidden transition-all duration-500 glow-card",
+          "tilt-card relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-lg border border-white/10 shadow-lg",
           isFeatured ? "md:col-span-2 md:row-span-2" : ""
         )}
-        hover3D
-        shine
       >
         <div className="relative overflow-hidden">
           <AspectRatio ratio={16/9} className="w-full">
-            <img
-              src={image}
-              alt={title}
-              className="h-full w-full object-cover object-top transition-transform duration-500 hover:scale-105"
-            />
+            <div className="h-full w-full overflow-hidden">
+              <img
+                ref={imageRef}
+                src={image}
+                alt={title}
+                className="absolute left-1/2 top-1/2 h-[120%] w-[120%] object-cover"
+              />
+            </div>
           </AspectRatio>
           <div className="absolute top-0 left-0 right-0 p-3 flex justify-between items-center">
             <div className={cn(
@@ -150,7 +216,7 @@ const LotteryCard: React.FC<LotteryCardProps> = ({
             </Button>
           </div>
         )}
-      </GlassCard>
+      </div>
     </Link>
   );
 };

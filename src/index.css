@@ -34,11 +34,6 @@
     --ring: 255 79% 75%;
 
     --radius: 0.75rem;
-    
-    /* Variables pour l'effet de carte brillante */
-    --rotate: 132deg;
-    --card-height: auto;
-    --card-width: 100%;
   }
 
   .light {
@@ -131,13 +126,6 @@
     background-position: 0 0, 40px 60px, 130px 270px;
     z-index: -1;
   }
-  
-  /* Définition de la propriété personnalisée pour l'animation */
-  @property --rotate {
-    syntax: "<angle>";
-    initial-value: 132deg;
-    inherits: false;
-  }
 }
 
 @layer components {
@@ -153,103 +141,53 @@
     @apply bg-white/10 border-white/20 shadow-xl;
   }
   
-  .shine-effect {
-    @apply relative overflow-hidden;
-  }
-  
-  /* Only apply shine animation on hover */
-  .shine-effect::after {
-    @apply absolute inset-0 z-10 pointer-events-none opacity-0 transition-opacity duration-300;
-    content: "";
-    background: linear-gradient(
-      45deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.05) 25%,
-      rgba(255, 255, 255, 0.1) 50%,
-      rgba(255, 255, 255, 0.05) 75%,
-      rgba(255, 255, 255, 0) 100%
-    );
-    background-size: 200% 100%;
-  }
-  
-  .shine-effect:hover::after {
-    @apply opacity-100;
-    animation: shine 3s infinite linear;
-  }
-  
-  /* Effet de carte brillante */
-  .glow-card {
-    @apply relative p-[3px] rounded-md cursor-pointer;
-  }
-  
-  .glow-card::before {
-    content: "";
-    width: 102%;
-    height: 102%;
-    border-radius: 8px;
-    background-image: linear-gradient(
-      var(--rotate),
-      #5ddcff, #3c67e3 43%, #4e00c2
-    );
-    position: absolute;
-    z-index: -1;
-    top: -1%;
-    left: -1%;
-    animation: spin 2.5s linear infinite;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  
-  .glow-card::after {
-    position: absolute;
-    content: "";
-    top: calc(var(--card-height) / 6);
-    left: 0;
-    right: 0;
-    z-index: -1;
-    height: 100%;
-    width: 100%;
-    margin: 0 auto;
-    transform: scale(0.8);
-    filter: blur(calc(var(--card-height) / 5));
-    background-image: linear-gradient(
-      var(--rotate),
-      #5ddcff, #3c67e3 43%, #4e00c2
-    );
-    opacity: 0;
-    transition: opacity 0.3s;
-    animation: spin 2.5s linear infinite;
-  }
-  
-  .glow-card:hover::before,
-  .glow-card:hover::after {
-    opacity: 1;
-  }
-  
-  @keyframes spin {
-    0% {
-      --rotate: 0deg;
-    }
-    100% {
-      --rotate: 360deg;
-    }
-  }
-  
-  @keyframes shine {
-    0% {
-      background-position: 0% 50%;
-    }
-    100% {
-      background-position: 200% 50%;
-    }
-  }
-  
   .progress-bar {
     @apply h-2 rounded-full bg-white/10 overflow-hidden;
   }
   
   .progress-bar-fill {
     @apply h-full rounded-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue transition-all duration-300;
+  }
+  
+  /* 3D Tilt Card Effect */
+  .tilt-card {
+    @apply rounded-xl cursor-pointer overflow-hidden transition-shadow duration-200;
+    transform-style: preserve-3d;
+    transform: perspective(1000px);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    will-change: transform;
+  }
+  
+  .tilt-card:hover {
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+  
+  /* Flash effect */
+  .tilt-card::before {
+    content: '';
+    position: absolute;
+    top: -60%;
+    left: -60%;
+    width: 220%;
+    height: 220%;
+    background: linear-gradient(
+      120deg,
+      transparent 40%,
+      rgba(0,255,255,0.18) 48%,
+      rgba(255,255,255,0.25) 52%,
+      transparent 60%
+    );
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(0) scale(1.05);
+    transition: opacity 0.15s, transform 0.6s cubic-bezier(.24,.97,.56,1.03);
+    z-index: 2;
+  }
+  
+  .tilt-card.flash::before {
+    opacity: 1;
+    transform: translateY(100%) scale(1.05);
+    transition: opacity 0.08s, transform 1s cubic-bezier(.24,.97,.56,1.03);
   }
 }
 
