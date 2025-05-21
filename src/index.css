@@ -235,6 +235,15 @@
     }
   }
   
+  @keyframes shine {
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: 200% 50%;
+    }
+  }
+  
   .progress-bar {
     @apply h-2 rounded-full bg-white/10 overflow-hidden;
   }

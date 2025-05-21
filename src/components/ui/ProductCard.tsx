@@ -5,6 +5,7 @@ import GlassCard from './GlassCard';
 import { ShoppingCart, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface ProductCardProps {
   id: string;
@@ -32,12 +33,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <Link to={`/products/${id}`} className="block">
       <GlassCard hover3D shine className="group relative overflow-hidden hover:shadow-lg glow-card">
-        <div className="relative aspect-square overflow-hidden rounded-t-xl">
-          <img
-            src={image}
-            alt={name}
-            className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
-          />
+        <div className="relative rounded-t-xl overflow-hidden">
+          <AspectRatio ratio={1} className="w-full">
+            <img
+              src={image}
+              alt={name}
+              className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
+            />
+          </AspectRatio>
           {isCustomizable && (
             <div className="absolute top-2 left-2 bg-winshirt-purple/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium">
               Personnalisable

@@ -5,6 +5,7 @@ import GlassCard from './GlassCard';
 import { CalendarIcon, Clock, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from './button';
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface LotteryCardProps {
   id: string;
@@ -68,12 +69,14 @@ const LotteryCard: React.FC<LotteryCardProps> = ({
         hover3D
         shine
       >
-        <div className="relative aspect-video overflow-hidden">
-          <img
-            src={image}
-            alt={title}
-            className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-          />
+        <div className="relative overflow-hidden">
+          <AspectRatio ratio={16/9} className="w-full">
+            <img
+              src={image}
+              alt={title}
+              className="h-full w-full object-contain transition-transform duration-500 hover:scale-105"
+            />
+          </AspectRatio>
           <div className="absolute top-0 left-0 right-0 p-3 flex justify-between items-center">
             <div className={cn(
               "px-3 py-1 rounded-full text-xs font-medium",
