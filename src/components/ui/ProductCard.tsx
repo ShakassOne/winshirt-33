@@ -109,7 +109,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 ref={imageRef}
                 src={image}
                 alt={name}
-                className="absolute left-1/2 top-1/2 h-[120%] w-[120%] object-cover"
+                className="absolute left-50% top-50% w-full h-full object-cover transform-center"
               />
             </div>
           </AspectRatio>
