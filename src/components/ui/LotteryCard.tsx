@@ -74,7 +74,7 @@ const LotteryCard: React.FC<LotteryCardProps> = ({
             <img
               src={image}
               alt={title}
-              className="h-full w-full object-contain transition-transform duration-500 hover:scale-105"
+              className="h-full w-full object-cover object-top transition-transform duration-500 hover:scale-105"
             />
           </AspectRatio>
           <div className="absolute top-0 left-0 right-0 p-3 flex justify-between items-center">

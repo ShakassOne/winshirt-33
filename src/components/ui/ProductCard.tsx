@@ -38,7 +38,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <img
               src={image}
               alt={name}
-              className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
+              className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
             />
           </AspectRatio>
           {isCustomizable && (
