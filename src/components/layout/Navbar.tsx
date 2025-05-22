@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { X, Menu, ChevronDown, User } from "lucide-react";
+import { X, Menu, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -81,48 +81,49 @@ const Navbar = () => {
             </nav>
 
             {/* User Menu, Theme Toggle and Cart */}
-           <div className="hidden md:flex items-center space-x-1">
-  <ThemeToggle />
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Button variant="ghost" size="icon" className="text-white/80 hover:text-white">
-        <User className="h-5 w-5" />
-      </Button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent align="end" className="bg-black/90 border-white/20">
-      <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
-      <DropdownMenuSeparator className="bg-white/10" />
-      {isAuthenticated ? (
-        <>
-          <DropdownMenuItem className="hover:bg-white/5">
-            <Link to="/profile" className="flex w-full">Profil</Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem className="hover:bg-white/5">
-            <Link to="/orders" className="flex w-full">Mes commandes</Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem className="hover:bg-white/5">
-            <Link to="/admin" className="flex w-full">Administration</Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem className="hover:bg-white/5">
-            <Link to="/admin/users" className="flex w-full">Utilisateurs</Link>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator className="bg-white/10" />
-          <DropdownMenuItem className="hover:bg-white/5 p-0">
-            <SignOutButton variant="ghost" className="w-full justify-start px-2 border-0 shadow-none" />
-          </DropdownMenuItem>
-        </>
-      ) : (
-        <>
-          <DropdownMenuItem className="hover:bg-white/5">
-            <Link to="/auth" className="flex w-full">Se connecter</Link>
-          </DropdownMenuItem>
-        </>
-      )}
-    </DropdownMenuContent>
-  </DropdownMenu>
-  <CartIcon />
-</div>
-
+            <div className="hidden md:flex items-center space-x-1">
+              <ThemeToggle />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-white/80 hover:text-white">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-black/90 border-white/20">
+                  <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  {isAuthenticated ? (
+                    <>
+                      <DropdownMenuItem className="hover:bg-white/5">
+                        <Link to="/profile" className="flex w-full">Profil</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="hover:bg-white/5">
+                        <Link to="/orders" className="flex w-full">Mes commandes</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="hover:bg-white/5">
+                        <Link to="/admin" className="flex w-full">Administration</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="hover:bg-white/5">
+                        <Link to="/admin/users" className="flex w-full">Utilisateurs</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="bg-white/10" />
+                      <DropdownMenuItem className="hover:bg-white/5 p-0">
+                        <SignOutButton variant="ghost" className="w-full justify-start px-2 border-0 shadow-none" />
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem className="hover:bg-white/5">
+                        <Link to="/auth" className="flex w-full">Se connecter</Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <CartIcon />
+            </div>
+          </div>
+        </div>
 
         {/* Mobile Navigation */}
         {isOpen && (
@@ -163,8 +164,17 @@ const Navbar = () => {
               Utilisateurs
             </Link>
             <div className="px-3 py-2">
-              {/* CORRECTION MOBILE : rien à changer, SignOutButton est déjà bien ici */}
-              <SignOutButton variant="outline" className="w-full" />
+              {isAuthenticated ? (
+                <SignOutButton variant="outline" className="w-full" />
+              ) : (
+                <Link
+                  to="/auth"
+                  className="block text-white/70 hover:text-white px-3 py-2 rounded-md text-center"
+                  onClick={toggleMenu}
+                >
+                  Se connecter
+                </Link>
+              )}
             </div>
           </div>
         )}
