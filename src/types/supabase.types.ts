@@ -1,3 +1,4 @@
+
 export type CartItem = {
   productId: string;
   name: string;
@@ -131,4 +132,15 @@ export type Mockup = {
   is_active: boolean;
   created_at?: string | null;
   updated_at?: string | null;
+};
+
+export type SocialNetwork = {
+  id: string;
+  name: string;
+  url: string | null;
+  icon: string;
+  is_active: boolean;
+  priority: number;
+  created_at: string;
+  updated_at: string;
 };

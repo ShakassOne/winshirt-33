@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { Product, Lottery, Mockup } from "@/types/supabase.types";
+import { Product, Lottery, Mockup, SocialNetwork } from "@/types/supabase.types";
 import { MockupWithColors, MockupColor } from "@/types/mockup.types";
 
 // Products
@@ -475,6 +475,104 @@ export const deleteDesign = async (id: string) => {
   } catch (error) {
     console.error("Error during design deletion:", error);
     throw error;
+  }
+};
+
+// Social Networks
+export const fetchAllSocialNetworks = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("social_networks")
+      .select("*")
+      .order("priority", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching social networks:", error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error("Critical error in fetchAllSocialNetworks:", err);
+    return [];
+  }
+};
+
+export const fetchActiveSocialNetworks = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("social_networks")
+      .select("*")
+      .eq("is_active", true)
+      .order("priority", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching active social networks:", error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error("Critical error in fetchActiveSocialNetworks:", err);
+    return [];
+  }
+};
+
+export const createSocialNetwork = async (socialNetworkData: Partial<SocialNetwork>) => {
+  try {
+    const { data, error } = await supabase
+      .from("social_networks")
+      .insert([socialNetworkData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating social network:", error);
+      throw error;
+    }
+
+    return data;
+  } catch (err) {
+    console.error("Critical error in createSocialNetwork:", err);
+    throw err;
+  }
+};
+
+export const updateSocialNetwork = async (id: string, socialNetworkData: Partial<SocialNetwork>) => {
+  try {
+    const { data, error } = await supabase
+      .from("social_networks")
+      .update(socialNetworkData)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`Error updating social network with ID ${id}:`, error);
+      throw error;
+    }
+
+    return data;
+  } catch (err) {
+    console.error(`Critical error in updateSocialNetwork for ID ${id}:`, err);
+    throw err;
+  }
+};
+
+export const deleteSocialNetwork = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from("social_networks")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error(`Error deleting social network with ID ${id}:`, error);
+      throw error;
+    }
+  } catch (err) {
+    console.error(`Critical error in deleteSocialNetwork for ID ${id}:`, err);
+    throw err;
   }
 };
 
