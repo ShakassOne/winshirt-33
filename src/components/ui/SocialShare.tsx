@@ -17,8 +17,6 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { toast } from "sonner";
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 
 interface SocialShareProps {
   title: string;
@@ -28,6 +26,15 @@ interface SocialShareProps {
   compact?: boolean;
 }
 
+interface SocialNetwork {
+  id: string;
+  name: string;
+  icon: string;
+  url: string;
+  is_active: boolean;
+  priority: number;
+}
+
 const SocialShare: React.FC<SocialShareProps> = ({ 
   title, 
   description = '', 
@@ -35,27 +42,13 @@ const SocialShare: React.FC<SocialShareProps> = ({
   image = '', 
   compact = false 
 }) => {
-  // Fetch the configured social networks from Supabase
-  const { data: socialNetworks } = useQuery({
-    queryKey: ['socialNetworks'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('social_networks')
-        .select('*')
-        .eq('is_active', true)
-        .order('priority');
-      
-      if (error) throw error;
-      return data || [];
-    },
-    // Default to common social networks if none are configured
-    placeholderData: [
-      { id: 'facebook', name: 'Facebook', icon: 'facebook', url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(title)}`, is_active: true, priority: 1 },
-      { id: 'twitter', name: 'Twitter', icon: 'twitter', url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, is_active: true, priority: 2 },
-      { id: 'linkedin', name: 'LinkedIn', icon: 'linkedin', url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, is_active: true, priority: 3 },
-      { id: 'email', name: 'Email', icon: 'mail', url: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${description}\n\n${url}`)}`, is_active: true, priority: 4 }
-    ]
-  });
+  // Define default social networks
+  const socialNetworks: SocialNetwork[] = [
+    { id: 'facebook', name: 'Facebook', icon: 'facebook', url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(title)}`, is_active: true, priority: 1 },
+    { id: 'twitter', name: 'Twitter', icon: 'twitter', url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, is_active: true, priority: 2 },
+    { id: 'linkedin', name: 'LinkedIn', icon: 'linkedin', url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, is_active: true, priority: 3 },
+    { id: 'email', name: 'Email', icon: 'mail', url: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${description}\n\n${url}`)}`, is_active: true, priority: 4 }
+  ];
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(url).then(() => {
@@ -89,10 +82,10 @@ const SocialShare: React.FC<SocialShareProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          {socialNetworks?.map((network) => (
+          {socialNetworks.map((network) => (
             <DropdownMenuItem key={network.id} asChild>
               <a 
-                href={network.url || `#${network.name}`} 
+                href={network.url} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center gap-2"
@@ -116,7 +109,7 @@ const SocialShare: React.FC<SocialShareProps> = ({
     <div className="flex flex-col space-y-4">
       <h3 className="text-sm font-medium">Partager</h3>
       <div className="flex space-x-2">
-        {socialNetworks?.slice(0, 4).map((network) => (
+        {socialNetworks.slice(0, 4).map((network) => (
           <Button
             key={network.id}
             variant="outline"
@@ -124,7 +117,7 @@ const SocialShare: React.FC<SocialShareProps> = ({
             asChild
           >
             <a 
-              href={network.url || `#${network.name}`} 
+              href={network.url} 
               target="_blank" 
               rel="noopener noreferrer" 
               aria-label={`Partager sur ${network.name}`}
