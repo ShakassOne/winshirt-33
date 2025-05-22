@@ -72,12 +72,14 @@ const Navbar = () => {
               >
                 Loteries
               </Link>
-              <Link
-                to="/admin"
-                className="text-white/80 hover:text-white transition-colors px-3 py-1"
-              >
-                Admin
-              </Link>
+              {isAuthenticated && (
+                <Link
+                  to="/admin"
+                  className="text-white/80 hover:text-white transition-colors px-3 py-1"
+                >
+                  Admin
+                </Link>
+              )}
             </nav>
 
             {/* User Menu, Theme Toggle and Cart */}
@@ -149,13 +151,15 @@ const Navbar = () => {
             >
               Loteries
             </Link>
-            <Link
-              to="/admin"
-              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
-              onClick={toggleMenu}
-            >
-              Admin
-            </Link>
+            {isAuthenticated && (
+              <Link
+                to="/admin"
+                className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+                onClick={toggleMenu}
+              >
+                Admin
+              </Link>
+            )}
             <Link
               to="/admin/users"
               className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
