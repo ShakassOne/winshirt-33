@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { fetchProductById, fetchRelatedProducts } from '@/services/api.service';
+import { fetchProductById, fetchAllProducts } from '@/services/api.service';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,7 @@ const ProductDetail = () => {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const { toast } = useToast();
-  const { addToCart } = useCart();
+  const { addItem: addToCart } = useCart();
 
   // Get current URL for social sharing
   const productUrl = window.location.href;
@@ -37,20 +38,27 @@ const ProductDetail = () => {
     enabled: !!id,
   });
 
-  const { data: relatedProducts } = useQuery({
-    queryKey: ['relatedProducts', product?.category],
-    queryFn: () => fetchRelatedProducts(product?.category as string),
-    enabled: !!product?.category,
+  const { data: allProducts } = useQuery({
+    queryKey: ['products'],
+    queryFn: () => fetchAllProducts(),
   });
+
+  // Filter related products from all products based on category
+  const relatedProducts = React.useMemo(() => {
+    if (!product || !allProducts) return [];
+    return allProducts
+      .filter(p => p.category === product.category && p.id !== product.id)
+      .slice(0, 4);
+  }, [product, allProducts]);
 
   // Set default size and color when product loads
   useEffect(() => {
     if (product) {
-      if (product.sizes && product.sizes.length > 0) {
-        setSelectedSize(product.sizes[0]);
+      if (product.available_sizes && product.available_sizes.length > 0) {
+        setSelectedSize(product.available_sizes[0]);
       }
-      if (product.colors && product.colors.length > 0) {
-        setSelectedColor(product.colors[0]);
+      if (product.available_colors && product.available_colors.length > 0) {
+        setSelectedColor(product.available_colors[0]);
       }
     }
   }, [product]);
@@ -58,7 +66,7 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     if (!product) return;
     
-    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+    if (product.available_sizes && product.available_sizes.length > 0 && !selectedSize) {
       toast({
         title: "Sélection requise",
         description: "Veuillez sélectionner une taille",
@@ -67,7 +75,7 @@ const ProductDetail = () => {
       return;
     }
 
-    if (product.colors && product.colors.length > 0 && !selectedColor) {
+    if (product.available_colors && product.available_colors.length > 0 && !selectedColor) {
       toast({
         title: "Sélection requise",
         description: "Veuillez sélectionner une couleur",
@@ -104,9 +112,9 @@ const ProductDetail = () => {
   const decrementQuantity = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
 
   // Prepare product images for gallery
-  const productImages = product?.gallery_images 
-    ? [{ url: product.image_url }, ...product.gallery_images]
-    : [{ url: product.image_url }];
+  const productImages = product?.image_url 
+    ? [{ url: product.image_url }] 
+    : [];
 
   if (isLoading) {
     return (
@@ -194,7 +202,7 @@ const ProductDetail = () => {
                   title={product?.name || 'Produit Winshirt'} 
                   description={product?.description || 'Découvrez ce produit sur Winshirt'} 
                   url={productUrl}
-                  image={productImages?.[0]?.url || product?.image_url}
+                  image={product?.image_url}
                 />
               </div>
             </div>
@@ -202,9 +210,9 @@ const ProductDetail = () => {
             {/* Product details - right side */}
             <div>
               <div className="mb-4">
-                {product.is_new && (
+                {product.is_active && (
                   <span className="inline-block bg-winshirt-blue text-white text-xs px-2 py-1 rounded-md mb-2">
-                    Nouveau
+                    Disponible
                   </span>
                 )}
                 <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
@@ -215,30 +223,25 @@ const ProductDetail = () => {
                         key={i}
                         className={cn(
                           "h-4 w-4",
-                          i < (product.rating || 5) ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                          i < 5 ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
                         )}
                       />
                     ))}
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    ({product.reviews_count || 0} avis)
+                    (0 avis)
                   </span>
                 </div>
                 <p className="text-2xl font-bold mb-4">
                   {product.price.toFixed(2)} €
-                  {product.old_price && (
-                    <span className="text-muted-foreground line-through ml-2 text-lg">
-                      {product.old_price.toFixed(2)} €
-                    </span>
-                  )}
                 </p>
-                <p className="text-muted-foreground mb-6">{product.short_description}</p>
+                <p className="text-muted-foreground mb-6">{product.description.substring(0, 100) + "..."}</p>
               </div>
 
               {/* Product options */}
               <div className="space-y-6 mb-6">
                 {/* Sizes */}
-                {product.sizes && product.sizes.length > 0 && (
+                {product.available_sizes && product.available_sizes.length > 0 && (
                   <div>
                     <div className="flex justify-between mb-2">
                       <Label htmlFor="size">Taille</Label>
@@ -252,7 +255,7 @@ const ProductDetail = () => {
                       onValueChange={setSelectedSize}
                       className="flex flex-wrap gap-2"
                     >
-                      {product.sizes.map((size) => (
+                      {product.available_sizes.map((size) => (
                         <div key={size}>
                           <RadioGroupItem
                             value={size}
@@ -272,7 +275,7 @@ const ProductDetail = () => {
                 )}
 
                 {/* Colors */}
-                {product.colors && product.colors.length > 0 && (
+                {product.available_colors && product.available_colors.length > 0 && (
                   <div>
                     <Label htmlFor="color" className="block mb-2">
                       Couleur: {selectedColor}
@@ -283,7 +286,7 @@ const ProductDetail = () => {
                       onValueChange={setSelectedColor}
                       className="flex flex-wrap gap-2"
                     >
-                      {product.colors.map((color) => (
+                      {product.available_colors.map((color) => (
                         <div key={color}>
                           <RadioGroupItem
                             value={color}
@@ -392,15 +395,15 @@ const ProductDetail = () => {
                       <ul className="space-y-2">
                         <li className="flex justify-between">
                           <span className="text-muted-foreground">Matière</span>
-                          <span>{product.material || 'Non spécifié'}</span>
+                          <span>Non spécifié</span>
                         </li>
                         <li className="flex justify-between">
                           <span className="text-muted-foreground">Poids</span>
-                          <span>{product.weight || 'Non spécifié'}</span>
+                          <span>Non spécifié</span>
                         </li>
                         <li className="flex justify-between">
                           <span className="text-muted-foreground">Dimensions</span>
-                          <span>{product.dimensions || 'Non spécifié'}</span>
+                          <span>Non spécifié</span>
                         </li>
                       </ul>
                     </div>
@@ -409,7 +412,7 @@ const ProductDetail = () => {
                       <ul className="space-y-2">
                         <li className="flex justify-between">
                           <span className="text-muted-foreground">Référence</span>
-                          <span>{product.sku || product.id.substring(0, 8)}</span>
+                          <span>{product.id.substring(0, 8)}</span>
                         </li>
                         <li className="flex justify-between">
                           <span className="text-muted-foreground">Catégorie</span>
@@ -461,7 +464,7 @@ const ProductDetail = () => {
                           category={relatedProduct.category}
                           price={relatedProduct.price}
                           image={relatedProduct.image_url}
-                          rating={relatedProduct.rating}
+                          rating={5}
                           isCustomizable={relatedProduct.is_customizable}
                           tickets={relatedProduct.tickets_offered}
                           color={relatedProduct.color}
