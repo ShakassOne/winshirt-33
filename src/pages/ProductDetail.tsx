@@ -79,8 +79,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { useCart } from '@/context/CartContext';
 
+// Définition des polices Google Fonts
 const googleFonts = [
   { value: 'Roboto', label: 'Roboto' },
   { value: 'Open Sans', label: 'Open Sans' },
@@ -195,9 +195,11 @@ const ProductDetail = () => {
   const [customizationMode, setCustomizationMode] = useState(false);
   const [selectedMockupColor, setSelectedMockupColor] = useState<MockupColor | null>(null);
   
+  // État pour les designs - maintenant séparés par côté (recto/verso)
   const [selectedDesignFront, setSelectedDesignFront] = useState<Design | null>(null);
   const [selectedDesignBack, setSelectedDesignBack] = useState<Design | null>(null);
   
+  // État pour les transformations des designs - séparés par côté
   const [designTransformFront, setDesignTransformFront] = useState({
     position: { x: 0, y: 0 },
     scale: 1,
@@ -209,9 +211,11 @@ const ProductDetail = () => {
     rotation: 0
   });
   
+  // État pour les tailles d'impression - séparées par côté
   const [printSizeFront, setPrintSizeFront] = useState<string>('A4');
   const [printSizeBack, setPrintSizeBack] = useState<string>('A4');
 
+  // État pour le texte - séparé par côté
   const [textContentFront, setTextContentFront] = useState('');
   const [textContentBack, setTextContentBack] = useState('');
   const [textFontFront, setTextFontFront] = useState('Roboto');
@@ -243,6 +247,7 @@ const ProductDetail = () => {
     underline: false
   });
 
+  // États pour le drag & drop
   const [isDragging, setIsDragging] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [isDraggingText, setIsDraggingText] = useState(false);
@@ -250,6 +255,7 @@ const ProductDetail = () => {
   const [activeDesignSide, setActiveDesignSide] = useState<'front' | 'back'>('front');
   const [activeTextSide, setActiveTextSide] = useState<'front' | 'back'>('front');
   
+  // États pour les loteries - support pour plusieurs loteries
   const [selectedLotteryIds, setSelectedLotteryIds] = useState<string[]>([]);
   const [selectedLotteries, setSelectedLotteries] = useState<Lottery[]>([]);
 
@@ -303,13 +309,16 @@ const ProductDetail = () => {
     }
   }, [product]);
   
+  // Effet pour initialiser la couleur du mockup par défaut
   useEffect(() => {
     if (mockup?.colors && mockup.colors.length > 0) {
       setSelectedMockupColor(mockup.colors[0]);
     }
   }, [mockup]);
 
+  // Verrouiller le défilement de la page pendant la personnalisation
   useEffect(() => {
+    // N'appliquer le verrouillage que lorsque c'est nécessaire
     if (isDragging || isDraggingText || (pageScrollLocked && customizationMode)) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -369,21 +378,30 @@ const ProductDetail = () => {
   };
 
   const handleLotteryToggle = (lottery: Lottery, index: number) => {
+    // Vérifier si nous avons atteint la limite de tickets
     if (selectedLotteries.length >= (product?.tickets_offered || 0) && !selectedLotteryIds.includes(lottery.id)) {
       toast.error(`Vous ne pouvez sélectionner que ${product?.tickets_offered} loterie(s) maximum pour ce produit.`);
       return;
     }
 
+    // Si la loterie est déjà sélectionnée, la supprimer
     if (selectedLotteryIds.includes(lottery.id)) {
       setSelectedLotteries(prev => prev.filter(l => l.id !== lottery.id));
       setSelectedLotteryIds(prev => prev.filter(id => id !== lottery.id));
-    } else {
+    } 
+    // Sinon, l'ajouter
+    else {
+      // Pour l'index spécifique
       if (index < (product?.tickets_offered || 0)) {
+        // Créer un nouveau tableau de loteries sélectionnées
         const updatedLotteries = [...selectedLotteries];
+        // S'assurer que le tableau a la bonne taille
         while (updatedLotteries.length <= index) {
           updatedLotteries.push(null as unknown as Lottery);
         }
+        // Mettre à jour la loterie à l'index spécifié
         updatedLotteries[index] = lottery;
+        // Filtrer les entrées nulles
         const filteredLotteries = updatedLotteries.filter(l => l !== null);
         
         setSelectedLotteries(filteredLotteries);
@@ -528,6 +546,7 @@ const ProductDetail = () => {
     };
   }, [isDragging, startPos, isDraggingText, startPosText]);
 
+  // Suivre le côté actif lors du changement de vue
   useEffect(() => {
     if (currentViewSide === 'front') {
       setActiveDesignSide('front');
@@ -538,6 +557,7 @@ const ProductDetail = () => {
     }
   }, [currentViewSide]);
 
+  // Activer le texte automatiquement lorsque l'onglet texte est sélectionné
   useEffect(() => {
     if (selectedTab === 'text') {
       // Le texte est automatiquement activé dans cette version
@@ -550,18 +570,22 @@ const ProductDetail = () => {
     let price = product.price * quantity;
     
     if (customizationMode) {
+      // Prix du design front
       const frontDesignPrice = selectedDesignFront ? 
         (printSizeFront === 'A3' ? mockup?.price_a3 || 15 : 
          printSizeFront === 'A4' ? mockup?.price_a4 || 10 : 
          printSizeFront === 'A5' ? mockup?.price_a5 || 8 : mockup?.price_a6 || 5) : 0;
       
+      // Prix du design back
       const backDesignPrice = selectedDesignBack ? 
         (printSizeBack === 'A3' ? mockup?.price_a3 || 15 : 
          printSizeBack === 'A4' ? mockup?.price_a4 || 10 : 
          printSizeBack === 'A5' ? mockup?.price_a5 || 8 : mockup?.price_a6 || 5) : 0;
       
+      // Prix du texte front
       const frontTextPrice = textContentFront ? (mockup?.text_price_front || 3) : 0;
       
+      // Prix du texte back
       const backTextPrice = textContentBack ? (mockup?.text_price_back || 3) : 0;
       
       price += frontDesignPrice + backDesignPrice + frontTextPrice + backTextPrice;
@@ -571,6 +595,7 @@ const ProductDetail = () => {
   };
 
   const getColorHexCode = (colorName: string) => {
+    // Convertir les noms de couleurs en codes hex
     const colorMap: {[key: string]: string} = {
       'white': '#ffffff',
       'black': '#000000',
@@ -582,8 +607,6 @@ const ProductDetail = () => {
     
     return colorName.startsWith('#') ? colorName : (colorMap[colorName.toLowerCase()] || '#000000');
   };
-
-  const { addItem } = useCart(); // Import de la fonction addItem du CartContext
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -599,6 +622,7 @@ const ProductDetail = () => {
       lotteries: selectedLotteryIds.length > 0 ? selectedLotteryIds : undefined
     };
 
+    // Customization object that includes both front and back designs and text
     if (customizationMode) {
       const customization: any = {};
       
@@ -642,14 +666,66 @@ const ProductDetail = () => {
         };
       }
 
+      // Only add customization if there's at least one design or text
       if (Object.keys(customization).length > 0) {
         cartItem.customization = customization;
       }
     }
 
-    addItem(cartItem);
+    // Ajouter l'élément au panier (localStorage pour l'instant)
+    const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
+    localStorage.setItem('cart', JSON.stringify([...existingCart, cartItem]));
+    
+    toast.success('Produit ajouté au panier !');
   };
   
+  // Fonction pour obtenir l'image à afficher en fonction du mode et de la couleur sélectionnée
+  const getProductImage = () => {
+    if (!customizationMode) {
+      return product?.image_url;
+    }
+    
+    if (selectedMockupColor) {
+      return currentViewSide === 'front' 
+        ? selectedMockupColor.front_image_url 
+        : (selectedMockupColor.back_image_url || product?.image_url);
+    } else if (mockup) {
+      return currentViewSide === 'front' 
+        ? mockup.svg_front_url 
+        : (mockup.svg_back_url || product?.image_url);
+    }
+    
+    return product?.image_url;
+  };
+
+  const getCurrentDesign = () => {
+    return currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack;
+  };
+  
+  const getCurrentDesignTransform = () => {
+    return currentViewSide === 'front' ? designTransformFront : designTransformBack;
+  };
+  
+  const getCurrentTextContent = () => {
+    return currentViewSide === 'front' ? textContentFront : textContentBack;
+  };
+  
+  const getCurrentTextTransform = () => {
+    return currentViewSide === 'front' ? textTransformFront : textTransformBack;
+  };
+  
+  const getCurrentTextFont = () => {
+    return currentViewSide === 'front' ? textFontFront : textFontBack;
+  };
+  
+  const getCurrentTextColor = () => {
+    return currentViewSide === 'front' ? textColorFront : textColorBack;
+  };
+  
+  const getCurrentTextStyles = () => {
+    return currentViewSide === 'front' ? textStylesFront : textStylesBack;
+  };
+
   if (isLoading || !product) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -676,6 +752,7 @@ const ProductDetail = () => {
 
   const activeLotteries = lotteries.filter(lottery => lottery.is_active);
 
+  // Prévenir le défilement de la page pendant la personnalisation sur mobile
   const handleTouchMove = (e: React.TouchEvent) => {
     if (isDragging || isDraggingText) {
       e.preventDefault();
@@ -695,6 +772,7 @@ const ProductDetail = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Image et visualisation du produit */}
           <div className="relative">
             <div 
               ref={productCanvasRef}
@@ -708,6 +786,7 @@ const ProductDetail = () => {
                 className="w-full h-full object-contain"
               />
 
+              {/* Design superposé - maintenant séparé par côté */}
               {customizationMode && getCurrentDesign() && (
                 <div 
                   className="absolute cursor-move select-none"
@@ -730,6 +809,7 @@ const ProductDetail = () => {
                 </div>
               )}
               
+              {/* Texte superposé - maintenant séparé par côté */}
               {customizationMode && getCurrentTextContent() && (
                 <div 
                   className="absolute cursor-move select-none"
@@ -755,6 +835,7 @@ const ProductDetail = () => {
               )}
             </div>
 
+            {/* Boutons pour basculer entre le recto et le verso déplacés en dessous de l'image */}
             {customizationMode && mockup && mockup.svg_back_url && (
               <div className="flex justify-center mt-4">
                 <ToggleGroup 
@@ -782,6 +863,7 @@ const ProductDetail = () => {
             )}
           </div>
 
+          {/* Informations du produit et options */}
           <div>
             <h1 className="text-2xl md:text-3xl font-bold mb-2">{product.name}</h1>
             
@@ -803,7 +885,9 @@ const ProductDetail = () => {
               {calculatePrice().toFixed(2)} €
             </div>
 
+            {/* Options du produit */}
             <div className="space-y-6">
+              {/* Couleurs disponibles */}
               {product.available_colors && product.available_colors.length > 0 && (
                 <div>
                   <h3 className="text-sm font-medium mb-3">Couleur</h3>
@@ -822,6 +906,7 @@ const ProductDetail = () => {
                 </div>
               )}
 
+              {/* Tailles disponibles */}
               {product.available_sizes && product.available_sizes.length > 0 && (
                 <div>
                   <h3 className="text-sm font-medium mb-3">Taille</h3>
@@ -843,6 +928,7 @@ const ProductDetail = () => {
                 </div>
               )}
 
+              {/* Personnalisation accordéon */}
               {product.is_customizable && (
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="customization" className="border-b-0">
@@ -928,6 +1014,7 @@ const ProductDetail = () => {
                             </div>
                           </div>
                           
+                          {/* Paramètres de design après sélection */}
                           {getCurrentDesign() && (
                             <div className="space-y-4 p-4 bg-white/5 rounded-lg">
                               <div>
@@ -1211,6 +1298,7 @@ const ProductDetail = () => {
                 </Accordion>
               )}
 
+              {/* Dialog pour sélection de design */}
               <Dialog open={designDialogOpen} onOpenChange={setDesignDialogOpen}>
                 <DialogContent className="bg-black/70 backdrop-blur-lg border-white/20 max-w-4xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
@@ -1262,6 +1350,7 @@ const ProductDetail = () => {
                 </DialogContent>
               </Dialog>
 
+              {/* Loteries disponibles */}
               {product.tickets_offered > 0 && activeLotteries.length > 0 && (
                 <div className="space-y-4 p-4 bg-white/5 border border-white/10 rounded-lg">
                   <h3 className="flex items-center text-lg font-medium">
@@ -1328,6 +1417,7 @@ const ProductDetail = () => {
                 </div>
               )}
 
+              {/* Quantité et ajout au panier */}
               <div>
                 <div className="flex flex-wrap gap-4 items-center">
                   <div className="flex items-center rounded-md overflow-hidden">
