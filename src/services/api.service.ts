@@ -206,7 +206,7 @@ export const updateLottery = async (id: string, lotteryData: Partial<Lottery>) =
 
     return data;
   } catch (error) {
-    console.error(`Error during lottery update:`, error);
+    console.error("Error during lottery update:", error);
     throw error;
   }
 };
@@ -223,7 +223,7 @@ export const deleteLottery = async (id: string) => {
       throw error;
     }
   } catch (error) {
-    console.error(`Error during lottery deletion:`, error);
+    console.error("Error during lottery deletion:", error);
     throw error;
   }
 };
@@ -520,9 +520,10 @@ export const fetchActiveSocialNetworks = async () => {
 
 export const createSocialNetwork = async (socialNetworkData: Partial<SocialNetwork>) => {
   try {
+    // Fix: Ensure we're passing a single object, not an array
     const { data, error } = await supabase
       .from("social_networks")
-      .insert([socialNetworkData])
+      .insert(socialNetworkData)
       .select()
       .single();
 

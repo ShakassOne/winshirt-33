@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Trash, Plus, Save, X, MoveUp, MoveDown, Check } from "lucide-react";
+import { Pencil, Trash, Plus, Save, X, MoveUp, MoveDown, Check, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,6 @@ import { Badge } from "@/components/ui/badge";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { facebook, twitter, instagram, linkedin } from "lucide-react";
 
 // Social network form schema
 const formSchema = z.object({
@@ -32,10 +31,10 @@ const formSchema = z.object({
 
 // Available icons for social networks
 const availableIcons = [
-  { id: "facebook", label: "Facebook", icon: <facebook className="h-4 w-4" /> },
-  { id: "twitter", label: "Twitter", icon: <twitter className="h-4 w-4" /> },
-  { id: "linkedin", label: "LinkedIn", icon: <linkedin className="h-4 w-4" /> },
-  { id: "instagram", label: "Instagram", icon: <instagram className="h-4 w-4" /> },
+  { id: "facebook", label: "Facebook", icon: <Facebook className="h-4 w-4" /> },
+  { id: "twitter", label: "Twitter", icon: <Twitter className="h-4 w-4" /> },
+  { id: "linkedin", label: "LinkedIn", icon: <Linkedin className="h-4 w-4" /> },
+  { id: "instagram", label: "Instagram", icon: <Instagram className="h-4 w-4" /> },
 ];
 
 const SocialNetworksAdmin = () => {
