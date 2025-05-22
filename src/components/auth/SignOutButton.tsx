@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -16,15 +15,12 @@ const SignOutButton: React.FC<SignOutButtonProps> = ({ variant = 'default', clas
   
   const handleSignOut = async () => {
     try {
-      console.log("Initiating sign out process...");
       await signOut();
-      
       toast.success("Déconnecté avec succès");
-      
-      // Force navigation to home page
-      navigate('/', { replace: true });
+      // Redirige toujours vers la page d'authentification
+      navigate("/auth", { replace: true });
     } catch (error) {
-      console.error("Error signing out:", error);
+      console.error("Erreur lors de la déconnexion :", error);
       toast.error("Erreur de déconnexion. Veuillez réessayer.");
     }
   };
