@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { Slider } from "@/components/ui/slider";
+import SocialShare from '@/components/ui/SocialShare';
 
 const LotteryDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +33,9 @@ const LotteryDetail = () => {
     queryKey: ['products'],
     queryFn: fetchAllProducts,
   });
+
+  // Get current URL for social sharing
+  const lotteryUrl = window.location.href;
 
   // Products that offer this lottery as a ticket
   const relatedProducts = products?.filter(product => product.tickets_offered > 0).slice(0, 4);
@@ -186,6 +190,19 @@ const LotteryDetail = () => {
                   </GlassCard>
                 </div>
               )}
+
+              {/* Social Sharing */}
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold mb-4">Partagez cette loterie</h2>
+                <GlassCard className="p-6">
+                  <SocialShare
+                    title={lottery.title}
+                    description={`Participez à cette loterie d'une valeur de ${formattedValue} sur Winshirt`}
+                    url={lotteryUrl}
+                    image={lottery.image_url}
+                  />
+                </GlassCard>
+              </div>
 
               {relatedProducts && relatedProducts.length > 0 && (
                 <div className="mb-8">
