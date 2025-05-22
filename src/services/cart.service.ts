@@ -383,15 +383,3 @@ export const migrateCartToUser = async (userId: string, token: string) => {
     throw error;
   }
 };
-
-// IMPORTANT : export de TOUTES les fonctions
-export {
-  getOrCreateCartToken,
-  getOrCreateCartSession,
-  addToCart,
-  getCartItems,
-  removeFromCart,
-  updateCartItemQuantity,
-  clearCart,
-  migrateCartToUser,
-};
