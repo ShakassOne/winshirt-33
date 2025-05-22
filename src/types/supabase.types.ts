@@ -1,3 +1,4 @@
+
 export type CartItem = {
   productId: string;
   name: string;
@@ -51,6 +52,7 @@ export type OrderItem = {
   quantity: number;
   price: number;
   customization: CartItem['customization'] | null;
+  product_name?: string; // Add product_name field
 };
 
 export type ExtendedOrderItem = OrderItem & {
@@ -132,3 +134,16 @@ export type Mockup = {
   created_at?: string | null;
   updated_at?: string | null;
 };
+
+// Add SocialNetwork type
+export type SocialNetwork = {
+  id: string;
+  name: string;
+  url?: string;
+  icon: string;
+  is_active: boolean;
+  priority: number;
+  created_at?: string;
+  updated_at?: string;
+};
+

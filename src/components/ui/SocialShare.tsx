@@ -1,140 +1,108 @@
 
 import React from 'react';
-import { 
-  Facebook, 
-  Twitter, 
-  Linkedin, 
-  Mail, 
-  Link as LinkIcon, 
-  Share2,
-} from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { 
-  DropdownMenu,
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { toast } from "sonner";
+import { Facebook, Twitter, Linkedin, Instagram, Share2, Mail } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { SocialNetwork } from '@/types/supabase.types';
 
 interface SocialShareProps {
   title: string;
-  description?: string;
+  description: string;
   url: string;
   image?: string;
-  compact?: boolean;
+  className?: string;
 }
 
-interface SocialNetwork {
-  id: string;
-  name: string;
-  icon: string;
-  url: string;
-  is_active: boolean;
-  priority: number;
-}
-
-const SocialShare: React.FC<SocialShareProps> = ({ 
-  title, 
-  description = '', 
-  url, 
-  image = '', 
-  compact = false 
+const SocialShare: React.FC<SocialShareProps> = ({
+  title,
+  description,
+  url,
+  image,
+  className = ''
 }) => {
-  // Define default social networks
-  const socialNetworks: SocialNetwork[] = [
-    { id: 'facebook', name: 'Facebook', icon: 'facebook', url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(title)}`, is_active: true, priority: 1 },
-    { id: 'twitter', name: 'Twitter', icon: 'twitter', url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, is_active: true, priority: 2 },
-    { id: 'linkedin', name: 'LinkedIn', icon: 'linkedin', url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, is_active: true, priority: 3 },
-    { id: 'email', name: 'Email', icon: 'mail', url: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${description}\n\n${url}`)}`, is_active: true, priority: 4 }
-  ];
+  const { data: socialNetworks, isLoading } = useQuery({
+    queryKey: ['socialNetworks'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('social_networks')
+        .select('*')
+        .eq('is_active', true)
+        .order('priority');
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(url).then(() => {
-      toast.success("Lien copié dans le presse-papier !");
-    }).catch(() => {
-      toast.error("Impossible de copier le lien");
-    });
+  const getShareUrl = (network: SocialNetwork) => {
+    if (!network.url) {
+      // Default share URLs
+      switch (network.icon) {
+        case 'facebook':
+          return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+        case 'twitter':
+          return `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+        case 'linkedin':
+          return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+        case 'mail':
+          return `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${description}\n\n${url}`)}`;
+        default:
+          return `https://www.addtoany.com/share?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`;
+      }
+    } else {
+      // Custom URL with parameters
+      return `${network.url}${network.url.includes('?') ? '&' : '?'}url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`;
+    }
   };
 
   const getIcon = (iconName: string) => {
     switch (iconName) {
       case 'facebook':
-        return <Facebook className="h-4 w-4" />;
+        return <Facebook size={18} />;
       case 'twitter':
-        return <Twitter className="h-4 w-4" />;
+        return <Twitter size={18} />;
       case 'linkedin':
-        return <Linkedin className="h-4 w-4" />;
+        return <Linkedin size={18} />;
+      case 'instagram':
+        return <Instagram size={18} />;
       case 'mail':
-        return <Mail className="h-4 w-4" />;
+        return <Mail size={18} />;
       default:
-        return <Share2 className="h-4 w-4" />;
+        return <Share2 size={18} />;
     }
   };
 
-  if (compact) {
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon">
-            <Share2 className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          {socialNetworks.map((network) => (
-            <DropdownMenuItem key={network.id} asChild>
-              <a 
-                href={network.url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-2"
-              >
-                {getIcon(network.icon)}
-                <span>Partager sur {network.name}</span>
-              </a>
-            </DropdownMenuItem>
-          ))}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={copyToClipboard} className="flex items-center gap-2">
-            <LinkIcon className="h-4 w-4" />
-            <span>Copier le lien</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }
+  const handleShare = (network: SocialNetwork) => {
+    const shareUrl = getShareUrl(network);
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+  };
+
+  // Fallback when no social networks are available
+  const defaultNetworks = [
+    { id: 'facebook', name: 'Facebook', icon: 'facebook', is_active: true, priority: 1 },
+    { id: 'twitter', name: 'Twitter', icon: 'twitter', is_active: true, priority: 2 },
+    { id: 'linkedin', name: 'LinkedIn', icon: 'linkedin', is_active: true, priority: 3 }
+  ];
+
+  const networks = socialNetworks?.length ? socialNetworks : defaultNetworks;
 
   return (
-    <div className="flex flex-col space-y-4">
-      <h3 className="text-sm font-medium">Partager</h3>
-      <div className="flex space-x-2">
-        {socialNetworks.slice(0, 4).map((network) => (
-          <Button
-            key={network.id}
-            variant="outline"
-            size="icon"
-            asChild
-          >
-            <a 
-              href={network.url} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              aria-label={`Partager sur ${network.name}`}
-            >
-              {getIcon(network.icon)}
-            </a>
-          </Button>
-        ))}
+    <div className={`flex flex-wrap items-center gap-2 ${className}`}>
+      <span className="text-sm font-medium mr-2">Partager:</span>
+      
+      {networks.map((network) => (
         <Button
+          key={network.id}
           variant="outline"
-          size="icon"
-          onClick={copyToClipboard}
-          aria-label="Copier le lien"
+          size="sm"
+          className="rounded-full w-8 h-8 p-0 flex items-center justify-center"
+          onClick={() => handleShare(network as SocialNetwork)}
+          title={`Partager sur ${network.name}`}
         >
-          <LinkIcon className="h-4 w-4" />
+          {getIcon(network.icon)}
         </Button>
-      </div>
+      ))}
     </div>
   );
 };

@@ -17,15 +17,7 @@ import {
 import { Plus, Pencil, Trash, ArrowUp, ArrowDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-
-interface SocialNetwork {
-  id: string;
-  name: string;
-  url?: string;
-  icon: string;
-  is_active: boolean;
-  priority: number;
-}
+import { SocialNetwork } from '@/types/supabase.types';
 
 const socialIcons = [
   { value: 'facebook', label: 'Facebook' },
@@ -64,7 +56,7 @@ const SocialNetworksAdmin = () => {
   });
 
   const createNetworkMutation = useMutation({
-    mutationFn: async (networkData: Omit<SocialNetwork, 'id'>) => {
+    mutationFn: async (networkData: Omit<SocialNetwork, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
         .from('social_networks')
         .insert(networkData)

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -56,14 +55,41 @@ const Profile = () => {
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
       
-      const { data, error } = await supabase
+      // Fetch orders with order items
+      const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('*, order_items(*)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data;
+      if (ordersError) throw ordersError;
+      
+      // For each order, fetch product names for each item
+      const ordersWithProductNames = await Promise.all(
+        ordersData.map(async (order) => {
+          const itemsWithProductNames = await Promise.all(
+            order.order_items.map(async (item) => {
+              const { data: productData } = await supabase
+                .from('products')
+                .select('name')
+                .eq('id', item.product_id)
+                .single();
+                
+              return {
+                ...item,
+                product_name: productData?.name || 'Produit inconnu'
+              };
+            })
+          );
+          
+          return {
+            ...order,
+            order_items: itemsWithProductNames
+          };
+        })
+      );
+      
+      return ordersWithProductNames;
     },
     enabled: !!user
   });
@@ -74,13 +100,13 @@ const Profile = () => {
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
       
-      const { data, error } = await supabase
+      const { data: entriesWithLotteryData, error: entriesError } = await supabase
         .from('lottery_entries')
-        .select('*, lottery(*)')
+        .select('*, lottery:lottery_id(*)')
         .eq('user_id', user.id);
       
-      if (error) throw error;
-      return data;
+      if (entriesError) throw entriesError;
+      return entriesWithLotteryData;
     },
     enabled: !!user
   });
@@ -400,44 +426,50 @@ const Profile = () => {
                             >
                               <div className="flex">
                                 <div className="w-1/4">
-                                  <img
-                                    src={entry.lottery.image_url}
-                                    alt={entry.lottery.title}
-                                    className="h-full w-full object-cover"
-                                  />
+                                  {entry.lottery && (
+                                    <img
+                                      src={entry.lottery.image_url}
+                                      alt={entry.lottery.title}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  )}
                                 </div>
                                 <div className="w-3/4 p-4">
-                                  <div className="flex justify-between items-start">
-                                    <div>
-                                      <h3 className="font-medium">{entry.lottery.title}</h3>
-                                      <p className="text-sm text-muted-foreground">
-                                        Tirage: {new Date(entry.lottery.draw_date).toLocaleDateString('fr-FR')}
-                                      </p>
-                                    </div>
-                                    <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                      entry.lottery.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                                    }`}>
-                                      {entry.lottery.is_active ? 'En cours' : 'Terminée'}
-                                    </div>
-                                  </div>
-                                  <div className="mt-4">
-                                    <p className="text-sm">
-                                      {entry.lottery.participants}/{entry.lottery.goal} participants
-                                    </p>
-                                    <div className="mt-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                                      <div
-                                        className="h-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue"
-                                        style={{ width: `${Math.min((entry.lottery.participants / entry.lottery.goal) * 100, 100)}%` }}
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="mt-4">
-                                    <Button size="sm" variant="outline" asChild>
-                                      <a href={`/lotteries/${entry.lottery.id}`}>
-                                        Voir les détails
-                                      </a>
-                                    </Button>
-                                  </div>
+                                  {entry.lottery && (
+                                    <>
+                                      <div className="flex justify-between items-start">
+                                        <div>
+                                          <h3 className="font-medium">{entry.lottery.title}</h3>
+                                          <p className="text-sm text-muted-foreground">
+                                            Tirage: {new Date(entry.lottery.draw_date).toLocaleDateString('fr-FR')}
+                                          </p>
+                                        </div>
+                                        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                          entry.lottery.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                        }`}>
+                                          {entry.lottery.is_active ? 'En cours' : 'Terminée'}
+                                        </div>
+                                      </div>
+                                      <div className="mt-4">
+                                        <p className="text-sm">
+                                          {entry.lottery.participants}/{entry.lottery.goal} participants
+                                        </p>
+                                        <div className="mt-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                                          <div
+                                            className="h-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue"
+                                            style={{ width: `${Math.min((entry.lottery.participants / entry.lottery.goal) * 100, 100)}%` }}
+                                          />
+                                        </div>
+                                      </div>
+                                      <div className="mt-4">
+                                        <Button size="sm" variant="outline" asChild>
+                                          <a href={`/lotteries/${entry.lottery.id}`}>
+                                            Voir les détails
+                                          </a>
+                                        </Button>
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </div>

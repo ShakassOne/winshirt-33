@@ -27,7 +27,7 @@ const ProductDetail = () => {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const { toast } = useToast();
-  const { addItem: addToCart } = useCart();
+  const { addItem } = useCart();
 
   // Get current URL for social sharing
   const productUrl = window.location.href;
@@ -84,12 +84,12 @@ const ProductDetail = () => {
       return;
     }
 
-    addToCart({
-      id: product.id,
+    addItem({
+      productId: product.id,
       name: product.name,
       price: product.price,
-      image: product.image_url,
       quantity,
+      image_url: product.image_url,
       size: selectedSize,
       color: selectedColor,
       customization: null,
@@ -151,11 +151,11 @@ const ProductDetail = () => {
             <span className="mx-2">/</span>
             <Link to="/products" className="hover:text-foreground">Produits</Link>
             <span className="mx-2">/</span>
-            <Link to={`/products?category=${product.category}`} className="hover:text-foreground">
-              {product.category}
+            <Link to={`/products?category=${product?.category}`} className="hover:text-foreground">
+              {product?.category}
             </Link>
             <span className="mx-2">/</span>
-            <span className="text-foreground">{product.name}</span>
+            <span className="text-foreground">{product?.name}</span>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
@@ -164,8 +164,8 @@ const ProductDetail = () => {
               <div className="relative rounded-lg overflow-hidden mb-4">
                 <AspectRatio ratio={1}>
                   <img
-                    src={productImages[selectedImage]?.url || product.image_url}
-                    alt={product.name}
+                    src={productImages[selectedImage]?.url || product?.image_url}
+                    alt={product?.name}
                     className="object-cover w-full h-full"
                   />
                 </AspectRatio>
@@ -187,7 +187,7 @@ const ProductDetail = () => {
                       <AspectRatio ratio={1}>
                         <img
                           src={image.url}
-                          alt={`${product.name} - Vue ${index + 1}`}
+                          alt={`${product?.name} - Vue ${index + 1}`}
                           className="object-cover w-full h-full"
                         />
                       </AspectRatio>
@@ -210,12 +210,12 @@ const ProductDetail = () => {
             {/* Product details - right side */}
             <div>
               <div className="mb-4">
-                {product.is_active && (
+                {product?.is_active && (
                   <span className="inline-block bg-winshirt-blue text-white text-xs px-2 py-1 rounded-md mb-2">
                     Disponible
                   </span>
                 )}
-                <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
+                <h1 className="text-3xl font-bold mb-2">{product?.name}</h1>
                 <div className="flex items-center gap-2 mb-4">
                   <div className="flex">
                     {Array(5).fill(0).map((_, i) => (
@@ -233,15 +233,15 @@ const ProductDetail = () => {
                   </span>
                 </div>
                 <p className="text-2xl font-bold mb-4">
-                  {product.price.toFixed(2)} €
+                  {product?.price.toFixed(2)} €
                 </p>
-                <p className="text-muted-foreground mb-6">{product.description.substring(0, 100) + "..."}</p>
+                <p className="text-muted-foreground mb-6">{product?.description?.substring(0, 100) + "..."}</p>
               </div>
 
               {/* Product options */}
               <div className="space-y-6 mb-6">
                 {/* Sizes */}
-                {product.available_sizes && product.available_sizes.length > 0 && (
+                {product?.available_sizes && product.available_sizes.length > 0 && (
                   <div>
                     <div className="flex justify-between mb-2">
                       <Label htmlFor="size">Taille</Label>
@@ -275,7 +275,7 @@ const ProductDetail = () => {
                 )}
 
                 {/* Colors */}
-                {product.available_colors && product.available_colors.length > 0 && (
+                {product?.available_colors && product.available_colors.length > 0 && (
                   <div>
                     <Label htmlFor="color" className="block mb-2">
                       Couleur: {selectedColor}
@@ -362,7 +362,7 @@ const ProductDetail = () => {
                   <Check className="h-4 w-4 text-green-500" />
                   <span className="text-sm">Livraison gratuite à partir de 50€</span>
                 </div>
-                {product.tickets_offered > 0 && (
+                {product?.tickets_offered && product.tickets_offered > 0 && (
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-winshirt-blue" />
                     <span className="text-sm">
@@ -384,7 +384,7 @@ const ProductDetail = () => {
               </TabsList>
               <TabsContent value="description" className="mt-6">
                 <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-lg p-6">
-                  <p className="whitespace-pre-line">{product.description}</p>
+                  <p className="whitespace-pre-line">{product?.description}</p>
                 </div>
               </TabsContent>
               <TabsContent value="specifications" className="mt-6">
@@ -412,15 +412,15 @@ const ProductDetail = () => {
                       <ul className="space-y-2">
                         <li className="flex justify-between">
                           <span className="text-muted-foreground">Référence</span>
-                          <span>{product.id.substring(0, 8)}</span>
+                          <span>{product?.id?.substring(0, 8)}</span>
                         </li>
                         <li className="flex justify-between">
                           <span className="text-muted-foreground">Catégorie</span>
-                          <span>{product.category}</span>
+                          <span>{product?.category}</span>
                         </li>
                         <li className="flex justify-between">
                           <span className="text-muted-foreground">Personnalisable</span>
-                          <span>{product.is_customizable ? 'Oui' : 'Non'}</span>
+                          <span>{product?.is_customizable ? 'Oui' : 'Non'}</span>
                         </li>
                       </ul>
                     </div>
@@ -447,7 +447,7 @@ const ProductDetail = () => {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">Produits similaires</h2>
                 <Link
-                  to={`/products?category=${product.category}`}
+                  to={`/products?category=${product?.category}`}
                   className="text-winshirt-blue hover:text-winshirt-purple flex items-center"
                 >
                   Voir plus <ArrowRight className="ml-1 h-4 w-4" />
