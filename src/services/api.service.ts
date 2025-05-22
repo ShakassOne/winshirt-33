@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Product, Lottery, Mockup, SocialNetwork } from "@/types/supabase.types";
 import { MockupWithColors, MockupColor } from "@/types/mockup.types";
@@ -520,10 +521,21 @@ export const fetchActiveSocialNetworks = async () => {
 
 export const createSocialNetwork = async (socialNetworkData: Partial<SocialNetwork>) => {
   try {
-    // Fix: Ensure we're passing a single object, not an array
+    // Ensure required fields are present to satisfy TypeScript
+    if (!socialNetworkData.name || !socialNetworkData.icon) {
+      throw new Error("Social network name and icon are required");
+    }
+    
+    // Now we can guarantee that the required fields are present
     const { data, error } = await supabase
       .from("social_networks")
-      .insert(socialNetworkData)
+      .insert({
+        name: socialNetworkData.name,
+        icon: socialNetworkData.icon,
+        url: socialNetworkData.url || null,
+        is_active: socialNetworkData.is_active !== undefined ? socialNetworkData.is_active : true,
+        priority: socialNetworkData.priority || 0
+      })
       .select()
       .single();
 
