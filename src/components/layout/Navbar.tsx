@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { X, Menu, ChevronDown, User } from "lucide-react";
@@ -106,7 +105,10 @@ const Navbar = () => {
                     <Link to="/admin/users" className="flex w-full">Utilisateurs</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-white/10" />
-                  <SignOutButton variant="ghost" className="w-full justify-start px-2" />
+                  {/* CORRECTION ICI : wrap SignOutButton dans DropdownMenuItem */}
+                  <DropdownMenuItem className="hover:bg-white/5 p-0">
+                    <SignOutButton variant="ghost" className="w-full justify-start px-2 border-0 shadow-none" />
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               <CartIcon />
@@ -153,6 +155,7 @@ const Navbar = () => {
               Utilisateurs
             </Link>
             <div className="px-3 py-2">
+              {/* CORRECTION MOBILE : rien à changer, SignOutButton est déjà bien ici */}
               <SignOutButton variant="outline" className="w-full" />
             </div>
           </div>
