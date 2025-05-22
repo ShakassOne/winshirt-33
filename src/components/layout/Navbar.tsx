@@ -81,40 +81,48 @@ const Navbar = () => {
             </nav>
 
             {/* User Menu, Theme Toggle and Cart */}
-            <div className="hidden md:flex items-center space-x-1">
-              <ThemeToggle />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-white/80 hover:text-white">
-                    <User className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-black/90 border-white/20">
-                  <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-white/10" />
-                  <DropdownMenuItem className="hover:bg-white/5">
-                    <Link to="/profile" className="flex w-full">Profil</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-white/5">
-                    <Link to="/orders" className="flex w-full">Mes commandes</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-white/5">
-                    <Link to="/admin" className="flex w-full">Administration</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="hover:bg-white/5">
-                    <Link to="/admin/users" className="flex w-full">Utilisateurs</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-white/10" />
-                  {/* CORRECTION ICI : wrap SignOutButton dans DropdownMenuItem */}
-                  <DropdownMenuItem className="hover:bg-white/5 p-0">
-                    <SignOutButton variant="ghost" className="w-full justify-start px-2 border-0 shadow-none" />
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <CartIcon />
-            </div>
-          </div>
-        </div>
+           <div className="hidden md:flex items-center space-x-1">
+  <ThemeToggle />
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="ghost" size="icon" className="text-white/80 hover:text-white">
+        <User className="h-5 w-5" />
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end" className="bg-black/90 border-white/20">
+      <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
+      <DropdownMenuSeparator className="bg-white/10" />
+      {isAuthenticated ? (
+        <>
+          <DropdownMenuItem className="hover:bg-white/5">
+            <Link to="/profile" className="flex w-full">Profil</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem className="hover:bg-white/5">
+            <Link to="/orders" className="flex w-full">Mes commandes</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem className="hover:bg-white/5">
+            <Link to="/admin" className="flex w-full">Administration</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem className="hover:bg-white/5">
+            <Link to="/admin/users" className="flex w-full">Utilisateurs</Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator className="bg-white/10" />
+          <DropdownMenuItem className="hover:bg-white/5 p-0">
+            <SignOutButton variant="ghost" className="w-full justify-start px-2 border-0 shadow-none" />
+          </DropdownMenuItem>
+        </>
+      ) : (
+        <>
+          <DropdownMenuItem className="hover:bg-white/5">
+            <Link to="/auth" className="flex w-full">Se connecter</Link>
+          </DropdownMenuItem>
+        </>
+      )}
+    </DropdownMenuContent>
+  </DropdownMenu>
+  <CartIcon />
+</div>
+
 
         {/* Mobile Navigation */}
         {isOpen && (
