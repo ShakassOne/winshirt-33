@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { CartContextType } from '@/types/cart.types';
@@ -10,7 +9,7 @@ import {
   getCartItems, 
   removeFromCart, 
   updateCartItemQuantity, 
-  clearCart as clearCartService,
+  clearCart,
   migrateCartToUser
 } from '@/services/cart.service';
 
@@ -251,7 +250,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     console.log("Clearing cart");
     setIsLoading(true);
     try {
-      await clearCartService(cartToken, currentUser?.id);
+      await clearCart(cartToken, currentUser?.id);
       toast({
         title: "Panier vidé",
         description: "Votre panier a été vidé",
