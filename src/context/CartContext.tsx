@@ -244,7 +244,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
   
-  const clearCart = async () => {
+  const clearCartItems = async () => {
     if (!cartToken) return;
     
     console.log("Clearing cart");
@@ -284,7 +284,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         addItem,
         removeItem,
         updateItemQuantity,
-        clearCart,
+        clearCart: clearCartItems,
         isLoading,
         error,
         total,
