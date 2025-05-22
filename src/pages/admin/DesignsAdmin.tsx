@@ -14,7 +14,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Plus, Pencil, Trash } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { UploadButton } from '@/components/ui/upload-button';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
 const DesignsAdmin = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -152,126 +151,115 @@ const DesignsAdmin = () => {
     setImageUrl(url);
   };
 
-  if (isLoading) return (
-    <DashboardLayout>
-      <div>Chargement des designs...</div>
-    </DashboardLayout>
-  );
-  
-  if (error) return (
-    <DashboardLayout>
-      <div>Une erreur est survenue lors du chargement des designs.</div>
-    </DashboardLayout>
-  );
+  if (isLoading) return <div>Chargement des designs...</div>;
+  if (error) return <div>Une erreur est survenue lors du chargement des designs.</div>;
 
   return (
-    <DashboardLayout>
-      <div className="container mx-auto py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Gestion des Designs</h1>
-          <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nouveau Design
-          </Button>
-        </div>
+    <div className="container mx-auto py-8">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Gestion des Designs</h1>
+        <Button onClick={handleCreate}>
+          <Plus className="mr-2 h-4 w-4" />
+          Nouveau Design
+        </Button>
+      </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {designs?.map((design) => (
-            <div key={design.id} className="relative bg-white/5 rounded-lg shadow-md p-4">
-              <img src={design.image_url} alt={design.name} className="w-full h-32 object-contain mb-4" />
-              <h3 className="text-lg font-semibold mb-2">{design.name}</h3>
-              <p className="text-sm text-gray-500 mb-2">Catégorie: {design.category}</p>
-              <div className="flex items-center justify-between">
-                <Switch
-                  id={`design-active-${design.id}`}
-                  checked={design.is_active !== false}
-                  onCheckedChange={(checked) => {
-                    updateDesignMutation.mutate({
-                      id: design.id,
-                      data: { is_active: checked },
-                    });
-                  }}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {designs?.map((design) => (
+          <div key={design.id} className="relative bg-white/5 rounded-lg shadow-md p-4">
+            <img src={design.image_url} alt={design.name} className="w-full h-32 object-contain mb-4" />
+            <h3 className="text-lg font-semibold mb-2">{design.name}</h3>
+            <p className="text-sm text-gray-500 mb-2">Catégorie: {design.category}</p>
+            <div className="flex items-center justify-between">
+              <Switch
+                id={`design-active-${design.id}`}
+                checked={design.is_active !== false}
+                onCheckedChange={(checked) => {
+                  updateDesignMutation.mutate({
+                    id: design.id,
+                    data: { is_active: checked },
+                  });
+                }}
+              />
+              <Label htmlFor={`design-active-${design.id}`} className="text-sm">
+                {design.is_active !== false ? 'Actif' : 'Inactif'}
+              </Label>
+            </div>
+            <div className="absolute top-2 right-2 flex gap-2">
+              <Button variant="outline" size="icon" onClick={() => handleEdit(design)}>
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button variant="destructive" size="icon" onClick={() => handleDelete(design.id)}>
+                <Trash className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
+        <DialogContent className="bg-black/50 backdrop-blur-xl border-white/20 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? 'Modifier Design' : 'Nouveau Design'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="name">Nom</Label>
+              <Input
+                type="text"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="imageUrl">URL de l'image</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  id="imageUrl"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  required
+                  className="flex-1"
                 />
-                <Label htmlFor={`design-active-${design.id}`} className="text-sm">
-                  {design.is_active !== false ? 'Actif' : 'Inactif'}
-                </Label>
-              </div>
-              <div className="absolute top-2 right-2 flex gap-2">
-                <Button variant="outline" size="icon" onClick={() => handleEdit(design)}>
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button variant="destructive" size="icon" onClick={() => handleDelete(design.id)}>
-                  <Trash className="h-4 w-4" />
-                </Button>
+                <UploadButton
+                  onUpload={handleImageUpload}
+                  variant="outline"
+                  targetFolder="designs"
+                />
               </div>
             </div>
-          ))}
-        </div>
-
-        <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
-          <DialogContent className="bg-black/50 backdrop-blur-xl border-white/20 text-white max-w-md">
-            <DialogHeader>
-              <DialogTitle>{isEditing ? 'Modifier Design' : 'Nouveau Design'}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="name">Nom</Label>
-                <Input
-                  type="text"
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
+            <div>
+              <Label htmlFor="category">Catégorie</Label>
+              <Input
+                type="text"
+                id="category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="is_active"
+                  checked={isActive}
+                  onCheckedChange={setIsActive}
                 />
+                <Label htmlFor="is_active">Design actif</Label>
               </div>
-              <div>
-                <Label htmlFor="imageUrl">URL de l'image</Label>
-                <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    id="imageUrl"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    required
-                    className="flex-1"
-                  />
-                  <UploadButton
-                    onUpload={handleImageUpload}
-                    variant="outline"
-                    targetFolder="designs"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="category">Catégorie</Label>
-                <Input
-                  type="text"
-                  id="category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_active"
-                    checked={isActive}
-                    onCheckedChange={setIsActive}
-                  />
-                  <Label htmlFor="is_active">Design actif</Label>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit">
-                  {isEditing ? 'Mettre à jour' : 'Créer'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </DashboardLayout>
+            </div>
+            <DialogFooter>
+              <Button type="submit">
+                {isEditing ? 'Mettre à jour' : 'Créer'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 

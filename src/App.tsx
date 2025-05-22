@@ -19,7 +19,6 @@ import DesignsAdmin from "./pages/admin/DesignsAdmin";
 import ThemeSettings from "./pages/admin/ThemeSettings";
 import OrdersAdmin from "./pages/admin/OrdersAdmin";
 import UsersAdmin from "./pages/admin/UsersAdmin";
-import SocialNetworksAdmin from "./pages/admin/SocialNetworksAdmin";
 import { useScrollReset } from "./hooks/useScrollReset";
 import { ThemeProvider } from "./components/theme-provider";
 import { CartProvider } from "./context/CartContext";
@@ -27,7 +26,6 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
 import OrderConfirmation from "./pages/OrderConfirmation";
-import Profile from "./pages/Profile";
 
 // ScrollToTop component to reset scroll position
 const ScrollToTop = () => {
@@ -66,7 +64,6 @@ const App = () => (
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/payment" element={<Payment />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/profile" element={<Profile />} />
               <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
               
               {/* Admin Routes */}
@@ -78,7 +75,6 @@ const App = () => (
               <Route path="/admin/orders" element={<OrdersAdmin />} />
               <Route path="/admin/users" element={<UsersAdmin />} />
               <Route path="/admin/theme" element={<ThemeSettings />} />
-              <Route path="/admin/social" element={<SocialNetworksAdmin />} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

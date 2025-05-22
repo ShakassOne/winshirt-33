@@ -515,39 +515,6 @@ export type Database = {
         }
         Relationships: []
       }
-      social_networks: {
-        Row: {
-          created_at: string
-          icon: string
-          id: string
-          is_active: boolean
-          name: string
-          priority: number
-          updated_at: string
-          url: string | null
-        }
-        Insert: {
-          created_at?: string
-          icon: string
-          id?: string
-          is_active?: boolean
-          name: string
-          priority?: number
-          updated_at?: string
-          url?: string | null
-        }
-        Update: {
-          created_at?: string
-          icon?: string
-          id?: string
-          is_active?: boolean
-          name?: string
-          priority?: number
-          updated_at?: string
-          url?: string | null
-        }
-        Relationships: []
-      }
       winners: {
         Row: {
           claimed: boolean | null
