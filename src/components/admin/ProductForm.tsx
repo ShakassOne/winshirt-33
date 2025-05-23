@@ -207,6 +207,7 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormPro
                   <option value="T-shirts">T-shirts</option>
                   <option value="Sweatshirts">Sweatshirts</option>
                   <option value="Casquettes">Casquettes</option>
+                  <option value="Accessoires">BodyWarmer</option>
                   <option value="Accessoires">Accessoires</option>
                 </select>
                 {errors.category && <p className="text-red-500 text-sm">{errors.category.message}</p>}
