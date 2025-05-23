@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { X, Menu, User } from "lucide-react";
@@ -103,16 +102,12 @@ const Navbar = () => {
                       <DropdownMenuItem className="hover:bg-white/5">
                         <Link to="/orders" className="flex w-full">Mes commandes</Link>
                       </DropdownMenuItem>
-                      {isAuthenticated && (
-                        <>
-                          <DropdownMenuItem className="hover:bg-white/5">
-                            <Link to="/admin" className="flex w-full">Administration</Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="hover:bg-white/5">
-                            <Link to="/admin/users" className="flex w-full">Utilisateurs</Link>
-                          </DropdownMenuItem>
-                        </>
-                      )}
+                      <DropdownMenuItem className="hover:bg-white/5">
+                        <Link to="/admin" className="flex w-full">Administration</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="hover:bg-white/5">
+                        <Link to="/admin/users" className="flex w-full">Utilisateurs</Link>
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator className="bg-white/10" />
                       <DropdownMenuItem className="hover:bg-white/5 p-0">
                         <SignOutButton variant="ghost" className="w-full justify-start px-2 border-0 shadow-none" />
@@ -157,23 +152,21 @@ const Navbar = () => {
               Loteries
             </Link>
             {isAuthenticated && (
-              <>
-                <Link
-                  to="/admin"
-                  className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
-                  onClick={toggleMenu}
-                >
-                  Admin
-                </Link>
-                <Link
-                  to="/admin/users"
-                  className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
-                  onClick={toggleMenu}
-                >
-                  Utilisateurs
-                </Link>
-              </>
+              <Link
+                to="/admin"
+                className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+                onClick={toggleMenu}
+              >
+                Admin
+              </Link>
             )}
+            <Link
+              to="/admin/users"
+              className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+              onClick={toggleMenu}
+            >
+              Utilisateurs
+            </Link>
             <div className="px-3 py-2">
               {isAuthenticated ? (
                 <SignOutButton variant="outline" className="w-full" />
