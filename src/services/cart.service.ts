@@ -1,20 +1,21 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { CartItem } from "@/types/supabase.types";
 
-// Get or create cart token from the database (corrigé anti-duplicate)
+// Create or get cart token from the database
 export const getOrCreateCartToken = async (token: string, userId?: string) => {
   try {
     console.log("Getting or creating cart token:", token, userId ? `for user: ${userId}` : "anonymous");
-    // 1. On cherche si le token existe déjà en base
+    // Check if token exists
     const { data: existingToken, error: fetchError } = await supabase
       .from('cart_tokens')
       .select('*')
       .eq('token', token)
       .single();
-
-    if (existingToken) {
+      
+    if (!fetchError && existingToken) {
       console.log("Found existing token:", existingToken);
-      // Si token existe, et user_id à mettre à jour
+      // If token exists but we now have a user ID, update the token
       if (userId && !existingToken.user_id) {
         console.log("Updating token with user ID:", userId);
         const { data: updatedToken, error: updateError } = await supabase
@@ -23,50 +24,37 @@ export const getOrCreateCartToken = async (token: string, userId?: string) => {
           .eq('id', existingToken.id)
           .select()
           .single();
-
+          
         if (updateError) {
           console.error("Error updating token with user ID:", updateError);
           throw updateError;
         }
         return updatedToken;
       }
-      // Sinon on retourne le token existant
       return existingToken;
     }
-
-    // 2. S'il n'existe PAS, alors seulement on l'insère
+    
     console.log("Creating new token:", token, userId ? `for user: ${userId}` : "anonymous");
+    // Create a new token if doesn't exist
     const { data: newToken, error: insertError } = await supabase
       .from('cart_tokens')
       .insert([
-        {
+        { 
           token: token,
           user_id: userId || null,
         }
       ])
       .select()
       .single();
-
+      
     if (insertError) {
-      // ERREUR TYPE : 23505 duplicate key => On ne throw PAS, on re-fetch !
-      if (insertError.code === "23505") {
-        // Le token existe, on le récupère
-        const { data: retryToken, error: retryError } = await supabase
-          .from('cart_tokens')
-          .select('*')
-          .eq('token', token)
-          .single();
-        if (retryError) throw retryError;
-        return retryToken;
-      }
-      // Autre erreur : on remonte
       console.error("Error inserting token:", insertError);
       throw insertError;
     }
-
+    
     console.log("New token created:", newToken);
     return newToken;
-
+    
   } catch (error) {
     console.error("Error in getOrCreateCartToken:", error);
     throw error;
