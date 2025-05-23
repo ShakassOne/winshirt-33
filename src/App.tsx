@@ -20,6 +20,7 @@ import ThemeSettings from "./pages/admin/ThemeSettings";
 import OrdersAdmin from "./pages/admin/OrdersAdmin";
 import UsersAdmin from "./pages/admin/UsersAdmin";
 import SocialNetworksAdmin from "./pages/admin/SocialNetworksAdmin";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { useScrollReset } from "./hooks/useScrollReset";
 import { ThemeProvider } from "./components/theme-provider";
 import { CartProvider } from "./context/CartContext";
@@ -67,16 +68,52 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
               
-              {/* Admin Routes */}
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/products" element={<ProductsAdmin />} />
-              <Route path="/admin/lotteries" element={<LotteriesAdmin />} />
-              <Route path="/admin/mockups" element={<MockupsAdmin />} />
-              <Route path="/admin/designs" element={<DesignsAdmin />} />
-              <Route path="/admin/orders" element={<OrdersAdmin />} />
-              <Route path="/admin/users" element={<UsersAdmin />} />
-              <Route path="/admin/theme" element={<ThemeSettings />} />
-              <Route path="/admin/social-networks" element={<SocialNetworksAdmin />} />
+              {/* Routes Admin protégées */}
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/products" element={
+                <ProtectedRoute>
+                  <ProductsAdmin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/lotteries" element={
+                <ProtectedRoute>
+                  <LotteriesAdmin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/mockups" element={
+                <ProtectedRoute>
+                  <MockupsAdmin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/designs" element={
+                <ProtectedRoute>
+                  <DesignsAdmin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/orders" element={
+                <ProtectedRoute>
+                  <OrdersAdmin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/users" element={
+                <ProtectedRoute>
+                  <UsersAdmin />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/theme" element={
+                <ProtectedRoute>
+                  <ThemeSettings />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/social-networks" element={
+                <ProtectedRoute>
+                  <SocialNetworksAdmin />
+                </ProtectedRoute>
+              } />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
