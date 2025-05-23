@@ -1,14 +1,15 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { useCart } from '@/context/CartContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CartItem from '@/components/cart/CartItem';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, ArrowRight } from 'lucide-react';
 
-const Cart = () => {
+const Cart = memo(() => {
   const { items, removeItem, updateItemQuantity, total, itemCount, isLoading } = useCart();
 
   const formatPrice = (price: number) => {
@@ -25,8 +26,7 @@ const Cart = () => {
           
           {isLoading ? (
             <div className="text-center py-12">
-              <div className="spinner"></div>
-              <p className="mt-4">Chargement de votre panier...</p>
+              <LoadingSpinner size="lg" text="Chargement de votre panier..." />
             </div>
           ) : itemCount === 0 ? (
             <div className="text-center py-12 glass-card">
@@ -101,6 +101,8 @@ const Cart = () => {
       <Footer />
     </div>
   );
-};
+});
+
+Cart.displayName = 'Cart';
 
 export default Cart;

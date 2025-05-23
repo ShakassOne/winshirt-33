@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { CartContextType } from '@/types/cart.types';
 import { CartItem } from '@/types/supabase.types';
@@ -22,6 +22,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [cartToken, setCartToken] = useState<string>('');
   const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // Generate a cart token if not exists
   useEffect(() => {
@@ -39,18 +40,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   
   // Check for auth state changes
   useEffect(() => {
+    let mounted = true;
+    
     // Get current auth status
     const checkCurrentUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const userFromSession = session?.user || null;
-      setCurrentUser(userFromSession);
-      console.log("Current user:", userFromSession ? userFromSession.id : "not logged in");
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userFromSession = session?.user || null;
+        if (mounted) {
+          setCurrentUser(userFromSession);
+          setIsInitialized(true);
+          console.log("Current user:", userFromSession ? userFromSession.id : "not logged in");
+        }
+      } catch (error) {
+        console.error("Error checking current user:", error);
+        if (mounted) {
+          setIsInitialized(true);
+        }
+      }
     };
     
     checkCurrentUser();
     
     // Set up auth state change listener
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+      
       const user = session?.user || null;
       console.log("Auth state changed in cart context:", event, user ? user.id : "no user");
       setCurrentUser(user);
@@ -58,50 +73,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       // Handle sign in - migrate cart if user just signed in
       if (event === 'SIGNED_IN' && user && cartToken) {
         console.log("User signed in, migrating cart");
-        await handleCartMigration(user.id, cartToken);
-      }
-      
-      // Handle sign out - reload cart with anonymous data
-      if (event === 'SIGNED_OUT' && cartToken) {
-        console.log("User signed out, reloading anonymous cart");
-        await loadCartItems();
+        try {
+          await migrateCartToUser(user.id, cartToken);
+          toast({
+            title: "Panier transféré",
+            description: "Votre panier a été associé à votre compte",
+          });
+        } catch (err: any) {
+          console.error("Error migrating cart:", err);
+        }
       }
     });
 
     return () => {
+      mounted = false;
       authListener.subscription.unsubscribe();
     };
   }, [cartToken]);
   
-  // Load cart items when cartToken is available or user changes
-  useEffect(() => {
-    if (cartToken) {
-      console.log("Loading cart items for token:", cartToken);
-      loadCartItems();
-    }
-  }, [cartToken, currentUser]);
-  
-  const handleCartMigration = async (userId: string, token: string) => {
-    setIsLoading(true);
-    try {
-      console.log("Starting cart migration for user:", userId);
-      await migrateCartToUser(userId, token);
-      toast({
-        title: "Panier transféré",
-        description: "Votre panier a été associé à votre compte",
-      });
-      await loadCartItems(); // Reload cart after migration
-      console.log("Cart migration completed");
-    } catch (err: any) {
-      console.error("Error migrating cart:", err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const loadCartItems = async () => {
-    if (!cartToken) return;
+  // Load cart items when cartToken is available and initialized
+  const loadCartItems = useCallback(async () => {
+    if (!cartToken || !isInitialized) return;
     
     console.log("Loading cart items for token:", cartToken);
     setIsLoading(true);
@@ -109,15 +101,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const cartItems = await getCartItems(cartToken, currentUser?.id);
       console.log("Loaded cart items:", cartItems);
       setItems(cartItems);
+      setError(null);
     } catch (err: any) {
       setError(err.message);
       console.error("Error loading cart items:", err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [cartToken, currentUser?.id, isInitialized]);
+
+  useEffect(() => {
+    loadCartItems();
+  }, [loadCartItems]);
   
-  const addItem = async (item: CartItem) => {
+  const addItem = useCallback(async (item: CartItem) => {
     console.log("Starting addItem function with item:", JSON.stringify(item, null, 2));
     
     if (!cartToken) {
@@ -130,7 +127,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    // Basic validation to ensure we have at least a productId
+    // Basic validation
     if (!item.productId) {
       console.error("Cannot add item - missing productId");
       toast({
@@ -141,7 +138,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Check if size is required based on available_sizes
+    // Check if size is required
     if (item.available_sizes && item.available_sizes.length > 0 && !item.size) {
       console.error("Cannot add item - size required but not selected");
       toast({
@@ -152,7 +149,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Check if color is required based on available_colors
+    // Check if color is required
     if (item.available_colors && item.available_colors.length > 0 && !item.color) {
       console.error("Cannot add item - color required but not selected");
       toast({
@@ -172,8 +169,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       });
       
       await addToCart(cartToken, item, currentUser?.id);
-      
-      // Explicitly refresh cart items to ensure the UI is updated
       await loadCartItems();
       
       toast({
@@ -181,7 +176,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         description: `${item.name} a été ajouté à votre panier`,
       });
       
-      console.log("Item added successfully, cart now has", items.length + 1, "items");
+      console.log("Item added successfully");
     } catch (err: any) {
       setError(err.message);
       console.error("Error adding to cart:", err);
@@ -193,9 +188,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [cartToken, currentUser?.id, loadCartItems]);
   
-  const removeItem = async (productId: string) => {
+  const removeItem = useCallback(async (productId: string) => {
     if (!cartToken) return;
     
     console.log("Removing item from cart:", productId);
@@ -206,7 +201,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         title: "Produit retiré du panier",
         description: "Le produit a été retiré de votre panier",
       });
-      // Reload cart items after removal
       await loadCartItems();
       console.log("Item removed successfully");
     } catch (err: any) {
@@ -220,16 +214,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [cartToken, currentUser?.id, loadCartItems]);
   
-  const updateItemQuantity = async (productId: string, quantity: number) => {
+  const updateItemQuantity = useCallback(async (productId: string, quantity: number) => {
     if (!cartToken || quantity < 1) return;
     
     console.log("Updating item quantity:", productId, quantity);
     setIsLoading(true);
     try {
       await updateCartItemQuantity(cartToken, productId, quantity, currentUser?.id);
-      // Reload cart items after update
       await loadCartItems();
       console.log("Item quantity updated successfully");
     } catch (err: any) {
@@ -243,9 +236,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [cartToken, currentUser?.id, loadCartItems]);
   
-  const clearCart = async () => {
+  const clearCart = useCallback(async () => {
     if (!cartToken) return;
     
     console.log("Clearing cart");
@@ -256,7 +249,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         title: "Panier vidé",
         description: "Votre panier a été vidé",
       });
-      // Reload cart items after clearing
       await loadCartItems();
       console.log("Cart cleared successfully");
     } catch (err: any) {
@@ -270,30 +262,45 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [cartToken, currentUser?.id, loadCartItems]);
   
-  // Calculate total price of items in cart
-  const total = items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  // Memoize calculated values
+  const total = useMemo(() => {
+    return items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  }, [items]);
   
-  // Calculate total number of items in cart
-  const itemCount = items.reduce((count, item) => count + item.quantity, 0);
+  const itemCount = useMemo(() => {
+    return items.reduce((count, item) => count + item.quantity, 0);
+  }, [items]);
+  
+  const contextValue = useMemo(() => ({
+    items,
+    addItem,
+    removeItem,
+    updateItemQuantity,
+    clearCart,
+    isLoading,
+    error,
+    total,
+    itemCount,
+    cartToken,
+    currentUser
+  }), [
+    items,
+    addItem,
+    removeItem,
+    updateItemQuantity,
+    clearCart,
+    isLoading,
+    error,
+    total,
+    itemCount,
+    cartToken,
+    currentUser
+  ]);
   
   return (
-    <CartContext.Provider
-      value={{
-        items,
-        addItem,
-        removeItem,
-        updateItemQuantity,
-        clearCart,
-        isLoading,
-        error,
-        total,
-        itemCount,
-        cartToken,
-        currentUser
-      }}
-    >
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   );
