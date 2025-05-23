@@ -68,6 +68,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { HexColorPicker } from 'react-colorful';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useCart } from '@/context/CartContext';
 import {
   Accordion,
   AccordionContent,
@@ -181,6 +182,7 @@ const googleFonts = [
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const isMobile = useIsMobile();
+  const { addItem } = useCart(); // Import useCart hook
   const productCanvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [quantity, setQuantity] = useState(1);
@@ -608,6 +610,52 @@ const ProductDetail = () => {
     return colorName.startsWith('#') ? colorName : (colorMap[colorName.toLowerCase()] || '#000000');
   };
 
+  const getProductImage = () => {
+    if (!customizationMode) {
+      return product?.image_url;
+    }
+    
+    if (selectedMockupColor) {
+      return currentViewSide === 'front' 
+        ? selectedMockupColor.front_image_url 
+        : (selectedMockupColor.back_image_url || product?.image_url);
+    } else if (mockup) {
+      return currentViewSide === 'front' 
+        ? mockup.svg_front_url 
+        : (mockup.svg_back_url || product?.image_url);
+    }
+    
+    return product?.image_url;
+  };
+
+  const getCurrentDesign = () => {
+    return currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack;
+  };
+  
+  const getCurrentDesignTransform = () => {
+    return currentViewSide === 'front' ? designTransformFront : designTransformBack;
+  };
+  
+  const getCurrentTextContent = () => {
+    return currentViewSide === 'front' ? textContentFront : textContentBack;
+  };
+  
+  const getCurrentTextTransform = () => {
+    return currentViewSide === 'front' ? textTransformFront : textTransformBack;
+  };
+  
+  const getCurrentTextFont = () => {
+    return currentViewSide === 'front' ? textFontFront : textFontBack;
+  };
+  
+  const getCurrentTextColor = () => {
+    return currentViewSide === 'front' ? textColorFront : textColorBack;
+  };
+  
+  const getCurrentTextStyles = () => {
+    return currentViewSide === 'front' ? textStylesFront : textStylesBack;
+  };
+
   const handleAddToCart = () => {
     if (!product) return;
 
@@ -672,60 +720,11 @@ const ProductDetail = () => {
       }
     }
 
-    // Ajouter l'élément au panier (localStorage pour l'instant)
-    const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-    localStorage.setItem('cart', JSON.stringify([...existingCart, cartItem]));
-    
+    // Use the addItem function from the cart context to add the item to the Supabase cart
+    addItem(cartItem);
     toast.success('Produit ajouté au panier !');
   };
   
-  // Fonction pour obtenir l'image à afficher en fonction du mode et de la couleur sélectionnée
-  const getProductImage = () => {
-    if (!customizationMode) {
-      return product?.image_url;
-    }
-    
-    if (selectedMockupColor) {
-      return currentViewSide === 'front' 
-        ? selectedMockupColor.front_image_url 
-        : (selectedMockupColor.back_image_url || product?.image_url);
-    } else if (mockup) {
-      return currentViewSide === 'front' 
-        ? mockup.svg_front_url 
-        : (mockup.svg_back_url || product?.image_url);
-    }
-    
-    return product?.image_url;
-  };
-
-  const getCurrentDesign = () => {
-    return currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack;
-  };
-  
-  const getCurrentDesignTransform = () => {
-    return currentViewSide === 'front' ? designTransformFront : designTransformBack;
-  };
-  
-  const getCurrentTextContent = () => {
-    return currentViewSide === 'front' ? textContentFront : textContentBack;
-  };
-  
-  const getCurrentTextTransform = () => {
-    return currentViewSide === 'front' ? textTransformFront : textTransformBack;
-  };
-  
-  const getCurrentTextFont = () => {
-    return currentViewSide === 'front' ? textFontFront : textFontBack;
-  };
-  
-  const getCurrentTextColor = () => {
-    return currentViewSide === 'front' ? textColorFront : textColorBack;
-  };
-  
-  const getCurrentTextStyles = () => {
-    return currentViewSide === 'front' ? textStylesFront : textStylesBack;
-  };
-
   if (isLoading || !product) {
     return (
       <div className="min-h-screen flex flex-col">
