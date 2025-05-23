@@ -15,11 +15,26 @@ export function useOptimizedQuery<T>({
 }: OptimizedQueryOptions<T>) {
   return useQuery({
     queryKey: [...queryKey, ...dependencies],
-    queryFn,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    queryFn: async () => {
+      try {
+        console.log(`[Query] Starting query for key: ${JSON.stringify(queryKey)}`);
+        const result = await queryFn();
+        console.log(`[Query] Completed query for key: ${JSON.stringify(queryKey)}`);
+        return result;
+      } catch (error) {
+        console.error(`[Query] Error in query ${JSON.stringify(queryKey)}:`, error);
+        throw error;
+      }
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    refetchOnReconnect: true,
+    retry: (failureCount, error) => {
+      console.log(`[Query] Retry attempt ${failureCount} for key: ${JSON.stringify(queryKey)}`);
+      return failureCount < 2;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     ...options,
   });
 }

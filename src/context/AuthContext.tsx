@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -27,68 +28,98 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const handleAuthChange = useCallback((event: string, currentSession: Session | null) => {
+    console.log(`[Auth] Auth state changed: ${event}`, currentSession ? 'User logged in' : 'User logged out');
+    setSession(currentSession);
+    setUser(currentSession?.user ?? null);
+  }, []);
+
   useEffect(() => {
+    let mounted = true;
+    
     const setupAuth = async () => {
+      console.log('[Auth] Setting up auth...');
       setIsLoading(true);
+      
       try {
-        // Écouteur d'état d'auth
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          (event, currentSession) => {
-            setSession(currentSession);
-            setUser(currentSession?.user ?? null);
-          }
-        );
-        // Vérifie session existante
+        // Set up auth state listener first
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+        
+        // Then check for existing session
         const { data: { session: initialSession } } = await supabase.auth.getSession();
-        setSession(initialSession);
-        setUser(initialSession?.user ?? null);
+        
+        if (mounted) {
+          console.log('[Auth] Initial session check completed', initialSession ? 'User found' : 'No user');
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+        }
+        
         return () => {
+          console.log('[Auth] Cleaning up auth subscription');
           subscription.unsubscribe();
         };
       } catch (error) {
-        console.error('Error setting up auth:', error);
+        console.error('[Auth] Error setting up auth:', error);
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
-    setupAuth();
-  }, []);
 
-  const signIn = async (email: string, password: string) => {
+    const cleanup = setupAuth();
+    
+    return () => {
+      mounted = false;
+      cleanup.then(cleanupFn => cleanupFn?.());
+    };
+  }, [handleAuthChange]);
+
+  const signIn = useCallback(async (email: string, password: string) => {
+    console.log('[Auth] Attempting sign in for:', email);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log('[Auth] Sign in result:', error ? 'Error' : 'Success');
       return { error };
     } catch (error) {
+      console.error('[Auth] Sign in error:', error);
       return { error };
     }
-  };
+  }, []);
 
-  const signUp = async (email: string, password: string, metadata?: any) => {
+  const signUp = useCallback(async (email: string, password: string, metadata?: any) => {
+    console.log('[Auth] Attempting sign up for:', email);
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { data: metadata }
       });
+      console.log('[Auth] Sign up result:', error ? 'Error' : 'Success');
       return { error, user: data?.user || null };
     } catch (error) {
+      console.error('[Auth] Sign up error:', error);
       return { error, user: null };
     }
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
+    console.log('[Auth] Attempting sign out');
     try {
       await supabase.auth.signOut();
+      console.log('[Auth] Sign out completed');
     } catch (error) {
-      // On continue, on veut effacer le contexte/local quoi qu'il arrive
-      console.error("Sign out error:", error);
+      console.error("[Auth] Sign out error:", error);
     }
+    
+    // Clear state regardless of API result
     setUser(null);
     setSession(null);
-    // Suppression TOTALE de tous les tokens/infos locaux (parano, sécurité)
+    
+    // Clear local storage
     localStorage.clear();
     sessionStorage.clear();
-  };
+  }, []);
 
   const value = {
     user,

@@ -2,29 +2,20 @@
 import React, { useState } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { fetchAllProducts } from '@/services/api.service';
-import { useQuery } from '@tanstack/react-query';
 import ProductCard from '@/components/ui/ProductCard';
 import { Button } from '@/components/ui/button';
-import { Search, Filter } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Product } from '@/types/supabase.types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
+import { useProductsQuery } from '@/hooks/useProductsQuery';
 
 const Products = () => {
   const [category, setCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
-  const { data: products, isLoading, error, refetch } = useQuery({
-    queryKey: ['products'],
-    queryFn: fetchAllProducts,
-    meta: {
-      onError: (error: Error) => {
-        console.error("Failed to fetch products:", error);
-        toast.error("Erreur lors du chargement des produits");
-      }
-    }
-  });
+  console.log('[Products Page] Rendering with category:', category, 'search:', searchTerm);
+  
+  const { data: products, isLoading, error, refetch } = useProductsQuery();
 
   // Extract categories from products if they exist
   const categories = products && products.length 
@@ -41,8 +32,11 @@ const Products = () => {
     return matchesCategory && matchesSearch;
   });
 
+  console.log('[Products Page] Filtered products count:', filteredProducts?.length || 0);
+
   // Function to retry fetching products
   const handleRetry = () => {
+    console.log('[Products Page] Retrying fetch...');
     refetch();
   };
 

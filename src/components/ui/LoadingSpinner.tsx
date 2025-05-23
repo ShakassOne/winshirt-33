@@ -18,6 +18,10 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = memo(({
     lg: 'h-12 w-12'
   };
 
+  React.useEffect(() => {
+    console.log(`[LoadingSpinner] Rendered with text: ${text}`);
+  }, [text]);
+
   return (
     <div className={`flex items-center justify-center ${className}`}>
       <div className={`animate-spin ${sizeClasses[size]} border-4 border-blue-500 border-t-transparent rounded-full`}></div>

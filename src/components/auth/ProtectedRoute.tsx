@@ -2,6 +2,7 @@
 import React, { memo } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,22 +11,25 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = memo(({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
   
-  // Attendre que le statut d'authentification soit vérifié
+  console.log('[ProtectedRoute] Auth state:', { isAuthenticated, isLoading });
+  
+  // Wait for auth status to be verified
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="spinner animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
-        <span className="ml-2">Chargement...</span>
+        <LoadingSpinner size="lg" text="Vérification de l'authentification..." />
       </div>
     );
   }
   
-  // Rediriger vers la page de connexion si l'utilisateur n'est pas authentifié
+  // Redirect to login if not authenticated
   if (!isAuthenticated) {
+    console.log('[ProtectedRoute] User not authenticated, redirecting to /auth');
     return <Navigate to="/auth" replace />;
   }
   
-  // Afficher le contenu protégé si l'utilisateur est authentifié
+  // Show protected content if authenticated
+  console.log('[ProtectedRoute] User authenticated, showing protected content');
   return <>{children}</>;
 });
 

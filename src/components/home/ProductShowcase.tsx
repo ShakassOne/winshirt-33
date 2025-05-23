@@ -4,25 +4,24 @@ import { Button } from '@/components/ui/button';
 import ProductCard from '../ui/ProductCard';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { fetchAllProducts } from '@/services/api.service';
+import { useProductsQuery } from '@/hooks/useProductsQuery';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface ProductShowcaseProps {
   className?: string;
 }
 
 const ProductShowcase: React.FC<ProductShowcaseProps> = ({ className }) => {
-  const { data: products, isLoading, error } = useQuery({
-    queryKey: ['products'],
-    queryFn: fetchAllProducts,
-  });
+  const { data: products, isLoading, error } = useProductsQuery();
+
+  console.log('[ProductShowcase] Rendering with products count:', products?.length || 0);
 
   if (isLoading) {
     return (
       <section className={cn('py-20', className)}>
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <p>Chargement des produits...</p>
+            <LoadingSpinner size="lg" text="Chargement des produits..." />
           </div>
         </div>
       </section>
