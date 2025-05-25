@@ -117,34 +117,34 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-black/70 backdrop-blur-lg border-white/20 max-w-4xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="bg-black/70 backdrop-blur-lg border-white/20 max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="flex items-center gap-2 text-lg">
             <Sparkles className="h-5 w-5 text-winshirt-purple" />
             Générateur d'images IA
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             Générez des images uniques avec l'IA ou parcourez les images déjà créées.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Stats Section */}
-        <div className="grid grid-cols-2 gap-4 p-4 bg-white/5 rounded-lg">
+        {/* Stats Section - Plus compact */}
+        <div className="grid grid-cols-2 gap-3 p-3 bg-white/5 rounded-lg">
           <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground mb-1">
-              <Zap className="h-4 w-4" />
+            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1">
+              <Zap className="h-3 w-3" />
               Générations restantes
             </div>
-            <div className="text-2xl font-bold text-winshirt-purple">
+            <div className="text-xl font-bold text-winshirt-purple">
               {stats.remainingGenerations}/3
             </div>
           </div>
           <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground mb-1">
-              <Sparkles className="h-4 w-4" />
+            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1">
+              <Sparkles className="h-3 w-3" />
               Total généré
             </div>
-            <div className="text-2xl font-bold text-blue-400">
+            <div className="text-xl font-bold text-blue-400">
               {stats.totalGenerations}
             </div>
           </div>
@@ -152,19 +152,19 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
         
         <Tabs defaultValue="generate" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="generate" className="flex items-center gap-2">
+            <TabsTrigger value="generate" className="flex items-center gap-2 text-sm">
               <Sparkles className="h-4 w-4" />
-              Générer nouvelle image
+              Générer
             </TabsTrigger>
-            <TabsTrigger value="gallery" className="flex items-center gap-2">
+            <TabsTrigger value="gallery" className="flex items-center gap-2 text-sm">
               <Recycle className="h-4 w-4" />
-              Galerie IA
+              Galerie
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="generate" className="space-y-4">
+          <TabsContent value="generate" className="space-y-3 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="prompt">Description de l'image</Label>
+              <Label htmlFor="prompt" className="text-sm">Description de l'image</Label>
               <Input
                 id="prompt"
                 value={prompt}
@@ -173,17 +173,17 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
                 className="w-full"
                 disabled={!canGenerate}
               />
-              <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                <AlertTriangle className="h-4 w-4 text-yellow-500 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-yellow-200">
-                  Évitez les descriptions controversées, violentes ou inappropriées. L'IA peut refuser certaines demandes.
+              <div className="flex items-start gap-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                <AlertTriangle className="h-3 w-3 text-yellow-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-yellow-200">
+                  Évitez les descriptions controversées, violentes ou inappropriées.
                 </p>
               </div>
               {stats.remainingGenerations <= 0 && (
-                <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                  <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-200">
-                    Limite de 3 générations atteinte. Utilisez les images de la galerie ou recyclez une image existante.
+                <div className="flex items-start gap-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <AlertTriangle className="h-3 w-3 text-red-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-200">
+                    Limite atteinte. Utilisez la galerie.
                   </p>
                 </div>
               )}
@@ -193,31 +193,32 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
               onClick={handleGenerate}
               disabled={!canGenerate || !prompt.trim()}
               className="w-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue"
+              size="sm"
             >
               {isGenerating ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Génération en cours...
+                  Génération...
                 </>
               ) : (
                 <>
                   <Sparkles className="h-4 w-4 mr-2" />
-                  Générer l'image ({stats.remainingGenerations} restantes)
+                  Générer ({stats.remainingGenerations} restantes)
                 </>
               )}
             </Button>
             
             {generatedImage && (
-              <div className="space-y-4">
-                <div className="border border-white/20 rounded-lg p-4">
+              <div className="space-y-3">
+                <div className="border border-white/20 rounded-lg p-3">
                   <img
                     src={generatedImage}
                     alt="Image générée"
-                    className="w-full h-auto rounded-lg"
+                    className="w-full h-48 object-cover rounded-lg"
                   />
                   {lastMessage && (
-                    <p className="text-sm text-green-400 mt-2 flex items-center gap-1">
-                      <Recycle className="h-4 w-4" />
+                    <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
+                      <Recycle className="h-3 w-3" />
                       {lastMessage}
                     </p>
                   )}
@@ -229,12 +230,14 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
                     onClick={() => setGeneratedImage(null)}
                     className="flex-1"
                     disabled={!canGenerate}
+                    size="sm"
                   >
-                    Générer une nouvelle image
+                    Nouvelle image
                   </Button>
                   <Button
                     onClick={handleUseImage}
                     className="flex-1 bg-gradient-to-r from-winshirt-purple to-winshirt-blue"
+                    size="sm"
                   >
                     Utiliser cette image
                   </Button>
@@ -243,7 +246,7 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
             )}
           </TabsContent>
           
-          <TabsContent value="gallery">
+          <TabsContent value="gallery" className="mt-4">
             <AIImageGallery onImageSelect={handleImageSelect} />
           </TabsContent>
         </Tabs>
