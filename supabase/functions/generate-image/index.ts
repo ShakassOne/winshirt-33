@@ -23,10 +23,12 @@ serve(async (req) => {
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     
     if (!openAIApiKey) {
+      console.error('Clé API OpenAI manquante');
       throw new Error('Clé API OpenAI non configurée');
     }
 
     console.log('Génération d\'image avec le prompt:', prompt);
+    console.log('Clé API présente:', openAIApiKey.substring(0, 10) + '...');
 
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -44,15 +46,36 @@ serve(async (req) => {
       }),
     });
 
+    console.log('Statut de la réponse OpenAI:', response.status);
+
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Erreur OpenAI:', errorData);
-      throw new Error(errorData.error?.message || 'Erreur lors de la génération de l\'image');
+      const errorText = await response.text();
+      console.error('Erreur OpenAI:', errorText);
+      
+      let errorMessage = 'Erreur lors de la génération de l\'image';
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        if (errorData.error?.message) {
+          errorMessage = errorData.error.message;
+        } else if (errorData.error?.type === 'image_generation_user_error') {
+          errorMessage = 'Le prompt contient du contenu non autorisé. Veuillez modifier votre description.';
+        }
+      } catch (parseError) {
+        console.error('Erreur lors du parsing de l\'erreur:', parseError);
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
-    const imageUrl = data.data[0].url;
+    
+    if (!data.data || !data.data[0] || !data.data[0].url) {
+      console.error('Réponse OpenAI invalide:', data);
+      throw new Error('Réponse invalide de l\'API OpenAI');
+    }
 
+    const imageUrl = data.data[0].url;
     console.log('Image générée avec succès:', imageUrl);
 
     return new Response(JSON.stringify({ image: imageUrl }), {

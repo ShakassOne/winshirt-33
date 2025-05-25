@@ -7,7 +7,8 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
+  DialogDescription
 } from '@/components/ui/dialog';
 import { Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
@@ -33,7 +34,6 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
     try {
       console.log('Appel de la fonction edge generate-image avec prompt:', prompt);
       
-      // Utiliser fetch direct avec l'URL complète pour éviter les conflits de client Supabase
       const response = await fetch('https://gyprtpqgeukcoxbfxtfg.supabase.co/functions/v1/generate-image', {
         method: 'POST',
         headers: {
@@ -43,13 +43,34 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
         body: JSON.stringify({ prompt })
       });
 
+      const responseText = await response.text();
+      console.log('Réponse brute:', responseText);
+
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Erreur HTTP:', response.status, errorText);
-        throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
+        console.error('Erreur HTTP:', response.status, responseText);
+        
+        let errorMessage = `Erreur HTTP ${response.status}`;
+        
+        try {
+          const errorData = JSON.parse(responseText);
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (parseError) {
+          console.error('Erreur lors du parsing:', parseError);
+          errorMessage = `${errorMessage}: ${responseText}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Erreur lors du parsing de la réponse:', parseError);
+        throw new Error('Réponse invalide du serveur');
+      }
 
       if (data?.error) {
         console.error('Erreur dans la réponse:', data.error);
@@ -57,6 +78,7 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
       }
 
       if (!data?.image) {
+        console.error('Aucune image dans la réponse:', data);
         throw new Error('Aucune image reçue dans la réponse');
       }
 
@@ -65,7 +87,21 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
       toast.success('Image générée avec succès !');
     } catch (error) {
       console.error('Erreur lors de la génération:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la génération de l\'image';
+      
+      let errorMessage = 'Erreur lors de la génération de l\'image';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('contenu non autorisé')) {
+          errorMessage = 'Le prompt contient du contenu non autorisé. Veuillez modifier votre description.';
+        } else if (error.message.includes('401')) {
+          errorMessage = 'Problème d\'authentification avec l\'API OpenAI. Vérifiez la clé API.';
+        } else if (error.message.includes('429')) {
+          errorMessage = 'Limite de taux atteinte. Veuillez réessayer dans quelques minutes.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast.error(errorMessage);
     } finally {
       setIsGenerating(false);
@@ -94,6 +130,9 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
             <Sparkles className="h-5 w-5 text-winshirt-purple" />
             Générateur d'images IA
           </DialogTitle>
+          <DialogDescription>
+            Générez des images uniques avec l'intelligence artificielle en décrivant ce que vous voulez.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">
