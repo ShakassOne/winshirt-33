@@ -83,6 +83,7 @@ import {
 } from "@/components/ui/collapsible";
 import AIImageGenerator from '@/components/product/AIImageGenerator';
 import { RemoveFlatBackground } from '@/components/product/RemoveFlatBackground';
+import { supabase } from '@/integrations/supabase/client';
 
 // Définition des polices Google Fonts
 const googleFonts = [
