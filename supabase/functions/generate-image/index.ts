@@ -7,6 +7,39 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Upload image to Supabase Storage
+const uploadImageToSupabase = async (supabase: any, dalleImageUrl: string, fileName: string) => {
+  try {
+    // 1. Récupération du blob depuis l'URL DALL·E
+    const response = await fetch(dalleImageUrl);
+    if (!response.ok) throw new Error("Impossible de récupérer l'image DALL·E");
+    const blob = await response.blob();
+
+    // 2. Upload vers Supabase Storage
+    const { data, error } = await supabase.storage
+      .from("ai-images")
+      .upload(`${fileName}.png`, blob, {
+        contentType: "image/png",
+        upsert: true,
+      });
+
+    if (error) {
+      console.error("Erreur upload Supabase :", error);
+      throw error;
+    }
+
+    // 3. Récupération de l'URL publique
+    const { data: { publicUrl } } = supabase.storage
+      .from("ai-images")
+      .getPublicUrl(`${fileName}.png`);
+
+    return publicUrl;
+  } catch (error) {
+    console.error("Error uploading image to Supabase:", error);
+    throw error;
+  }
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -108,7 +141,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         imageUrl: recycledImage.image_url,
         recycled: true,
-        message: "Image recyclée trouvée ! (économie : 0,037€)"
+        message: "Image recyclée trouvée ! (Gratuite)"
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       })
@@ -153,35 +186,40 @@ serve(async (req) => {
     }
 
     const data = await response.json()
-    const imageUrl = data.data[0].url
+    const tempImageUrl = data.data[0].url
 
-    // Save to ai_images for recycling
+    // Generate unique filename
+    const fileName = `ai-${userId || sessionToken}-${Date.now()}`
+    
+    // Upload image to Supabase Storage and get permanent URL
+    const permanentImageUrl = await uploadImageToSupabase(supabase, tempImageUrl, fileName)
+
+    // Save to ai_images for recycling with permanent URL
     await supabase
       .from('ai_images')
       .insert({
         prompt: prompt,
-        image_url: imageUrl,
+        image_url: permanentImageUrl,
         is_used: true,
         usage_count: 1
       })
 
-    // Record the generation
+    // Record the generation with permanent URL
     await supabase
       .from('ai_generations')
       .insert({
         user_id: userId,
         session_token: sessionToken,
         prompt: prompt,
-        image_url: imageUrl,
+        image_url: permanentImageUrl,
         cost: 0.037
       })
 
     const remainingGenerations = 3 - (generations?.length || 0) - 1
 
     return new Response(JSON.stringify({ 
-      imageUrl,
-      remainingGenerations,
-      cost: 0.037
+      imageUrl: permanentImageUrl,
+      remainingGenerations
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     })

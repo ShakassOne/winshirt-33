@@ -13,8 +13,43 @@ export interface AIImage {
 export interface GenerationStats {
   totalGenerations: number;
   remainingGenerations: number;
-  totalCost: number;
 }
+
+// Upload image to Supabase Storage
+export const uploadImageToSupabase = async (
+  dalleImageUrl: string,
+  fileName: string = `ai-image-${Date.now()}`
+): Promise<string> => {
+  try {
+    // 1. Récupération du blob depuis l'URL DALL·E
+    const response = await fetch(dalleImageUrl);
+    if (!response.ok) throw new Error("Impossible de récupérer l'image DALL·E");
+    const blob = await response.blob();
+
+    // 2. Upload vers Supabase Storage
+    const { data, error } = await supabase.storage
+      .from("ai-images")
+      .upload(`${fileName}.png`, blob, {
+        contentType: "image/png",
+        upsert: true,
+      });
+
+    if (error) {
+      console.error("Erreur upload Supabase :", error);
+      throw error;
+    }
+
+    // 3. Récupération de l'URL publique
+    const { data: { publicUrl } } = supabase.storage
+      .from("ai-images")
+      .getPublicUrl(`${fileName}.png`);
+
+    return publicUrl;
+  } catch (error) {
+    console.error("Error uploading image to Supabase:", error);
+    throw error;
+  }
+};
 
 // Get session token for anonymous users
 export const getSessionToken = (): string => {
@@ -34,26 +69,24 @@ export const getGenerationStats = async (): Promise<GenerationStats> => {
 
     const { data: generations, error } = await supabase
       .from('ai_generations')
-      .select('cost')
+      .select('id')
       .or(user ? `user_id.eq.${user.id}` : `session_token.eq.${sessionToken}`);
 
     if (error) {
       console.error('Error fetching generation stats:', error);
-      return { totalGenerations: 0, remainingGenerations: 3, totalCost: 0 };
+      return { totalGenerations: 0, remainingGenerations: 3 };
     }
 
     const totalGenerations = generations?.length || 0;
-    const totalCost = generations?.reduce((sum, gen) => sum + (Number(gen.cost) || 0), 0) || 0;
     const remainingGenerations = Math.max(0, 3 - totalGenerations);
 
     return {
       totalGenerations,
-      remainingGenerations,
-      totalCost: Number(totalCost.toFixed(3))
+      remainingGenerations
     };
   } catch (error) {
     console.error('Error in getGenerationStats:', error);
-    return { totalGenerations: 0, remainingGenerations: 3, totalCost: 0 };
+    return { totalGenerations: 0, remainingGenerations: 3 };
   }
 };
 
@@ -84,7 +117,6 @@ export const generateImage = async (prompt: string): Promise<{
   recycled?: boolean;
   message?: string;
   remainingGenerations?: number;
-  cost?: number;
   error?: string;
   limitReached?: boolean;
 }> => {

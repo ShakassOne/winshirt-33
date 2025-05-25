@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogDescription
 } from '@/components/ui/dialog';
-import { Loader2, Sparkles, AlertTriangle, Zap, Recycle, Coins } from 'lucide-react';
+import { Loader2, Sparkles, AlertTriangle, Zap, Recycle } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateImage, getGenerationStats, GenerationStats } from '@/services/aiImages.service';
 import AIImageGallery from './AIImageGallery';
@@ -26,7 +26,7 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [stats, setStats] = useState<GenerationStats>({ totalGenerations: 0, remainingGenerations: 3, totalCost: 0 });
+  const [stats, setStats] = useState<GenerationStats>({ totalGenerations: 0, remainingGenerations: 3 });
   const [lastMessage, setLastMessage] = useState<string>('');
 
   useEffect(() => {
@@ -71,9 +71,9 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
       setLastMessage(result.message || '');
       
       if (result.recycled) {
-        toast.success(`Image recyclée trouvée ! Économie : 0,037€`);
+        toast.success(`Image recyclée trouvée ! (Gratuite)`);
       } else {
-        toast.success(`Image générée avec succès ! Coût : ${result.cost}€`);
+        toast.success(`Image générée avec succès !`);
       }
       
       // Refresh stats
@@ -129,7 +129,7 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
         </DialogHeader>
 
         {/* Stats Section */}
-        <div className="grid grid-cols-3 gap-4 p-4 bg-white/5 rounded-lg">
+        <div className="grid grid-cols-2 gap-4 p-4 bg-white/5 rounded-lg">
           <div className="text-center">
             <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground mb-1">
               <Zap className="h-4 w-4" />
@@ -146,15 +146,6 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
             </div>
             <div className="text-2xl font-bold text-blue-400">
               {stats.totalGenerations}
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground mb-1">
-              <Coins className="h-4 w-4" />
-              Coût total
-            </div>
-            <div className="text-2xl font-bold text-green-400">
-              {stats.totalCost.toFixed(3)}€
             </div>
           </div>
         </div>
