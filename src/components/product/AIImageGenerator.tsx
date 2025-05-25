@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,47 +42,19 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
         body: JSON.stringify({ prompt })
       });
 
-      const responseText = await response.text();
-      console.log('Réponse brute:', responseText);
-
       if (!response.ok) {
-        console.error('Erreur HTTP:', response.status, responseText);
-        
-        let errorMessage = `Erreur HTTP ${response.status}`;
-        
-        try {
-          const errorData = JSON.parse(responseText);
-          if (errorData.error) {
-            errorMessage = errorData.error;
-          }
-        } catch (parseError) {
-          console.error('Erreur lors du parsing:', parseError);
-          errorMessage = `${errorMessage}: ${responseText}`;
-        }
-        
-        throw new Error(errorMessage);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Erreur HTTP ${response.status}`);
       }
 
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('Erreur lors du parsing de la réponse:', parseError);
-        throw new Error('Réponse invalide du serveur');
-      }
-
-      if (data?.error) {
-        console.error('Erreur dans la réponse:', data.error);
-        throw new Error(data.error);
-      }
-
-      if (!data?.image) {
-        console.error('Aucune image dans la réponse:', data);
+      const data = await response.json();
+      
+      if (!data?.imageUrl) {
         throw new Error('Aucune image reçue dans la réponse');
       }
 
       console.log('Image générée avec succès');
-      setGeneratedImage(data.image);
+      setGeneratedImage(data.imageUrl);
       toast.success('Image générée avec succès !');
     } catch (error) {
       console.error('Erreur lors de la génération:', error);
@@ -91,15 +62,7 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
       let errorMessage = 'Erreur lors de la génération de l\'image';
       
       if (error instanceof Error) {
-        if (error.message.includes('contenu non autorisé')) {
-          errorMessage = 'Le prompt contient du contenu non autorisé. Veuillez modifier votre description.';
-        } else if (error.message.includes('401')) {
-          errorMessage = 'Problème d\'authentification avec l\'API OpenAI. Vérifiez la clé API.';
-        } else if (error.message.includes('429')) {
-          errorMessage = 'Limite de taux atteinte. Veuillez réessayer dans quelques minutes.';
-        } else {
-          errorMessage = error.message;
-        }
+        errorMessage = error.message;
       }
       
       toast.error(errorMessage);
