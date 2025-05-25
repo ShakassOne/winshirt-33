@@ -266,6 +266,10 @@ const ProductDetail = () => {
   const [selectedLotteryIds, setSelectedLotteryIds] = useState<string[]>([]);
   const [selectedLotteries, setSelectedLotteries] = useState<Lottery[]>([]);
 
+  // New states for background removal
+  const [isRemovingBackground, setIsRemovingBackground] = useState(false);
+  const [backgroundRemovalImage, setBackgroundRemovalImage] = useState<string | null>(null);
+
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
     queryFn: () => fetchProductById(id!),
@@ -781,14 +785,17 @@ const ProductDetail = () => {
     }
   };
 
-  // New state for background removal
-  const [isRemovingBackground, setIsRemovingBackground] = useState(false);
-
   // New function to handle background removal
-  const handleBackgroundRemoval = async (cleanedImageUrl: string) => {
+  const handleRemoveBackground = async () => {
+    const currentDesign = getCurrentDesign();
+    if (!currentDesign) return;
+
+    setIsRemovingBackground(true);
+    setBackgroundRemovalImage(currentDesign.image_url);
+  };
+
+  const handleBackgroundRemovalReady = async (cleanedImageUrl: string) => {
     try {
-      setIsRemovingBackground(true);
-      
       // Convert base64 to blob
       const response = await fetch(cleanedImageUrl);
       const blob = await response.blob();
@@ -837,6 +844,7 @@ const ProductDetail = () => {
       toast.error('Erreur lors de la suppression du fond');
     } finally {
       setIsRemovingBackground(false);
+      setBackgroundRemovalImage(null);
     }
   };
 
@@ -922,16 +930,7 @@ const ProductDetail = () => {
                   <Button
                     size="sm"
                     variant="secondary"
-                    onClick={() => {
-                      if (getCurrentDesign()) {
-                        // Use the RemoveFlatBackground component
-                        const dummyComponent = React.createElement(RemoveFlatBackground, {
-                          imageUrl: getCurrentDesign()!.image_url,
-                          tolerance: 35,
-                          onReady: handleBackgroundRemoval
-                        });
-                      }
-                    }}
+                    onClick={handleRemoveBackground}
                     disabled={isRemovingBackground}
                     className="bg-black/60 hover:bg-black/80 text-white border-white/20"
                     title="Supprimer le fond de l'image"
@@ -948,20 +947,20 @@ const ProductDetail = () => {
                       </>
                     )}
                   </Button>
-                  
-                  {/* Hidden RemoveFlatBackground component for processing */}
-                  {getCurrentDesign() && (
-                    <div style={{ display: 'none' }}>
-                      <RemoveFlatBackground
-                        imageUrl={getCurrentDesign()!.image_url}
-                        tolerance={35}
-                        onReady={handleBackgroundRemoval}
-                      />
-                    </div>
-                  )}
                 </div>
               )}
             </div>
+
+            {/* Composant de suppression de fond (caché) */}
+            {backgroundRemovalImage && (
+              <div style={{ display: 'none' }}>
+                <RemoveFlatBackground
+                  imageUrl={backgroundRemovalImage}
+                  tolerance={35}
+                  onReady={handleBackgroundRemovalReady}
+                />
+              </div>
+            )}
 
             {/* Boutons pour basculer entre le recto et le verso déplacés en dessous de l'image */}
             {customizationMode && mockup && mockup.svg_back_url && (
