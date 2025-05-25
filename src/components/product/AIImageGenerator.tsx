@@ -33,6 +33,7 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
     try {
       console.log('Appel de la fonction edge generate-image avec prompt:', prompt);
       
+      // Utiliser fetch direct avec l'URL complète pour éviter les conflits de client Supabase
       const response = await fetch('https://gyprtpqgeukcoxbfxtfg.supabase.co/functions/v1/generate-image', {
         method: 'POST',
         headers: {
@@ -43,7 +44,9 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Erreur HTTP:', response.status, errorText);
+        throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
       }
 
       const data = await response.json();
@@ -57,12 +60,13 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
         throw new Error('Aucune image reçue dans la réponse');
       }
 
-      console.log('Image générée avec succès:', data.image);
+      console.log('Image générée avec succès');
       setGeneratedImage(data.image);
       toast.success('Image générée avec succès !');
     } catch (error) {
-      console.error('Erreur:', error);
-      toast.error(error instanceof Error ? error.message : 'Erreur lors de la génération de l\'image');
+      console.error('Erreur lors de la génération:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la génération de l\'image';
+      toast.error(errorMessage);
     } finally {
       setIsGenerating(false);
     }

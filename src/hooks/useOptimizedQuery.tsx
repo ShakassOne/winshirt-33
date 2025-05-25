@@ -23,6 +23,7 @@ export function useOptimizedQuery<T>({
         return result;
       } catch (error) {
         console.error(`[Query] Error in query ${JSON.stringify(queryKey)}:`, error);
+        // Relancer l'erreur pour que React Query puisse la gérer correctement
         throw error;
       }
     },
@@ -32,9 +33,16 @@ export function useOptimizedQuery<T>({
     refetchOnReconnect: true,
     retry: (failureCount, error) => {
       console.log(`[Query] Retry attempt ${failureCount} for key: ${JSON.stringify(queryKey)}`);
-      return failureCount < 2;
+      // Limiter les tentatives de retry pour éviter les boucles infinies
+      if (failureCount >= 2) {
+        console.error(`[Query] Max retries reached for ${JSON.stringify(queryKey)}, stopping retries`);
+        return false;
+      }
+      return true;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    // Améliorer la gestion d'erreur
+    throwOnError: false,
     ...options,
   });
 }

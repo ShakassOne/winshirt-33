@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { fetchAllLotteries } from '@/services/api.service';
-import { useQuery } from '@tanstack/react-query';
+import { useLotteriesQuery } from '@/hooks/useLotteriesQuery';
 import LotteryCard from '@/components/ui/LotteryCard';
 import { Button } from '@/components/ui/button';
 import { Search, Calendar, Users, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -15,10 +14,9 @@ const Lotteries = () => {
   const [filterActive, setFilterActive] = useState<boolean | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
-  const { data: lotteries, isLoading, error } = useQuery({
-    queryKey: ['lotteries'],
-    queryFn: fetchAllLotteries,
-  });
+  console.log('[Lotteries Page] Rendering with filterActive:', filterActive, 'search:', searchTerm);
+  
+  const { data: lotteries, isLoading, error, refetch } = useLotteriesQuery();
 
   const filteredLotteries = lotteries?.filter(lottery => {
     const matchesStatus = filterActive === null ? true : lottery.is_active === filterActive;
@@ -36,6 +34,14 @@ const Lotteries = () => {
   const otherFeaturedLotteries = lotteries?.filter(lottery => 
     lottery.is_featured && lottery.id !== featuredLottery?.id
   ) || [];
+
+  console.log('[Lotteries Page] Filtered lotteries count:', filteredLotteries?.length || 0);
+
+  // Function to retry fetching lotteries
+  const handleRetry = () => {
+    console.log('[Lotteries Page] Retrying fetch...');
+    refetch();
+  };
 
   // Format dates for countdown timer
   const getTimeRemaining = (drawDate: Date) => {
@@ -226,7 +232,8 @@ const Lotteries = () => {
               </div>
             ) : error ? (
               <div className="text-center py-20">
-                <p>Une erreur est survenue lors du chargement des loteries.</p>
+                <p className="text-lg mb-4">Une erreur est survenue lors du chargement des loteries.</p>
+                <Button onClick={handleRetry}>Réessayer</Button>
               </div>
             ) : filteredLotteries?.length === 0 ? (
               <div className="text-center py-20">

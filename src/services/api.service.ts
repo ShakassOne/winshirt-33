@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Product, Lottery, Mockup, SocialNetwork } from "@/types/supabase.types";
 import { MockupWithColors, MockupColor } from "@/types/mockup.types";
@@ -6,6 +5,7 @@ import { MockupWithColors, MockupColor } from "@/types/mockup.types";
 // Products
 export const fetchAllProducts = async () => {
   try {
+    console.log('[API] Fetching all products...');
     const { data, error } = await supabase
       .from("products")
       .select("*")
@@ -13,23 +13,25 @@ export const fetchAllProducts = async () => {
 
     if (error) {
       console.error("Error fetching products:", error);
-      throw error;
+      throw new Error(`Failed to fetch products: ${error.message}`);
     }
 
+    console.log(`[API] Successfully fetched ${data?.length || 0} products`);
     return data || [];
   } catch (err) {
     console.error("Critical error in fetchAllProducts:", err);
-    return [];
+    // Ne pas masquer l'erreur, la relancer pour que les hooks puissent la gérer
+    throw err;
   }
 };
 
 export const fetchProductById = async (id: string) => {
   try {
     if (!id) {
-      console.error("Invalid product ID provided");
-      return null;
+      throw new Error("Invalid product ID provided");
     }
     
+    console.log(`[API] Fetching product with ID: ${id}`);
     const { data, error } = await supabase
       .from("products")
       .select("*")
@@ -38,13 +40,14 @@ export const fetchProductById = async (id: string) => {
 
     if (error) {
       console.error(`Error fetching product with ID ${id}:`, error);
-      throw error;
+      throw new Error(`Failed to fetch product: ${error.message}`);
     }
 
+    console.log(`[API] Successfully fetched product: ${data?.name}`);
     return data;
   } catch (err) {
     console.error(`Critical error in fetchProductById for ID ${id}:`, err);
-    return null;
+    throw err;
   }
 };
 
@@ -109,6 +112,7 @@ export const deleteProduct = async (id: string) => {
 // Lotteries
 export const fetchAllLotteries = async () => {
   try {
+    console.log('[API] Fetching all lotteries...');
     const { data, error } = await supabase
       .from("lotteries")
       .select("*")
@@ -116,18 +120,20 @@ export const fetchAllLotteries = async () => {
 
     if (error) {
       console.error("Error fetching lotteries:", error);
-      throw error;
+      throw new Error(`Failed to fetch lotteries: ${error.message}`);
     }
 
+    console.log(`[API] Successfully fetched ${data?.length || 0} lotteries`);
     return data || [];
   } catch (err) {
     console.error("Critical error in fetchAllLotteries:", err);
-    return [];
+    throw err;
   }
 };
 
 export const fetchFeaturedLotteries = async () => {
   try {
+    console.log('[API] Fetching featured lotteries...');
     const { data, error } = await supabase
       .from("lotteries")
       .select("*")
@@ -136,23 +142,24 @@ export const fetchFeaturedLotteries = async () => {
 
     if (error) {
       console.error("Error fetching featured lotteries:", error);
-      throw error;
+      throw new Error(`Failed to fetch featured lotteries: ${error.message}`);
     }
 
+    console.log(`[API] Successfully fetched ${data?.length || 0} featured lotteries`);
     return data || [];
   } catch (err) {
     console.error("Critical error in fetchFeaturedLotteries:", err);
-    return [];
+    throw err;
   }
 };
 
 export const fetchLotteryById = async (id: string) => {
   try {
     if (!id) {
-      console.error("Invalid lottery ID provided");
-      return null;
+      throw new Error("Invalid lottery ID provided");
     }
     
+    console.log(`[API] Fetching lottery with ID: ${id}`);
     const { data, error } = await supabase
       .from("lotteries")
       .select("*")
@@ -161,13 +168,14 @@ export const fetchLotteryById = async (id: string) => {
 
     if (error) {
       console.error(`Error fetching lottery with ID ${id}:`, error);
-      throw error;
+      throw new Error(`Failed to fetch lottery: ${error.message}`);
     }
 
+    console.log(`[API] Successfully fetched lottery: ${data?.title}`);
     return data;
   } catch (err) {
     console.error(`Critical error in fetchLotteryById for ID ${id}:`, err);
-    return null;
+    throw err;
   }
 };
 
