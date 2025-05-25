@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,8 +14,10 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt } = await req.json()
+    const { prompt, sessionToken } = await req.json()
     const apiKey = Deno.env.get("OPENAI_API_KEY")
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
 
     if (!apiKey) {
       return new Response(JSON.stringify({ error: "OpenAI API key not configured" }), {
@@ -23,6 +26,95 @@ serve(async (req) => {
       })
     }
 
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl!, supabaseServiceKey!)
+
+    // Get user ID from auth header
+    const authHeader = req.headers.get('authorization')
+    let userId = null
+    if (authHeader) {
+      try {
+        const token = authHeader.replace('Bearer ', '')
+        const { data: { user } } = await supabase.auth.getUser(token)
+        userId = user?.id
+      } catch (error) {
+        console.log('No valid auth token, treating as anonymous user')
+      }
+    }
+
+    // Check if we have either userId or sessionToken
+    if (!userId && !sessionToken) {
+      return new Response(JSON.stringify({ error: "Utilisateur non identifié" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      })
+    }
+
+    // Check generation limit (3 per user/session)
+    const { data: generations, error: genError } = await supabase
+      .from('ai_generations')
+      .select('id')
+      .or(userId ? `user_id.eq.${userId}` : `session_token.eq.${sessionToken}`)
+
+    if (genError) {
+      console.error('Error checking generations:', genError)
+      return new Response(JSON.stringify({ error: "Erreur lors de la vérification des générations" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      })
+    }
+
+    if (generations && generations.length >= 3) {
+      return new Response(JSON.stringify({ 
+        error: "Limite de 3 générations atteinte. Parcourez les images déjà générées ci-dessous.",
+        limitReached: true
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      })
+    }
+
+    // Search for existing similar image first
+    const { data: existingImages } = await supabase
+      .from('ai_images')
+      .select('*')
+      .textSearch('prompt', prompt.trim(), { config: 'french' })
+      .limit(1)
+
+    if (existingImages && existingImages.length > 0) {
+      const recycledImage = existingImages[0]
+      
+      // Update usage count
+      await supabase
+        .from('ai_images')
+        .update({ 
+          usage_count: recycledImage.usage_count + 1,
+          is_used: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', recycledImage.id)
+
+      // Record the generation (even for recycled images)
+      await supabase
+        .from('ai_generations')
+        .insert({
+          user_id: userId,
+          session_token: sessionToken,
+          prompt: prompt,
+          image_url: recycledImage.image_url,
+          cost: 0 // Recycled images are free
+        })
+
+      return new Response(JSON.stringify({ 
+        imageUrl: recycledImage.image_url,
+        recycled: true,
+        message: "Image recyclée trouvée ! (économie : 0,037€)"
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      })
+    }
+
+    // Generate new image with OpenAI
     const response = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
       headers: {
@@ -61,7 +153,36 @@ serve(async (req) => {
     }
 
     const data = await response.json()
-    return new Response(JSON.stringify({ imageUrl: data.data[0].url }), {
+    const imageUrl = data.data[0].url
+
+    // Save to ai_images for recycling
+    await supabase
+      .from('ai_images')
+      .insert({
+        prompt: prompt,
+        image_url: imageUrl,
+        is_used: true,
+        usage_count: 1
+      })
+
+    // Record the generation
+    await supabase
+      .from('ai_generations')
+      .insert({
+        user_id: userId,
+        session_token: sessionToken,
+        prompt: prompt,
+        image_url: imageUrl,
+        cost: 0.037
+      })
+
+    const remainingGenerations = 3 - (generations?.length || 0) - 1
+
+    return new Response(JSON.stringify({ 
+      imageUrl,
+      remainingGenerations,
+      cost: 0.037
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   } catch (error) {

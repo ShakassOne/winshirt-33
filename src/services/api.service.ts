@@ -607,3 +607,73 @@ export const uploadFileToStorage = async (file: File, folder: string = "uploads"
     throw error;
   }
 };
+
+// AI Images functions
+export const fetchAllAIImages = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("ai_images")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching AI images:", error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error("Critical error in fetchAllAIImages:", err);
+    return [];
+  }
+};
+
+export const createAIImage = async (imageData: {
+  prompt: string;
+  image_url: string;
+  is_used?: boolean;
+  usage_count?: number;
+}) => {
+  try {
+    const { data, error } = await supabase
+      .from("ai_images")
+      .insert([imageData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating AI image:", error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error during AI image creation:", error);
+    throw error;
+  }
+};
+
+export const updateAIImageUsage = async (id: string, usageCount: number) => {
+  try {
+    const { data, error } = await supabase
+      .from("ai_images")
+      .update({ 
+        usage_count: usageCount,
+        is_used: true,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`Error updating AI image usage for ID ${id}:`, error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error during AI image usage update:", error);
+    throw error;
+  }
+};

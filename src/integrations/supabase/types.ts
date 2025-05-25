@@ -9,6 +9,66 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_generations: {
+        Row: {
+          cost: number | null
+          created_at: string
+          id: string
+          image_url: string
+          prompt: string
+          session_token: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          id?: string
+          image_url: string
+          prompt: string
+          session_token?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          prompt?: string
+          session_token?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      ai_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          is_used: boolean | null
+          prompt: string
+          updated_at: string
+          usage_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          is_used?: boolean | null
+          prompt: string
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_used?: boolean | null
+          prompt?: string
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           cart_session_id: string | null
