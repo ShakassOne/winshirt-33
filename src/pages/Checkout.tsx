@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -36,7 +37,11 @@ const checkoutSchema = z.object({
   country: z.string().min(2, "Pays invalide"),
   deliveryNotes: z.string().optional(),
   createAccount: z.boolean().default(false),
-  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").optional(),
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").optional()
+    .refine(
+      (pw) => !z.boolean().parse(z.object({ createAccount: z.boolean() }).shape.createAccount) || (pw && pw.length >= 6),
+      { message: "Le mot de passe est requis pour créer un compte" }
+    ),
 });
 
 const Checkout = () => {
@@ -44,6 +49,40 @@ const Checkout = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+
+  // Vérifie si l'utilisateur est connecté
+  React.useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        setUser(data.session.user);
+        
+        // Récupère les informations du profil pour pré-remplir le formulaire
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.session.user.id)
+          .single();
+          
+        if (profileData) {
+          form.reset({
+            firstName: profileData.first_name || '',
+            lastName: profileData.last_name || '',
+            email: data.session.user.email || '',
+            phone: profileData.phone || '',
+            address: profileData.address || '',
+            city: profileData.city || '',
+            postalCode: profileData.postal_code || '',
+            country: profileData.country || '',
+            deliveryNotes: '',
+            createAccount: false
+          });
+        }
+      }
+    };
+    
+    checkUser();
+  }, []);
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
@@ -62,76 +101,40 @@ const Checkout = () => {
     }
   });
 
-  // Pré-remplissage du formulaire si connecté
-  React.useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.user) {
-        setUser(data.session.user);
-
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.session.user.id)
-          .single();
-
-        if (profileData) {
-          form.reset({
-            firstName: profileData.first_name || '',
-            lastName: profileData.last_name || '',
-            email: data.session.user.email || '',
-            phone: profileData.phone || '',
-            address: profileData.address || '',
-            city: profileData.city || '',
-            postalCode: profileData.postal_code || '',
-            country: profileData.country || '',
-            deliveryNotes: '',
-            createAccount: false,
-            password: ''
-          });
-        }
-      }
-    };
-    checkUser();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const createAccount = form.watch('createAccount');
 
-  // HANDLER PRINCIPAL DE SUBMISSION DU FORMULAIRE
   const onSubmit = async (data: CheckoutFormData) => {
-    setIsLoading(true);
-    console.log("[Checkout] Submit déclenché avec data :", data);
-
     try {
+      setIsLoading(true);
+      
       let userId = user?.id;
-
-      // Création de compte si nécessaire
+      
+      // Si l'utilisateur veut créer un compte et n'est pas connecté
       if (data.createAccount && !user) {
-        const { error: signupError, data: authData } = await supabase.auth.signUp({
+        const { error, data: authData } = await supabase.auth.signUp({
           email: data.email,
           password: data.password as string,
           options: {
             data: {
               first_name: data.firstName,
-              last_name: data.lastName,
+              last_name: data.lastName
             }
           }
         });
-
-        if (signupError) throw signupError;
-        userId = authData?.user?.id;
-        console.log("[Checkout] Compte utilisateur créé :", userId);
-
-        // Migration du panier au nouveau compte
+        
+        if (error) throw error;
+        
+        userId = authData.user?.id;
+        
+        // Migrate the cart to the new user
         if (userId && cartToken) {
           await migrateCartToUser(userId, cartToken);
           toast({
-            title: "Panier migré",
+            title: "Panier migrée",
             description: "Votre panier a été associé à votre nouveau compte",
           });
         }
-
+        
         // Crée ou met à jour le profil utilisateur
         if (userId) {
           const { error: profileError } = await supabase
@@ -147,41 +150,35 @@ const Checkout = () => {
               postal_code: data.postalCode,
               country: data.country
             });
-
-          if (profileError) console.error("[Checkout] Erreur lors de la création du profil:", profileError);
+            
+          if (profileError) console.error("Erreur lors de la création du profil:", profileError);
         }
       }
-
-      // Création de la commande
+      
+      // Crée la commande
       const order = await createOrder(data, items, cartToken, userId);
-      if (!order || !order.id) throw new Error("La commande n'a pas pu être créée.");
-
-      // Toast/Log et redirection
+      
+      // Redirige vers la page de paiement avec les données nécessaires
+      navigate('/payment', { 
+        state: { 
+          checkoutData: data, 
+          orderId: order.id,
+          orderTotal: total
+        } 
+      });
+      
+      // Vide le panier après la création de la commande
+      await clearCart();
+      
       toast({
         title: "Commande créée avec succès!",
         description: "Vous allez être redirigé vers la page de paiement.",
       });
-      console.log("[Checkout] Commande créée :", order.id);
-
-      // Redirection vers la page de paiement avec les données nécessaires
-      navigate('/payment', {
-        state: {
-          checkoutData: data,
-          orderId: order.id,
-          orderTotal: total
-        }
-      });
-
-      // Clear du panier APRÈS redirection (pour éviter perte panier si la navigation échoue)
-      setTimeout(() => {
-        clearCart();
-      }, 500);
-
     } catch (error) {
-      console.error("[Checkout] Erreur lors de la création de la commande:", error);
+      console.error("Erreur lors de la création de la commande:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la création de la commande.",
+        description: "Une erreur est survenue lors de la création de la commande",
         variant: "destructive",
       });
     } finally {
@@ -192,16 +189,16 @@ const Checkout = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-
+      
       <div className="container mx-auto px-4 py-8 mt-16 flex-grow">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold mb-6">Finaliser votre commande</h1>
-
+          
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <div className="glass-card p-6">
                 <h2 className="text-xl font-semibold mb-4">Informations de livraison</h2>
-
+                
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -218,7 +215,7 @@ const Checkout = () => {
                           </FormItem>
                         )}
                       />
-
+                      
                       <FormField
                         control={form.control}
                         name="lastName"
@@ -233,7 +230,7 @@ const Checkout = () => {
                         )}
                       />
                     </div>
-
+                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -248,7 +245,7 @@ const Checkout = () => {
                           </FormItem>
                         )}
                       />
-
+                      
                       <FormField
                         control={form.control}
                         name="phone"
@@ -263,7 +260,7 @@ const Checkout = () => {
                         )}
                       />
                     </div>
-
+                    
                     <FormField
                       control={form.control}
                       name="address"
@@ -277,7 +274,7 @@ const Checkout = () => {
                         </FormItem>
                       )}
                     />
-
+                    
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       <FormField
                         control={form.control}
@@ -292,7 +289,7 @@ const Checkout = () => {
                           </FormItem>
                         )}
                       />
-
+                      
                       <FormField
                         control={form.control}
                         name="postalCode"
@@ -306,7 +303,7 @@ const Checkout = () => {
                           </FormItem>
                         )}
                       />
-
+                      
                       <FormField
                         control={form.control}
                         name="country"
@@ -321,7 +318,7 @@ const Checkout = () => {
                         )}
                       />
                     </div>
-
+                    
                     <FormField
                       control={form.control}
                       name="deliveryNotes"
@@ -329,16 +326,16 @@ const Checkout = () => {
                         <FormItem>
                           <FormLabel>Instructions de livraison (optionnel)</FormLabel>
                           <FormControl>
-                            <Textarea
-                              placeholder="Instructions spéciales pour la livraison..."
-                              {...field}
+                            <Textarea 
+                              placeholder="Instructions spéciales pour la livraison..." 
+                              {...field} 
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-
+                    
                     {!user && (
                       <div className="space-y-4">
                         <FormField
@@ -361,7 +358,7 @@ const Checkout = () => {
                             </FormItem>
                           )}
                         />
-
+                        
                         {createAccount && (
                           <FormField
                             control={form.control}
@@ -370,10 +367,10 @@ const Checkout = () => {
                               <FormItem>
                                 <FormLabel>Mot de passe</FormLabel>
                                 <FormControl>
-                                  <Input
-                                    placeholder="Mot de passe"
-                                    type="password"
-                                    {...field}
+                                  <Input 
+                                    placeholder="Mot de passe" 
+                                    type="password" 
+                                    {...field} 
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -383,11 +380,11 @@ const Checkout = () => {
                         )}
                       </div>
                     )}
-
+                    
                     <div className="pt-4">
-                      <Button
-                        type="submit"
-                        className="w-full"
+                      <Button 
+                        type="submit" 
+                        className="w-full" 
                         size="lg"
                         disabled={isLoading}
                       >
@@ -398,18 +395,18 @@ const Checkout = () => {
                 </Form>
               </div>
             </div>
-
+            
             <div className="lg:col-span-1">
               <div className="glass-card p-6">
                 <h2 className="text-lg font-semibold mb-4">Résumé de la commande</h2>
-
+                
                 <div className="space-y-4">
                   {items.map((item) => (
                     <div key={item.productId} className="flex gap-3">
                       <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
-                        <img
-                          src={item.image_url}
-                          alt={item.name}
+                        <img 
+                          src={item.image_url} 
+                          alt={item.name} 
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -427,7 +424,7 @@ const Checkout = () => {
                     </div>
                   ))}
                 </div>
-
+                
                 <div className="mt-6 pt-4 border-t border-gray-100/10 space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Sous-total</span>
@@ -447,7 +444,7 @@ const Checkout = () => {
           </div>
         </div>
       </div>
-
+      
       <Footer />
     </div>
   );

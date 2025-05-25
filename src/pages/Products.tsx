@@ -17,8 +17,6 @@ const Products = () => {
   
   const { data: products, isLoading, error, refetch } = useProductsQuery();
 
-  console.log('[Products Page] State:', { products: products?.length, isLoading, error });
-
   // Extract categories from products if they exist
   const categories = products && products.length 
     ? [...new Set(products.map((product: Product) => product.category))] 
@@ -41,87 +39,6 @@ const Products = () => {
     console.log('[Products Page] Retrying fetch...');
     refetch();
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
-        <main className="flex-grow pb-20">
-          <section className="relative py-20 bg-gradient-to-b from-winshirt-blue/20 to-transparent">
-            <div className="container mx-auto px-4">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center">
-                Notre <span className="text-gradient">Collection</span>
-              </h1>
-              <p className="text-lg text-white/70 text-center max-w-2xl mx-auto">
-                Découvrez nos vêtements personnalisables de qualité avec une chance de gagner des prix exceptionnels
-              </p>
-            </div>
-          </section>
-          
-          <section className="py-8">
-            <div className="container mx-auto px-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {Array(8).fill(0).map((_, index) => (
-                  <div key={index} className="flex flex-col space-y-3">
-                    <Skeleton className="h-64 w-full rounded-md" />
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
-        <main className="flex-grow pb-20">
-          <section className="relative py-20 bg-gradient-to-b from-winshirt-blue/20 to-transparent">
-            <div className="container mx-auto px-4">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center">
-                Notre <span className="text-gradient">Collection</span>
-              </h1>
-            </div>
-          </section>
-          
-          <div className="text-center py-20">
-            <p className="text-lg mb-4 text-red-500">Une erreur est survenue lors du chargement des produits.</p>
-            <p className="text-sm text-white/60 mb-4">{error.message}</p>
-            <Button onClick={handleRetry}>Réessayer</Button>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (!products || products.length === 0) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
-        <main className="flex-grow pb-20">
-          <section className="relative py-20 bg-gradient-to-b from-winshirt-blue/20 to-transparent">
-            <div className="container mx-auto px-4">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center">
-                Notre <span className="text-gradient">Collection</span>
-              </h1>
-              <p className="text-lg text-white/70 text-center max-w-2xl mx-auto">
-                Aucun produit disponible pour le moment. Revenez bientôt !
-              </p>
-            </div>
-          </section>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -181,7 +98,23 @@ const Products = () => {
         {/* Products Grid */}
         <section className="py-8">
           <div className="container mx-auto px-4">
-            {filteredProducts?.length === 0 ? (
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {Array(8).fill(0).map((_, index) => (
+                  <div key={index} className="flex flex-col space-y-3">
+                    <Skeleton className="h-64 w-full rounded-md" />
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ))}
+              </div>
+            ) : error ? (
+              <div className="text-center py-20">
+                <p className="text-lg mb-4">Une erreur est survenue lors du chargement des produits.</p>
+                <Button onClick={handleRetry}>Réessayer</Button>
+              </div>
+            ) : filteredProducts?.length === 0 ? (
               <div className="text-center py-20">
                 <p>Aucun produit ne correspond à votre recherche.</p>
               </div>
