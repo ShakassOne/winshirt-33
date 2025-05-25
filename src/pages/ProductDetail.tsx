@@ -13,12 +13,11 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import CustomizationAccordion from '@/components/product/CustomizationAccordion';
-import MockupCustomizer from '@/components/product/MockupCustomizer';
 import AIImageGenerator from '@/components/product/AIImageGenerator';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { addToCart } = useCart();
+  const { addItem } = useCart();
   const { toast } = useToast();
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState<string>('');
@@ -76,17 +75,19 @@ const ProductDetail = () => {
     }
 
     const cartItem = {
-      id: product.id,
+      productId: product.id,
       name: product.name,
       price: product.price,
-      image: product.image_url,
+      image_url: product.image_url,
       quantity: 1,
       color: selectedColor,
       size: selectedSize,
-      customization: Object.keys(customizations).length > 0 ? customizations : undefined
+      customization: Object.keys(customizations).length > 0 ? customizations : undefined,
+      available_colors: product.available_colors,
+      available_sizes: product.available_sizes
     };
 
-    addToCart(cartItem);
+    addItem(cartItem);
     toast({
       title: "Produit ajouté",
       description: `${product.name} a été ajouté à votre panier`,
@@ -175,22 +176,23 @@ const ProductDetail = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Product Image & Customizer */}
             <div className="space-y-6">
-              {product.is_customizable && mockup ? (
-                <MockupCustomizer
-                  mockup={mockup}
-                  selectedColor={selectedColor}
-                  selectedDesign={selectedDesign}
-                  onCustomizationChange={handleCustomizationChange}
+              <div className="relative aspect-square overflow-hidden rounded-lg">
+                <img 
+                  src={product.image_url} 
+                  alt={product.name}
+                  className="w-full h-full object-cover" 
                 />
-              ) : (
-                <div className="relative aspect-square overflow-hidden rounded-lg">
-                  <img 
-                    src={product.image_url} 
-                    alt={product.name}
-                    className="w-full h-full object-cover" 
-                  />
-                </div>
-              )}
+                {/* Design overlay if selected */}
+                {selectedDesign && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <img
+                      src={selectedDesign.image_url}
+                      alt={selectedDesign.name}
+                      className="max-w-[60%] max-h-[60%] object-contain"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Product Info */}
