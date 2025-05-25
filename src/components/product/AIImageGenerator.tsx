@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,7 @@ import {
   DialogTitle,
   DialogDescription
 } from '@/components/ui/dialog';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface AIImageGeneratorProps {
@@ -42,13 +43,12 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
         body: JSON.stringify({ prompt })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Erreur HTTP ${response.status}`);
-      }
-
       const data = await response.json();
       
+      if (!response.ok) {
+        throw new Error(data.error || `Erreur HTTP ${response.status}`);
+      }
+
       if (!data?.imageUrl) {
         throw new Error('Aucune image reçue dans la réponse');
       }
@@ -105,9 +105,15 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
               id="prompt"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Décrivez l'image que vous voulez générer..."
+              placeholder="Ex: un logo moderne minimaliste, un paysage coloré..."
               className="w-full"
             />
+            <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <AlertTriangle className="h-4 w-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-yellow-200">
+                Évitez les descriptions controversées, violentes ou inappropriées. L'IA peut refuser certaines demandes.
+              </p>
+            </div>
           </div>
           
           <Button
