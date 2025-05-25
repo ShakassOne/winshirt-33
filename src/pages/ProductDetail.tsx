@@ -19,7 +19,8 @@ import {
   Upload,
   UsersRound,
   Target,
-  PenTool
+  PenTool,
+  Sparkles
 } from 'lucide-react';
 import { fetchProductById, fetchAllLotteries, fetchAllDesigns, fetchMockupById } from '@/services/api.service';
 import { Design, Lottery, CartItem } from '@/types/supabase.types';
@@ -80,6 +81,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import AIImageGenerator from '@/components/product/AIImageGenerator';
 
 // Définition des polices Google Fonts
 const googleFonts = [
@@ -182,7 +184,7 @@ const googleFonts = [
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const isMobile = useIsMobile();
-  const { addItem } = useCart(); // Import useCart hook
+  const { addItem } = useCart();
   const productCanvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [quantity, setQuantity] = useState(1);
@@ -191,6 +193,7 @@ const ProductDetail = () => {
   const [selectedTab, setSelectedTab] = useState('design');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [designDialogOpen, setDesignDialogOpen] = useState(false);
+  const [aiGeneratorOpen, setAiGeneratorOpen] = useState(false);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [pageScrollLocked, setPageScrollLocked] = useState(false);
   const [currentViewSide, setCurrentViewSide] = useState<'front' | 'back'>('front');
@@ -758,6 +761,24 @@ const ProductDetail = () => {
     }
   };
 
+  const handleAIImageGenerated = (imageUrl: string, imageName: string) => {
+    const design: Design = {
+      id: `ai-${Date.now()}`,
+      name: imageName,
+      image_url: imageUrl,
+      category: 'ai-generated',
+      is_active: true
+    };
+    
+    if (currentViewSide === 'front') {
+      setSelectedDesignFront(design);
+      setActiveDesignSide('front');
+    } else {
+      setSelectedDesignBack(design);
+      setActiveDesignSide('back');
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -995,6 +1016,14 @@ const ProductDetail = () => {
                                   (selectedDesignFront ? 'Changer' : 'Sélectionner') : 
                                   (selectedDesignBack ? 'Changer' : 'Sélectionner')
                                 }
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => setAiGeneratorOpen(true)}
+                                className="bg-gradient-to-r from-winshirt-purple/20 to-winshirt-blue/20"
+                              >
+                                <Sparkles className="h-4 w-4 mr-2" />
+                                Générer IA
                               </Button>
                               <Button
                                 variant="outline"
@@ -1348,6 +1377,13 @@ const ProductDetail = () => {
                   </div>
                 </DialogContent>
               </Dialog>
+
+              {/* AI Image Generator Dialog */}
+              <AIImageGenerator
+                isOpen={aiGeneratorOpen}
+                onClose={() => setAiGeneratorOpen(false)}
+                onImageGenerated={handleAIImageGenerated}
+              />
 
               {/* Loteries disponibles */}
               {product.tickets_offered > 0 && activeLotteries.length > 0 && (
