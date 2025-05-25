@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { createClient } from '@supabase/supabase-js';
 
 interface AIImageGeneratorProps {
   isOpen: boolean;
@@ -23,6 +24,11 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
 
+  const supabase = createClient(
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_ANON_KEY
+  );
+
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       toast.error('Veuillez entrer une description pour générer une image');
@@ -31,24 +37,32 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
 
     setIsGenerating(true);
     try {
-      const response = await fetch('/api/generate-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt }),
+      console.log('Appel de la fonction edge generate-image avec prompt:', prompt);
+      
+      const { data, error } = await supabase.functions.invoke('generate-image', {
+        body: { prompt }
       });
 
-      if (!response.ok) {
-        throw new Error('Erreur lors de la génération de l\'image');
+      if (error) {
+        console.error('Erreur Supabase:', error);
+        throw new Error(error.message || 'Erreur lors de la génération de l\'image');
       }
 
-      const data = await response.json();
+      if (data?.error) {
+        console.error('Erreur dans la réponse:', data.error);
+        throw new Error(data.error);
+      }
+
+      if (!data?.image) {
+        throw new Error('Aucune image reçue dans la réponse');
+      }
+
+      console.log('Image générée avec succès:', data.image);
       setGeneratedImage(data.image);
       toast.success('Image générée avec succès !');
     } catch (error) {
       console.error('Erreur:', error);
-      toast.error('Erreur lors de la génération de l\'image');
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de la génération de l\'image');
     } finally {
       setIsGenerating(false);
     }
