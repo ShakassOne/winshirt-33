@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AIImageGeneratorProps {
   isOpen: boolean;
@@ -23,11 +23,6 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-
-  const supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_ANON_KEY
-  );
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
