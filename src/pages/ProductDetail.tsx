@@ -1076,9 +1076,9 @@ const ProductDetail = () => {
                                 <Label>Échelle ({Math.round(getCurrentDesignTransform().scale * 100)}%)</Label>
                                 <Slider
                                   value={[getCurrentDesignTransform().scale * 100]}
-                                  min={50}
+                                  min={10}
                                   max={200}
-                                  step={5}
+                                  step={10}
                                   onValueChange={(value) =>
                                     handleDesignTransformChange('scale', value[0] / 100)
                                   }
