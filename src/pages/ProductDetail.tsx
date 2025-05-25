@@ -82,6 +82,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import AIImageGenerator from '@/components/product/AIImageGenerator';
+import { RemoveFlatBackground } from '@/components/product/RemoveFlatBackground';
 
 // Définition des polices Google Fonts
 const googleFonts = [
@@ -779,6 +780,65 @@ const ProductDetail = () => {
     }
   };
 
+  // New state for background removal
+  const [isRemovingBackground, setIsRemovingBackground] = useState(false);
+
+  // New function to handle background removal
+  const handleBackgroundRemoval = async (cleanedImageUrl: string) => {
+    try {
+      setIsRemovingBackground(true);
+      
+      // Convert base64 to blob
+      const response = await fetch(cleanedImageUrl);
+      const blob = await response.blob();
+      
+      // Upload to Supabase Storage
+      const fileName = `bg-removed-${Date.now()}.png`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('ai-images')
+        .upload(fileName, blob);
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        toast.error('Erreur lors de la sauvegarde de l\'image');
+        return;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('ai-images')
+        .getPublicUrl(fileName);
+
+      if (!urlData.publicUrl) {
+        toast.error('Erreur lors de la récupération de l\'URL');
+        return;
+      }
+
+      // Create new design with cleaned image
+      const cleanedDesign = {
+        ...getCurrentDesign()!,
+        id: `cleaned-${Date.now()}`,
+        name: `${getCurrentDesign()!.name} (sans fond)`,
+        image_url: urlData.publicUrl,
+        category: 'ai-generated-cleaned'
+      };
+
+      // Replace the current design
+      if (currentViewSide === 'front') {
+        setSelectedDesignFront(cleanedDesign);
+      } else {
+        setSelectedDesignBack(cleanedDesign);
+      }
+
+      toast.success('Fond supprimé avec succès !');
+    } catch (error) {
+      console.error('Error removing background:', error);
+      toast.error('Erreur lors de la suppression du fond');
+    } finally {
+      setIsRemovingBackground(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -851,6 +911,53 @@ const ProductDetail = () => {
                   onTouchStart={(e) => handleMouseDown(e, true)}
                 >
                   {getCurrentTextContent()}
+                </div>
+              )}
+
+              {/* Bouton de suppression de fond pour images IA */}
+              {customizationMode && getCurrentDesign() && 
+               (getCurrentDesign()!.category === 'ai-generated' || getCurrentDesign()!.category === 'ai-generated-cleaned') && (
+                <div className="absolute bottom-4 right-4 z-30">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      if (getCurrentDesign()) {
+                        // Use the RemoveFlatBackground component
+                        const dummyComponent = React.createElement(RemoveFlatBackground, {
+                          imageUrl: getCurrentDesign()!.image_url,
+                          tolerance: 35,
+                          onReady: handleBackgroundRemoval
+                        });
+                      }
+                    }}
+                    disabled={isRemovingBackground}
+                    className="bg-black/60 hover:bg-black/80 text-white border-white/20"
+                    title="Supprimer le fond de l'image"
+                  >
+                    {isRemovingBackground ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                        Traitement...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Supprimer fond
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Hidden RemoveFlatBackground component for processing */}
+                  {getCurrentDesign() && (
+                    <div style={{ display: 'none' }}>
+                      <RemoveFlatBackground
+                        imageUrl={getCurrentDesign()!.image_url}
+                        tolerance={35}
+                        onReady={handleBackgroundRemoval}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -981,7 +1088,7 @@ const ProductDetail = () => {
                                 >
                                   {selectedMockupColor === color && (
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                      <Check className="text-white h-4 w-4 drop-shadow-[0_0_2px_rgba(0,0,0,0.5)]" />
+                                      <Check className="text-white h-4 w-4 drop-shadow-[0_0,2px_rgba(0,0,0,0.5)]" />
                                     </div>
                                   )}
                                 </div>
