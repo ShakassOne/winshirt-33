@@ -1,24 +1,20 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { fetchAllLotteries } from '@/services/api.service';
-import { useQuery } from '@tanstack/react-query';
 import LotteryCard from '@/components/ui/LotteryCard';
 import { Button } from '@/components/ui/button';
-import { Search, Calendar, Users, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
+import { Search, Calendar, Users, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useLotteriesQuery } from '@/hooks/useLotteriesQuery';
 
 const Lotteries = () => {
   const [filterActive, setFilterActive] = useState<boolean | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
-  const { data: lotteries, isLoading, error } = useQuery({
-    queryKey: ['lotteries'],
-    queryFn: fetchAllLotteries,
-  });
+  const { data: lotteries, isLoading, error } = useLotteriesQuery();
+
+  console.log('[Lotteries Page] State:', { lotteries: lotteries?.length, isLoading, error });
 
   const filteredLotteries = lotteries?.filter(lottery => {
     const matchesStatus = filterActive === null ? true : lottery.is_active === filterActive;
@@ -47,6 +43,58 @@ const Lotteries = () => {
     
     return { total, days, hours, minutes, seconds };
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-grow mt-16 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-winshirt-purple mx-auto mb-4"></div>
+            <p className="text-lg">Chargement des loteries...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-grow mt-16 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-lg mb-4 text-red-500">Erreur lors du chargement des loteries</p>
+            <p className="text-sm text-white/60 mb-4">{error.message}</p>
+            <Button onClick={() => window.location.reload()}>Réessayer</Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!lotteries || lotteries.length === 0) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-grow mt-16">
+          <section className="relative py-20 bg-gradient-to-b from-winshirt-purple/20 to-transparent">
+            <div className="container mx-auto px-4">
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center">
+                Nos <span className="text-gradient">Loteries</span>
+              </h1>
+              <p className="text-lg text-white/70 text-center max-w-2xl mx-auto">
+                Aucune loterie disponible pour le moment. Revenez bientôt !
+              </p>
+            </div>
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -216,19 +264,11 @@ const Lotteries = () => {
             </div>
           </div>
         </section>
-
+        
         {/* Lotteries Grid */}
         <section className="py-8">
           <div className="container mx-auto px-4">
-            {isLoading ? (
-              <div className="text-center py-20">
-                <p>Chargement des loteries...</p>
-              </div>
-            ) : error ? (
-              <div className="text-center py-20">
-                <p>Une erreur est survenue lors du chargement des loteries.</p>
-              </div>
-            ) : filteredLotteries?.length === 0 ? (
+            {filteredLotteries?.length === 0 ? (
               <div className="text-center py-20">
                 <p>Aucune loterie ne correspond à votre recherche.</p>
               </div>
