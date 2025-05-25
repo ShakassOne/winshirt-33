@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/dialog';
 import { Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 interface AIImageGeneratorProps {
   isOpen: boolean;
@@ -34,14 +33,20 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
     try {
       console.log('Appel de la fonction edge generate-image avec prompt:', prompt);
       
-      const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: { prompt }
+      const response = await fetch('https://gyprtpqgeukcoxbfxtfg.supabase.co/functions/v1/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5cHJ0cHFnZXVrY294YmZ4dGZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NzY1MDQsImV4cCI6MjA2MjM1MjUwNH0.sm-yWpvwGPvEFHdKomFsE-YKF0BHzry2W4Gma2hpY_4`
+        },
+        body: JSON.stringify({ prompt })
       });
 
-      if (error) {
-        console.error('Erreur Supabase:', error);
-        throw new Error(error.message || 'Erreur lors de la génération de l\'image');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
 
       if (data?.error) {
         console.error('Erreur dans la réponse:', data.error);
