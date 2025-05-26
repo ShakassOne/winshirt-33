@@ -6,7 +6,6 @@ export const useProductsQuery = () => {
   return useOptimizedQuery({
     queryKey: ['products'],
     queryFn: fetchAllProducts,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: false,
+    // Remove conflicting options - use defaults from useOptimizedQuery
   });
 };

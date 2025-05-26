@@ -35,16 +35,16 @@ const ScrollToTop = () => {
   return null;
 };
 
-// Create a client for React Query with optimized settings
+// Create a client for React Query with unified and optimized settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 2,
-      staleTime: 2 * 60 * 1000, // 2 minutes
-      gcTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+      staleTime: 2 * 60 * 1000, // 2 minutes - unified with useOptimizedQuery
+      gcTime: 5 * 60 * 1000, // 5 minutes - unified with useOptimizedQuery
       refetchOnWindowFocus: false,
-      refetchOnReconnect: true,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      refetchOnReconnect: false, // Unified with useOptimizedQuery
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     },
     mutations: {
       retry: 1,
@@ -52,8 +52,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Add logging for debugging
-console.log('[App] Query client configured with optimized settings');
+console.log('[App] Query client configured with unified optimized settings');
 
 // App component that will be rendered in main.tsx
 // Note: AuthProvider is already wrapping this component in main.tsx

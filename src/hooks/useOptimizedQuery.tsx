@@ -16,11 +16,12 @@ export function useOptimizedQuery<T>({
   return useQuery({
     queryKey: [...queryKey, ...dependencies],
     queryFn: queryFn,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    // Use consistent settings with App.tsx queryClient
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false, // Désactiver les tentatives pour éviter les boucles
+    retry: 1, // Reduced from false to 1 for better error handling
     ...options,
   });
 }

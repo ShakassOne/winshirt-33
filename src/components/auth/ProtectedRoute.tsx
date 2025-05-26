@@ -1,6 +1,6 @@
 
 import React, { memo } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
@@ -10,8 +10,9 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = memo(({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
   
-  console.log('[ProtectedRoute] Auth state:', { isAuthenticated, isLoading });
+  console.log('[ProtectedRoute] Auth state:', { isAuthenticated, isLoading, path: location.pathname });
   
   // Wait for auth status to be verified
   if (isLoading) {
@@ -22,10 +23,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = memo(({ children }) => {
     );
   }
   
-  // Redirect to login if not authenticated
+  // Redirect to login if not authenticated, preserving the intended destination
   if (!isAuthenticated) {
     console.log('[ProtectedRoute] User not authenticated, redirecting to /auth');
-    return <Navigate to="/auth" replace />;
+    return <Navigate to={`/auth?from=${encodeURIComponent(location.pathname)}`} replace />;
   }
   
   // Show protected content if authenticated

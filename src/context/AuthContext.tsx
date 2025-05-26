@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -27,51 +27,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const isInitializedRef = useRef(false);
 
   const handleAuthChange = useCallback((event: string, currentSession: Session | null) => {
     console.log(`[Auth] Auth state changed: ${event}`, currentSession ? 'User logged in' : 'User logged out');
     setSession(currentSession);
     setUser(currentSession?.user ?? null);
+    
+    // Mark as initialized after first auth event
+    if (!isInitializedRef.current) {
+      isInitializedRef.current = true;
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    let mounted = true;
+    console.log('[Auth] Setting up auth...');
+    
+    let cleanup: (() => void) | undefined;
     
     const setupAuth = async () => {
-      console.log('[Auth] Setting up auth...');
-      setIsLoading(true);
-      
       try {
         // Set up auth state listener first
         const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+        cleanup = () => subscription.unsubscribe();
         
         // Then check for existing session
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         
-        if (mounted) {
-          console.log('[Auth] Initial session check completed', initialSession ? 'User found' : 'No user');
-          setSession(initialSession);
-          setUser(initialSession?.user ?? null);
-        }
+        console.log('[Auth] Initial session check completed', initialSession ? 'User found' : 'No user');
         
-        return () => {
-          console.log('[Auth] Cleaning up auth subscription');
-          subscription.unsubscribe();
-        };
+        // Update state and mark as initialized
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+        isInitializedRef.current = true;
+        setIsLoading(false);
+        
       } catch (error) {
         console.error('[Auth] Error setting up auth:', error);
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 
-    const cleanup = setupAuth();
+    setupAuth();
     
     return () => {
-      mounted = false;
-      cleanup.then(cleanupFn => cleanupFn?.());
+      console.log('[Auth] Cleaning up auth subscription');
+      cleanup?.();
     };
   }, [handleAuthChange]);
 
@@ -108,17 +110,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await supabase.auth.signOut();
       console.log('[Auth] Sign out completed');
+      
+      // Clear state
+      setUser(null);
+      setSession(null);
+      
+      // Only clear auth-related localStorage items to avoid breaking other features
+      const authKeys = ['sb-gyprtpqgeukcoxbfxtfg-auth-token'];
+      authKeys.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          console.warn('[Auth] Could not clear localStorage key:', key);
+        }
+      });
+      
     } catch (error) {
       console.error("[Auth] Sign out error:", error);
+      // Still clear local state even if API call fails
+      setUser(null);
+      setSession(null);
     }
-    
-    // Clear state regardless of API result
-    setUser(null);
-    setSession(null);
-    
-    // Clear local storage
-    localStorage.clear();
-    sessionStorage.clear();
   }, []);
 
   const value = {

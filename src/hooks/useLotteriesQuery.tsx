@@ -14,7 +14,6 @@ export const useLotteriesQuery = () => {
         return [];
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: false,
+    // Remove conflicting options - use defaults from useOptimizedQuery
   });
 };
