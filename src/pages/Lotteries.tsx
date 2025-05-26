@@ -8,11 +8,11 @@ import LotteryCard from '@/components/ui/LotteryCard';
 import { Button } from '@/components/ui/button';
 import { Search, Calendar, Users, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
-import { Badge } from '@/components/ui/badge';
 
 const Lotteries = () => {
   const [filterActive, setFilterActive] = useState<boolean | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeHeroIndex, setActiveHeroIndex] = useState(0);
   
   console.log('[Lotteries Page] Rendering with filterActive:', filterActive, 'search:', searchTerm);
   
@@ -27,20 +27,30 @@ const Lotteries = () => {
     return matchesStatus && matchesSearch;
   });
   
-  // Get featured lottery for the hero section
-  const featuredLottery = lotteries?.find(lottery => lottery.is_featured);
+  // Get featured lotteries for hero
+  const featuredLotteries = lotteries?.filter(lottery => lottery.is_featured) || [];
+  const currentFeaturedLottery = featuredLotteries[activeHeroIndex];
 
-  // Get remaining featured lotteries
-  const otherFeaturedLotteries = lotteries?.filter(lottery => 
-    lottery.is_featured && lottery.id !== featuredLottery?.id
-  ) || [];
-
+  console.log('[Lotteries Page] Featured lotteries:', featuredLotteries.length);
   console.log('[Lotteries Page] Filtered lotteries count:', filteredLotteries?.length || 0);
 
   // Function to retry fetching lotteries
   const handleRetry = () => {
     console.log('[Lotteries Page] Retrying fetch...');
     refetch();
+  };
+
+  // Navigation functions for hero carousel
+  const goToPrev = () => {
+    setActiveHeroIndex(prev => 
+      prev === 0 ? featuredLotteries.length - 1 : prev - 1
+    );
+  };
+
+  const goToNext = () => {
+    setActiveHeroIndex(prev => 
+      (prev + 1) % featuredLotteries.length
+    );
   };
 
   // Format dates for countdown timer
@@ -54,36 +64,47 @@ const Lotteries = () => {
     return { total, days, hours, minutes, seconds };
   };
 
+  // Auto-advance hero carousel
+  React.useEffect(() => {
+    if (featuredLotteries.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setActiveHeroIndex(prev => (prev + 1) % featuredLotteries.length);
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [featuredLotteries.length]);
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       
-      <main className="flex-grow mt-16 pb-20">
-        {/* Hero Lottery Showcase - Full Screen */}
-        {featuredLottery && (
+      <main className="flex-grow pb-20" style={{ marginTop: '4rem' }}>
+        {/* Hero Lottery Showcase - Only if featured lottery exists */}
+        {currentFeaturedLottery && (
           <section className="relative h-screen w-full overflow-hidden">
             <img 
-              src={featuredLottery.image_url} 
-              alt={featuredLottery.title} 
+              src={currentFeaturedLottery.image_url} 
+              alt={currentFeaturedLottery.title} 
               className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80" />
             
             <div className="absolute inset-0 flex flex-col justify-end pb-16 px-6 md:px-12 lg:container lg:mx-auto">
               <div className="max-w-3xl">
-                <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4">{featuredLottery.title}</h1>
+                <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4">{currentFeaturedLottery.title}</h1>
                 <p className="text-xl md:text-2xl font-semibold text-white/90 mb-6">
                   {new Intl.NumberFormat('fr-FR', { 
                     style: 'currency', 
                     currency: 'EUR',
                     maximumFractionDigits: 0
-                  }).format(featuredLottery.value)}
+                  }).format(currentFeaturedLottery.value)}
                 </p>
                 
                 <div className="flex flex-wrap gap-6 mb-6 text-white/80">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-winshirt-blue" />
-                    <span>Tirage le {new Date(featuredLottery.draw_date).toLocaleDateString('fr-FR', {
+                    <span>Tirage le {new Date(currentFeaturedLottery.draw_date).toLocaleDateString('fr-FR', {
                       day: 'numeric',
                       month: 'long',
                       year: 'numeric'
@@ -91,23 +112,23 @@ const Lotteries = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <Users className="w-5 h-5 text-winshirt-purple" />
-                    <span>{featuredLottery.participants} participants</span>
+                    <span>{currentFeaturedLottery.participants} participants</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-5 h-5 text-winshirt-blue" />
-                    <span>Objectif: {featuredLottery.goal} participants</span>
+                    <span>Objectif: {currentFeaturedLottery.goal} participants</span>
                   </div>
                 </div>
                 
                 {/* Countdown Timer */}
-                {featuredLottery.is_active && (
+                {currentFeaturedLottery.is_active && (
                   <div className="flex flex-wrap gap-4 mb-8">
                     <p className="w-full text-white/70 text-sm mb-1 flex items-center">
                       <Clock className="h-4 w-4 mr-1" />
                       Temps restant avant le tirage:
                     </p>
                     {(() => {
-                      const time = getTimeRemaining(new Date(featuredLottery.draw_date));
+                      const time = getTimeRemaining(new Date(currentFeaturedLottery.draw_date));
                       return (
                         <div className="flex gap-4">
                           <div className="text-center bg-black/40 backdrop-blur-sm px-4 py-3 rounded-lg">
@@ -135,19 +156,19 @@ const Lotteries = () => {
                 <div className="mb-8">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-white/70">Progression</span>
-                    <span className="font-semibold">{featuredLottery.participants}/{featuredLottery.goal}</span>
+                    <span className="font-semibold">{currentFeaturedLottery.participants}/{currentFeaturedLottery.goal}</span>
                   </div>
                   <div className="h-2 bg-white/20 rounded-full">
                     <div 
                       className="h-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue rounded-full" 
-                      style={{ width: `${Math.min((featuredLottery.participants / featuredLottery.goal) * 100, 100)}%` }}
+                      style={{ width: `${Math.min((currentFeaturedLottery.participants / currentFeaturedLottery.goal) * 100, 100)}%` }}
                     />
                   </div>
                 </div>
                 
                 <div className="flex flex-wrap gap-4">
                   <Button className="bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90 text-lg px-8 py-6" size="lg" asChild>
-                    <Link to={`/lotteries/${featuredLottery.id}`}>
+                    <Link to={`/lotteries/${currentFeaturedLottery.id}`}>
                       Participer
                     </Link>
                   </Button>
@@ -155,12 +176,39 @@ const Lotteries = () => {
               </div>
             </div>
             
+            {/* Navigation Arrows */}
+            {featuredLotteries.length > 1 && (
+              <>
+                <Button 
+                  onClick={goToPrev}
+                  variant="outline" 
+                  size="icon" 
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 rounded-full w-12 h-12 bg-black/30 backdrop-blur-sm border-white/10 hover:bg-black/50 z-10"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </Button>
+                <Button 
+                  onClick={goToNext}
+                  variant="outline" 
+                  size="icon" 
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 rounded-full w-12 h-12 bg-black/30 backdrop-blur-sm border-white/10 hover:bg-black/50 z-10"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </Button>
+              </>
+            )}
+            
             {/* Indicators */}
-            {otherFeaturedLotteries.length > 0 && (
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-                <div className="w-2 h-2 rounded-full bg-winshirt-purple" />
-                {otherFeaturedLotteries.map((_, idx) => (
-                  <div key={idx} className="w-2 h-2 rounded-full bg-white/30" />
+            {featuredLotteries.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
+                {featuredLotteries.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveHeroIndex(idx)}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      idx === activeHeroIndex ? "bg-winshirt-purple w-6" : "bg-white/30"
+                    }`}
+                  />
                 ))}
               </div>
             )}
@@ -168,7 +216,7 @@ const Lotteries = () => {
         )}
 
         {/* Hero Section - Only show if no featured lottery */}
-        {!featuredLottery && (
+        {!currentFeaturedLottery && (
           <section className="relative py-20 bg-gradient-to-b from-winshirt-purple/20 to-transparent">
             <div className="container mx-auto px-4">
               <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center">

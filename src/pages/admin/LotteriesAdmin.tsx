@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
@@ -14,9 +13,11 @@ import LotteryForm from '@/components/admin/LotteryForm';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
 import { Lottery } from '@/types/supabase.types';
+import { useAdminMutations } from '@/hooks/useAdminMutations';
 
 const LotteriesAdmin = () => {
   const { toast: toastHook } = useToast();
+  const { invalidateData } = useAdminMutations();
   const [searchTerm, setSearchTerm] = useState('');
   const [showLotteryForm, setShowLotteryForm] = useState(false);
   const [editingLottery, setEditingLottery] = useState<Lottery | null>(null);
@@ -25,9 +26,13 @@ const LotteriesAdmin = () => {
   const { data: lotteries, isLoading, error, refetch } = useQuery({
     queryKey: ['adminLotteries'],
     queryFn: fetchAllLotteries,
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 2 * 60 * 1000, // 2 minutes
   });
 
   const handleCreateSuccess = () => {
+    console.log('[LotteriesAdmin] Lottery created, invalidating cache');
+    invalidateData('lotteries');
     refetch();
     toastHook({
       title: "Loterie créée",
@@ -44,6 +49,8 @@ const LotteriesAdmin = () => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette loterie ?')) {
       try {
         await deleteLottery(lotteryId);
+        console.log('[LotteriesAdmin] Lottery deleted, invalidating cache');
+        invalidateData('lotteries');
         toast.success('Loterie supprimée avec succès');
         refetch();
       } catch (error) {

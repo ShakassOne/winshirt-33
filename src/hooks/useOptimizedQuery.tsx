@@ -11,17 +11,23 @@ export function useOptimizedQuery<T>({
   queryKey,
   queryFn,
   dependencies = [],
+  staleTime = 1 * 60 * 1000, // Default 1 minute
+  gcTime = 3 * 60 * 1000, // Default 3 minutes
   ...options
 }: OptimizedQueryOptions<T>) {
   return useQuery({
     queryKey: [...queryKey, ...dependencies],
     queryFn: queryFn,
-    // Use consistent settings with App.tsx queryClient
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime,
+    gcTime,
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    retry: 1, // Reduced from false to 1 for better error handling
+    refetchOnReconnect: true, // Important for connectivity issues
+    retry: (failureCount, error) => {
+      // Only retry network errors, not 404s etc
+      if (failureCount >= 2) return false;
+      return true;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
     ...options,
   });
 }
