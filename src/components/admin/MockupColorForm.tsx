@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UploadButton } from "@/components/ui/upload-button";
+import { UploadImageField } from "@/components/ui/upload-image-field";
 import { Trash } from "lucide-react";
 
 interface MockupColor {
@@ -79,39 +79,25 @@ const MockupColorForm = ({
       </div>
       
       <div className="mt-4">
-        <Label htmlFor={`front-image-${index}`}>Image recto</Label>
-        <div className="flex mt-1 gap-2">
-          <Input
-            id={`front-image-${index}`}
-            value={color.front_image_url}
-            onChange={(e) => handleChange('front_image_url', e.target.value)}
-            placeholder="URL de l'image recto"
-            className="flex-1"
-          />
-          <UploadButton
-            onUpload={(url) => handleChange('front_image_url', url)}
-            variant="outline"
-            targetFolder="mockups"
-          />
-        </div>
+        <UploadImageField
+          label="Image recto"
+          value={color.front_image_url}
+          onChange={(value) => handleChange('front_image_url', value)}
+          placeholder="URL de l'image recto"
+          id={`front-image-${index}`}
+          showPreview={false}
+        />
       </div>
       
       <div className="mt-4">
-        <Label htmlFor={`back-image-${index}`}>Image verso</Label>
-        <div className="flex mt-1 gap-2">
-          <Input
-            id={`back-image-${index}`}
-            value={color.back_image_url}
-            onChange={(e) => handleChange('back_image_url', e.target.value)}
-            placeholder="URL de l'image verso"
-            className="flex-1"
-          />
-          <UploadButton
-            onUpload={(url) => handleChange('back_image_url', url)}
-            variant="outline"
-            targetFolder="mockups"
-          />
-        </div>
+        <UploadImageField
+          label="Image verso"
+          value={color.back_image_url}
+          onChange={(value) => handleChange('back_image_url', value)}
+          placeholder="URL de l'image verso"
+          id={`back-image-${index}`}
+          showPreview={false}
+        />
       </div>
     </div>
   );

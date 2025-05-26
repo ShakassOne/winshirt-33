@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { X, Plus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Product } from '@/types/supabase.types';
+import { UploadImageField } from '@/components/ui/upload-image-field';
 
 const productSchema = z.object({
   name: z.string().min(3, { message: 'Le nom doit contenir au moins 3 caractères' }),
@@ -67,7 +67,6 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormPro
     defaultValues
   });
 
-  // Initialize form with product data if editing
   useEffect(() => {
     if (initialData) {
       setValue('name', initialData.name);
@@ -92,9 +91,9 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormPro
   const isCustomizable = watch('is_customizable');
   const ticketsOffered = watch('tickets_offered');
   const selectedCategory = watch('category');
+  const imageUrl = watch('image_url');
 
   useEffect(() => {
-    // Filtrer les mockups par catégorie sélectionnée
     if (selectedCategory && mockups && mockups.length > 0) {
       const matchingMockups = mockups.filter(mockup => mockup.category === selectedCategory);
       if (matchingMockups.length === 1) {
@@ -129,7 +128,6 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormPro
     try {
       setIsSubmitting(true);
       
-      // Nous nous assurons que toutes les propriétés requises sont définies
       const productData = {
         name: data.name,
         description: data.description,
@@ -243,11 +241,14 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormPro
                 {errors.price && <p className="text-red-500 text-sm">{errors.price.message}</p>}
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="image_url">URL de l'image</Label>
-                <Input id="image_url" {...register('image_url')} />
-                {errors.image_url && <p className="text-red-500 text-sm">{errors.image_url.message}</p>}
-              </div>
+              <UploadImageField
+                label="Image du produit"
+                value={imageUrl}
+                onChange={(value) => setValue('image_url', value)}
+                placeholder="URL de l'image"
+                id="product-image"
+              />
+              {errors.image_url && <p className="text-red-500 text-sm">{errors.image_url.message}</p>}
               
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">

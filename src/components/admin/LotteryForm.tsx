@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,6 +20,7 @@ import {
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Lottery } from '@/types/supabase.types';
+import { UploadImageField } from '@/components/ui/upload-image-field';
 
 const lotterySchema = z.object({
   title: z.string().min(3, { message: 'Le titre doit contenir au moins 3 caractères' }),
@@ -61,7 +61,6 @@ const LotteryForm = ({ isOpen, onClose, onSuccess, initialData }: LotteryFormPro
     defaultValues
   });
 
-  // Initialize form with initialData if provided
   useEffect(() => {
     if (initialData) {
       setValue('title', initialData.title);
@@ -76,6 +75,7 @@ const LotteryForm = ({ isOpen, onClose, onSuccess, initialData }: LotteryFormPro
   }, [initialData, setValue]);
 
   const isFeatured = watch('is_featured');
+  const imageUrl = watch('image_url');
 
   const onSubmit = async (data: LotteryFormValues) => {
     if (!drawDate) {
@@ -90,7 +90,6 @@ const LotteryForm = ({ isOpen, onClose, onSuccess, initialData }: LotteryFormPro
     try {
       setIsSubmitting(true);
       
-      // Nous nous assurons que toutes les propriétés requises sont définies
       const lotteryData = {
         title: data.title,
         description: data.description,
@@ -162,11 +161,15 @@ const LotteryForm = ({ isOpen, onClose, onSuccess, initialData }: LotteryFormPro
               {errors.description && <p className="text-red-500 text-sm">{errors.description.message}</p>}
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="image_url">URL de l'image</Label>
-              <Input id="image_url" {...register('image_url')} />
-              {errors.image_url && <p className="text-red-500 text-sm">{errors.image_url.message}</p>}
-            </div>
+            <UploadImageField
+              label="Image de la loterie"
+              value={imageUrl}
+              onChange={(value) => setValue('image_url', value)}
+              placeholder="URL de l'image"
+              id="lottery-image"
+            />
+            {errors.image_url && <p className="text-red-500 text-sm">{errors.image_url.message}</p>}
+            
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">

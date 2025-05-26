@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,6 +19,7 @@ import { Design } from '@/types/supabase.types';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { UploadImageField } from '@/components/ui/upload-image-field';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -49,8 +49,6 @@ const DesignForm: React.FC<DesignFormProps> = ({
   onDelete,
   isSubmitting,
 }) => {
-  const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image_url || null);
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -60,12 +58,6 @@ const DesignForm: React.FC<DesignFormProps> = ({
       is_active: initialData?.is_active !== false, // default to true if undefined
     },
   });
-
-  const handleImagePreview = (url: string) => {
-    if (url) {
-      setImagePreview(url);
-    }
-  };
 
   const designCategories = [
     { value: "sports", label: "Sports" },
@@ -127,21 +119,13 @@ const DesignForm: React.FC<DesignFormProps> = ({
               name="image_url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>URL de l'image</FormLabel>
                   <FormControl>
-                    <Input
+                    <UploadImageField
+                      label="Image du design"
+                      value={field.value}
+                      onChange={field.onChange}
                       placeholder="URL de l'image"
-                      {...field}
-                      onBlur={(e) => {
-                        field.onBlur();
-                        handleImagePreview(e.target.value);
-                      }}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        if (e.target.value === '') {
-                          setImagePreview(null);
-                        }
-                      }}
+                      id="design-image"
                     />
                   </FormControl>
                   <FormMessage />
@@ -172,21 +156,7 @@ const DesignForm: React.FC<DesignFormProps> = ({
           </div>
 
           <div>
-            {imagePreview ? (
-              <div className="rounded-lg overflow-hidden border border-dashed p-2 flex flex-col items-center">
-                <p className="text-sm mb-2 text-muted-foreground">Aperçu de l'image</p>
-                <img
-                  src={imagePreview}
-                  alt="Aperçu du design"
-                  className="max-h-80 object-contain rounded"
-                />
-              </div>
-            ) : (
-              <div className="rounded-lg overflow-hidden border border-dashed p-8 flex flex-col items-center justify-center h-64">
-                <p className="text-sm text-muted-foreground">Aucun aperçu disponible</p>
-                <p className="text-xs text-muted-foreground mt-1">Entrez une URL d'image pour voir l'aperçu</p>
-              </div>
-            )}
+            {/* Preview is now handled by UploadImageField */}
           </div>
         </div>
 

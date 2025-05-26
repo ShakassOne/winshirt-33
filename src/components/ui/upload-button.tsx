@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { uploadFileToStorage } from '@/services/api.service';
+import { uploadFileToStorage, uploadToExternalScript } from '@/services/api.service';
 
 interface UploadButtonProps {
   onUpload: (url: string) => void;
@@ -12,6 +12,7 @@ interface UploadButtonProps {
   targetFolder?: string;
   acceptTypes?: string;
   className?: string;
+  useExternalUpload?: boolean;
 }
 
 export function UploadButton({
@@ -20,7 +21,8 @@ export function UploadButton({
   size = 'default',
   targetFolder = 'uploads',
   acceptTypes = 'image/*',
-  className
+  className,
+  useExternalUpload = true
 }: UploadButtonProps) {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -38,12 +40,23 @@ export function UploadButton({
 
     setIsUploading(true);
     try {
-      const url = await uploadFileToStorage(file, targetFolder);
+      let url: string;
+      
+      if (useExternalUpload) {
+        url = await uploadToExternalScript(file);
+        toast({
+          title: "Téléchargement réussi",
+          description: "Le fichier a été téléchargé vers le serveur externe",
+        });
+      } else {
+        url = await uploadFileToStorage(file, targetFolder);
+        toast({
+          title: "Téléchargement réussi",
+          description: "Le fichier a été téléchargé avec succès",
+        });
+      }
+      
       onUpload(url);
-      toast({
-        title: "Téléchargement réussi",
-        description: "Le fichier a été téléchargé avec succès",
-      });
     } catch (error) {
       toast({
         title: "Erreur de téléchargement",

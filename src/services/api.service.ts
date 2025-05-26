@@ -677,3 +677,42 @@ export const updateAIImageUsage = async (id: string, usageCount: number) => {
     throw error;
   }
 };
+
+// External image upload to PHP script
+export const uploadToExternalScript = async (file: File): Promise<string> => {
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    console.log('[API] Uploading to external script:', file.name);
+    
+    const response = await fetch('https://winshirt.fr/upload-visuel.php', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.url) {
+      throw new Error('No URL returned from external script');
+    }
+
+    console.log('[API] External upload successful:', data.url);
+    return data.url;
+  } catch (error) {
+    console.error('Error uploading to external script:', error);
+    
+    // Fallback to Supabase if external script fails
+    console.log('[API] Falling back to Supabase storage...');
+    try {
+      return await uploadFileToStorage(file);
+    } catch (fallbackError) {
+      console.error('Fallback upload also failed:', fallbackError);
+      throw new Error('Both external and fallback uploads failed');
+    }
+  }
+};
