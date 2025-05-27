@@ -17,6 +17,8 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancelled from "./pages/PaymentCancelled";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
+import Orders from "./pages/Orders";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/admin/Dashboard";
 import ProductsAdmin from "./pages/admin/ProductsAdmin";
@@ -56,6 +58,24 @@ function App() {
                   <Route path="/payment-cancelled" element={<PaymentCancelled />} />
                   <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
                   <Route path="/auth" element={<Auth />} />
+                  
+                  {/* User account routes */}
+                  <Route 
+                    path="/profile" 
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/orders" 
+                    element={
+                      <ProtectedRoute>
+                        <Orders />
+                      </ProtectedRoute>
+                    } 
+                  />
                   
                   {/* Admin routes */}
                   <Route 
