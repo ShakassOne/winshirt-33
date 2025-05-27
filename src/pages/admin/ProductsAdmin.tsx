@@ -159,9 +159,9 @@ const ProductsAdmin = React.memo(() => {
         <section className="py-6">
           <div className="container mx-auto px-4">
             <GlassCard className="p-0 overflow-hidden">
-              {isLoading ? (
+              {productsLoading ? (
                 <div className="p-10 text-center">Chargement des produits...</div>
-              ) : error ? (
+              ) : productsError ? (
                 <div className="p-10 text-center">Erreur lors du chargement des produits</div>
               ) : filteredProducts?.length === 0 ? (
                 <div className="p-10 text-center">Aucun produit ne correspond à votre recherche</div>
