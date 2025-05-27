@@ -17,8 +17,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancelled from "./pages/PaymentCancelled";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import Auth from "./pages/Auth";
-import Profile from "./pages/Profile";
-import Orders from "./pages/Orders";
+import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/admin/Dashboard";
 import ProductsAdmin from "./pages/admin/ProductsAdmin";
@@ -59,12 +58,22 @@ function App() {
                   <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
                   <Route path="/auth" element={<Auth />} />
                   
-                  {/* User account routes */}
+                  {/* User account route - unified */}
+                  <Route 
+                    path="/account" 
+                    element={
+                      <ProtectedRoute>
+                        <Account />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  {/* Legacy routes redirected to account */}
                   <Route 
                     path="/profile" 
                     element={
                       <ProtectedRoute>
-                        <Profile />
+                        <Account />
                       </ProtectedRoute>
                     } 
                   />
@@ -72,7 +81,7 @@ function App() {
                     path="/orders" 
                     element={
                       <ProtectedRoute>
-                        <Orders />
+                        <Account />
                       </ProtectedRoute>
                     } 
                   />
@@ -81,7 +90,7 @@ function App() {
                   <Route 
                     path="/admin" 
                     element={
-                      <ProtectedRoute requireAdmin>
+                      <ProtectedRoute requireAdmin={true}>
                         <Dashboard />
                       </ProtectedRoute>
                     } 
@@ -89,7 +98,7 @@ function App() {
                   <Route 
                     path="/admin/products" 
                     element={
-                      <ProtectedRoute requireAdmin>
+                      <ProtectedRoute requireAdmin={true}>
                         <ProductsAdmin />
                       </ProtectedRoute>
                     } 
@@ -97,7 +106,7 @@ function App() {
                   <Route 
                     path="/admin/lotteries" 
                     element={
-                      <ProtectedRoute requireAdmin>
+                      <ProtectedRoute requireAdmin={true}>
                         <LotteriesAdmin />
                       </ProtectedRoute>
                     } 
@@ -105,7 +114,7 @@ function App() {
                   <Route 
                     path="/admin/designs" 
                     element={
-                      <ProtectedRoute requireAdmin>
+                      <ProtectedRoute requireAdmin={true}>
                         <DesignsAdmin />
                       </ProtectedRoute>
                     } 
@@ -113,7 +122,7 @@ function App() {
                   <Route 
                     path="/admin/mockups" 
                     element={
-                      <ProtectedRoute requireAdmin>
+                      <ProtectedRoute requireAdmin={true}>
                         <MockupsAdmin />
                       </ProtectedRoute>
                     } 
@@ -121,7 +130,7 @@ function App() {
                   <Route 
                     path="/admin/orders" 
                     element={
-                      <ProtectedRoute requireAdmin>
+                      <ProtectedRoute requireAdmin={true}>
                         <OrdersAdmin />
                       </ProtectedRoute>
                     } 
@@ -129,7 +138,7 @@ function App() {
                   <Route 
                     path="/admin/users" 
                     element={
-                      <ProtectedRoute requireAdmin>
+                      <ProtectedRoute requireAdmin={true}>
                         <UsersAdmin />
                       </ProtectedRoute>
                     } 
@@ -137,7 +146,7 @@ function App() {
                   <Route 
                     path="/admin/theme" 
                     element={
-                      <ProtectedRoute requireAdmin>
+                      <ProtectedRoute requireAdmin={true}>
                         <ThemeSettings />
                       </ProtectedRoute>
                     } 
@@ -145,7 +154,7 @@ function App() {
                   <Route 
                     path="/admin/social" 
                     element={
-                      <ProtectedRoute requireAdmin>
+                      <ProtectedRoute requireAdmin={true}>
                         <SocialNetworksAdmin />
                       </ProtectedRoute>
                     } 
