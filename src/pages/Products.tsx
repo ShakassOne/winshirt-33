@@ -1,40 +1,46 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import { useOptimizedProductsQuery } from '@/hooks/useOptimizedProductsQuery';
 import ProductCard from '@/components/ui/ProductCard';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
-import { Product } from '@/types/supabase.types';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useProductsQuery } from '@/hooks/useProductsQuery';
+import { Search, Filter } from 'lucide-react';
 
 const Products = () => {
-  const [category, setCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
-  console.log('[Products Page] Rendering with category:', category, 'search:', searchTerm);
+  console.log('[Products Page] Rendering with search:', searchTerm, 'category:', selectedCategory);
   
-  const { data: products, isLoading, error, refetch } = useProductsQuery();
+  const { data: products, isLoading, error, refetch } = useOptimizedProductsQuery();
 
-  // Extract categories from products if they exist
-  const categories = products && products.length 
-    ? [...new Set(products.map((product: Product) => product.category))] 
-    : [];
+  // Mémoriser les produits filtrés pour éviter les recalculs
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    
+    return products.filter(product => {
+      const matchesSearch = searchTerm 
+        ? product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+          product.description.toLowerCase().includes(searchTerm.toLowerCase())
+        : true;
+      
+      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+      
+      return matchesSearch && matchesCategory && product.is_active;
+    });
+  }, [products, searchTerm, selectedCategory]);
 
-  // Filter products based on search term and category
-  const filteredProducts = products?.filter((product: Product) => {
-    const matchesCategory = !category || product.category === category;
-    const matchesSearch = !searchTerm 
-      ? true 
-      : product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesCategory && matchesSearch;
-  });
+  // Mémoriser les catégories uniques
+  const categories = useMemo(() => {
+    if (!products) return [];
+    const uniqueCategories = [...new Set(products.map(product => product.category))];
+    return uniqueCategories.filter(Boolean);
+  }, [products]);
 
   console.log('[Products Page] Filtered products count:', filteredProducts?.length || 0);
 
-  // Function to retry fetching products
   const handleRetry = () => {
     console.log('[Products Page] Retrying fetch...');
     refetch();
@@ -44,15 +50,15 @@ const Products = () => {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       
-      <main className="flex-grow pb-20">
+      <main className="flex-grow">
         {/* Hero Section */}
-        <section className="relative py-20 bg-gradient-to-b from-winshirt-blue/20 to-transparent">
+        <section className="relative py-20 bg-gradient-to-b from-winshirt-purple/20 to-transparent">
           <div className="container mx-auto px-4">
             <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center">
-              Notre <span className="text-gradient">Collection</span>
+              Nos <span className="text-gradient">Produits</span>
             </h1>
             <p className="text-lg text-white/70 text-center max-w-2xl mx-auto">
-              Découvrez nos vêtements personnalisables de qualité avec une chance de gagner des prix exceptionnels
+              Découvrez notre collection de produits personnalisables et uniques
             </p>
           </div>
         </section>
@@ -65,29 +71,30 @@ const Products = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50" size={18} />
                 <input
                   type="text"
-                  placeholder="Rechercher..."
+                  placeholder="Rechercher un produit..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 rounded-md bg-white/5 backdrop-blur-sm border border-white/10 focus:outline-none focus:ring-2 focus:ring-winshirt-purple/50"
                 />
               </div>
               
-              <div className="flex flex-wrap gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
-                  variant={category === null ? "default" : "outline"}
-                  onClick={() => setCategory(null)}
-                  className={category === null ? "bg-gradient-purple" : ""}
+                  variant={selectedCategory === 'all' ? "default" : "outline"}
+                  onClick={() => setSelectedCategory('all')}
+                  className={selectedCategory === 'all' ? "bg-gradient-to-r from-winshirt-purple to-winshirt-blue" : ""}
                 >
+                  <Filter className="w-4 h-4 mr-2" />
                   Tous
                 </Button>
-                {categories.map((cat: string) => (
+                {categories.map(category => (
                   <Button
-                    key={cat}
-                    variant={category === cat ? "default" : "outline"}
-                    onClick={() => setCategory(cat)}
-                    className={category === cat ? "bg-gradient-purple" : ""}
+                    key={category}
+                    variant={selectedCategory === category ? "default" : "outline"}
+                    onClick={() => setSelectedCategory(category)}
+                    className={selectedCategory === category ? "bg-gradient-to-r from-winshirt-purple to-winshirt-blue" : ""}
                   >
-                    {cat}
+                    {category}
                   </Button>
                 ))}
               </div>
@@ -96,18 +103,11 @@ const Products = () => {
         </section>
 
         {/* Products Grid */}
-        <section className="py-8">
+        <section className="py-8 pb-20">
           <div className="container mx-auto px-4">
             {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {Array(8).fill(0).map((_, index) => (
-                  <div key={index} className="flex flex-col space-y-3">
-                    <Skeleton className="h-64 w-full rounded-md" />
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                ))}
+              <div className="text-center py-20">
+                <p>Chargement des produits...</p>
               </div>
             ) : error ? (
               <div className="text-center py-20">
@@ -119,19 +119,16 @@ const Products = () => {
                 <p>Aucun produit ne correspond à votre recherche.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredProducts?.map((product: Product) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredProducts?.map(product => (
                   <ProductCard 
                     key={product.id}
                     id={product.id}
                     name={product.name}
-                    category={product.category}
                     price={product.price}
                     image={product.image_url}
-                    rating={5}
+                    category={product.category}
                     isCustomizable={product.is_customizable}
-                    tickets={product.tickets_offered}
-                    color={product.color || undefined}
                   />
                 ))}
               </div>

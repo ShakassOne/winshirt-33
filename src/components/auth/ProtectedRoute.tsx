@@ -1,7 +1,7 @@
 
 import React, { memo } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useOptimizedAuth } from "@/context/OptimizedAuthContext";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface ProtectedRouteProps {
@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = memo(({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useOptimizedAuth();
   const location = useLocation();
   
   console.log('[ProtectedRoute] Auth state:', { isAuthenticated, isLoading, path: location.pathname });

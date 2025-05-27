@@ -1,13 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { useLotteriesQuery } from '@/hooks/useLotteriesQuery';
+import { useOptimizedLotteriesQuery } from '@/hooks/useOptimizedLotteriesQuery';
 import LotteryCard from '@/components/ui/LotteryCard';
 import { Button } from '@/components/ui/button';
 import { Search, Calendar, Users, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 
 const Lotteries = () => {
   const [filterActive, setFilterActive] = useState<boolean | null>(null);
@@ -16,19 +15,27 @@ const Lotteries = () => {
   
   console.log('[Lotteries Page] Rendering with filterActive:', filterActive, 'search:', searchTerm);
   
-  const { data: lotteries, isLoading, error, refetch } = useLotteriesQuery();
+  const { data: lotteries, isLoading, error, refetch } = useOptimizedLotteriesQuery();
 
-  const filteredLotteries = lotteries?.filter(lottery => {
-    const matchesStatus = filterActive === null ? true : lottery.is_active === filterActive;
-    const matchesSearch = searchTerm 
-      ? lottery.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        lottery.description.toLowerCase().includes(searchTerm.toLowerCase())
-      : true;
-    return matchesStatus && matchesSearch;
-  });
+  // Mémoriser les loteries filtrées pour éviter les recalculs
+  const filteredLotteries = useMemo(() => {
+    if (!lotteries) return [];
+    
+    return lotteries.filter(lottery => {
+      const matchesStatus = filterActive === null ? true : lottery.is_active === filterActive;
+      const matchesSearch = searchTerm 
+        ? lottery.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+          lottery.description.toLowerCase().includes(searchTerm.toLowerCase())
+        : true;
+      return matchesStatus && matchesSearch;
+    });
+  }, [lotteries, filterActive, searchTerm]);
   
-  // Get featured lotteries for hero
-  const featuredLotteries = lotteries?.filter(lottery => lottery.is_featured) || [];
+  // Mémoriser les loteries en vedette
+  const featuredLotteries = useMemo(() => {
+    return lotteries?.filter(lottery => lottery.is_featured) || [];
+  }, [lotteries]);
+  
   const currentFeaturedLottery = featuredLotteries[activeHeroIndex];
 
   console.log('[Lotteries Page] Featured lotteries:', featuredLotteries.length);

@@ -2,7 +2,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
@@ -24,6 +24,8 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { useScrollReset } from "./hooks/useScrollReset";
 import { ThemeProvider } from "./components/theme-provider";
 import { CartProvider } from "./context/CartContext";
+import { OptimizedAuthProvider } from "./context/OptimizedAuthContext";
+import { createOptimizedQueryClient } from "./lib/queryClient";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
@@ -35,105 +37,91 @@ const ScrollToTop = () => {
   return null;
 };
 
-// Create a client for React Query with unified and optimized settings
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      staleTime: 2 * 60 * 1000, // 2 minutes - unified with useOptimizedQuery
-      gcTime: 5 * 60 * 1000, // 5 minutes - unified with useOptimizedQuery
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false, // Unified with useOptimizedQuery
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
-    },
-    mutations: {
-      retry: 1,
-    },
-  },
-});
+// Créer le client de requête optimisé
+const queryClient = createOptimizedQueryClient();
 
-console.log('[App] Query client configured with unified optimized settings');
+console.log('[App] Optimized query client and auth context configured');
 
 // App component that will be rendered in main.tsx
-// Note: AuthProvider is already wrapping this component in main.tsx
 const App = () => {
-  console.log('[App] Rendering application');
+  console.log('[App] Rendering optimized application');
   
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
-        <CartProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <ScrollToTop />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/products/:id" element={<ProductDetail />} />
-                <Route path="/lotteries" element={<Lotteries />} />
-                <Route path="/lotteries/:id" element={<LotteryDetail />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/payment" element={<Payment />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-                
-                {/* Routes Admin protégées */}
-                <Route path="/admin" element={
-                  <ProtectedRoute>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/products" element={
-                  <ProtectedRoute>
-                    <ProductsAdmin />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/lotteries" element={
-                  <ProtectedRoute>
-                    <LotteriesAdmin />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/mockups" element={
-                  <ProtectedRoute>
-                    <MockupsAdmin />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/designs" element={
-                  <ProtectedRoute>
-                    <DesignsAdmin />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/orders" element={
-                  <ProtectedRoute>
-                    <OrdersAdmin />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/users" element={
-                  <ProtectedRoute>
-                    <UsersAdmin />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/theme" element={
-                  <ProtectedRoute>
-                    <ThemeSettings />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/social-networks" element={
-                  <ProtectedRoute>
-                    <SocialNetworksAdmin />
-                  </ProtectedRoute>
-                } />
-                
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </CartProvider>
-      </ThemeProvider>
+      <OptimizedAuthProvider>
+        <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
+          <CartProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <ScrollToTop />
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/products/:id" element={<ProductDetail />} />
+                  <Route path="/lotteries" element={<Lotteries />} />
+                  <Route path="/lotteries/:id" element={<LotteryDetail />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/payment" element={<Payment />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+                  
+                  {/* Routes Admin protégées */}
+                  <Route path="/admin" element={
+                    <ProtectedRoute>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/products" element={
+                    <ProtectedRoute>
+                      <ProductsAdmin />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/lotteries" element={
+                    <ProtectedRoute>
+                      <LotteriesAdmin />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/mockups" element={
+                    <ProtectedRoute>
+                      <MockupsAdmin />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/designs" element={
+                    <ProtectedRoute>
+                      <DesignsAdmin />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/orders" element={
+                    <ProtectedRoute>
+                      <OrdersAdmin />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/users" element={
+                    <ProtectedRoute>
+                      <UsersAdmin />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/theme" element={
+                    <ProtectedRoute>
+                      <ThemeSettings />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/social-networks" element={
+                    <ProtectedRoute>
+                      <SocialNetworksAdmin />
+                    </ProtectedRoute>
+                  } />
+                  
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </CartProvider>
+        </ThemeProvider>
+      </OptimizedAuthProvider>
     </QueryClientProvider>
   );
 };

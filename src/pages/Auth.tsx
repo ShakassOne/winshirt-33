@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/components/ui/use-toast';
-import { useAuth } from '@/context/AuthContext';
+import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
 import { Loader2 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -16,7 +16,7 @@ import Footer from '@/components/layout/Footer';
 const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { signIn, signUp, isAuthenticated, isLoading: authLoading } = useOptimizedAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Form state
