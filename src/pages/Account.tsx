@@ -240,6 +240,9 @@ const Account = () => {
     }
   };
 
+  // Check if user is admin
+  const isAdmin = user?.email === 'alan@shakass.com' || user?.email === 'admin@example.com';
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -267,7 +270,7 @@ const Account = () => {
               </div>
             </div>
             
-            {user?.email === 'admin@example.com' && (
+            {isAdmin && (
               <Button 
                 onClick={handleRetroprocessLotteries}
                 disabled={isProcessing}
