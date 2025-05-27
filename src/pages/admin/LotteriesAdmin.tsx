@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -13,11 +14,11 @@ import LotteryForm from '@/components/admin/LotteryForm';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
 import { Lottery } from '@/types/supabase.types';
-import { useAdminMutations } from '@/hooks/useAdminMutations';
+import { useSimpleMutations } from '@/hooks/useSimpleMutations';
 
-const LotteriesAdmin = () => {
+const LotteriesAdmin = React.memo(() => {
   const { toast: toastHook } = useToast();
-  const { invalidateData } = useAdminMutations();
+  const { invalidateLotteries } = useSimpleMutations();
   const [searchTerm, setSearchTerm] = useState('');
   const [showLotteryForm, setShowLotteryForm] = useState(false);
   const [editingLottery, setEditingLottery] = useState<Lottery | null>(null);
@@ -26,61 +27,65 @@ const LotteriesAdmin = () => {
   const { data: lotteries, isLoading, error, refetch } = useQuery({
     queryKey: ['adminLotteries'],
     queryFn: fetchAllLotteries,
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
-  const handleCreateSuccess = () => {
+  const handleCreateSuccess = React.useCallback(() => {
     console.log('[LotteriesAdmin] Lottery created, invalidating cache');
-    invalidateData('lotteries');
+    invalidateLotteries();
     refetch();
     toastHook({
       title: "Loterie créée",
       description: "La nouvelle loterie a été ajoutée avec succès",
     });
-  };
+  }, [invalidateLotteries, refetch, toastHook]);
 
-  const handleEditLottery = (lottery: Lottery) => {
+  const handleEditLottery = React.useCallback((lottery: Lottery) => {
     setEditingLottery(lottery);
     setShowLotteryForm(true);
-  };
+  }, []);
 
-  const handleDeleteLottery = async (lotteryId: string) => {
+  const handleDeleteLottery = React.useCallback(async (lotteryId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette loterie ?')) {
       try {
         await deleteLottery(lotteryId);
         console.log('[LotteriesAdmin] Lottery deleted, invalidating cache');
-        invalidateData('lotteries');
+        invalidateLotteries();
         toast.success('Loterie supprimée avec succès');
         refetch();
       } catch (error) {
         toast.error('Erreur lors de la suppression de la loterie');
       }
     }
-  };
+  }, [invalidateLotteries, refetch]);
 
-  const filteredLotteries = lotteries?.filter((lottery: Lottery) => {
-    const matchesSearch = 
-      lottery.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lottery.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (!activeFilter) return matchesSearch;
-    
-    if (activeFilter === 'active') return matchesSearch && lottery.is_active;
-    if (activeFilter === 'inactive') return matchesSearch && !lottery.is_active;
-    if (activeFilter === 'featured') return matchesSearch && lottery.is_featured;
-    
-    return matchesSearch;
-  });
+  const filteredLotteries = useMemo(() => {
+    return lotteries?.filter((lottery: Lottery) => {
+      const matchesSearch = 
+        lottery.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lottery.description.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      if (!activeFilter) return matchesSearch;
+      
+      if (activeFilter === 'active') return matchesSearch && lottery.is_active;
+      if (activeFilter === 'inactive') return matchesSearch && !lottery.is_active;
+      if (activeFilter === 'featured') return matchesSearch && lottery.is_featured;
+      
+      return matchesSearch;
+    });
+  }, [lotteries, searchTerm, activeFilter]);
 
-  const formatDate = (dateString: string) => {
+  const formatDate = React.useCallback((dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('fr-FR', { 
       day: 'numeric', 
       month: 'short', 
       year: 'numeric' 
     }).format(date);
-  };
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -286,6 +291,8 @@ const LotteriesAdmin = () => {
       )}
     </div>
   );
-};
+});
+
+LotteriesAdmin.displayName = 'LotteriesAdmin';
 
 export default LotteriesAdmin;

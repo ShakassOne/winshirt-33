@@ -1,21 +1,13 @@
 
-import { useStableQuery } from './useStableQuery';
+import { useSimpleQuery } from './useSimpleQuery';
 import { fetchAllLotteries } from '@/services/api.service';
 
 export const useOptimizedLotteriesQuery = () => {
-  return useStableQuery({
+  return useSimpleQuery({
     queryKey: ['lotteries-optimized'],
-    queryFn: async () => {
-      try {
-        const lotteries = await fetchAllLotteries();
-        return lotteries || [];
-      } catch (error) {
-        console.error("[Optimized Lotteries Query] Failed to fetch lotteries:", error);
-        throw error;
-      }
-    },
-    debugName: 'LotteriesQuery',
-    staleTime: 3 * 60 * 1000, // 3 minutes pour les loteries
-    gcTime: 5 * 60 * 1000, // 5 minutes en cache
+    queryFn: fetchAllLotteries,
+    debugName: 'LotteriesOptimized',
+    staleTime: 3 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 };

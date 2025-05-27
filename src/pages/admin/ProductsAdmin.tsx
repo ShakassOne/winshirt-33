@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -14,9 +14,11 @@ import ProductForm from '@/components/admin/ProductForm';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
 import { Product } from '@/types/supabase.types';
+import { useSimpleMutations } from '@/hooks/useSimpleMutations';
 
-const ProductsAdmin = () => {
+const ProductsAdmin = React.memo(() => {
   const { toast: toastHook } = useToast();
+  const { invalidateProducts } = useSimpleMutations();
   const [searchTerm, setSearchTerm] = useState('');
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -25,45 +27,55 @@ const ProductsAdmin = () => {
   const { data: products, isLoading, error, refetch } = useQuery({
     queryKey: ['adminProducts'],
     queryFn: fetchAllProducts,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
-  const handleCreateSuccess = () => {
+  const handleCreateSuccess = React.useCallback(() => {
+    invalidateProducts();
     refetch();
     toastHook({
       title: "Produit créé",
       description: "Le nouveau produit a été ajouté avec succès",
     });
-  };
+  }, [invalidateProducts, refetch, toastHook]);
 
-  const handleEditProduct = (product: Product) => {
+  const handleEditProduct = React.useCallback((product: Product) => {
     setEditingProduct(product);
     setShowProductForm(true);
-  };
+  }, []);
 
-  const handleDeleteProduct = async (productId: string) => {
+  const handleDeleteProduct = React.useCallback(async (productId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
       try {
         await deleteProduct(productId);
         toast.success('Produit supprimé avec succès');
+        invalidateProducts();
         refetch();
       } catch (error) {
         toast.error('Erreur lors de la suppression du produit');
       }
     }
-  };
+  }, [invalidateProducts, refetch]);
 
-  const filteredProducts = products?.filter((product: Product) => {
-    const matchesSearch = 
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = !activeCategory || product.category === activeCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
+  const filteredProducts = useMemo(() => {
+    return products?.filter((product: Product) => {
+      const matchesSearch = 
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesCategory = !activeCategory || product.category === activeCategory;
+      
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchTerm, activeCategory]);
 
-  const categories = products ? [...new Set(products.map((product: Product) => product.category))] : [];
+  const categories = useMemo(() => {
+    return products ? [...new Set(products.map((product: Product) => product.category))] : [];
+  }, [products]);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -250,6 +262,8 @@ const ProductsAdmin = () => {
       )}
     </div>
   );
-};
+});
+
+ProductsAdmin.displayName = 'ProductsAdmin';
 
 export default ProductsAdmin;
