@@ -2,60 +2,47 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
-import Lotteries from "./pages/Lotteries";
 import ProductDetail from "./pages/ProductDetail";
+import Lotteries from "./pages/Lotteries";
 import LotteryDetail from "./pages/LotteryDetail";
-import NotFound from "./pages/NotFound";
-import Auth from "./pages/Auth";
-import AdminDashboard from "./pages/admin/Dashboard";
-import ProductsAdmin from "./pages/admin/ProductsAdmin";
-import LotteriesAdmin from "./pages/admin/LotteriesAdmin";
-import MockupsAdmin from "./pages/admin/MockupsAdmin";
-import DesignsAdmin from "./pages/admin/DesignsAdmin";
-import ThemeSettings from "./pages/admin/ThemeSettings";
-import OrdersAdmin from "./pages/admin/OrdersAdmin";
-import UsersAdmin from "./pages/admin/UsersAdmin";
-import SocialNetworksAdmin from "./pages/admin/SocialNetworksAdmin";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
-import { useScrollReset } from "./hooks/useScrollReset";
-import { ThemeProvider } from "./components/theme-provider";
-import { CartProvider } from "./context/CartContext";
-import { OptimizedAuthProvider } from "./context/OptimizedAuthContext";
-import { createOptimizedQueryClient } from "./lib/queryClient";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancelled from "./pages/PaymentCancelled";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import Auth from "./pages/Auth";
+import NotFound from "./pages/NotFound";
+import Dashboard from "./pages/admin/Dashboard";
+import ProductsAdmin from "./pages/admin/ProductsAdmin";
+import LotteriesAdmin from "./pages/admin/LotteriesAdmin";
+import DesignsAdmin from "./pages/admin/DesignsAdmin";
+import MockupsAdmin from "./pages/admin/MockupsAdmin";
+import OrdersAdmin from "./pages/admin/OrdersAdmin";
+import UsersAdmin from "./pages/admin/UsersAdmin";
+import ThemeSettings from "./pages/admin/ThemeSettings";
+import SocialNetworksAdmin from "./pages/admin/SocialNetworksAdmin";
+import { OptimizedAuthProvider } from "./context/OptimizedAuthContext";
+import { CartProvider } from "./context/CartContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
-// ScrollToTop component to reset scroll position
-const ScrollToTop = () => {
-  useScrollReset();
-  return null;
-};
+const queryClient = new QueryClient();
 
-// Créer le client de requête optimisé
-const queryClient = createOptimizedQueryClient();
-
-console.log('[App] Optimized query client and auth context configured');
-
-// App component that will be rendered in main.tsx
-const App = () => {
-  console.log('[App] Rendering optimized application');
-  
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <OptimizedAuthProvider>
-        <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
-          <CartProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <ScrollToTop />
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <OptimizedAuthProvider>
+              <CartProvider>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/products" element={<Products />} />
@@ -65,65 +52,94 @@ const App = () => {
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/payment" element={<Payment />} />
-                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/payment-success" element={<PaymentSuccess />} />
+                  <Route path="/payment-cancelled" element={<PaymentCancelled />} />
                   <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+                  <Route path="/auth" element={<Auth />} />
                   
-                  {/* Routes Admin protégées */}
-                  <Route path="/admin" element={
-                    <ProtectedRoute>
-                      <AdminDashboard />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/products" element={
-                    <ProtectedRoute>
-                      <ProductsAdmin />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/lotteries" element={
-                    <ProtectedRoute>
-                      <LotteriesAdmin />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/mockups" element={
-                    <ProtectedRoute>
-                      <MockupsAdmin />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/designs" element={
-                    <ProtectedRoute>
-                      <DesignsAdmin />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/orders" element={
-                    <ProtectedRoute>
-                      <OrdersAdmin />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/users" element={
-                    <ProtectedRoute>
-                      <UsersAdmin />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/theme" element={
-                    <ProtectedRoute>
-                      <ThemeSettings />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/social-networks" element={
-                    <ProtectedRoute>
-                      <SocialNetworksAdmin />
-                    </ProtectedRoute>
-                  } />
+                  {/* Admin routes */}
+                  <Route 
+                    path="/admin" 
+                    element={
+                      <ProtectedRoute requireAdmin>
+                        <Dashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/products" 
+                    element={
+                      <ProtectedRoute requireAdmin>
+                        <ProductsAdmin />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/lotteries" 
+                    element={
+                      <ProtectedRoute requireAdmin>
+                        <LotteriesAdmin />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/designs" 
+                    element={
+                      <ProtectedRoute requireAdmin>
+                        <DesignsAdmin />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/mockups" 
+                    element={
+                      <ProtectedRoute requireAdmin>
+                        <MockupsAdmin />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/orders" 
+                    element={
+                      <ProtectedRoute requireAdmin>
+                        <OrdersAdmin />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/users" 
+                    element={
+                      <ProtectedRoute requireAdmin>
+                        <UsersAdmin />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/theme" 
+                    element={
+                      <ProtectedRoute requireAdmin>
+                        <ThemeSettings />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/social" 
+                    element={
+                      <ProtectedRoute requireAdmin>
+                        <SocialNetworksAdmin />
+                      </ProtectedRoute>
+                    } 
+                  />
                   
                   <Route path="*" element={<NotFound />} />
                 </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
-          </CartProvider>
-        </ThemeProvider>
-      </OptimizedAuthProvider>
+              </CartProvider>
+            </OptimizedAuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;

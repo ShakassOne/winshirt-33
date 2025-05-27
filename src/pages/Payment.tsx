@@ -1,11 +1,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { getOrderById, updateOrderPaymentStatus } from '@/services/order.service';
+import { getOrderById } from '@/services/order.service';
+import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, CreditCard, Check, AlertCircle } from 'lucide-react';
+import { ArrowRight, CreditCard, AlertCircle } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 
 const Payment = () => {
@@ -13,11 +14,13 @@ const Payment = () => {
   const navigate = useNavigate();
   const { state } = location;
   const orderId = state?.orderId;
+  const checkoutData = state?.checkoutData;
+  const orderTotal = state?.orderTotal;
   
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'success' | 'failed'>('pending');
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   useEffect(() => {
     if (!orderId) {
@@ -41,34 +44,52 @@ const Payment = () => {
     fetchOrder();
   }, [orderId]);
 
-  const handleProcessPayment = async () => {
-    if (!order) return;
+  const handleStripeCheckout = async () => {
+    if (!order || !checkoutData) return;
     
-    setPaymentStatus('processing');
+    setPaymentLoading(true);
     
     try {
-      // Simulation d'un paiement réussi (à remplacer par Stripe ou autre)
-      // Attendre 2 secondes pour simuler le traitement du paiement
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log("Creating Stripe checkout session...");
       
-      // Mise à jour du statut de la commande
-      const paymentIntentId = `pi_${Math.random().toString(36).substring(2, 15)}`;
-      await updateOrderPaymentStatus(orderId, paymentIntentId, 'paid');
-      
-      // Envoyer un email de confirmation (simulation)
-      if (order.shipping_email) {
-        console.log(`Email de confirmation envoyé à ${order.shipping_email}`);
-      }
-      
-      setPaymentStatus('success');
-    } catch (err) {
-      console.error("Erreur lors du traitement du paiement:", err);
-      setPaymentStatus('failed');
-    }
-  };
+      const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
+        body: {
+          orderId: order.id,
+          items: order.items?.map((item: any) => ({
+            name: item.products?.name || 'Produit',
+            price: parseFloat(item.price),
+            quantity: item.quantity,
+            image_url: item.products?.image_url,
+            color: item.customization?.color,
+            size: item.customization?.size,
+          })) || [],
+          total: order.total_amount,
+          checkoutData: checkoutData,
+        },
+      });
 
-  const handleCompleteOrder = () => {
-    navigate(`/order-confirmation/${orderId}`);
+      if (error) {
+        console.error("Error creating checkout session:", error);
+        throw error;
+      }
+
+      if (data?.url) {
+        console.log("Redirecting to Stripe checkout:", data.url);
+        // Rediriger vers Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error("URL de checkout manquante");
+      }
+    } catch (err) {
+      console.error("Erreur lors de la création de la session Stripe:", err);
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer la session de paiement. Veuillez réessayer.",
+        variant: "destructive",
+      });
+    } finally {
+      setPaymentLoading(false);
+    }
   };
 
   if (loading) {
@@ -111,144 +132,81 @@ const Payment = () => {
       
       <div className="container mx-auto px-4 py-8 mt-16 flex-grow">
         <div className="max-w-2xl mx-auto">
-          {paymentStatus === 'success' ? (
-            <div className="glass-card p-8 text-center">
-              <div className="mx-auto h-16 w-16 flex items-center justify-center bg-green-500/20 rounded-full mb-6">
-                <Check className="h-8 w-8 text-green-500" />
-              </div>
-              <h1 className="text-2xl font-bold mb-2">Paiement réussi !</h1>
-              <p className="mb-2">Votre commande a été confirmée</p>
-              <p className="text-gray-400 mb-6">Numéro de commande: {order.id}</p>
-              
-              <div className="mb-6 text-left bg-gray-800/50 rounded-lg p-4">
-                <h2 className="font-semibold mb-2">Résumé de la commande</h2>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
+          <div className="glass-card p-8">
+            <h1 className="text-2xl font-bold mb-6">Paiement sécurisé</h1>
+            
+            <div className="mb-6">
+              <h2 className="font-semibold mb-4">Résumé de votre commande</h2>
+              <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
+                <div className="space-y-3">
+                  {order.items?.map((item: any, index: number) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <div className="flex-1">
+                        <p className="font-medium">{item.products?.name || 'Produit'}</p>
+                        <p className="text-sm text-gray-400">
+                          Qté: {item.quantity} × {parseFloat(item.price).toFixed(2)} €
+                        </p>
+                      </div>
+                      <p className="font-semibold">
+                        {(parseFloat(item.price) * item.quantity).toFixed(2)} €
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t border-gray-600 mt-4 pt-4">
+                  <div className="flex justify-between items-center font-bold text-lg">
                     <span>Total</span>
                     <span>{order.total_amount.toFixed(2)} €</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Adresse de livraison</span>
-                    <span className="text-right">
-                      {`${order.shipping_first_name} ${order.shipping_last_name}`}<br />
-                      {order.shipping_address}<br />
-                      {`${order.shipping_postal_code} ${order.shipping_city}`}<br />
-                      {order.shipping_country}
-                    </span>
-                  </div>
                 </div>
               </div>
-              
-              <p className="text-gray-400 mb-6">
-                Un email de confirmation a été envoyé à {order.shipping_email}
-              </p>
-              
-              <Button size="lg" onClick={handleCompleteOrder}>
-                Continuer <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
             </div>
-          ) : (
-            <div className="glass-card p-8">
-              <h1 className="text-2xl font-bold mb-6">Paiement</h1>
-              
-              <div className="mb-6">
-                <h2 className="font-semibold mb-2">Détails de la commande</h2>
-                <div className="bg-gray-800/50 rounded-lg p-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Total à payer</span>
-                      <span className="font-semibold">{order.total_amount.toFixed(2)} €</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Méthode de paiement</span>
-                      <span>Carte de crédit</span>
-                    </div>
-                  </div>
-                </div>
+            
+            <div className="mb-6">
+              <h3 className="font-semibold mb-2">Adresse de livraison</h3>
+              <div className="text-sm text-gray-300">
+                <p>{order.shipping_first_name} {order.shipping_last_name}</p>
+                <p>{order.shipping_address}</p>
+                <p>{order.shipping_postal_code} {order.shipping_city}</p>
+                <p>{order.shipping_country}</p>
               </div>
-              
-              {/* Simulation d'un formulaire de paiement par carte */}
-              <div className="mb-8 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Numéro de carte</label>
-                  <div className="flex">
-                    <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-600 bg-gray-700">
-                      <CreditCard className="h-4 w-4" />
-                    </span>
-                    <input 
-                      type="text"
-                      className="flex-1 rounded-r-md border border-gray-600 bg-gray-700 px-3 py-2" 
-                      placeholder="4242 4242 4242 4242"
-                      value="4242 4242 4242 4242"
-                      readOnly
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Date d'expiration</label>
-                    <input 
-                      type="text"
-                      className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2" 
-                      placeholder="MM / AA"
-                      value="12 / 25"
-                      readOnly
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">CVV</label>
-                    <input 
-                      type="text"
-                      className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2" 
-                      placeholder="123"
-                      value="123"
-                      readOnly
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Nom sur la carte</label>
-                  <input 
-                    type="text"
-                    className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2" 
-                    placeholder="John Doe"
-                    value={`${order.shipping_first_name} ${order.shipping_last_name}`}
-                    readOnly
-                  />
-                </div>
+            </div>
+            
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <CreditCard className="h-5 w-5" />
+                <span className="font-semibold">Paiement par carte</span>
               </div>
-              
-              <Button 
-                className="w-full" 
-                size="lg"
-                disabled={paymentStatus === 'processing'}
-                onClick={handleProcessPayment}
-              >
-                {paymentStatus === 'processing' ? (
-                  <>
-                    <div className="spinner spinner-sm mr-2"></div>
-                    Traitement en cours...
-                  </>
-                ) : paymentStatus === 'failed' ? (
-                  'Réessayer le paiement'
-                ) : (
-                  'Payer maintenant'
-                )}
-              </Button>
-              
-              {paymentStatus === 'failed' && (
-                <div className="mt-4 p-3 bg-red-500/20 rounded-md text-red-400 text-sm">
-                  Le paiement a échoué. Veuillez vérifier vos informations et réessayer.
-                </div>
+              <p className="text-sm text-gray-400 mb-4">
+                Vous allez être redirigé vers notre plateforme de paiement sécurisée Stripe pour finaliser votre achat.
+              </p>
+              <div className="text-xs text-gray-500">
+                🔒 Paiement 100% sécurisé - Vos données bancaires sont protégées par le cryptage SSL
+              </div>
+            </div>
+            
+            <Button 
+              className="w-full" 
+              size="lg"
+              disabled={paymentLoading}
+              onClick={handleStripeCheckout}
+            >
+              {paymentLoading ? (
+                <>
+                  <div className="spinner spinner-sm mr-2"></div>
+                  Redirection en cours...
+                </>
+              ) : (
+                <>
+                  Payer {order.total_amount.toFixed(2)} € <ArrowRight className="ml-2 h-4 w-4" />
+                </>
               )}
-              
-              <p className="mt-4 text-xs text-gray-400 text-center">
-                En cliquant sur "Payer maintenant", vous acceptez nos conditions générales de vente.
-              </p>
-            </div>
-          )}
+            </Button>
+            
+            <p className="mt-4 text-xs text-gray-400 text-center">
+              En cliquant sur "Payer", vous acceptez nos conditions générales de vente et serez redirigé vers Stripe.
+            </p>
+          </div>
         </div>
       </div>
       
