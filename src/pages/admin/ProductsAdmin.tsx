@@ -1,9 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { fetchAllProducts, deleteProduct } from '@/services/api.service';
+import { fetchAllProducts, fetchAllMockups, deleteProduct } from '@/services/api.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import GlassCard from '@/components/ui/GlassCard';
@@ -14,33 +13,40 @@ import ProductForm from '@/components/admin/ProductForm';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
 import { Product } from '@/types/supabase.types';
-import { useSimpleMutations } from '@/hooks/useSimpleMutations';
+import { useStableAdminQuery } from '@/hooks/useStableAdminQuery';
+import { useStableAdminMutations } from '@/hooks/useStableAdminMutations';
 
 const ProductsAdmin = React.memo(() => {
+  console.log('🏪 [ProductsAdmin] Rendering page...');
+  
   const { toast: toastHook } = useToast();
-  const { invalidateProducts } = useSimpleMutations();
+  const { invalidateProducts } = useStableAdminMutations();
   const [searchTerm, setSearchTerm] = useState('');
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   
-  const { data: products, isLoading, error, refetch } = useQuery({
+  // ✅ Queries stables séparées
+  const { data: products, isLoading: productsLoading, error: productsError } = useStableAdminQuery({
     queryKey: ['adminProducts'],
     queryFn: fetchAllProducts,
-    staleTime: 2 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    debugName: 'AdminProducts',
+  });
+
+  const { data: mockups, isLoading: mockupsLoading } = useStableAdminQuery({
+    queryKey: ['adminMockups'],
+    queryFn: fetchAllMockups,
+    debugName: 'AdminMockups',
   });
 
   const handleCreateSuccess = React.useCallback(() => {
-    invalidateProducts();
-    refetch();
+    console.log('✅ [ProductsAdmin] Product operation success - invalidating only');
+    invalidateProducts(); // ✅ Une seule invalidation, pas de refetch
     toastHook({
       title: "Produit créé",
       description: "Le nouveau produit a été ajouté avec succès",
     });
-  }, [invalidateProducts, refetch, toastHook]);
+  }, [invalidateProducts, toastHook]);
 
   const handleEditProduct = React.useCallback((product: Product) => {
     setEditingProduct(product);
@@ -52,13 +58,12 @@ const ProductsAdmin = React.memo(() => {
       try {
         await deleteProduct(productId);
         toast.success('Produit supprimé avec succès');
-        invalidateProducts();
-        refetch();
+        invalidateProducts(); // ✅ Une seule invalidation
       } catch (error) {
         toast.error('Erreur lors de la suppression du produit');
       }
     }
-  }, [invalidateProducts, refetch]);
+  }, [invalidateProducts]);
 
   const filteredProducts = useMemo(() => {
     return products?.filter((product: Product) => {
@@ -258,6 +263,7 @@ const ProductsAdmin = React.memo(() => {
           }} 
           onSuccess={handleCreateSuccess}
           initialData={editingProduct}
+          mockups={mockups || []} // ✅ Mockups passés en props
         />
       )}
     </div>

@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { fetchAllMockups } from '@/services/api.service';
@@ -8,27 +7,31 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import GlassCard from '@/components/ui/GlassCard';
 import { Edit, Trash, Eye, Plus, Search } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import MockupForm from '@/components/admin/MockupForm';
 import { useToast } from '@/hooks/use-toast';
 import { Mockup } from '@/types/supabase.types';
-import { UploadButton } from '@/components/ui/upload-button';
+import { useStableAdminQuery } from '@/hooks/useStableAdminQuery';
+import { useStableAdminMutations } from '@/hooks/useStableAdminMutations';
 
 interface NormalizedMockup extends Mockup {
   print_areas: any[];
 }
 
 const MockupsAdmin = () => {
+  console.log('🖼️ [MockupsAdmin] Rendering page...');
+  
   const { toast } = useToast();
+  const { invalidateMockups } = useStableAdminMutations();
   const [searchTerm, setSearchTerm] = useState('');
   const [showMockupForm, setShowMockupForm] = useState(false);
   const [activeMockup, setActiveMockup] = useState<Mockup | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   
-  const { data: mockupsData, isLoading, error, refetch } = useQuery({
+  const { data: mockupsData, isLoading, error } = useStableAdminQuery({
     queryKey: ['adminMockups'],
     queryFn: fetchAllMockups,
+    debugName: 'AdminMockups',
   });
 
   // Normalize mockups data to ensure compatible types
@@ -61,7 +64,8 @@ const MockupsAdmin = () => {
   }, [mockupsData]);
 
   const handleCreateSuccess = () => {
-    refetch();
+    console.log('✅ [MockupsAdmin] Mockup operation success - invalidating only');
+    invalidateMockups(); // ✅ Une seule invalidation
     toast({
       title: "Mockup créé",
       description: "Le nouveau mockup a été ajouté avec succès",

@@ -1,6 +1,4 @@
-
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { fetchAllLotteries, deleteLottery } from '@/services/api.service';
@@ -14,34 +12,33 @@ import LotteryForm from '@/components/admin/LotteryForm';
 import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
 import { Lottery } from '@/types/supabase.types';
-import { useSimpleMutations } from '@/hooks/useSimpleMutations';
+import { useStableAdminQuery } from '@/hooks/useStableAdminQuery';
+import { useStableAdminMutations } from '@/hooks/useStableAdminMutations';
 
 const LotteriesAdmin = React.memo(() => {
+  console.log('🎲 [LotteriesAdmin] Rendering page...');
+  
   const { toast: toastHook } = useToast();
-  const { invalidateLotteries } = useSimpleMutations();
+  const { invalidateLotteries } = useStableAdminMutations();
   const [searchTerm, setSearchTerm] = useState('');
   const [showLotteryForm, setShowLotteryForm] = useState(false);
   const [editingLottery, setEditingLottery] = useState<Lottery | null>(null);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   
-  const { data: lotteries, isLoading, error, refetch } = useQuery({
+  const { data: lotteries, isLoading, error } = useStableAdminQuery({
     queryKey: ['adminLotteries'],
     queryFn: fetchAllLotteries,
-    staleTime: 2 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    debugName: 'AdminLotteries',
   });
 
   const handleCreateSuccess = React.useCallback(() => {
-    console.log('[LotteriesAdmin] Lottery created, invalidating cache');
-    invalidateLotteries();
-    refetch();
+    console.log('✅ [LotteriesAdmin] Lottery operation success - invalidating only');
+    invalidateLotteries(); // ✅ Une seule invalidation, pas de refetch
     toastHook({
       title: "Loterie créée",
       description: "La nouvelle loterie a été ajoutée avec succès",
     });
-  }, [invalidateLotteries, refetch, toastHook]);
+  }, [invalidateLotteries, toastHook]);
 
   const handleEditLottery = React.useCallback((lottery: Lottery) => {
     setEditingLottery(lottery);
@@ -52,15 +49,14 @@ const LotteriesAdmin = React.memo(() => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette loterie ?')) {
       try {
         await deleteLottery(lotteryId);
-        console.log('[LotteriesAdmin] Lottery deleted, invalidating cache');
-        invalidateLotteries();
+        console.log('✅ [LotteriesAdmin] Lottery deleted - invalidating only');
+        invalidateLotteries(); // ✅ Une seule invalidation
         toast.success('Loterie supprimée avec succès');
-        refetch();
       } catch (error) {
         toast.error('Erreur lors de la suppression de la loterie');
       }
     }
-  }, [invalidateLotteries, refetch]);
+  }, [invalidateLotteries]);
 
   const filteredLotteries = useMemo(() => {
     return lotteries?.filter((lottery: Lottery) => {

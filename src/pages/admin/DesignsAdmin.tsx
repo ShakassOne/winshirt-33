@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import {
   fetchAllDesigns as fetchDesigns, createDesign, updateDesign, deleteDesign
 } from '@/services/api.service';
@@ -8,14 +8,17 @@ import { Design } from '@/types/supabase.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { UploadButton } from '@/components/ui/upload-button';
+import { useStableAdminQuery } from '@/hooks/useStableAdminQuery';
+import { useStableAdminMutations } from '@/hooks/useStableAdminMutations';
 
 const DesignsAdmin = () => {
+  console.log('🎨 [DesignsAdmin] Rendering page...');
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
@@ -24,17 +27,19 @@ const DesignsAdmin = () => {
   const [category, setCategory] = useState('');
   const [isActive, setIsActive] = useState(true);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const { invalidateDesigns } = useStableAdminMutations();
 
-  const { data: designs, isLoading, error } = useQuery({
+  const { data: designs, isLoading, error } = useStableAdminQuery({
     queryKey: ['designs'],
     queryFn: fetchDesigns,
+    debugName: 'AdminDesigns',
   });
 
   const createDesignMutation = useMutation({
     mutationFn: (designData: any) => createDesign(designData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['designs'] });
+      console.log('✅ [DesignsAdmin] Design created - invalidating only');
+      invalidateDesigns(); // ✅ Une seule invalidation
       closeDialog();
       toast({
         title: "Succès",
@@ -55,7 +60,8 @@ const DesignsAdmin = () => {
     mutationFn: (designData: { id: string; data: any }) => 
       updateDesign(designData.id, designData.data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['designs'] });
+      console.log('✅ [DesignsAdmin] Design updated - invalidating only');
+      invalidateDesigns(); // ✅ Une seule invalidation
       closeDialog();
       toast({
         title: "Succès",
@@ -75,7 +81,8 @@ const DesignsAdmin = () => {
   const deleteDesignMutation = useMutation({
     mutationFn: (id: string) => deleteDesign(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['designs'] });
+      console.log('✅ [DesignsAdmin] Design deleted - invalidating only');
+      invalidateDesigns(); // ✅ Une seule invalidation
       toast({
         title: "Succès",
         description: "Le design a été supprimé avec succès",

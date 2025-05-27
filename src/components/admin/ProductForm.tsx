@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { createProduct, updateProduct, fetchAllMockups } from '@/services/api.service';
+import { createProduct, updateProduct } from '@/services/api.service';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -11,8 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { X, Plus } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { Product } from '@/types/supabase.types';
+import { Product, Mockup } from '@/types/supabase.types';
 import { UploadImageField } from '@/components/ui/upload-image-field';
 
 const productSchema = z.object({
@@ -34,21 +33,18 @@ interface ProductFormProps {
   onClose: () => void;
   onSuccess?: () => void;
   initialData?: Product | null;
+  mockups?: Mockup[]; // ✅ Reçu en props maintenant
 }
 
-const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormProps) => {
+const ProductForm = ({ isOpen, onClose, onSuccess, initialData, mockups = [] }: ProductFormProps) => {
+  console.log('🎭 [ProductForm] Rendering with mockups:', mockups?.length || 0);
+  
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [colors, setColors] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
   const [newColor, setNewColor] = useState('');
   const [newSize, setNewSize] = useState('');
-
-  const { data: mockups } = useQuery({
-    queryKey: ['mockups'],
-    queryFn: fetchAllMockups,
-    enabled: isOpen
-  });
 
   const defaultValues: Partial<ProductFormValues> = {
     name: '',
@@ -89,7 +85,6 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData }: ProductFormPro
   }, [initialData, setValue, reset]);
 
   const isCustomizable = watch('is_customizable');
-  const ticketsOffered = watch('tickets_offered');
   const selectedCategory = watch('category');
   const imageUrl = watch('image_url');
 
