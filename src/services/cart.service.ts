@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { CartItem } from "@/types/supabase.types";
 
@@ -6,6 +5,7 @@ import { CartItem } from "@/types/supabase.types";
 export const getOrCreateCartToken = async (token: string, userId?: string) => {
   try {
     console.log("Getting or creating cart token:", token, userId ? `for user: ${userId}` : "anonymous");
+    
     // Check if token exists
     const { data: existingToken, error: fetchError } = await supabase
       .from('cart_tokens')
@@ -13,6 +13,7 @@ export const getOrCreateCartToken = async (token: string, userId?: string) => {
       .eq('token', token)
       .single();
       
+    // If token exists, handle it
     if (!fetchError && existingToken) {
       console.log("Found existing token:", existingToken);
       // If token exists but we now have a user ID, update the token
@@ -34,8 +35,15 @@ export const getOrCreateCartToken = async (token: string, userId?: string) => {
       return existingToken;
     }
     
+    // If error is something other than "not found", throw it
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error("Unexpected error fetching token:", fetchError);
+      throw fetchError;
+    }
+    
     console.log("Creating new token:", token, userId ? `for user: ${userId}` : "anonymous");
-    // Create a new token if doesn't exist
+    
+    // Try to create a new token
     const { data: newToken, error: insertError } = await supabase
       .from('cart_tokens')
       .insert([
@@ -48,6 +56,24 @@ export const getOrCreateCartToken = async (token: string, userId?: string) => {
       .single();
       
     if (insertError) {
+      // If it's a duplicate key error, try to fetch the existing token again
+      if (insertError.code === '23505') {
+        console.log("Token already exists due to race condition, fetching existing token");
+        const { data: existingToken, error: refetchError } = await supabase
+          .from('cart_tokens')
+          .select('*')
+          .eq('token', token)
+          .single();
+          
+        if (refetchError) {
+          console.error("Error refetching existing token:", refetchError);
+          throw refetchError;
+        }
+        
+        console.log("Successfully retrieved existing token after race condition:", existingToken);
+        return existingToken;
+      }
+      
       console.error("Error inserting token:", insertError);
       throw insertError;
     }
