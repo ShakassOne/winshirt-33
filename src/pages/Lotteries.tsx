@@ -79,7 +79,7 @@ const Lotteries = () => {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       
-      <main className="flex-grow pb-20" style={{ marginTop: '4rem' }}>
+      <main className="flex-grow pb-20">
         {/* Hero Lottery Showcase - Only if featured lottery exists */}
         {currentFeaturedLottery && (
           <section className="relative h-screen w-full overflow-hidden">
@@ -217,7 +217,7 @@ const Lotteries = () => {
 
         {/* Hero Section - Only show if no featured lottery */}
         {!currentFeaturedLottery && (
-          <section className="relative py-20 bg-gradient-to-b from-winshirt-purple/20 to-transparent">
+          <section className="relative py-12 bg-gradient-to-b from-winshirt-purple/20 to-transparent">
             <div className="container mx-auto px-4">
               <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center">
                 Nos <span className="text-gradient">Loteries</span>
@@ -230,7 +230,7 @@ const Lotteries = () => {
         )}
 
         {/* Filters */}
-        <section className="py-8">
+        <section className="py-6">
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
               <div className="relative w-full md:w-64">
