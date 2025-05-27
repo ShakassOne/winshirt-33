@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ExtendedOrder, OrderStatus, PaymentStatus, CartItem } from '@/types/supabase.types';
+import { OrderItemDetails } from '@/components/order/OrderItemDetails';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { ArrowLeft, ChevronRight, Search, Calendar, Package, CheckCircle, AlertCircle } from 'lucide-react';
@@ -362,8 +362,9 @@ const OrdersAdmin = () => {
       
       <Footer />
       
+      {/* Dialog détaillé avec les nouveaux composants */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
           {selectedOrder && (
             <>
               <DialogHeader>
@@ -378,7 +379,7 @@ const OrdersAdmin = () => {
                 </DialogDescription>
               </DialogHeader>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Informations client</h3>
                   <div className="space-y-2">
@@ -456,42 +457,12 @@ const OrdersAdmin = () => {
                 </div>
               </div>
               
-              <div className="mt-6">
+              {/* Articles avec détails complets */}
+              <div>
                 <h3 className="text-lg font-semibold mb-4">Articles commandés</h3>
-                <div className="space-y-4">
-                  {selectedOrder.items && selectedOrder.items.map((item: any) => (
-                    <div key={item.id} className="flex gap-4 border-b border-gray-700/30 pb-4">
-                      <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
-                        <img 
-                          src={item.products?.image_url || '/placeholder.svg'}
-                          alt={item.products?.name || 'Product'}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-grow">
-                        <p className="font-medium">{item.products?.name || 'Produit'}</p>
-                        <div className="flex justify-between">
-                          <p className="text-sm text-gray-400">
-                            Qté: {item.quantity} × {parseFloat(item.price).toFixed(2)} €
-                          </p>
-                          <p className="font-semibold">
-                            {(parseFloat(item.price) * item.quantity).toFixed(2)} €
-                          </p>
-                        </div>
-                        {item.customization && (
-                          <div className="mt-1">
-                            <Badge variant="outline">Personnalisé</Badge>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="flex justify-between mt-6 pt-4 border-t border-gray-700/30">
-                  <div className="text-lg">Total</div>
-                  <div className="text-lg font-semibold">{selectedOrder.total_amount.toFixed(2)} €</div>
-                </div>
+                {selectedOrder.items && selectedOrder.items.map((item: any) => (
+                  <OrderItemDetails key={item.id} item={item} />
+                ))}
               </div>
               
               <DialogFooter>

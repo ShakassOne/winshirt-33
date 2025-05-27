@@ -7,7 +7,7 @@ export type CartItem = {
   image_url?: string;
   color?: string | null;
   size?: string | null;
-  lotteries?: any; // Ajout de la propriété manquante
+  lotteries?: any;
   available_colors?: string[] | null;
   available_sizes?: string[] | null;
   customization?: {
@@ -17,6 +17,11 @@ export type CartItem = {
     customText?: string;
     textColor?: string;
     textFont?: string;
+    mockupRectoUrl?: string;
+    mockupVersoUrl?: string;
+    selectedSize?: string;
+    selectedColor?: string;
+    lotteryName?: string;
   } | null;
 };
 
@@ -52,6 +57,11 @@ export type OrderItem = {
   quantity: number;
   price: number;
   customization: CartItem['customization'] | null;
+  mockup_recto_url?: string | null;
+  mockup_verso_url?: string | null;
+  selected_size?: string | null;
+  selected_color?: string | null;
+  lottery_name?: string | null;
 };
 
 export type ExtendedOrderItem = OrderItem & {

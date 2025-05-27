@@ -38,13 +38,18 @@ export const createOrder = async (
       
     if (orderError) throw orderError;
     
-    // Create order items
+    // Create order items avec les nouveaux champs
     const orderItems = items.map(item => ({
       order_id: order.id,
       product_id: item.productId,
       quantity: item.quantity,
       price: item.price,
-      customization: item.customization || null
+      customization: item.customization || null,
+      mockup_recto_url: item.customization?.mockupRectoUrl || null,
+      mockup_verso_url: item.customization?.mockupVersoUrl || null,
+      selected_size: item.size || item.customization?.selectedSize || null,
+      selected_color: item.color || item.customization?.selectedColor || null,
+      lottery_name: item.customization?.lotteryName || null
     }));
     
     const { error: itemsError } = await supabase

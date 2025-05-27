@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getOrderById } from '@/services/order.service';
+import { OrderItemDetails } from '@/components/order/OrderItemDetails';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -74,7 +75,7 @@ const OrderConfirmation = () => {
       <Navbar />
       
       <div className="container mx-auto px-4 py-8 mt-16 flex-grow">
-        <div className="max-w-2xl mx-auto glass-card p-8">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8">
             <div className="mx-auto h-16 w-16 flex items-center justify-center bg-green-500/20 rounded-full mb-6">
               <Check className="h-8 w-8 text-green-500" />
@@ -84,71 +85,51 @@ const OrderConfirmation = () => {
             <p className="text-gray-400">Numéro de commande: {order.id}</p>
           </div>
           
-          <div className="space-y-6">
-            <div>
-              <h2 className="font-semibold mb-3 border-b border-gray-700 pb-2">Détails de la commande</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-400">Date de commande</p>
-                  <p>{new Date(order.created_at).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">Total</p>
-                  <p>{order.total_amount.toFixed(2)} €</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">Statut du paiement</p>
-                  <p className="capitalize">{order.payment_status}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">Statut de la commande</p>
-                  <p className="capitalize">{order.status}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h2 className="font-semibold mb-3 border-b border-gray-700 pb-2">Adresse de livraison</h2>
-              <p>{order.shipping_first_name} {order.shipping_last_name}</p>
-              <p>{order.shipping_address}</p>
-              <p>{order.shipping_postal_code} {order.shipping_city}</p>
-              <p>{order.shipping_country}</p>
-              <p>{order.shipping_email}</p>
-              <p>{order.shipping_phone}</p>
-            </div>
-            
-            <div>
-              <h2 className="font-semibold mb-3 border-b border-gray-700 pb-2">Articles commandés</h2>
-              <div className="space-y-4">
-                {order.items.map((item: any) => (
-                  <div key={item.id} className="flex gap-4">
-                    <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
-                      <img 
-                        src={item.products.image_url}
-                        alt={item.products.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-grow">
-                      <p className="font-medium">{item.products.name}</p>
-                      <div className="flex justify-between">
-                        <p className="text-sm text-gray-400">
-                          Qté: {item.quantity} × {parseFloat(item.price).toFixed(2)} €
-                        </p>
-                        <p className="font-semibold">
-                          {(parseFloat(item.price) * item.quantity).toFixed(2)} €
-                        </p>
-                      </div>
-                    </div>
+          {/* Informations générales de la commande */}
+          <div className="glass-card p-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h2 className="font-semibold mb-3 border-b border-gray-700 pb-2">Détails de la commande</h2>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Date:</span>
+                    <span>{new Date(order.created_at).toLocaleDateString()}</span>
                   </div>
-                ))}
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Statut:</span>
+                    <span className="capitalize">{order.status}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Paiement:</span>
+                    <span className="capitalize">{order.payment_status}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold">
+                    <span>Total:</span>
+                    <span>{order.total_amount.toFixed(2)} €</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h2 className="font-semibold mb-3 border-b border-gray-700 pb-2">Adresse de livraison</h2>
+                <div className="space-y-1 text-sm">
+                  <p>{order.shipping_first_name} {order.shipping_last_name}</p>
+                  <p>{order.shipping_address}</p>
+                  <p>{order.shipping_postal_code} {order.shipping_city}</p>
+                  <p>{order.shipping_country}</p>
+                  <p>{order.shipping_email}</p>
+                  <p>{order.shipping_phone}</p>
+                </div>
               </div>
             </div>
-            
-            <div className="flex justify-between pt-4 border-t border-gray-700">
-              <div className="text-lg">Total</div>
-              <div className="text-lg font-semibold">{order.total_amount.toFixed(2)} €</div>
-            </div>
+          </div>
+          
+          {/* Articles commandés avec détails complets */}
+          <div>
+            <h2 className="text-xl font-semibold mb-6">Articles commandés</h2>
+            {order.items && order.items.map((item: any) => (
+              <OrderItemDetails key={item.id} item={item} />
+            ))}
           </div>
           
           <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
@@ -157,7 +138,7 @@ const OrderConfirmation = () => {
             </Button>
             {order.user_id && (
               <Button variant="outline" asChild>
-                <Link to="/orders">Voir mes commandes</Link>
+                <Link to="/account">Voir mes commandes</Link>
               </Button>
             )}
           </div>
