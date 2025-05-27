@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserOrders } from '@/services/order.service';
+import { useLotteryRetroprocessing } from '@/hooks/useLotteryRetroprocessing';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
-import { Loader2, User, Package, Calendar, Euro, Eye, Trophy, Ticket } from 'lucide-react';
+import { Loader2, User, Package, Calendar, Euro, Eye, Trophy, Ticket, RefreshCw } from 'lucide-react';
 import { Order } from '@/types/supabase.types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -51,6 +51,7 @@ const Account = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const { processExistingOrders, isProcessing } = useLotteryRetroprocessing();
   
   // Profile state
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -231,6 +232,14 @@ const Account = () => {
     }
   };
 
+  const handleRetroprocessLotteries = async () => {
+    const result = await processExistingOrders();
+    if (result.success) {
+      // Refresh lottery participations to show new entries
+      fetchLotteryParticipations();
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -249,12 +258,30 @@ const Account = () => {
       
       <div className="container mx-auto px-4 py-8 mt-16 flex-grow">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center mb-8">
-            <User className="h-8 w-8 mr-3 text-primary" />
-            <div>
-              <h1 className="text-3xl font-bold">Mon Compte</h1>
-              <p className="text-gray-400">Gérez votre profil et suivez vos activités</p>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center">
+              <User className="h-8 w-8 mr-3 text-primary" />
+              <div>
+                <h1 className="text-3xl font-bold">Mon Compte</h1>
+                <p className="text-gray-400">Gérez votre profil et suivez vos activités</p>
+              </div>
             </div>
+            
+            {user?.email === 'admin@example.com' && (
+              <Button 
+                onClick={handleRetroprocessLotteries}
+                disabled={isProcessing}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {isProcessing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                Traiter les commandes existantes
+              </Button>
+            )}
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

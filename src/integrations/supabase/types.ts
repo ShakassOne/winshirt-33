@@ -648,7 +648,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_lottery_entries_for_order: {
+        Args: { order_id_param: string }
+        Returns: undefined
+      }
       migrate_cart_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      process_existing_orders_for_lottery: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

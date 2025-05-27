@@ -59,6 +59,24 @@ serve(async (req) => {
 
       console.log(`Order ${orderId} marked as paid`);
 
+      // Generate lottery entries for this order
+      try {
+        const { error: lotteryError } = await supabaseAdmin.rpc(
+          'generate_lottery_entries_for_order',
+          { order_id_param: orderId }
+        );
+
+        if (lotteryError) {
+          console.error("Error generating lottery entries:", lotteryError);
+          // Don't throw here - order is still valid even if lottery fails
+        } else {
+          console.log(`Lottery entries generated for order ${orderId}`);
+        }
+      } catch (lotteryErr) {
+        console.error("Exception generating lottery entries:", lotteryErr);
+        // Continue - order processing should not fail due to lottery issues
+      }
+
       return new Response(
         JSON.stringify({
           success: true,

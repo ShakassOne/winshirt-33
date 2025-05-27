@@ -63,6 +63,24 @@ serve(async (req) => {
       throw new Error(`Error updating order: ${updateError.message}`);
     }
 
+    // Generate lottery entries for this order
+    try {
+      const { error: lotteryError } = await supabaseAdmin.rpc(
+        'generate_lottery_entries_for_order',
+        { order_id_param: orderId }
+      );
+
+      if (lotteryError) {
+        console.error("Error generating lottery entries:", lotteryError);
+        // Don't throw here - order is still valid even if lottery fails
+      } else {
+        console.log(`Lottery entries generated for order ${orderId}`);
+      }
+    } catch (lotteryErr) {
+      console.error("Exception generating lottery entries:", lotteryErr);
+      // Continue - order processing should not fail due to lottery issues
+    }
+
     // In a real implementation, we would send email confirmations here
     console.log(`Payment processed successfully for order ${orderId}`);
     console.log(`Email notification would be sent to: ${order.shipping_email}`);

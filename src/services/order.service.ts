@@ -146,8 +146,45 @@ export const updateOrderPaymentStatus = async (
       .eq('id', orderId);
       
     if (error) throw error;
+
+    // If order is now paid, generate lottery entries
+    if (status === 'paid') {
+      try {
+        const { error: lotteryError } = await supabase.rpc('generate_lottery_entries_for_order', {
+          order_id_param: orderId
+        });
+        
+        if (lotteryError) {
+          console.error('Error generating lottery entries:', lotteryError);
+          // Don't throw - order update succeeded
+        } else {
+          console.log(`Generated lottery entries for order ${orderId}`);
+        }
+      } catch (lotteryErr) {
+        console.error('Exception generating lottery entries:', lotteryErr);
+        // Continue - order update succeeded
+      }
+    }
   } catch (error) {
     console.error("Error in updateOrderPaymentStatus:", error);
+    throw error;
+  }
+};
+
+// Nouvelle fonction pour traiter rétroactivement les commandes existantes
+export const processExistingOrdersForLottery = async () => {
+  try {
+    const { error } = await supabase.rpc('process_existing_orders_for_lottery');
+    
+    if (error) {
+      console.error('Error processing existing orders for lottery:', error);
+      throw error;
+    }
+    
+    console.log('Successfully processed existing orders for lottery');
+    return { success: true };
+  } catch (error) {
+    console.error('Exception processing existing orders:', error);
     throw error;
   }
 };
