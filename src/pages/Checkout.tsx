@@ -37,12 +37,14 @@ const checkoutSchema = z.object({
   country: z.string().min(2, "Pays invalide"),
   deliveryNotes: z.string().optional(),
   createAccount: z.boolean().default(false),
-  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères").optional()
-    .refine(
-      (pw) => !z.boolean().parse(z.object({ createAccount: z.boolean() }).shape.createAccount) || (pw && pw.length >= 6),
-      { message: "Le mot de passe est requis pour créer un compte" }
-    ),
-});
+  password: z.string().optional()
+}).refine(
+  (data) => !data.createAccount || (data.password && data.password.length >= 6),
+  {
+    message: "Le mot de passe doit contenir au moins 6 caractères pour créer un compte",
+    path: ["password"]
+  }
+);
 
 const Checkout = () => {
   const { items, total, cartToken, currentUser, clearCart } = useCart();
@@ -104,13 +106,37 @@ const Checkout = () => {
   const createAccount = form.watch('createAccount');
 
   const onSubmit = async (data: CheckoutFormData) => {
+    console.log("Checkout form submitted with data:", data);
+    console.log("Cart items:", items);
+    console.log("Cart token:", cartToken);
+    
+    if (!items || items.length === 0) {
+      toast({
+        title: "Panier vide",
+        description: "Votre panier est vide. Ajoutez des produits avant de procéder au paiement.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!cartToken) {
+      toast({
+        title: "Erreur",
+        description: "Token de panier manquant. Veuillez rafraîchir la page.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
+      console.log("Starting checkout process...");
       
       let userId = user?.id;
       
       // Si l'utilisateur veut créer un compte et n'est pas connecté
       if (data.createAccount && !user) {
+        console.log("Creating new account...");
         const { error, data: authData } = await supabase.auth.signUp({
           email: data.email,
           password: data.password as string,
@@ -122,7 +148,10 @@ const Checkout = () => {
           }
         });
         
-        if (error) throw error;
+        if (error) {
+          console.error("Error creating account:", error);
+          throw error;
+        }
         
         userId = authData.user?.id;
         
@@ -155,8 +184,10 @@ const Checkout = () => {
         }
       }
       
+      console.log("Creating order...");
       // Crée la commande
       const order = await createOrder(data, items, cartToken, userId);
+      console.log("Order created:", order);
       
       // Redirige vers la page de paiement avec les données nécessaires
       navigate('/payment', { 
@@ -178,12 +209,18 @@ const Checkout = () => {
       console.error("Erreur lors de la création de la commande:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la création de la commande",
+        description: `Une erreur est survenue lors de la création de la commande: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    console.log("Form submit triggered");
+    e.preventDefault();
+    form.handleSubmit(onSubmit)(e);
   };
 
   return (
@@ -200,7 +237,7 @@ const Checkout = () => {
                 <h2 className="text-xl font-semibold mb-4">Informations de livraison</h2>
                 
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <form onSubmit={handleFormSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -387,6 +424,10 @@ const Checkout = () => {
                         className="w-full" 
                         size="lg"
                         disabled={isLoading}
+                        onClick={(e) => {
+                          console.log("Button clicked");
+                          // Le handleFormSubmit sera appelé automatiquement par le type="submit"
+                        }}
                       >
                         {isLoading ? "Traitement en cours..." : "Procéder au paiement"}
                       </Button>
