@@ -28,6 +28,7 @@ import OrdersAdmin from "./pages/admin/OrdersAdmin";
 import UsersAdmin from "./pages/admin/UsersAdmin";
 import ThemeSettings from "./pages/admin/ThemeSettings";
 import SocialNetworksAdmin from "./pages/admin/SocialNetworksAdmin";
+import AnalyticsAdmin from "./pages/admin/AnalyticsAdmin";
 import { OptimizedAuthProvider } from "./context/OptimizedAuthContext";
 import { CartProvider } from "./context/CartContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -92,6 +93,14 @@ function App() {
                     element={
                       <ProtectedRoute requireAdmin={true}>
                         <Dashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/analytics" 
+                    element={
+                      <ProtectedRoute requireAdmin={true}>
+                        <AnalyticsAdmin />
                       </ProtectedRoute>
                     } 
                   />
