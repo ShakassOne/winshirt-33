@@ -19,6 +19,11 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import Auth from "./pages/Auth";
 import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
+import FAQ from "./pages/FAQ";
+import Winners from "./pages/Winners";
+import PolitiqueConfidentialite from "./pages/PolitiqueConfidentialite";
+import ConditionsGenerales from "./pages/ConditionsGenerales";
+import ReglementDuJeu from "./pages/ReglementDuJeu";
 import Dashboard from "./pages/admin/Dashboard";
 import ProductsAdmin from "./pages/admin/ProductsAdmin";
 import LotteriesAdmin from "./pages/admin/LotteriesAdmin";
@@ -58,6 +63,13 @@ function App() {
                   <Route path="/payment-cancelled" element={<PaymentCancelled />} />
                   <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
                   <Route path="/auth" element={<Auth />} />
+                  
+                  {/* New pages */}
+                  <Route path="/faq" element={<FAQ />} />
+                  <Route path="/winners" element={<Winners />} />
+                  <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
+                  <Route path="/conditions-generales" element={<ConditionsGenerales />} />
+                  <Route path="/reglement-du-jeu" element={<ReglementDuJeu />} />
                   
                   {/* User account route - unified */}
                   <Route 

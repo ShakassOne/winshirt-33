@@ -45,10 +45,10 @@ const Footer = () => {
                 <FooterLink href="/">Accueil</FooterLink>
               </li>
               <li>
-                <FooterLink href="/shop">Nos T-shirts</FooterLink>
+                <FooterLink href="/products">Shop</FooterLink>
               </li>
               <li>
-                <FooterLink href="/loteries">Loteries actives</FooterLink>
+                <FooterLink href="/lotteries">Loteries actives</FooterLink>
               </li>
               <li>
                 <FooterLink href="/winners">Gagnants précédents</FooterLink>
@@ -60,7 +60,7 @@ const Footer = () => {
             <h3 className="font-medium mb-4">Informations</h3>
             <ul className="space-y-2">
               <li>
-                <FooterLink href="/comment-ca-marche">Comment ça marche</FooterLink>
+                <FooterLink href="/reglement-du-jeu">Règlement du jeu</FooterLink>
               </li>
               <li>
                 <FooterLink href="/faq">FAQ</FooterLink>
@@ -69,7 +69,7 @@ const Footer = () => {
                 <FooterLink href="/conditions-generales">Conditions générales</FooterLink>
               </li>
               <li>
-                <FooterLink href="/confidentialite">Politique de confidentialité</FooterLink>
+                <FooterLink href="/politique-confidentialite">Politique de confidentialité</FooterLink>
               </li>
             </ul>
           </div>
