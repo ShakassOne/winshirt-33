@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { CartItem } from "@/types/supabase.types";
 
@@ -439,6 +440,13 @@ export const migrateCartToUser = async (userId: string, token: string) => {
   try {
     console.log("Migrating cart for token:", token, "to user:", userId);
     
+    // Vérifier d'abord si l'utilisateur existe dans la table auth.users
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user || user.id !== userId) {
+      console.log("User not confirmed or not found, skipping cart migration");
+      return;
+    }
+    
     // Find token entry
     const { data: tokenData, error: tokenError } = await supabase
       .from('cart_tokens')
@@ -454,13 +462,20 @@ export const migrateCartToUser = async (userId: string, token: string) => {
     
     console.log("Found token data:", tokenData);
     
-    // Update token with user_id
+    // Update token with user_id with error handling
     const { error: updateError } = await supabase
       .from('cart_tokens')
       .update({ user_id: userId })
       .eq('id', tokenData.id);
       
-    if (updateError) throw updateError;
+    if (updateError) {
+      // Si c'est une erreur de contrainte de clé étrangère, on ignore silencieusement
+      if (updateError.code === '23503') {
+        console.log("Foreign key constraint error - user not fully confirmed yet, migration will happen later");
+        return;
+      }
+      throw updateError;
+    }
     
     console.log("Updated token with user ID");
     
@@ -558,6 +573,11 @@ export const migrateCartToUser = async (userId: string, token: string) => {
     
   } catch (error) {
     console.error("Error in migrateCartToUser:", error);
+    // Ne pas throw l'erreur pour éviter de bloquer le processus de checkout
+    if (error && typeof error === 'object' && 'code' in error && error.code === '23503') {
+      console.log("Silently handling foreign key constraint error");
+      return;
+    }
     throw error;
   }
 };

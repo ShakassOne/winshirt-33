@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,7 +10,6 @@ import Footer from '@/components/layout/Footer';
 import { useCart } from '@/context/CartContext';
 import { CheckoutFormData } from '@/types/cart.types';
 import { createOrder } from '@/services/order.service';
-import { migrateCartToUser } from '@/services/cart.service';
 import { 
   Form, 
   FormControl, 
@@ -153,39 +152,43 @@ const Checkout = () => {
           throw error;
         }
         
-        userId = authData.user?.id;
+        // Ne pas utiliser l'userId immédiatement car l'utilisateur n'est pas confirmé
+        // La migration du panier se fera plus tard lors de la première connexion
+        console.log("Account created, but email not confirmed yet");
         
-        // Migrate the cart to the new user
-        if (userId && cartToken) {
-          await migrateCartToUser(userId, cartToken);
-          toast({
-            title: "Panier migrée",
-            description: "Votre panier a été associé à votre nouveau compte",
-          });
+        // Crée ou met à jour le profil utilisateur même si l'email n'est pas confirmé
+        if (authData.user?.id) {
+          try {
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .upsert({
+                id: authData.user.id,
+                first_name: data.firstName,
+                last_name: data.lastName,
+                email: data.email,
+                phone: data.phone,
+                address: data.address,
+                city: data.city,
+                postal_code: data.postalCode,
+                country: data.country
+              });
+              
+            if (profileError) console.error("Erreur lors de la création du profil:", profileError);
+          } catch (profileErr) {
+            console.error("Profile creation failed:", profileErr);
+            // Continue même si la création du profil échoue
+          }
         }
         
-        // Crée ou met à jour le profil utilisateur
-        if (userId) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .upsert({
-              id: userId,
-              first_name: data.firstName,
-              last_name: data.lastName,
-              email: data.email,
-              phone: data.phone,
-              address: data.address,
-              city: data.city,
-              postal_code: data.postalCode,
-              country: data.country
-            });
-            
-          if (profileError) console.error("Erreur lors de la création du profil:", profileError);
-        }
+        toast({
+          title: "Compte créé",
+          description: "Votre compte a été créé. Vérifiez votre email pour l'activer.",
+        });
       }
       
       console.log("Creating order...");
-      // Crée la commande
+      // Crée la commande sans userId si c'est un nouveau compte non confirmé
+      // L'userId sera null et guest_email sera utilisé
       const order = await createOrder(data, items, cartToken, userId);
       console.log("Order created:", order);
       
@@ -207,6 +210,35 @@ const Checkout = () => {
       });
     } catch (error) {
       console.error("Erreur lors de la création de la commande:", error);
+      
+      // Gestion spécifique de l'erreur de contrainte de clé étrangère
+      if (error instanceof Error && error.message.includes('violates foreign key constraint')) {
+        console.log("Foreign key constraint error detected, retrying without user migration");
+        try {
+          // Retry la création de commande sans userId
+          const order = await createOrder(data, items, cartToken, undefined);
+          console.log("Order created without user migration:", order);
+          
+          navigate('/payment', { 
+            state: { 
+              checkoutData: data, 
+              orderId: order.id,
+              orderTotal: total
+            } 
+          });
+          
+          await clearCart();
+          
+          toast({
+            title: "Commande créée avec succès!",
+            description: "Vous allez être redirigé vers la page de paiement.",
+          });
+          return;
+        } catch (retryError) {
+          console.error("Retry failed:", retryError);
+        }
+      }
+      
       toast({
         title: "Erreur",
         description: `Une erreur est survenue lors de la création de la commande: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,

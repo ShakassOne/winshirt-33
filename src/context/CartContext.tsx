@@ -70,9 +70,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       console.log("Auth state changed in cart context:", event, user ? user.id : "no user");
       setCurrentUser(user);
       
-      // Handle sign in - migrate cart if user just signed in
-      if (event === 'SIGNED_IN' && user && cartToken) {
-        console.log("User signed in, migrating cart");
+      // Handle sign in - migrate cart if user just signed in and is confirmed
+      if (event === 'SIGNED_IN' && user && cartToken && session?.user?.email_confirmed_at) {
+        console.log("User signed in and confirmed, migrating cart");
         try {
           await migrateCartToUser(user.id, cartToken);
           toast({
@@ -81,6 +81,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           });
         } catch (err: any) {
           console.error("Error migrating cart:", err);
+          // Ne pas afficher d'erreur à l'utilisateur pour ne pas le perturber
         }
       }
     });
