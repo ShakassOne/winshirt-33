@@ -47,7 +47,7 @@ const steps = [
 
 const HowItWorks: React.FC<HowItWorksProps> = ({ className }) => {
   return (
-    <section className={cn('py-20 section-optimized', className)}>
+    <section className={cn('py-20', className)}>
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-2">Comment ça marche</h2>
