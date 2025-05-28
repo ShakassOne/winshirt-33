@@ -183,6 +183,15 @@ const googleFonts = [
   { value: 'Fira Code', label: 'Fira Code' }
 ];
 
+// Correspondances entre formats et échelles
+const sizePresets = [
+  { label: 'A3', min: 81, max: 100 },
+  { label: 'A4', min: 61, max: 80 },
+  { label: 'A5', min: 41, max: 60 },
+  { label: 'A6', min: 21, max: 40 },
+  { label: 'A7', min: 1, max: 20 },
+];
+
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const isMobile = useIsMobile();
@@ -222,6 +231,10 @@ const ProductDetail = () => {
   const [printSizeFront, setPrintSizeFront] = useState<string>('A4');
   const [printSizeBack, setPrintSizeBack] = useState<string>('A4');
 
+  // Nouveaux états pour la synchronisation échelle ↔ formats
+  const [selectedSizeFront, setSelectedSizeFront] = useState<string>('A4');
+  const [selectedSizeBack, setSelectedSizeBack] = useState<string>('A4');
+
   // État pour le texte - séparé par côté
   const [textContentFront, setTextContentFront] = useState('');
   const [textContentBack, setTextContentBack] = useState('');
@@ -254,7 +267,6 @@ const ProductDetail = () => {
     underline: false
   });
 
-  // États pour le drag & drop
   const [isDragging, setIsDragging] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [isDraggingText, setIsDraggingText] = useState(false);
@@ -262,13 +274,50 @@ const ProductDetail = () => {
   const [activeDesignSide, setActiveDesignSide] = useState<'front' | 'back'>('front');
   const [activeTextSide, setActiveTextSide] = useState<'front' | 'back'>('front');
   
-  // États pour les loteries - support pour plusieurs loteries
   const [selectedLotteryIds, setSelectedLotteryIds] = useState<string[]>([]);
   const [selectedLotteries, setSelectedLotteries] = useState<Lottery[]>([]);
 
-  // New states for background removal
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
   const [backgroundRemovalImage, setBackgroundRemovalImage] = useState<string | null>(null);
+
+  // Fonctions utilitaires pour la synchronisation
+  const getSizeLabel = (scale: number): string => {
+    const scalePercent = Math.round(scale * 100);
+    const preset = sizePresets.find(p => scalePercent >= p.min && scalePercent <= p.max);
+    return preset?.label || 'Custom';
+  };
+
+  const handleSizeClick = (label: string) => {
+    const preset = sizePresets.find(p => p.label === label);
+    if (preset) {
+      const newScale = (preset.min + preset.max) / 200; // Convertir en échelle (0-1)
+      
+      if (currentViewSide === 'front') {
+        setDesignTransformFront(prev => ({ ...prev, scale: newScale }));
+        setSelectedSizeFront(label);
+        setPrintSizeFront(label);
+      } else {
+        setDesignTransformBack(prev => ({ ...prev, scale: newScale }));
+        setSelectedSizeBack(label);
+        setPrintSizeBack(label);
+      }
+    }
+  };
+
+  const handleScaleChange = (value: number[]) => {
+    const newScale = value[0] / 100; // Convertir de pourcentage à échelle (0-1)
+    const newSizeLabel = getSizeLabel(newScale);
+    
+    if (currentViewSide === 'front') {
+      setDesignTransformFront(prev => ({ ...prev, scale: newScale }));
+      setSelectedSizeFront(newSizeLabel);
+      setPrintSizeFront(newSizeLabel);
+    } else {
+      setDesignTransformBack(prev => ({ ...prev, scale: newScale }));
+      setSelectedSizeBack(newSizeLabel);
+      setPrintSizeBack(newSizeLabel);
+    }
+  };
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -320,16 +369,13 @@ const ProductDetail = () => {
     }
   }, [product]);
   
-  // Effet pour initialiser la couleur du mockup par défaut
   useEffect(() => {
     if (mockup?.colors && mockup.colors.length > 0) {
       setSelectedMockupColor(mockup.colors[0]);
     }
   }, [mockup]);
 
-  // Verrouiller le défilement de la page pendant la personnalisation
   useEffect(() => {
-    // N'appliquer le verrouillage que lorsque c'est nécessaire
     if (isDragging || isDraggingText || (pageScrollLocked && customizationMode)) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -389,30 +435,22 @@ const ProductDetail = () => {
   };
 
   const handleLotteryToggle = (lottery: Lottery, index: number) => {
-    // Vérifier si nous avons atteint la limite de tickets
     if (selectedLotteries.length >= (product?.tickets_offered || 0) && !selectedLotteryIds.includes(lottery.id)) {
-      toast.error(`Vous ne pouvez sélectionner que ${product?.tickets_offered} loterie(s) maximum pour ce produit.`);
+      toast.error(`Vous ne pouvez sélectionner que ${product?.tickets_offerts} loterie(s) maximum pour ce produit.`);
       return;
     }
 
-    // Si la loterie est déjà sélectionnée, la supprimer
     if (selectedLotteryIds.includes(lottery.id)) {
       setSelectedLotteries(prev => prev.filter(l => l.id !== lottery.id));
       setSelectedLotteryIds(prev => prev.filter(id => id !== lottery.id));
     } 
-    // Sinon, l'ajouter
     else {
-      // Pour l'index spécifique
       if (index < (product?.tickets_offered || 0)) {
-        // Créer un nouveau tableau de loteries sélectionnées
         const updatedLotteries = [...selectedLotteries];
-        // S'assurer que le tableau a la bonne taille
         while (updatedLotteries.length <= index) {
           updatedLotteries.push(null as unknown as Lottery);
         }
-        // Mettre à jour la loterie à l'index spécifié
         updatedLotteries[index] = lottery;
-        // Filtrer les entrées nulles
         const filteredLotteries = updatedLotteries.filter(l => l !== null);
         
         setSelectedLotteries(filteredLotteries);
@@ -557,7 +595,6 @@ const ProductDetail = () => {
     };
   }, [isDragging, startPos, isDraggingText, startPosText]);
 
-  // Suivre le côté actif lors du changement de vue
   useEffect(() => {
     if (currentViewSide === 'front') {
       setActiveDesignSide('front');
@@ -568,7 +605,6 @@ const ProductDetail = () => {
     }
   }, [currentViewSide]);
 
-  // Activer le texte automatiquement lorsque l'onglet texte est sélectionné
   useEffect(() => {
     if (selectedTab === 'text') {
       // Le texte est automatiquement activé dans cette version
@@ -581,22 +617,17 @@ const ProductDetail = () => {
     let price = product.price * quantity;
     
     if (customizationMode) {
-      // Prix du design front
       const frontDesignPrice = selectedDesignFront ? 
         (printSizeFront === 'A3' ? mockup?.price_a3 || 15 : 
          printSizeFront === 'A4' ? mockup?.price_a4 || 10 : 
          printSizeFront === 'A5' ? mockup?.price_a5 || 8 : mockup?.price_a6 || 5) : 0;
       
-      // Prix du design back
       const backDesignPrice = selectedDesignBack ? 
         (printSizeBack === 'A3' ? mockup?.price_a3 || 15 : 
          printSizeBack === 'A4' ? mockup?.price_a4 || 10 : 
          printSizeBack === 'A5' ? mockup?.price_a5 || 8 : mockup?.price_a6 || 5) : 0;
       
-      // Prix du texte front
       const frontTextPrice = textContentFront ? (mockup?.text_price_front || 3) : 0;
-      
-      // Prix du texte back
       const backTextPrice = textContentBack ? (mockup?.text_price_back || 3) : 0;
       
       price += frontDesignPrice + backDesignPrice + frontTextPrice + backTextPrice;
@@ -606,7 +637,6 @@ const ProductDetail = () => {
   };
 
   const getColorHexCode = (colorName: string) => {
-    // Convertir les noms de couleurs en codes hex
     const colorMap: {[key: string]: string} = {
       'white': '#ffffff',
       'black': '#000000',
@@ -665,6 +695,10 @@ const ProductDetail = () => {
     return currentViewSide === 'front' ? textStylesFront : textStylesBack;
   };
 
+  const getCurrentSelectedSize = () => {
+    return currentViewSide === 'front' ? selectedSizeFront : selectedSizeBack;
+  };
+
   const handleAddToCart = () => {
     if (!product) return;
 
@@ -679,7 +713,6 @@ const ProductDetail = () => {
       lotteries: selectedLotteryIds.length > 0 ? selectedLotteryIds : undefined
     };
 
-    // Customization object that includes both front and back designs and text
     if (customizationMode) {
       const customization: any = {};
       
@@ -723,13 +756,11 @@ const ProductDetail = () => {
         };
       }
 
-      // Only add customization if there's at least one design or text
       if (Object.keys(customization).length > 0) {
         cartItem.customization = customization;
       }
     }
 
-    // Use the addItem function from the cart context to add the item to the Supabase cart
     addItem(cartItem);
     toast.success('Produit ajouté au panier !');
   };
@@ -760,7 +791,6 @@ const ProductDetail = () => {
 
   const activeLotteries = lotteries.filter(lottery => lottery.is_active);
 
-  // Prévenir le défilement de la page pendant la personnalisation sur mobile
   const handleTouchMove = (e: React.TouchEvent) => {
     if (isDragging || isDraggingText) {
       e.preventDefault();
@@ -785,7 +815,6 @@ const ProductDetail = () => {
     }
   };
 
-  // New function to handle background removal
   const handleRemoveBackground = async () => {
     const currentDesign = getCurrentDesign();
     if (!currentDesign) return;
@@ -796,11 +825,9 @@ const ProductDetail = () => {
 
   const handleBackgroundRemovalReady = async (cleanedImageUrl: string) => {
     try {
-      // Convert base64 to blob
       const response = await fetch(cleanedImageUrl);
       const blob = await response.blob();
       
-      // Upload to Supabase Storage
       const fileName = `bg-removed-${Date.now()}.png`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('ai-images')
@@ -812,7 +839,6 @@ const ProductDetail = () => {
         return;
       }
 
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('ai-images')
         .getPublicUrl(fileName);
@@ -822,7 +848,6 @@ const ProductDetail = () => {
         return;
       }
 
-      // Create new design with cleaned image
       const cleanedDesign = {
         ...getCurrentDesign()!,
         id: `cleaned-${Date.now()}`,
@@ -831,7 +856,6 @@ const ProductDetail = () => {
         category: 'ai-generated-cleaned'
       };
 
-      // Replace the current design
       if (currentViewSide === 'front') {
         setSelectedDesignFront(cleanedDesign);
       } else {
@@ -875,7 +899,6 @@ const ProductDetail = () => {
                 className="w-full h-full object-contain"
               />
 
-              {/* Design superposé - maintenant séparé par côté */}
               {customizationMode && getCurrentDesign() && (
                 <div 
                   className="absolute cursor-move select-none"
@@ -898,7 +921,6 @@ const ProductDetail = () => {
                 </div>
               )}
               
-              {/* Texte superposé - maintenant séparé par côté */}
               {customizationMode && getCurrentTextContent() && (
                 <div 
                   className="absolute cursor-move select-none"
@@ -923,7 +945,6 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Bouton de suppression de fond pour images IA */}
               {customizationMode && getCurrentDesign() && 
                (getCurrentDesign()!.category === 'ai-generated' || getCurrentDesign()!.category === 'ai-generated-cleaned') && (
                 <div className="absolute bottom-4 right-4 z-30">
@@ -951,7 +972,6 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* Composant de suppression de fond (caché) */}
             {backgroundRemovalImage && (
               <div style={{ display: 'none' }}>
                 <RemoveFlatBackground
@@ -962,7 +982,6 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Boutons pour basculer entre le recto et le verso déplacés en dessous de l'image */}
             {customizationMode && mockup && mockup.svg_back_url && (
               <div className="flex justify-center mt-4">
                 <ToggleGroup 
@@ -1012,9 +1031,7 @@ const ProductDetail = () => {
               {calculatePrice().toFixed(2)} €
             </div>
 
-            {/* Options du produit */}
             <div className="space-y-6">
-              {/* Couleurs disponibles */}
               {product.available_colors && product.available_colors.length > 0 && (
                 <div>
                   <h3 className="text-sm font-medium mb-3">Couleur</h3>
@@ -1033,7 +1050,6 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Tailles disponibles */}
               {product.available_sizes && product.available_sizes.length > 0 && (
                 <div>
                   <h3 className="text-sm font-medium mb-3">Taille</h3>
@@ -1055,7 +1071,6 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Personnalisation accordéon */}
               {product.is_customizable && (
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="customization" className="border-b-0">
@@ -1149,46 +1164,45 @@ const ProductDetail = () => {
                             </div>
                           </div>
                           
-                          {/* Paramètres de design après sélection */}
                           {getCurrentDesign() && (
                             <div className="space-y-4 p-4 bg-white/5 rounded-lg">
                               <div>
-                                <Label className="mb-2 block">Taille d'impression</Label>
-                                <div className="flex gap-2">
-                                  {['A3', 'A4', 'A5', 'A6'].map((size) => (
+                                <div className="flex justify-between items-center mb-2">
+                                  <Label className="block">Taille d'impression</Label>
+                                  <span className="text-sm text-winshirt-blue">
+                                    Format sélectionné : {getCurrentSelectedSize()}
+                                  </span>
+                                </div>
+                                <div className="flex gap-2 mb-2">
+                                  {sizePresets.map((preset) => (
                                     <Button
-                                      key={size}
+                                      key={preset.label}
                                       variant="outline"
                                       size="sm"
                                       className={`${
-                                        (currentViewSide === 'front' ? printSizeFront : printSizeBack) === size
-                                          ? 'bg-winshirt-purple'
-                                          : ''
+                                        getCurrentSelectedSize() === preset.label
+                                          ? 'bg-winshirt-purple text-white'
+                                          : 'hover:bg-winshirt-purple/20'
                                       }`}
-                                      onClick={() => {
-                                        if (currentViewSide === 'front') {
-                                          setPrintSizeFront(size);
-                                        } else {
-                                          setPrintSizeBack(size);
-                                        }
-                                      }}
+                                      onClick={() => handleSizeClick(preset.label)}
                                     >
-                                      {size}
+                                      {preset.label}
                                     </Button>
                                   ))}
                                 </div>
+                                <p className="text-xs text-white/60 mt-2">
+                                  Les tailles A3 à A7 correspondent à l'échelle approximative d'impression.
+                                </p>
                               </div>
                               
                               <div className="space-y-2">
                                 <Label>Échelle ({Math.round(getCurrentDesignTransform().scale * 100)}%)</Label>
                                 <Slider
                                   value={[getCurrentDesignTransform().scale * 100]}
-                                  min={10}
-                                  max={200}
-                                  step={10}
-                                  onValueChange={(value) =>
-                                    handleDesignTransformChange('scale', value[0] / 100)
-                                  }
+                                  min={1}
+                                  max={100}
+                                  step={1}
+                                  onValueChange={handleScaleChange}
                                   className="flex-1"
                                 />
                               </div>
@@ -1433,7 +1447,6 @@ const ProductDetail = () => {
                 </Accordion>
               )}
 
-              {/* Dialog pour sélection de design */}
               <Dialog open={designDialogOpen} onOpenChange={setDesignDialogOpen}>
                 <DialogContent className="bg-black/70 backdrop-blur-lg border-white/20 max-w-4xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
@@ -1485,14 +1498,12 @@ const ProductDetail = () => {
                 </DialogContent>
               </Dialog>
 
-              {/* AI Image Generator Dialog */}
               <AIImageGenerator
                 isOpen={aiGeneratorOpen}
                 onClose={() => setAiGeneratorOpen(false)}
                 onImageGenerated={handleAIImageGenerated}
               />
 
-              {/* Loteries disponibles */}
               {product.tickets_offered > 0 && activeLotteries.length > 0 && (
                 <div className="space-y-4 p-4 bg-white/5 border border-white/10 rounded-lg">
                   <h3 className="flex items-center text-lg font-medium">
@@ -1501,8 +1512,8 @@ const ProductDetail = () => {
                   </h3>
                   
                   <p className="text-sm text-white/70">
-                    Ce produit vous permet de participer à {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}.
-                    Sélectionnez {product.tickets_offered > 1 ? 'celles qui vous intéressent' : 'celle qui vous intéresse'}.
+                    Ce produit vous permet de participer à {product.tickets_offered} {product.tickets_offerts > 1 ? 'loteries' : 'loterie'}.
+                    Sélectionnez {product.tickets_offerts > 1 ? 'celles qui vous intéressent' : 'celle qui vous intéresse'}.
                   </p>
                   
                   <div className="space-y-3">
@@ -1559,7 +1570,6 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Quantité et ajout au panier */}
               <div>
                 <div className="flex flex-wrap gap-4 items-center">
                   <div className="flex items-center rounded-md overflow-hidden">
