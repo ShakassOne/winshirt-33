@@ -356,28 +356,43 @@ export type Database = {
           created_at: string | null
           customization: Json | null
           id: string
+          lottery_name: string | null
+          mockup_recto_url: string | null
+          mockup_verso_url: string | null
           order_id: string
           price: number
           product_id: string
           quantity: number
+          selected_color: string | null
+          selected_size: string | null
         }
         Insert: {
           created_at?: string | null
           customization?: Json | null
           id?: string
+          lottery_name?: string | null
+          mockup_recto_url?: string | null
+          mockup_verso_url?: string | null
           order_id: string
           price: number
           product_id: string
           quantity: number
+          selected_color?: string | null
+          selected_size?: string | null
         }
         Update: {
           created_at?: string | null
           customization?: Json | null
           id?: string
+          lottery_name?: string | null
+          mockup_recto_url?: string | null
+          mockup_verso_url?: string | null
           order_id?: string
           price?: number
           product_id?: string
           quantity?: number
+          selected_color?: string | null
+          selected_size?: string | null
         }
         Relationships: [
           {

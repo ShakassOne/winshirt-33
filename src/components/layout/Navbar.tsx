@@ -16,11 +16,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import CartIcon from "@/components/cart/CartIcon";
 import SignOutButton from "@/components/auth/SignOutButton";
 import { useAuth } from "@/context/AuthContext";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
   const { isAuthenticated } = useAuth();
+  const { isAdmin } = useAdminCheck();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -73,7 +75,7 @@ const Navbar = () => {
               >
                 Loteries
               </Link>
-              {isAuthenticated && (
+              {isAuthenticated && isAdmin && (
                 <Link
                   to="/admin"
                   className="text-white/80 hover:text-white transition-colors px-3 py-1"
@@ -103,7 +105,7 @@ const Navbar = () => {
                       <DropdownMenuItem className="hover:bg-white/5">
                         <Link to="/orders" className="flex w-full">Mes commandes</Link>
                       </DropdownMenuItem>
-                      {isAuthenticated && (
+                      {isAdmin && (
                         <>
                           <DropdownMenuItem className="hover:bg-white/5">
                             <Link to="/admin" className="flex w-full">Administration</Link>
@@ -156,7 +158,7 @@ const Navbar = () => {
             >
               Loteries
             </Link>
-            {isAuthenticated && (
+            {isAuthenticated && isAdmin && (
               <>
                 <Link
                   to="/admin"
