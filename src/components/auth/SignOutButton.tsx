@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
@@ -12,7 +12,7 @@ interface SignOutButtonProps {
 }
 
 const SignOutButton: React.FC<SignOutButtonProps> = ({ variant = 'default', className = '' }) => {
-  const { signOut } = useOptimizedAuth();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   

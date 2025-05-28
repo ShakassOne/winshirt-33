@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { X, Menu, User } from "lucide-react";
@@ -14,12 +15,12 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import CartIcon from "@/components/cart/CartIcon";
 import SignOutButton from "@/components/auth/SignOutButton";
-import { useOptimizedAuth } from "@/context/OptimizedAuthContext";
+import { useAuth } from "@/context/AuthContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { isAuthenticated } = useOptimizedAuth();
+  const { isAuthenticated } = useAuth();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
