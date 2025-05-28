@@ -436,7 +436,7 @@ const ProductDetail = () => {
 
   const handleLotteryToggle = (lottery: Lottery, index: number) => {
     if (selectedLotteries.length >= (product?.tickets_offered || 0) && !selectedLotteryIds.includes(lottery.id)) {
-      toast.error(`Vous ne pouvez sélectionner que ${product?.tickets_offerts} loterie(s) maximum pour ce produit.`);
+      toast.error(`Vous ne pouvez sélectionner que ${product?.tickets_offered} loterie(s) maximum pour ce produit.`);
       return;
     }
 
@@ -1512,8 +1512,8 @@ const ProductDetail = () => {
                   </h3>
                   
                   <p className="text-sm text-white/70">
-                    Ce produit vous permet de participer à {product.tickets_offered} {product.tickets_offerts > 1 ? 'loteries' : 'loterie'}.
-                    Sélectionnez {product.tickets_offerts > 1 ? 'celles qui vous intéressent' : 'celle qui vous intéresse'}.
+                    Ce produit vous permet de participer à {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}.
+                    Sélectionnez {product.tickets_offered > 1 ? 'celles qui vous intéressent' : 'celle qui vous intéresse'}.
                   </p>
                   
                   <div className="space-y-3">
