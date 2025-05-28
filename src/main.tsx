@@ -9,21 +9,20 @@ import { ThemeProvider } from "next-themes";
 import App from "./App.tsx";
 import "./index.css";
 
-// Optimized query client configuration
+// Configuration simplifiée du query client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: (failureCount, error) => {
-        if (failureCount < 2) return true;
-        return false;
-      },
+      retry: 2,
     },
   },
 });
 
 const rootElement = document.getElementById("root");
-if (!rootElement) throw new Error("Root element not found");
+if (!rootElement) {
+  throw new Error("Root element not found");
+}
 
 createRoot(rootElement).render(
   <StrictMode>
@@ -37,5 +36,5 @@ createRoot(rootElement).render(
         </ThemeProvider>
       </BrowserRouter>
     </QueryClientProvider>
-  </StrictMode>,
+  </StrictMode>
 );
