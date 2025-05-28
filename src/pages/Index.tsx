@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Hero from '@/components/home/Hero';
-import ProductShowcase from '@/components/home/ProductShowcase';
+import OptimizedProductShowcase from '@/components/home/OptimizedProductShowcase';
 import HowItWorks from '@/components/home/HowItWorks';
 
 const Index = () => {
@@ -21,8 +21,12 @@ const Index = () => {
       
       <main className="flex-grow">
         <Hero />
-        <ProductShowcase />
-        <HowItWorks />
+        <div className="section-optimized">
+          <OptimizedProductShowcase />
+        </div>
+        <div className="section-optimized">
+          <HowItWorks />
+        </div>
       </main>
       
       <Footer />

@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -107,8 +108,12 @@
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
+    /* Optimisations de performance */
+    content-visibility: auto;
+    contain-intrinsic-size: 100vh;
   }
 
+  /* Arrière-plan étoilé optimisé - simplifié pour de meilleures performances */
   body::after {
     content: '';
     position: fixed;
@@ -117,13 +122,14 @@
     width: 100%;
     height: 100%;
     pointer-events: none;
-    background-image: 
-      radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 7px),
-      radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 5px),
-      radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 10px);
-    background-size: 550px 550px, 350px 350px, 250px 250px;
-    background-position: 0 0, 40px 60px, 130px 270px;
+    /* Simplifié à un seul dégradé pour améliorer les performances */
+    background-image: radial-gradient(white, rgba(255,255,255,.1) 1px, transparent 4px);
+    background-size: 400px 400px;
+    background-position: 0 0;
     z-index: -1;
+    /* Optimisation GPU */
+    will-change: transform;
+    transform: translateZ(0);
   }
 }
 
@@ -134,6 +140,8 @@
   
   .glass-card {
     @apply glass rounded-2xl transition-all duration-300;
+    /* Optimisation pour éviter les reflows */
+    contain: layout style paint;
   }
   
   .glass-card:hover {
@@ -148,13 +156,15 @@
     @apply h-full rounded-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue transition-all duration-300;
   }
   
-  /* 3D Tilt Card Effect */
+  /* 3D Tilt Card Effect - optimisé */
   .tilt-card {
     @apply rounded-xl cursor-pointer overflow-hidden transition-shadow duration-200;
     transform-style: preserve-3d;
     transform: perspective(1000px);
     box-shadow: 0 4px 24px rgba(0,0,0,0.15);
     will-change: transform;
+    /* Optimisation conteneur */
+    contain: layout style paint;
   }
   
   .tilt-card:hover {
@@ -168,7 +178,7 @@
     left: 50%;
   }
   
-  /* Flash effect */
+  /* Flash effect - optimisé */
   .tilt-card::before {
     content: '';
     position: absolute;
@@ -179,8 +189,8 @@
     background: linear-gradient(
       120deg,
       transparent 40%,
-      rgba(0,255,255,0.18) 48%,
-      rgba(255,255,255,0.25) 52%,
+      rgba(0,255,255,0.15) 48%,
+      rgba(255,255,255,0.2) 52%,
       transparent 60%
     );
     pointer-events: none;
@@ -188,12 +198,19 @@
     transform: translateY(0) scale(1.05);
     transition: opacity 0.15s, transform 0.6s cubic-bezier(.24,.97,.56,1.03);
     z-index: 2;
+    will-change: transform, opacity;
   }
   
   .tilt-card.flash::before {
     opacity: 1;
     transform: translateY(100%) scale(1.05);
     transition: opacity 0.08s, transform 1s cubic-bezier(.24,.97,.56,1.03);
+  }
+
+  /* Optimisations de performance pour les sections */
+  .section-optimized {
+    content-visibility: auto;
+    contain-intrinsic-size: 600px;
   }
 }
 
@@ -204,5 +221,34 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
     color: transparent;
+  }
+
+  /* Animations optimisées */
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-pulse-light {
+    animation: pulseLight 3s ease-in-out infinite;
+  }
+
+  @keyframes pulseLight {
+    0%, 100% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 0.6;
+    }
   }
 }
