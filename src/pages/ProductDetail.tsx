@@ -435,26 +435,33 @@ const ProductDetail = () => {
   };
 
   const handleLotteryToggle = (lottery: Lottery, index: number) => {
-    if (selectedLotteries.length >= (product?.tickets_offered || 0) && !selectedLotteryIds.includes(lottery.id)) {
-      toast.error(`Vous ne pouvez sélectionner que ${product?.tickets_offered} loterie(s) maximum pour ce produit.`);
-      return;
-    }
-
     if (selectedLotteryIds.includes(lottery.id)) {
+      // Si la loterie est déjà sélectionnée, on la désélectionne
       setSelectedLotteries(prev => prev.filter(l => l.id !== lottery.id));
       setSelectedLotteryIds(prev => prev.filter(id => id !== lottery.id));
     } 
     else {
+      // Si on a déjà une loterie à cet index, on la remplace directement
       if (index < (product?.tickets_offered || 0)) {
         const updatedLotteries = [...selectedLotteries];
+        
+        // S'assurer que le tableau a la bonne taille
         while (updatedLotteries.length <= index) {
           updatedLotteries.push(null as unknown as Lottery);
         }
+        
+        // Remplacer la loterie à l'index spécifié
         updatedLotteries[index] = lottery;
+        
+        // Filtrer les valeurs null
         const filteredLotteries = updatedLotteries.filter(l => l !== null);
         
         setSelectedLotteries(filteredLotteries);
         setSelectedLotteryIds(filteredLotteries.map(l => l.id));
+      }
+      // Si on dépasse le nombre de tickets offerts ET qu'on n'a pas de loterie à remplacer à cet index
+      else if (selectedLotteries.length >= (product?.tickets_offered || 0)) {
+        toast.error(`Vous ne pouvez sélectionner que ${product?.tickets_offered} loterie(s) maximum pour ce produit.`);
       }
     }
   };
