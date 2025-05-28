@@ -1,4 +1,12 @@
 
-// Supabase configuration
+// Supabase configuration optimized for production
 export const SUPABASE_URL = 'https://gyprtpqgeukcoxbfxtfg.supabase.co';
 export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5cHJ0cHFnZXVrY294YmZ4dGZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NzY1MDQsImV4cCI6MjA2MjM1MjUwNH0.sm-yWpvwGPvEFHdKomFsE-YKF0BHzry2W4Gma2hpY_4';
+
+// Configuration pour l'environnement de production
+export const getBaseURL = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  return 'https://winshirt.fr';
+};
