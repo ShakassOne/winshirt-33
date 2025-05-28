@@ -26,7 +26,7 @@ const PolitiqueConfidentialite = () => {
                 <div className="text-white/80 space-y-2">
                   <p>Le traitement des données est effectué par :</p>
                   <div className="bg-white/5 p-4 rounded-lg">
-                    <p><strong>WinShirt by SHAKASS COMMUNICATION</strong></p>
+                    <p><strong>WinShirt <br>est la propriété de Shakass Communication</strong></p>
                     <p>SIRET : 410 561 112 00062</p>
                     <p>195 chemin des Plateaux Fleuris, 06600 Antibes</p>
                     <p>Email : contact@winshirt.fr</p>
