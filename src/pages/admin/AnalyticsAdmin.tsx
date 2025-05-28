@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -9,7 +8,7 @@ import { TopProductsChart } from '@/components/analytics/TopProductsChart';
 import { LotteryAnalytics } from '@/components/analytics/LotteryAnalytics';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/button';
-import { activity } from 'lucide-react';
+import { Activity } from 'lucide-react';
 
 const AnalyticsAdmin = () => {
   const { data: analytics, isLoading, error } = useAnalyticsData();
@@ -102,7 +101,7 @@ const AnalyticsAdmin = () => {
                 variant="outline"
                 className="flex items-center gap-2"
               >
-                <activity className="h-4 w-4" />
+                <Activity className="h-4 w-4" />
                 Exporter CSV
               </Button>
             </div>
