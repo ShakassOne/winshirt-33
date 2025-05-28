@@ -26,8 +26,8 @@ const ReglementDuJeu = () => {
                 <div className="text-white/80">
                   <p className="mb-4">Le jeu est organisé par :</p>
                   <div className="bg-white/5 p-4 rounded-lg">
-                    <p><strong>SHAKASS COMMUNICATION / WinShirt</strong></p>
-                    <p>SIRET : 410 561 112 00062 – Entrepreneur individuel</p>
+                    <p><strong>WinShirt <br />est la propriété de Shakass Communication</strong></p>
+                    <p>SIRET : 410 561 112 00062</p>
                     <p>195 chemin des Plateaux Fleuris, 06600 Antibes</p>
                   </div>
                 </div>
