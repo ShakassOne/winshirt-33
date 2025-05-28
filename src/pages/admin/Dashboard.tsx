@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import GlassCard from '@/components/ui/GlassCard';
-import { ShoppingBag, Ticket, Award, ShoppingCart, Users, Image, Palette, Settings, bar-chart } from 'lucide-react';
+import { ShoppingBag, Ticket, Award, ShoppingCart, Users, Image, Palette, Settings, BarChart } from 'lucide-react';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -13,7 +12,7 @@ const AdminDashboard = () => {
     {
       title: 'Analytics',
       description: 'Statistiques et performances de vente',
-      icon: <bar-chart className="h-8 w-8 text-emerald-500" />,
+      icon: <BarChart className="h-8 w-8 text-emerald-500" />,
       route: '/admin/analytics',
       color: 'from-emerald-500/20 to-emerald-500/5'
     },

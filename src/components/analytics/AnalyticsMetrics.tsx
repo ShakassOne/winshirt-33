@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { activity, circle-dollar-sign, file-text, trending-up } from 'lucide-react';
+import { Activity, DollarSign, FileText, TrendingUp } from 'lucide-react';
 
 interface AnalyticsMetricsProps {
   totalRevenue: number;
@@ -23,28 +23,28 @@ export const AnalyticsMetrics: React.FC<AnalyticsMetricsProps> = ({
     {
       title: 'Chiffre d\'affaires',
       value: `${totalRevenue.toFixed(2)} €`,
-      icon: circle-dollar-sign,
+      icon: DollarSign,
       description: 'Total des ventes',
       color: 'text-green-500'
     },
     {
       title: 'Commandes',
       value: totalOrders.toString(),
-      icon: file-text,
+      icon: FileText,
       description: 'Commandes payées',
       color: 'text-blue-500'
     },
     {
       title: 'Panier moyen',
       value: `${averageOrderValue.toFixed(2)} €`,
-      icon: trending-up,
+      icon: TrendingUp,
       description: 'Valeur moyenne',
       color: 'text-purple-500'
     },
     {
       title: 'Clients uniques',
       value: uniqueCustomers.toString(),
-      icon: activity,
+      icon: Activity,
       description: 'Acheteurs différents',
       color: 'text-orange-500'
     }
