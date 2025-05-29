@@ -7,7 +7,7 @@ import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Package, Truck, ArrowRight } from 'lucide-react';
-import { ExtendedOrder } from '@/types/supabase.types';
+import { ExtendedOrder, OrderStatus, PaymentStatus } from '@/types/supabase.types';
 
 const PaymentSuccess = () => {
   const location = useLocation();
@@ -38,7 +38,20 @@ const PaymentSuccess = () => {
           .single();
 
         if (error) throw error;
-        setOrder(orderData);
+        
+        // Valider et convertir les types
+        const validatedOrder: ExtendedOrder = {
+          ...orderData,
+          status: (['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(orderData.status) 
+            ? orderData.status 
+            : 'pending') as OrderStatus,
+          payment_status: (['pending', 'paid', 'failed'].includes(orderData.payment_status) 
+            ? orderData.payment_status 
+            : 'pending') as PaymentStatus,
+          items: orderData.order_items
+        };
+        
+        setOrder(validatedOrder);
       } catch (error) {
         console.error('Error fetching order:', error);
       } finally {

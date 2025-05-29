@@ -153,6 +153,10 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
     hidePostalCode: true,
   };
 
+  // Calculer le sous-total (total sans livraison)
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const shippingCost = total - subtotal;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -172,11 +176,11 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
             <h4 className="font-medium text-sm">Récapitulatif</h4>
             <div className="flex justify-between text-sm">
               <span>Sous-total</span>
-              <span>{(total - (items.reduce((sum, item) => sum + (item.customization?.selectedShippingCost || 0), 0))).toFixed(2)} €</span>
+              <span>{subtotal.toFixed(2)} €</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Livraison</span>
-              <span>{(total - (total - (items.reduce((sum, item) => sum + (item.customization?.selectedShippingCost || 0), 0)))).toFixed(2)} €</span>
+              <span>{shippingCost.toFixed(2)} €</span>
             </div>
             <div className="flex justify-between font-medium text-base border-t pt-2">
               <span>Total</span>
