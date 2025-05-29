@@ -14,9 +14,9 @@ import { useToast } from '@/hooks/use-toast';
 import { fetchProductById } from '@/services/api.service';
 import { Product } from '@/types/supabase.types';
 import { SocialShareButton } from '@/components/SocialShareButton';
-import CustomizationAccordion from '@/components/product/CustomizationAccordion';
-import AIImageGenerator from '@/components/product/AIImageGenerator';
 import { UploadImageField } from '@/components/ui/upload-image-field';
+import AIImageGenerator from '@/components/product/AIImageGenerator';
+import { ChevronDown } from 'lucide-react';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +29,9 @@ const ProductDetail = () => {
   const [designImage, setDesignImage] = useState<string>('');
   const [designName, setDesignName] = useState<string>('');
   const [isAIGeneratorOpen, setIsAIGeneratorOpen] = useState(false);
+  const [isCustomizationOpen, setIsCustomizationOpen] = useState(false);
+  const [selectedTextFont, setSelectedTextFont] = useState<string>('Arial');
+  const [selectedTextColor, setSelectedTextColor] = useState<string>('#FFFFFF');
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -69,6 +72,9 @@ const ProductDetail = () => {
         selectedColor: selectedColor,
         designUrl: designImage,
         designName: designName,
+        textFont: selectedTextFont,
+        textColor: selectedTextColor,
+        productColor: selectedProductColor,
       } : null,
     };
 
@@ -89,6 +95,9 @@ const ProductDetail = () => {
     { name: 'Bleu', value: '#0066CC' },
     { name: 'Blanc', value: '#FFFFFF' }
   ];
+
+  const textColors = ['#FFFFFF', '#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00'];
+  const fontOptions = ['Arial', 'Helvetica', 'Times New Roman', 'Impact'];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -136,15 +145,15 @@ const ProductDetail = () => {
                   </div>
                   <p className="text-white/80 mb-6">{product.description}</p>
 
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Tailles disponibles</h3>
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-3">Tailles disponibles</h3>
                     <div className="flex space-x-2">
                       {product.available_sizes && product.available_sizes.map((size) => (
                         <Badge
                           key={size}
                           variant={selectedSize === size ? "default" : "secondary"}
                           onClick={() => setSelectedSize(size)}
-                          className="cursor-pointer"
+                          className="cursor-pointer px-4 py-2"
                         >
                           {size}
                         </Badge>
@@ -153,15 +162,15 @@ const ProductDetail = () => {
                   </div>
 
                   {product.available_colors && product.available_colors.length > 0 && (
-                    <div className="mt-4">
-                      <h3 className="text-lg font-semibold mb-2">Couleurs disponibles</h3>
+                    <div className="mb-6">
+                      <h3 className="text-lg font-semibold mb-3">Couleurs disponibles</h3>
                       <div className="flex space-x-2">
                         {product.available_colors.map((color) => (
                           <Badge
                             key={color}
                             variant={selectedColor === color ? "default" : "secondary"}
                             onClick={() => setSelectedColor(color)}
-                            className="cursor-pointer"
+                            className="cursor-pointer px-4 py-2"
                           >
                             {color}
                           </Badge>
@@ -170,142 +179,165 @@ const ProductDetail = () => {
                     </div>
                   )}
 
-                  <Button className="w-full mt-6" onClick={handleAddToCart}>
+                  <Button className="w-full" onClick={handleAddToCart}>
                     Ajouter au panier
                   </Button>
                 </GlassCard>
 
+                {/* Customization Section */}
                 {product.is_customizable && (
-                  <CustomizationAccordion>
-                    <div className="space-y-6">
-                      <Tabs defaultValue="design" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="design">Design</TabsTrigger>
-                          <TabsTrigger value="text">Texte</TabsTrigger>
-                        </TabsList>
-                        
-                        <TabsContent value="design" className="space-y-6">
-                          <div>
-                            <h4 className="text-sm font-medium mb-3">Couleur du produit</h4>
-                            <div className="flex gap-3">
-                              {productColors.map((color) => (
-                                <div
-                                  key={color.name}
-                                  className={`w-10 h-10 rounded-full border-2 cursor-pointer transition-all hover:scale-110 ${
-                                    selectedProductColor === color.name 
-                                      ? 'border-white shadow-lg' 
-                                      : 'border-gray-500'
-                                  }`}
-                                  style={{ backgroundColor: color.value }}
-                                  onClick={() => setSelectedProductColor(color.name)}
-                                  title={color.name}
-                                />
-                              ))}
-                            </div>
-                          </div>
-
-                          <div>
-                            <h4 className="text-sm font-medium mb-3">Ajouter un design</h4>
-                            <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center bg-black/20">
-                              {designImage ? (
-                                <div className="space-y-3">
-                                  <img 
-                                    src={designImage} 
-                                    alt={designName} 
-                                    className="max-h-32 mx-auto rounded-md shadow-md" 
-                                  />
-                                  <p className="text-sm text-gray-300">{designName}</p>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => {
-                                      setDesignImage('');
-                                      setDesignName('');
-                                    }}
-                                  >
-                                    Supprimer
-                                  </Button>
-                                </div>
-                              ) : (
-                                <div className="space-y-3">
-                                  <p className="text-gray-400 text-sm">Aucun design sélectionné</p>
-                                  <p className="text-xs text-gray-500">
-                                    Ajoutez votre propre design ou générez-en un avec l'IA
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                            
-                            <div className="grid grid-cols-3 gap-3 mt-4">
-                              <UploadImageField
-                                label=""
-                                value={designImage}
-                                onChange={(url) => {
-                                  setDesignImage(url);
-                                  setDesignName('Image importée');
-                                }}
-                                showPreview={false}
-                                className="contents"
-                              />
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => setIsAIGeneratorOpen(true)}
-                              >
-                                Générer IA
-                              </Button>
-                              <Button variant="outline" size="sm">
-                                Galerie
-                              </Button>
-                            </div>
-                          </div>
-                        </TabsContent>
-                        
-                        <TabsContent value="text" className="space-y-6">
-                          <div>
-                            <h4 className="text-sm font-medium mb-3">Texte personnalisé</h4>
-                            <textarea
-                              className="w-full p-3 border rounded-md bg-background text-white resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              rows={4}
-                              placeholder="Entrez votre texte ici..."
-                              value={customText}
-                              onChange={(e) => setCustomText(e.target.value)}
-                            />
-                            <p className="text-xs text-gray-500 mt-2">
-                              Maximum 50 caractères par ligne recommandé
-                            </p>
-                          </div>
-
-                          <div>
-                            <h4 className="text-sm font-medium mb-3">Options de texte</h4>
-                            <div className="space-y-3">
-                              <div>
-                                <label className="text-xs text-gray-400">Police</label>
-                                <select className="w-full p-2 border rounded-md bg-background text-white text-sm">
-                                  <option>Arial</option>
-                                  <option>Helvetica</option>
-                                  <option>Times New Roman</option>
-                                  <option>Impact</option>
-                                </select>
-                              </div>
-                              <div>
-                                <label className="text-xs text-gray-400">Couleur du texte</label>
-                                <div className="flex gap-2 mt-1">
-                                  {['#FFFFFF', '#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00'].map((color) => (
-                                    <div
-                                      key={color}
-                                      className="w-6 h-6 rounded border cursor-pointer"
-                                      style={{ backgroundColor: color }}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </TabsContent>
-                      </Tabs>
+                  <GlassCard className="p-0 overflow-hidden">
+                    <div 
+                      className="bg-gradient-to-r from-purple-600 to-blue-600 p-4 cursor-pointer flex items-center justify-between"
+                      onClick={() => setIsCustomizationOpen(!isCustomizationOpen)}
+                    >
+                      <span className="text-white font-semibold">Commencer à personnaliser</span>
+                      <ChevronDown 
+                        className={`h-5 w-5 text-white transition-transform duration-300 ${
+                          isCustomizationOpen ? 'rotate-180' : ''
+                        }`} 
+                      />
                     </div>
-                  </CustomizationAccordion>
+                    
+                    {isCustomizationOpen && (
+                      <div className="p-6">
+                        <Tabs defaultValue="design" className="w-full">
+                          <TabsList className="grid w-full grid-cols-2 mb-6">
+                            <TabsTrigger value="design">Design</TabsTrigger>
+                            <TabsTrigger value="texte">Texte</TabsTrigger>
+                          </TabsList>
+                          
+                          <TabsContent value="design" className="space-y-6">
+                            <div>
+                              <h4 className="text-lg font-medium mb-4">Couleur du produit</h4>
+                              <div className="flex gap-3">
+                                {productColors.map((color) => (
+                                  <div
+                                    key={color.name}
+                                    className={`w-12 h-12 rounded-full border-2 cursor-pointer transition-all hover:scale-110 ${
+                                      selectedProductColor === color.name 
+                                        ? 'border-white shadow-lg' 
+                                        : 'border-gray-500'
+                                    }`}
+                                    style={{ backgroundColor: color.value }}
+                                    onClick={() => setSelectedProductColor(color.name)}
+                                    title={color.name}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            <div>
+                              <h4 className="text-lg font-medium mb-4">Zone de design</h4>
+                              <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center bg-black/20 min-h-[200px] flex flex-col justify-center">
+                                {designImage ? (
+                                  <div className="space-y-3">
+                                    <img 
+                                      src={designImage} 
+                                      alt={designName} 
+                                      className="max-h-40 mx-auto rounded-md shadow-md" 
+                                    />
+                                    <p className="text-sm text-gray-300">{designName}</p>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => {
+                                        setDesignImage('');
+                                        setDesignName('');
+                                      }}
+                                    >
+                                      Supprimer
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-3">
+                                    <p className="text-gray-400">Aucun design sélectionné</p>
+                                    <p className="text-xs text-gray-500">
+                                      Ajoutez votre propre design ou générez-en un avec l'IA
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="grid grid-cols-3 gap-3 mt-4">
+                                <UploadImageField
+                                  label=""
+                                  value={designImage}
+                                  onChange={(url) => {
+                                    setDesignImage(url);
+                                    setDesignName('Image importée');
+                                  }}
+                                  showPreview={false}
+                                  className="contents"
+                                />
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => setIsAIGeneratorOpen(true)}
+                                  className="w-full"
+                                >
+                                  Générer IA
+                                </Button>
+                                <Button variant="outline" size="sm" className="w-full">
+                                  Galerie
+                                </Button>
+                              </div>
+                            </div>
+                          </TabsContent>
+                          
+                          <TabsContent value="texte" className="space-y-6">
+                            <div>
+                              <h4 className="text-lg font-medium mb-4">Texte personnalisé</h4>
+                              <textarea
+                                className="w-full p-4 border rounded-md bg-gray-800/50 text-white resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[120px]"
+                                placeholder="Entrez votre texte ici..."
+                                value={customText}
+                                onChange={(e) => setCustomText(e.target.value)}
+                              />
+                              <p className="text-xs text-gray-500 mt-2">
+                                Maximum 50 caractères par ligne recommandé
+                              </p>
+                            </div>
+
+                            <div>
+                              <h4 className="text-lg font-medium mb-4">Options de texte</h4>
+                              <div className="space-y-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-300 mb-2">Police</label>
+                                  <select 
+                                    className="w-full p-3 border rounded-md bg-gray-800/50 text-white"
+                                    value={selectedTextFont}
+                                    onChange={(e) => setSelectedTextFont(e.target.value)}
+                                  >
+                                    {fontOptions.map((font) => (
+                                      <option key={font} value={font}>{font}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-300 mb-2">Couleur du texte</label>
+                                  <div className="flex gap-3">
+                                    {textColors.map((color) => (
+                                      <div
+                                        key={color}
+                                        className={`w-8 h-8 rounded border-2 cursor-pointer transition-all hover:scale-110 ${
+                                          selectedTextColor === color 
+                                            ? 'border-white shadow-lg' 
+                                            : 'border-gray-500'
+                                        }`}
+                                        style={{ backgroundColor: color }}
+                                        onClick={() => setSelectedTextColor(color)}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </TabsContent>
+                        </Tabs>
+                      </div>
+                    )}
+                  </GlassCard>
                 )}
 
                 {/* Section Loterie */}
