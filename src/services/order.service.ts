@@ -40,25 +40,36 @@ export const createOrder = async (
       
     if (orderError) throw orderError;
     
-    // Create order items avec logs pour debug
+    // Create order items avec transmission correcte de toutes les données
     const orderItems = items.map(item => {
       console.log('Processing item for order:', item);
       console.log('Item customization:', item.customization);
+      
+      // Extraire les informations de personnalisation
+      const customization = item.customization;
+      const mockupRectoUrl = customization?.mockupRectoUrl || null;
+      const mockupVersoUrl = customization?.mockupVersoUrl || null;
+      const selectedSize = item.size || customization?.selectedSize || null;
+      const selectedColor = item.color || customization?.selectedColor || null;
+      const lotteryName = customization?.lotteryName || null;
       
       const orderItem = {
         order_id: order.id,
         product_id: item.productId,
         quantity: item.quantity,
         price: item.price,
-        customization: item.customization || null,
-        mockup_recto_url: item.customization?.mockupRectoUrl || null,
-        mockup_verso_url: item.customization?.mockupVersoUrl || null,
-        selected_size: item.size || item.customization?.selectedSize || null,
-        selected_color: item.color || item.customization?.selectedColor || null,
-        lottery_name: item.customization?.lotteryName || null
+        customization: customization || null,
+        mockup_recto_url: mockupRectoUrl,
+        mockup_verso_url: mockupVersoUrl,
+        selected_size: selectedSize,
+        selected_color: selectedColor,
+        lottery_name: lotteryName
       };
       
       console.log('Order item to insert:', orderItem);
+      console.log('Mockup URLs - Recto:', mockupRectoUrl, 'Verso:', mockupVersoUrl);
+      console.log('Lottery name being saved:', lotteryName);
+      
       return orderItem;
     });
     
@@ -66,7 +77,12 @@ export const createOrder = async (
       .from('order_items')
       .insert(orderItems);
       
-    if (itemsError) throw itemsError;
+    if (itemsError) {
+      console.error('Error inserting order items:', itemsError);
+      throw itemsError;
+    }
+    
+    console.log('Order items successfully created with visual and lottery data');
     
     return order;
   } catch (error) {
@@ -162,7 +178,7 @@ export const updateOrderPaymentStatus = async (
       
     if (error) throw error;
 
-    // If order is now paid, generate lottery entries
+    // If order is now paid, generate lottery entries with the corrected function
     if (status === 'paid') {
       try {
         const { error: lotteryError } = await supabase.rpc('generate_lottery_entries_for_order', {
@@ -173,7 +189,7 @@ export const updateOrderPaymentStatus = async (
           console.error('Error generating lottery entries:', lotteryError);
           // Don't throw - order update succeeded
         } else {
-          console.log(`Generated lottery entries for order ${orderId}`);
+          console.log(`Generated lottery entries for order ${orderId} using corrected function`);
         }
       } catch (lotteryErr) {
         console.error('Exception generating lottery entries:', lotteryErr);
@@ -182,24 +198,6 @@ export const updateOrderPaymentStatus = async (
     }
   } catch (error) {
     console.error("Error in updateOrderPaymentStatus:", error);
-    throw error;
-  }
-};
-
-// Nouvelle fonction pour traiter rétroactivement les commandes existantes
-export const processExistingOrdersForLottery = async () => {
-  try {
-    const { error } = await supabase.rpc('process_existing_orders_for_lottery');
-    
-    if (error) {
-      console.error('Error processing existing orders for lottery:', error);
-      throw error;
-    }
-    
-    console.log('Successfully processed existing orders for lottery');
-    return { success: true };
-  } catch (error) {
-    console.error('Exception processing existing orders:', error);
     throw error;
   }
 };

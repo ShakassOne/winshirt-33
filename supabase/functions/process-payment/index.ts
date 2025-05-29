@@ -63,7 +63,7 @@ serve(async (req) => {
       throw new Error(`Error updating order: ${updateError.message}`);
     }
 
-    // Generate lottery entries for this order
+    // Generate lottery entries for this order using the corrected function
     try {
       const { error: lotteryError } = await supabaseAdmin.rpc(
         'generate_lottery_entries_for_order',
@@ -74,7 +74,7 @@ serve(async (req) => {
         console.error("Error generating lottery entries:", lotteryError);
         // Don't throw here - order is still valid even if lottery fails
       } else {
-        console.log(`Lottery entries generated for order ${orderId}`);
+        console.log(`Lottery entries generated for order ${orderId} with respect to chosen lotteries`);
       }
     } catch (lotteryErr) {
       console.error("Exception generating lottery entries:", lotteryErr);

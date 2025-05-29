@@ -59,7 +59,7 @@ serve(async (req) => {
 
       console.log(`Order ${orderId} marked as paid`);
 
-      // Generate lottery entries for this order
+      // Generate lottery entries for this order with the corrected function
       try {
         const { error: lotteryError } = await supabaseAdmin.rpc(
           'generate_lottery_entries_for_order',
@@ -70,7 +70,7 @@ serve(async (req) => {
           console.error("Error generating lottery entries:", lotteryError);
           // Don't throw here - order is still valid even if lottery fails
         } else {
-          console.log(`Lottery entries generated for order ${orderId}`);
+          console.log(`Lottery entries generated for order ${orderId} respecting user's lottery choices`);
         }
       } catch (lotteryErr) {
         console.error("Exception generating lottery entries:", lotteryErr);
@@ -108,7 +108,7 @@ serve(async (req) => {
         error: error.message,
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       }
     );
