@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Share2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface SocialShareButtonProps {
   url: string;
@@ -17,8 +17,6 @@ export const SocialShareButton: React.FC<SocialShareButtonProps> = ({
   description = "",
   className = ""
 }) => {
-  const { toast } = useToast();
-
   const handleShare = async () => {
     const fullUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`;
     
@@ -35,16 +33,9 @@ export const SocialShareButton: React.FC<SocialShareButtonProps> = ({
     } else {
       try {
         await navigator.clipboard.writeText(fullUrl);
-        toast({
-          title: "Lien copié",
-          description: "Le lien a été copié dans le presse-papiers",
-        });
+        toast.success("Lien copié dans le presse-papiers");
       } catch (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible de copier le lien",
-          variant: "destructive",
-        });
+        toast.error("Impossible de copier le lien");
       }
     }
   };

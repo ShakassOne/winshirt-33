@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { v4 as uuidv4 } from 'uuid';
 import { CartContextType } from '@/types/cart.types';
 import { CartItem } from '@/types/supabase.types';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   addToCart, 
@@ -75,10 +75,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         console.log("User signed in, migrating cart");
         try {
           await migrateCartToUser(user.id, cartToken);
-          toast({
-            title: "Panier transféré",
-            description: "Votre panier a été associé à votre compte",
-          });
+          toast.success("Panier transféré à votre compte");
         } catch (err: any) {
           console.error("Error migrating cart:", err);
         }
@@ -119,45 +116,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     
     if (!cartToken) {
       console.error("Cannot add item to cart - no cart token available");
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter au panier - problème d'identification",
-        variant: "destructive",
-      });
-      return;
+      toast.error("Impossible d'ajouter au panier - problème d'identification");
+      return false;
     }
     
     // Basic validation
     if (!item.productId) {
       console.error("Cannot add item - missing productId");
-      toast({
-        title: "Erreur",
-        description: "Impossible d'ajouter un produit sans identifiant",
-        variant: "destructive",
-      });
-      return;
+      toast.error("Impossible d'ajouter un produit sans identifiant");
+      return false;
     }
 
     // Check if size is required
     if (item.available_sizes && item.available_sizes.length > 0 && !item.size) {
       console.error("Cannot add item - size required but not selected");
-      toast({
-        title: "Taille requise",
-        description: "Veuillez sélectionner une taille pour ce produit",
-        variant: "destructive",
-      });
-      return;
+      toast.error("Veuillez sélectionner une taille pour ce produit");
+      return false;
     }
 
     // Check if color is required
     if (item.available_colors && item.available_colors.length > 0 && !item.color) {
       console.error("Cannot add item - color required but not selected");
-      toast({
-        title: "Couleur requise",
-        description: "Veuillez sélectionner une couleur pour ce produit",
-        variant: "destructive",
-      });
-      return;
+      toast.error("Veuillez sélectionner une couleur pour ce produit");
+      return false;
     }
     
     setIsLoading(true);
@@ -171,20 +152,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       await addToCart(cartToken, item, currentUser?.id);
       await loadCartItems();
       
-      toast({
-        title: "Produit ajouté au panier",
-        description: `${item.name} a été ajouté à votre panier`,
-      });
-      
       console.log("Item added successfully");
+      return true;
     } catch (err: any) {
       setError(err.message);
       console.error("Error adding to cart:", err);
-      toast({
-        title: "Erreur",
-        description: `Erreur lors de l'ajout au panier: ${err.message}`,
-        variant: "destructive",
-      });
+      toast.error(`Erreur lors de l'ajout au panier: ${err.message}`);
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -197,20 +171,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await removeFromCart(cartToken, productId, currentUser?.id);
-      toast({
-        title: "Produit retiré du panier",
-        description: "Le produit a été retiré de votre panier",
-      });
+      toast.success("Produit retiré du panier");
       await loadCartItems();
       console.log("Item removed successfully");
     } catch (err: any) {
       setError(err.message);
       console.error("Error removing from cart:", err);
-      toast({
-        title: "Erreur",
-        description: "Erreur lors du retrait du produit",
-        variant: "destructive",
-      });
+      toast.error("Erreur lors du retrait du produit");
     } finally {
       setIsLoading(false);
     }
@@ -228,11 +195,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       setError(err.message);
       console.error("Error updating quantity:", err);
-      toast({
-        title: "Erreur",
-        description: "Erreur lors de la mise à jour de la quantité",
-        variant: "destructive",
-      });
+      toast.error("Erreur lors de la mise à jour de la quantité");
     } finally {
       setIsLoading(false);
     }
@@ -245,20 +208,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await clearCartService(cartToken, currentUser?.id);
-      toast({
-        title: "Panier vidé",
-        description: "Votre panier a été vidé",
-      });
+      toast.success("Panier vidé");
       await loadCartItems();
       console.log("Cart cleared successfully");
     } catch (err: any) {
       setError(err.message);
       console.error("Error clearing cart:", err);
-      toast({
-        title: "Erreur",
-        description: "Erreur lors du vidage du panier",
-        variant: "destructive",
-      });
+      toast.error("Erreur lors du vidage du panier");
     } finally {
       setIsLoading(false);
     }
