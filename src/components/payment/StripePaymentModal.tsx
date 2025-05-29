@@ -8,6 +8,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,6 +39,7 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [cardholderName, setCardholderName] = useState(`${checkoutData.firstName} ${checkoutData.lastName}`);
 
   // Créer le PaymentIntent quand la modal s'ouvre
   useEffect(() => {
@@ -45,6 +47,11 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
       createPaymentIntent();
     }
   }, [isOpen]);
+
+  // Réinitialiser le nom du porteur quand les données de checkout changent
+  useEffect(() => {
+    setCardholderName(`${checkoutData.firstName} ${checkoutData.lastName}`);
+  }, [checkoutData.firstName, checkoutData.lastName]);
 
   const createPaymentIntent = async () => {
     try {
@@ -90,7 +97,7 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
         payment_method: {
           card: cardElement,
           billing_details: {
-            name: `${checkoutData.firstName} ${checkoutData.lastName}`,
+            name: cardholderName,
             email: checkoutData.email,
             phone: checkoutData.phone,
             address: {
@@ -211,13 +218,22 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
           {clientSecret && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
+                <label className="text-sm font-medium text-white">Nom du porteur de carte</label>
+                <Input
+                  type="text"
+                  value={cardholderName}
+                  onChange={(e) => setCardholderName(e.target.value)}
+                  placeholder="Nom complet tel qu'il apparaît sur la carte"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-white/40"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
                 <label className="text-sm font-medium text-white">Informations de carte</label>
                 <div className="glass-card border border-white/20 rounded-lg p-4 bg-white/5 backdrop-blur-sm">
                   <CardElement options={cardElementOptions} />
                 </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  Le nom du porteur sera automatiquement renseigné : {checkoutData.firstName} {checkoutData.lastName}
-                </p>
               </div>
 
               <div className="flex items-center gap-2 text-xs text-gray-400">
@@ -237,7 +253,7 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={!stripe || isProcessing}
+                  disabled={!stripe || isProcessing || !cardholderName.trim()}
                   className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium"
                 >
                   {isProcessing ? (
