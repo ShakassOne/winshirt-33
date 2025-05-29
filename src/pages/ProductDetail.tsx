@@ -67,6 +67,8 @@ const ProductDetail = () => {
         customText: customText,
         selectedSize: selectedSize,
         selectedColor: selectedColor,
+        designUrl: designImage,
+        designName: designName,
       } : null,
     };
 
@@ -134,22 +136,6 @@ const ProductDetail = () => {
                   </div>
                   <p className="text-white/80 mb-6">{product.description}</p>
 
-                  {product.is_customizable && (
-                    <div className="mb-4">
-                      <h3 className="text-lg font-semibold mb-2">Personnalisation</h3>
-                      <p className="text-white/60 mb-2">
-                        Ajoutez un texte personnalisé à votre produit.
-                      </p>
-                      <input
-                        type="text"
-                        placeholder="Votre texte ici"
-                        className="w-full p-2 border rounded-md bg-background text-white"
-                        value={customText}
-                        onChange={(e) => setCustomText(e.target.value)}
-                      />
-                    </div>
-                  )}
-
                   <div>
                     <h3 className="text-lg font-semibold mb-2">Tailles disponibles</h3>
                     <div className="flex space-x-2">
@@ -191,93 +177,153 @@ const ProductDetail = () => {
 
                 {product.is_customizable && (
                   <CustomizationAccordion>
-                    <Tabs defaultValue="design" className="w-full">
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="design">Design</TabsTrigger>
-                        <TabsTrigger value="text">Texte</TabsTrigger>
-                      </TabsList>
-                      
-                      <TabsContent value="design" className="space-y-4">
-                        <div>
-                          <h4 className="text-sm font-medium mb-2">Couleur du produit</h4>
-                          <div className="flex gap-2">
-                            {productColors.map((color) => (
-                              <div
-                                key={color.name}
-                                className={`w-8 h-8 rounded-full border-2 cursor-pointer ${
-                                  selectedProductColor === color.name ? 'border-white' : 'border-gray-500'
-                                }`}
-                                style={{ backgroundColor: color.value }}
-                                onClick={() => setSelectedProductColor(color.name)}
-                                title={color.name}
-                              />
-                            ))}
+                    <div className="space-y-6">
+                      <Tabs defaultValue="design" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="design">Design</TabsTrigger>
+                          <TabsTrigger value="text">Texte</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="design" className="space-y-6">
+                          <div>
+                            <h4 className="text-sm font-medium mb-3">Couleur du produit</h4>
+                            <div className="flex gap-3">
+                              {productColors.map((color) => (
+                                <div
+                                  key={color.name}
+                                  className={`w-10 h-10 rounded-full border-2 cursor-pointer transition-all hover:scale-110 ${
+                                    selectedProductColor === color.name 
+                                      ? 'border-white shadow-lg' 
+                                      : 'border-gray-500'
+                                  }`}
+                                  style={{ backgroundColor: color.value }}
+                                  onClick={() => setSelectedProductColor(color.name)}
+                                  title={color.name}
+                                />
+                              ))}
+                            </div>
                           </div>
-                        </div>
 
-                        <div>
-                          <h4 className="text-sm font-medium mb-2">Ajouter un design</h4>
-                          <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
-                            {designImage ? (
-                              <div className="space-y-2">
-                                <img src={designImage} alt={designName} className="max-h-24 mx-auto" />
-                                <p className="text-xs text-gray-400">{designName}</p>
-                              </div>
-                            ) : (
-                              <p className="text-gray-400 text-sm">Aucun design sélectionné</p>
-                            )}
+                          <div>
+                            <h4 className="text-sm font-medium mb-3">Ajouter un design</h4>
+                            <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center bg-black/20">
+                              {designImage ? (
+                                <div className="space-y-3">
+                                  <img 
+                                    src={designImage} 
+                                    alt={designName} 
+                                    className="max-h-32 mx-auto rounded-md shadow-md" 
+                                  />
+                                  <p className="text-sm text-gray-300">{designName}</p>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => {
+                                      setDesignImage('');
+                                      setDesignName('');
+                                    }}
+                                  >
+                                    Supprimer
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="space-y-3">
+                                  <p className="text-gray-400 text-sm">Aucun design sélectionné</p>
+                                  <p className="text-xs text-gray-500">
+                                    Ajoutez votre propre design ou générez-en un avec l'IA
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="grid grid-cols-3 gap-3 mt-4">
+                              <UploadImageField
+                                label=""
+                                value={designImage}
+                                onChange={(url) => {
+                                  setDesignImage(url);
+                                  setDesignName('Image importée');
+                                }}
+                                showPreview={false}
+                                className="contents"
+                              />
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setIsAIGeneratorOpen(true)}
+                              >
+                                Générer IA
+                              </Button>
+                              <Button variant="outline" size="sm">
+                                Galerie
+                              </Button>
+                            </div>
                           </div>
-                          
-                          <div className="grid grid-cols-3 gap-2 mt-3">
-                            <Button variant="outline" size="sm">
-                              Sélectionner
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setIsAIGeneratorOpen(true)}
-                            >
-                              Générer IA
-                            </Button>
-                            <UploadImageField
-                              label=""
-                              value={designImage}
-                              onChange={(url) => {
-                                setDesignImage(url);
-                                setDesignName('Image importée');
-                              }}
-                              showPreview={false}
-                              className="contents"
+                        </TabsContent>
+                        
+                        <TabsContent value="text" className="space-y-6">
+                          <div>
+                            <h4 className="text-sm font-medium mb-3">Texte personnalisé</h4>
+                            <textarea
+                              className="w-full p-3 border rounded-md bg-background text-white resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              rows={4}
+                              placeholder="Entrez votre texte ici..."
+                              value={customText}
+                              onChange={(e) => setCustomText(e.target.value)}
                             />
+                            <p className="text-xs text-gray-500 mt-2">
+                              Maximum 50 caractères par ligne recommandé
+                            </p>
                           </div>
-                        </div>
-                      </TabsContent>
-                      
-                      <TabsContent value="text" className="space-y-4">
-                        <div>
-                          <h4 className="text-sm font-medium mb-2">Texte personnalisé</h4>
-                          <textarea
-                            className="w-full p-2 border rounded-md bg-background text-white resize-none"
-                            rows={3}
-                            placeholder="Entrez votre texte ici..."
-                            value={customText}
-                            onChange={(e) => setCustomText(e.target.value)}
-                          />
-                        </div>
-                      </TabsContent>
-                    </Tabs>
+
+                          <div>
+                            <h4 className="text-sm font-medium mb-3">Options de texte</h4>
+                            <div className="space-y-3">
+                              <div>
+                                <label className="text-xs text-gray-400">Police</label>
+                                <select className="w-full p-2 border rounded-md bg-background text-white text-sm">
+                                  <option>Arial</option>
+                                  <option>Helvetica</option>
+                                  <option>Times New Roman</option>
+                                  <option>Impact</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-400">Couleur du texte</label>
+                                <div className="flex gap-2 mt-1">
+                                  {['#FFFFFF', '#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00'].map((color) => (
+                                    <div
+                                      key={color}
+                                      className="w-6 h-6 rounded border cursor-pointer"
+                                      style={{ backgroundColor: color }}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    </div>
                   </CustomizationAccordion>
                 )}
 
                 {/* Section Loterie */}
                 <GlassCard className="p-6">
-                  <h3 className="text-lg font-semibold mb-3">🎰 Participez à nos loteries</h3>
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    🎰 Participez à nos loteries
+                  </h3>
                   <p className="text-white/70 text-sm mb-4">
                     Chaque achat vous donne des tickets de loterie pour gagner des produits exclusifs !
                   </p>
-                  <Button variant="outline" className="w-full">
-                    Voir les loteries actives
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="flex-1">
+                      Voir les loteries actives
+                    </Button>
+                    <Button variant="default" className="flex-1">
+                      Mes tickets
+                    </Button>
+                  </div>
                 </GlassCard>
               </div>
             </div>
