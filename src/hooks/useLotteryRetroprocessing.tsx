@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { processExistingOrdersForLottery } from '@/services/order.service';
+import { processExistingOrdersForLottery } from '@/services/lottery.service';
 import { toast } from 'sonner';
 
 export const useLotteryRetroprocessing = () => {
