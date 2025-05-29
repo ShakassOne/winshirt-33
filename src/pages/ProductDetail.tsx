@@ -8,11 +8,15 @@ import GlassCard from '@/components/ui/GlassCard';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { fetchProductById } from '@/services/api.service';
 import { Product } from '@/types/supabase.types';
 import { SocialShareButton } from '@/components/SocialShareButton';
+import CustomizationAccordion from '@/components/product/CustomizationAccordion';
+import AIImageGenerator from '@/components/product/AIImageGenerator';
+import { UploadImageField } from '@/components/ui/upload-image-field';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,7 +25,10 @@ const ProductDetail = () => {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [customText, setCustomText] = useState<string>('');
-  const [isCustomizationOpen, setIsCustomizationOpen] = useState(false);
+  const [selectedProductColor, setSelectedProductColor] = useState<string>('Noir');
+  const [designImage, setDesignImage] = useState<string>('');
+  const [designName, setDesignName] = useState<string>('');
+  const [isAIGeneratorOpen, setIsAIGeneratorOpen] = useState(false);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -69,6 +76,17 @@ const ProductDetail = () => {
       description: "Le produit a été ajouté à votre panier.",
     });
   };
+
+  const handleImageGenerated = (imageUrl: string, imageName: string) => {
+    setDesignImage(imageUrl);
+    setDesignName(imageName);
+  };
+
+  const productColors = [
+    { name: 'Noir', value: '#000000' },
+    { name: 'Bleu', value: '#0066CC' },
+    { name: 'Blanc', value: '#FFFFFF' }
+  ];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -172,17 +190,95 @@ const ProductDetail = () => {
                 </GlassCard>
 
                 {product.is_customizable && (
-                  <GlassCard className="p-6">
-                    <div className="space-y-4">
-                      <h3
-                        className="text-lg font-semibold cursor-pointer flex items-center justify-between"
-                        onClick={() => setIsCustomizationOpen(!isCustomizationOpen)}
-                      >
-                        <span>Options d'IA</span>
-                      </h3>
-                    </div>
-                  </GlassCard>
+                  <CustomizationAccordion>
+                    <Tabs defaultValue="design" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="design">Design</TabsTrigger>
+                        <TabsTrigger value="text">Texte</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="design" className="space-y-4">
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Couleur du produit</h4>
+                          <div className="flex gap-2">
+                            {productColors.map((color) => (
+                              <div
+                                key={color.name}
+                                className={`w-8 h-8 rounded-full border-2 cursor-pointer ${
+                                  selectedProductColor === color.name ? 'border-white' : 'border-gray-500'
+                                }`}
+                                style={{ backgroundColor: color.value }}
+                                onClick={() => setSelectedProductColor(color.name)}
+                                title={color.name}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Ajouter un design</h4>
+                          <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
+                            {designImage ? (
+                              <div className="space-y-2">
+                                <img src={designImage} alt={designName} className="max-h-24 mx-auto" />
+                                <p className="text-xs text-gray-400">{designName}</p>
+                              </div>
+                            ) : (
+                              <p className="text-gray-400 text-sm">Aucun design sélectionné</p>
+                            )}
+                          </div>
+                          
+                          <div className="grid grid-cols-3 gap-2 mt-3">
+                            <Button variant="outline" size="sm">
+                              Sélectionner
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setIsAIGeneratorOpen(true)}
+                            >
+                              Générer IA
+                            </Button>
+                            <UploadImageField
+                              label=""
+                              value={designImage}
+                              onChange={(url) => {
+                                setDesignImage(url);
+                                setDesignName('Image importée');
+                              }}
+                              showPreview={false}
+                              className="contents"
+                            />
+                          </div>
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="text" className="space-y-4">
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Texte personnalisé</h4>
+                          <textarea
+                            className="w-full p-2 border rounded-md bg-background text-white resize-none"
+                            rows={3}
+                            placeholder="Entrez votre texte ici..."
+                            value={customText}
+                            onChange={(e) => setCustomText(e.target.value)}
+                          />
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </CustomizationAccordion>
                 )}
+
+                {/* Section Loterie */}
+                <GlassCard className="p-6">
+                  <h3 className="text-lg font-semibold mb-3">🎰 Participez à nos loteries</h3>
+                  <p className="text-white/70 text-sm mb-4">
+                    Chaque achat vous donne des tickets de loterie pour gagner des produits exclusifs !
+                  </p>
+                  <Button variant="outline" className="w-full">
+                    Voir les loteries actives
+                  </Button>
+                </GlassCard>
               </div>
             </div>
           </div>
@@ -190,6 +286,12 @@ const ProductDetail = () => {
       </main>
       
       <Footer />
+      
+      <AIImageGenerator
+        isOpen={isAIGeneratorOpen}
+        onClose={() => setIsAIGeneratorOpen(false)}
+        onImageGenerated={handleImageGenerated}
+      />
     </div>
   );
 };
