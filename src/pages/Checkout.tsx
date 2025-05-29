@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -27,7 +26,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
 
 // Schéma de validation pour le formulaire de checkout
@@ -65,36 +64,31 @@ const Checkout = () => {
   // Vérifie si l'utilisateur est connecté
   React.useEffect(() => {
     const checkUser = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data.session?.user) {
-          setUser(data.session.user);
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        setUser(data.session.user);
+        
+        // Récupère les informations du profil pour pré-remplir le formulaire
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.session.user.id)
+          .single();
           
-          // Récupère les informations du profil pour pré-remplir le formulaire
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.session.user.id)
-            .single();
-            
-          if (profileData) {
-            form.reset({
-              firstName: profileData.first_name || '',
-              lastName: profileData.last_name || '',
-              email: data.session.user.email || '',
-              phone: profileData.phone || '',
-              address: profileData.address || '',
-              city: profileData.city || '',
-              postalCode: profileData.postal_code || '',
-              country: profileData.country || '',
-              deliveryNotes: '',
-              createAccount: false
-            });
-          }
+        if (profileData) {
+          form.reset({
+            firstName: profileData.first_name || '',
+            lastName: profileData.last_name || '',
+            email: data.session.user.email || '',
+            phone: profileData.phone || '',
+            address: profileData.address || '',
+            city: profileData.city || '',
+            postalCode: profileData.postal_code || '',
+            country: profileData.country || '',
+            deliveryNotes: '',
+            createAccount: false
+          });
         }
-      } catch (error) {
-        console.error("Error checking current user:", error);
-        toast.error("Erreur lors de la vérification de l'utilisateur");
       }
     };
     
@@ -136,7 +130,11 @@ const Checkout = () => {
         }
       } catch (error) {
         console.error('Error loading shipping options:', error);
-        toast.error("Impossible de charger les options de livraison");
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les options de livraison",
+          variant: "destructive",
+        });
       }
     };
 
@@ -165,12 +163,20 @@ const Checkout = () => {
     console.log("Cart token:", cartToken);
     
     if (!items || items.length === 0) {
-      toast.error("Votre panier est vide. Ajoutez des produits avant de procéder au paiement.");
+      toast({
+        title: "Panier vide",
+        description: "Votre panier est vide. Ajoutez des produits avant de procéder au paiement.",
+        variant: "destructive",
+      });
       return;
     }
 
     if (!cartToken) {
-      toast.error("Token de panier manquant. Veuillez rafraîchir la page.");
+      toast({
+        title: "Erreur",
+        description: "Token de panier manquant. Veuillez rafraîchir la page.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -204,7 +210,10 @@ const Checkout = () => {
         // Migrate the cart to the new user
         if (userId && cartToken) {
           await migrateCartToUser(userId, cartToken);
-          toast.success("Panier migré vers votre nouveau compte");
+          toast({
+            title: "Panier migrée",
+            description: "Votre panier a été associé à votre nouveau compte",
+          });
         }
         
         // Crée ou met à jour le profil utilisateur
@@ -236,10 +245,17 @@ const Checkout = () => {
       setCurrentOrderId(order.id);
       setShowPaymentModal(true);
       
-      toast.success("Commande créée avec succès! Procédez maintenant au paiement.");
+      toast({
+        title: "Commande créée avec succès!",
+        description: "Procédez maintenant au paiement.",
+      });
     } catch (error) {
       console.error("Erreur lors de la création de la commande:", error);
-      toast.error(`Une erreur est survenue lors de la création de la commande: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      toast({
+        title: "Erreur",
+        description: `Une erreur est survenue lors de la création de la commande: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }

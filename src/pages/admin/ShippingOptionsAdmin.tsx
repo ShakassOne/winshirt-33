@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Truck, Plus, Edit, Trash2 } from 'lucide-react';
 import { getAllShippingOptions, createShippingOption, updateShippingOption, deleteShippingOption } from '@/services/shipping.service';
 import { ShippingOption } from '@/types/shipping.types';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 const ShippingOptionsAdmin = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -28,6 +28,7 @@ const ShippingOptionsAdmin = () => {
     priority: 1
   });
 
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: shippingOptions, isLoading } = useQuery({
@@ -39,13 +40,19 @@ const ShippingOptionsAdmin = () => {
     mutationFn: createShippingOption,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allShippingOptions'] });
-      toast.success("Option de livraison créée avec succès");
+      toast({
+        title: "Option de livraison créée",
+        description: "L'option de livraison a été créée avec succès.",
+      });
       setIsDialogOpen(false);
       resetForm();
     },
-    onError: (error: any) => {
-      console.error('Error creating shipping option:', error);
-      toast.error(`Erreur lors de la création: ${error.message || 'Erreur inconnue'}`);
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la création.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -53,13 +60,19 @@ const ShippingOptionsAdmin = () => {
     mutationFn: ({ id, data }: { id: string; data: any }) => updateShippingOption(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allShippingOptions'] });
-      toast.success("Option mise à jour avec succès");
+      toast({
+        title: "Option mise à jour",
+        description: "L'option de livraison a été mise à jour avec succès.",
+      });
       setIsDialogOpen(false);
       resetForm();
     },
-    onError: (error: any) => {
-      console.error('Error updating shipping option:', error);
-      toast.error(`Erreur lors de la mise à jour: ${error.message || 'Erreur inconnue'}`);
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la mise à jour.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -67,68 +80,27 @@ const ShippingOptionsAdmin = () => {
     mutationFn: deleteShippingOption,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allShippingOptions'] });
-      toast.success("Option supprimée avec succès");
+      toast({
+        title: "Option supprimée",
+        description: "L'option de livraison a été supprimée avec succès.",
+      });
     },
-    onError: (error: any) => {
-      console.error('Error deleting shipping option:', error);
-      toast.error(`Erreur lors de la suppression: ${error.message || 'Erreur inconnue'}`);
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la suppression.",
+        variant: "destructive",
+      });
     },
   });
 
-  const createDefaultOptions = async () => {
-    const defaultOptions = [
-      {
-        name: 'Standard',
-        description: 'Livraison standard en France métropolitaine',
-        price: 4.99,
-        estimated_days_min: 3,
-        estimated_days_max: 5,
-        is_active: true,
-        priority: 1
-      },
-      {
-        name: 'Rapide',
-        description: 'Livraison rapide en 48h',
-        price: 8.99,
-        estimated_days_min: 1,
-        estimated_days_max: 2,
-        is_active: true,
-        priority: 2
-      },
-      {
-        name: 'Express',
-        description: 'Livraison express en 24h',
-        price: 12.99,
-        estimated_days_min: 1,
-        estimated_days_max: 1,
-        is_active: true,
-        priority: 3
-      }
-    ];
-
-    try {
-      for (const option of defaultOptions) {
-        await createShippingOption(option);
-      }
-      queryClient.invalidateQueries({ queryKey: ['allShippingOptions'] });
-      toast.success("Options de livraison par défaut créées");
-    } catch (error: any) {
-      console.error('Error creating default options:', error);
-      toast.error(`Erreur lors de la création des options par défaut: ${error.message}`);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    try {
-      if (editingOption) {
-        await updateMutation.mutateAsync({ id: editingOption.id, data: formData });
-      } else {
-        await createMutation.mutateAsync(formData);
-      }
-    } catch (error) {
-      console.error('Form submission error:', error);
+    if (editingOption) {
+      updateMutation.mutate({ id: editingOption.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
@@ -188,139 +160,109 @@ const ShippingOptionsAdmin = () => {
           <div className="container mx-auto px-4">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-semibold">Options de livraison</h2>
-              <div className="flex gap-2">
-                {(!shippingOptions || shippingOptions.length === 0) && (
-                  <Button 
-                    onClick={createDefaultOptions}
-                    variant="outline"
-                    className="bg-blue-500/20 hover:bg-blue-500/30"
-                  >
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={resetForm} className="bg-gradient-purple hover:opacity-90">
                     <Plus className="h-4 w-4 mr-2" />
-                    Créer options par défaut
+                    Ajouter une option
                   </Button>
-                )}
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button onClick={resetForm} className="bg-gradient-purple hover:opacity-90">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Ajouter une option
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>
-                        {editingOption ? 'Modifier l\'option' : 'Nouvelle option de livraison'}
-                      </DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingOption ? 'Modifier l\'option' : 'Nouvelle option de livraison'}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">Nom</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="price">Prix (€)</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="name">Nom *</Label>
+                        <Label htmlFor="min_days">Jours min</Label>
                         <Input
-                          id="name"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          required
-                          placeholder="ex: Standard, Rapide, Express"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="description">Description</Label>
-                        <Textarea
-                          id="description"
-                          value={formData.description}
-                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                          placeholder="Description de l'option de livraison"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="price">Prix (€) *</Label>
-                        <Input
-                          id="price"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={formData.price}
-                          onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                          required
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="min_days">Jours min *</Label>
-                          <Input
-                            id="min_days"
-                            type="number"
-                            min="1"
-                            value={formData.estimated_days_min}
-                            onChange={(e) => setFormData({ ...formData, estimated_days_min: parseInt(e.target.value) || 1 })}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="max_days">Jours max *</Label>
-                          <Input
-                            id="max_days"
-                            type="number"
-                            min="1"
-                            value={formData.estimated_days_max}
-                            onChange={(e) => setFormData({ ...formData, estimated_days_max: parseInt(e.target.value) || 1 })}
-                            required
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="priority">Priorité *</Label>
-                        <Input
-                          id="priority"
+                          id="min_days"
                           type="number"
                           min="1"
-                          value={formData.priority}
-                          onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })}
-                          required
+                          value={formData.estimated_days_min}
+                          onChange={(e) => setFormData({ ...formData, estimated_days_min: parseInt(e.target.value) || 1 })}
                         />
                       </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="is_active"
-                          checked={formData.is_active}
-                          onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                      <div>
+                        <Label htmlFor="max_days">Jours max</Label>
+                        <Input
+                          id="max_days"
+                          type="number"
+                          min="1"
+                          value={formData.estimated_days_max}
+                          onChange={(e) => setFormData({ ...formData, estimated_days_max: parseInt(e.target.value) || 1 })}
                         />
-                        <Label htmlFor="is_active">Option active</Label>
                       </div>
-                      
-                      <div className="flex gap-2 pt-4">
-                        <Button 
-                          type="submit" 
-                          className="flex-1"
-                          disabled={createMutation.isPending || updateMutation.isPending}
-                        >
-                          {createMutation.isPending || updateMutation.isPending ? (
-                            <div className="flex items-center gap-2">
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                              {editingOption ? 'Mise à jour...' : 'Création...'}
-                            </div>
-                          ) : (
-                            editingOption ? 'Mettre à jour' : 'Créer'
-                          )}
-                        </Button>
-                        <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                          Annuler
-                        </Button>
-                      </div>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="priority">Priorité</Label>
+                      <Input
+                        id="priority"
+                        type="number"
+                        min="1"
+                        value={formData.priority}
+                        onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="is_active"
+                        checked={formData.is_active}
+                        onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                      />
+                      <Label htmlFor="is_active">Option active</Label>
+                    </div>
+                    
+                    <div className="flex gap-2 pt-4">
+                      <Button type="submit" className="flex-1">
+                        {editingOption ? 'Mettre à jour' : 'Créer'}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Annuler
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
 
             {isLoading ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-winshirt-blue mx-auto mb-4"></div>
                 <p>Chargement des options de livraison...</p>
               </div>
             ) : (
@@ -368,11 +310,7 @@ const ShippingOptionsAdmin = () => {
                 
                 {(!shippingOptions || shippingOptions.length === 0) && (
                   <div className="text-center py-8">
-                    <Truck className="h-12 w-12 text-white/30 mx-auto mb-4" />
-                    <p className="text-white/60 mb-4">Aucune option de livraison configurée</p>
-                    <p className="text-white/40 text-sm">
-                      Cliquez sur "Créer options par défaut" pour créer Standard, Rapide et Express
-                    </p>
+                    <p className="text-white/60">Aucune option de livraison configurée</p>
                   </div>
                 )}
               </div>

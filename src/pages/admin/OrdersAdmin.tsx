@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from 'sonner';
+import { toast } from "@/components/ui/use-toast";
 import { Skeleton } from '@/components/ui/skeleton';
 
 const OrdersAdmin = () => {
@@ -114,7 +114,11 @@ const OrdersAdmin = () => {
       setOrders(typedOrders);
     } catch (error) {
       console.error('Error fetching orders:', error);
-      toast.error("Impossible de récupérer les commandes");
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de récupérer les commandes",
+      });
     } finally {
       setLoading(false);
     }
@@ -129,7 +133,10 @@ const OrdersAdmin = () => {
         
       if (error) throw error;
       
-      toast.success("Le statut de la commande a été mis à jour");
+      toast({
+        title: "Statut mis à jour",
+        description: "Le statut de la commande a été mis à jour",
+      });
       
       // Update local state
       setOrders(prevOrders => prevOrders.map(order => 
@@ -142,7 +149,11 @@ const OrdersAdmin = () => {
       
     } catch (error) {
       console.error('Error updating order status:', error);
-      toast.error("Impossible de mettre à jour le statut");
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut",
+      });
     }
   };
   

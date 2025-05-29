@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
 import { Loader2 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
@@ -41,7 +41,11 @@ const Auth = () => {
     e.preventDefault();
     
     if (!loginEmail || !loginPassword) {
-      toast.error("Veuillez remplir tous les champs");
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -54,10 +58,17 @@ const Auth = () => {
         throw error;
       }
       
-      toast.success("Connexion réussie");
+      toast({
+        title: "Connexion réussie",
+        description: "Vous êtes maintenant connecté",
+      });
     } catch (error: any) {
       console.error("Login error:", error);
-      toast.error(error.message || "Une erreur s'est produite lors de la connexion");
+      toast({
+        title: "Échec de la connexion",
+        description: error.message || "Une erreur s'est produite lors de la connexion",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -68,17 +79,29 @@ const Auth = () => {
     
     // Validation
     if (!signupEmail || !signupPassword || !confirmPassword || !firstName || !lastName) {
-      toast.error("Veuillez remplir tous les champs");
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs",
+        variant: "destructive",
+      });
       return;
     }
     
     if (signupPassword !== confirmPassword) {
-      toast.error("Les mots de passe ne correspondent pas");
+      toast({
+        title: "Erreur",
+        description: "Les mots de passe ne correspondent pas",
+        variant: "destructive",
+      });
       return;
     }
     
     if (!acceptTerms) {
-      toast.error("Vous devez accepter les conditions générales");
+      toast({
+        title: "Erreur",
+        description: "Vous devez accepter les conditions générales",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -94,10 +117,17 @@ const Auth = () => {
         throw error;
       }
       
-      toast.success("Inscription réussie");
+      toast({
+        title: "Inscription réussie",
+        description: "Votre compte a été créé avec succès",
+      });
     } catch (error: any) {
       console.error("Signup error:", error);
-      toast.error(error.message || "Une erreur s'est produite lors de l'inscription");
+      toast({
+        title: "Échec de l'inscription",
+        description: error.message || "Une erreur s'est produite lors de l'inscription",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getOrderById } from '@/services/order.service';
@@ -6,7 +7,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CreditCard, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 
 const Payment = () => {
   const location = useLocation();
@@ -81,7 +82,11 @@ const Payment = () => {
       }
     } catch (err) {
       console.error("Erreur lors de la création de la session Stripe:", err);
-      toast.error("Impossible de créer la session de paiement. Veuillez réessayer.");
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer la session de paiement. Veuillez réessayer.",
+        variant: "destructive",
+      });
     } finally {
       setPaymentLoading(false);
     }

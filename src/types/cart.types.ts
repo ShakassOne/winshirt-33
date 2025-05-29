@@ -3,7 +3,7 @@ import { CartItem } from './supabase.types';
 
 export interface CartContextType {
   items: CartItem[];
-  addItem: (item: CartItem) => Promise<boolean>;
+  addItem: (item: CartItem) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   updateItemQuantity: (productId: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;

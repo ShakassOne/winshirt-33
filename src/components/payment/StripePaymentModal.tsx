@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { CheckoutFormData } from '@/types/cart.types';
 import { CartItem } from '@/types/supabase.types';
@@ -62,7 +62,11 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
       setClientSecret(data.clientSecret);
     } catch (error) {
       console.error('Erreur lors de la création du PaymentIntent:', error);
-      toast.error("Impossible d'initialiser le paiement");
+      toast({
+        title: "Erreur",
+        description: "Impossible d'initialiser le paiement",
+        variant: "destructive",
+      });
     }
   };
 
@@ -113,12 +117,20 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
           }
         });
 
-        toast.success("Paiement réussi ! Votre commande a été confirmée.");
+        toast({
+          title: "Paiement réussi !",
+          description: "Votre commande a été confirmée.",
+        });
+
         onSuccess(orderId);
       }
     } catch (error) {
       console.error('Erreur de paiement:', error);
-      toast.error(error instanceof Error ? error.message : "Une erreur est survenue");
+      toast({
+        title: "Erreur de paiement",
+        description: error instanceof Error ? error.message : "Une erreur est survenue",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }

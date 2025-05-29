@@ -8,11 +8,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { HexColorPicker } from 'react-colorful';
 import { ChevronLeft, ChevronRight, Heart, Moon, Paintbrush, Save, Sun, Upload } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
 import { useTheme } from '@/components/theme-provider';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 const ThemeSettings = () => {
+  const { toast } = useToast();
   const { theme } = useTheme();
   const [primaryColor, setPrimaryColor] = useState('#9b87f5');
   const [accentColor, setAccentColor] = useState('#33C3F0');
@@ -23,7 +24,10 @@ const ThemeSettings = () => {
   const [selectedTab, setSelectedTab] = useState('colors');
 
   const handleSaveTheme = () => {
-    toast.success("Les modifications ont été appliquées avec succès.");
+    toast({
+      title: "Thème sauvegardé",
+      description: "Les modifications ont été appliquées avec succès.",
+    });
   };
 
   // Helper function to convert slider value to number
