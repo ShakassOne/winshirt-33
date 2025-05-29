@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -141,11 +142,17 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
                   ) : products.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {products.map((product) => (
-                        <ProductCard
-                          key={product.id}
-                          {...product}
-                          onClick={() => handleViewProduct(product.id)}
-                        />
+                        <div key={product.id} onClick={() => handleViewProduct(product.id)}>
+                          <ProductCard
+                            id={product.id}
+                            name={product.name}
+                            category={product.category}
+                            price={product.price}
+                            image={product.image_url}
+                            isCustomizable={product.is_customizable}
+                            tickets={product.tickets_offered}
+                          />
+                        </div>
                       ))}
                     </div>
                   ) : (

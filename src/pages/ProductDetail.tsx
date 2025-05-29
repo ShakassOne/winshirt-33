@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -46,11 +47,20 @@ const ProductDetail = () => {
     }
 
     const cartItem = {
-      ...product,
+      productId: product.id,
+      name: product.name,
+      price: product.price,
       quantity: 1,
-      selectedSize: selectedSize,
-      selectedColor: selectedColor,
-      customText: customText,
+      image_url: product.image_url,
+      size: selectedSize,
+      color: selectedColor,
+      available_sizes: product.available_sizes,
+      available_colors: product.available_colors,
+      customization: product.is_customizable ? {
+        customText: customText,
+        selectedSize: selectedSize,
+        selectedColor: selectedColor,
+      } : null,
     };
 
     addItem(cartItem);
