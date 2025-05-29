@@ -34,6 +34,9 @@ export type Order = {
   guest_email: string | null;
   session_id: string | null;
   total_amount: number;
+  subtotal: number | null;
+  shipping_cost: number | null;
+  shipping_option_id: string | null;
   shipping_first_name: string;
   shipping_last_name: string;
   shipping_email: string;

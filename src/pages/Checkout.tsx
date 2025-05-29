@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,8 +8,11 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { useCart } from '@/context/CartContext';
 import { CheckoutFormData } from '@/types/cart.types';
+import { ShippingOption } from '@/types/shipping.types';
 import { createOrder } from '@/services/order.service';
 import { migrateCartToUser } from '@/services/cart.service';
+import { getShippingOptions } from '@/services/shipping.service';
+import ShippingOptions from '@/components/checkout/ShippingOptions';
 import { 
   Form, 
   FormControl, 
@@ -37,7 +39,8 @@ const checkoutSchema = z.object({
   country: z.string().min(2, "Pays invalide"),
   deliveryNotes: z.string().optional(),
   createAccount: z.boolean().default(false),
-  password: z.string().optional()
+  password: z.string().optional(),
+  selectedShippingOption: z.string().min(1, "Veuillez sélectionner une option de livraison")
 }).refine(
   (data) => !data.createAccount || (data.password && data.password.length >= 6),
   {
@@ -51,6 +54,8 @@ const Checkout = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
+  const [selectedShippingCost, setSelectedShippingCost] = useState(0);
 
   // Vérifie si l'utilisateur est connecté
   React.useEffect(() => {
@@ -99,11 +104,54 @@ const Checkout = () => {
       country: '',
       deliveryNotes: '',
       createAccount: false,
-      password: ''
+      password: '',
+      selectedShippingOption: ''
     }
   });
 
   const createAccount = form.watch('createAccount');
+  const selectedShippingOption = form.watch('selectedShippingOption');
+
+  // Charger les options de livraison
+  useEffect(() => {
+    const loadShippingOptions = async () => {
+      try {
+        const options = await getShippingOptions();
+        setShippingOptions(options);
+        
+        // Sélectionner automatiquement la première option si disponible
+        if (options.length > 0 && !selectedShippingOption) {
+          form.setValue('selectedShippingOption', options[0].id);
+          setSelectedShippingCost(options[0].price);
+        }
+      } catch (error) {
+        console.error('Error loading shipping options:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les options de livraison",
+          variant: "destructive",
+        });
+      }
+    };
+
+    loadShippingOptions();
+  }, []);
+
+  // Mettre à jour le coût de livraison quand l'option change
+  useEffect(() => {
+    const option = shippingOptions.find(opt => opt.id === selectedShippingOption);
+    if (option) {
+      setSelectedShippingCost(option.price);
+    }
+  }, [selectedShippingOption, shippingOptions]);
+
+  const handleShippingOptionChange = (optionId: string) => {
+    form.setValue('selectedShippingOption', optionId);
+    const option = shippingOptions.find(opt => opt.id === optionId);
+    if (option) {
+      setSelectedShippingCost(option.price);
+    }
+  };
 
   const onSubmit = async (data: CheckoutFormData) => {
     console.log("Checkout form submitted with data:", data);
@@ -223,6 +271,8 @@ const Checkout = () => {
     form.handleSubmit(onSubmit)(e);
   };
 
+  const finalTotal = total + selectedShippingCost;
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -237,7 +287,7 @@ const Checkout = () => {
                 <h2 className="text-xl font-semibold mb-4">Informations de livraison</h2>
                 
                 <Form {...form}>
-                  <form onSubmit={handleFormSubmit} className="space-y-4">
+                  <form onSubmit={handleFormSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -373,6 +423,24 @@ const Checkout = () => {
                       )}
                     />
                     
+                    {/* Options de livraison */}
+                    <div className="pt-6 border-t border-gray-100/10">
+                      <FormField
+                        control={form.control}
+                        name="selectedShippingOption"
+                        render={({ field }) => (
+                          <FormItem>
+                            <ShippingOptions
+                              options={shippingOptions}
+                              selectedOption={field.value}
+                              onOptionChange={handleShippingOptionChange}
+                            />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
                     {!user && (
                       <div className="space-y-4">
                         <FormField
@@ -473,11 +541,13 @@ const Checkout = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Livraison</span>
-                    <span>Gratuite</span>
+                    <span>
+                      {selectedShippingCost > 0 ? `${selectedShippingCost.toFixed(2)} €` : 'Gratuite'}
+                    </span>
                   </div>
-                  <div className="flex justify-between font-semibold pt-2">
+                  <div className="flex justify-between font-semibold pt-2 text-lg">
                     <span>Total</span>
-                    <span>{total.toFixed(2)} €</span>
+                    <span>{finalTotal.toFixed(2)} €</span>
                   </div>
                 </div>
               </div>

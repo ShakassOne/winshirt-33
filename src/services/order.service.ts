@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
 import { CartItem, Order, OrderStatus, PaymentStatus } from "@/types/supabase.types";
+import { getShippingOptionById } from "./shipping.service";
 
 export const createOrder = async (
   checkoutData: CheckoutFormData,
@@ -10,9 +11,20 @@ export const createOrder = async (
   userId?: string
 ) => {
   try {
-    const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    
+    // Récupérer l'option de livraison sélectionnée
+    const shippingOption = await getShippingOptionById(checkoutData.selectedShippingOption);
+    if (!shippingOption) {
+      throw new Error("Option de livraison invalide");
+    }
+    
+    const shippingCost = shippingOption.price;
+    const totalAmount = subtotal + shippingCost;
     
     console.log('Creating order with items:', items);
+    console.log('Shipping option:', shippingOption);
+    console.log('Subtotal:', subtotal, 'Shipping:', shippingCost, 'Total:', totalAmount);
     
     // Create order
     const { data: order, error: orderError } = await supabase
@@ -22,6 +34,9 @@ export const createOrder = async (
           user_id: userId || null,
           guest_email: !userId ? checkoutData.email : null,
           session_id: sessionId,
+          subtotal: subtotal,
+          shipping_cost: shippingCost,
+          shipping_option_id: shippingOption.id,
           total_amount: totalAmount,
           shipping_first_name: checkoutData.firstName,
           shipping_last_name: checkoutData.lastName,

@@ -396,7 +396,7 @@ const OrdersAdmin = () => {
                 </div>
                 
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Détails paiement</h3>
+                  <h3 className="text-lg font-semibold mb-2">Détails paiement et livraison</h3>
                   <div className="space-y-2">
                     <p>
                       <span className="text-gray-400">Statut paiement:</span> 
@@ -407,6 +407,12 @@ const OrdersAdmin = () => {
                     </p>
                     {selectedOrder.payment_intent_id && (
                       <p><span className="text-gray-400">ID Transaction:</span> {selectedOrder.payment_intent_id}</p>
+                    )}
+                    {selectedOrder.subtotal && (
+                      <p><span className="text-gray-400">Sous-total:</span> {selectedOrder.subtotal.toFixed(2)} €</p>
+                    )}
+                    {selectedOrder.shipping_cost && (
+                      <p><span className="text-gray-400">Frais de livraison:</span> {selectedOrder.shipping_cost.toFixed(2)} €</p>
                     )}
                     <p><span className="text-gray-400">Total:</span> {selectedOrder.total_amount.toFixed(2)} €</p>
                   </div>

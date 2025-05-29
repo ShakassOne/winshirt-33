@@ -422,13 +422,16 @@ export type Database = {
           session_id: string | null
           shipping_address: string | null
           shipping_city: string | null
+          shipping_cost: number | null
           shipping_country: string | null
           shipping_email: string | null
           shipping_first_name: string | null
           shipping_last_name: string | null
+          shipping_option_id: string | null
           shipping_phone: string | null
           shipping_postal_code: string | null
           status: string
+          subtotal: number | null
           total_amount: number
           updated_at: string | null
           user_id: string | null
@@ -443,13 +446,16 @@ export type Database = {
           session_id?: string | null
           shipping_address?: string | null
           shipping_city?: string | null
+          shipping_cost?: number | null
           shipping_country?: string | null
           shipping_email?: string | null
           shipping_first_name?: string | null
           shipping_last_name?: string | null
+          shipping_option_id?: string | null
           shipping_phone?: string | null
           shipping_postal_code?: string | null
           status?: string
+          subtotal?: number | null
           total_amount: number
           updated_at?: string | null
           user_id?: string | null
@@ -464,18 +470,29 @@ export type Database = {
           session_id?: string | null
           shipping_address?: string | null
           shipping_city?: string | null
+          shipping_cost?: number | null
           shipping_country?: string | null
           shipping_email?: string | null
           shipping_first_name?: string | null
           shipping_last_name?: string | null
+          shipping_option_id?: string | null
           shipping_phone?: string | null
           shipping_postal_code?: string | null
           status?: string
+          subtotal?: number | null
           total_amount?: number
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_shipping_option_id_fkey"
+            columns: ["shipping_option_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_options"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -587,6 +604,45 @@ export type Database = {
           phone?: string | null
           postal_code?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      shipping_options: {
+        Row: {
+          created_at: string
+          description: string | null
+          estimated_days_max: number
+          estimated_days_min: number
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          priority: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          estimated_days_max?: number
+          estimated_days_min?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          price?: number
+          priority?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          estimated_days_max?: number
+          estimated_days_min?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          priority?: number
+          updated_at?: string
         }
         Relationships: []
       }
