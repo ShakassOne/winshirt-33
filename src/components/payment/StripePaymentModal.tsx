@@ -143,7 +143,7 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
     }
   };
 
-  // Style glassmorphism optimisé pour le CardElement
+  // Style pour le CardElement avec tous les champs visibles
   const cardElementOptions = {
     style: {
       base: {
@@ -165,7 +165,7 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
         iconColor: '#10b981',
       },
     },
-    hidePostalCode: true,
+    hidePostalCode: true, // On cache seulement le code postal car on l'a déjà dans l'adresse
   };
 
   // Calculer le sous-total (total sans livraison)
@@ -217,6 +217,7 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
           {/* Formulaire de paiement */}
           {clientSecret && (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Nom du porteur de carte */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white">Nom du porteur de carte</label>
                 <Input
@@ -229,11 +230,15 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
                 />
               </div>
 
+              {/* Informations de carte - Numéro, Date, CVC */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white">Informations de carte</label>
-                <div className="glass-card border border-white/20 rounded-lg p-4 bg-white/5 backdrop-blur-sm">
+                <div className="glass-card border border-white/20 rounded-lg p-4 bg-white/5 backdrop-blur-sm min-h-[50px]">
                   <CardElement options={cardElementOptions} />
                 </div>
+                <p className="text-xs text-gray-400">
+                  Saisissez le numéro de carte, la date d'expiration et le code CVC
+                </p>
               </div>
 
               <div className="flex items-center gap-2 text-xs text-gray-400">
