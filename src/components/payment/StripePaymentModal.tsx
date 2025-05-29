@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -143,29 +142,22 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
     }
   };
 
-  // Style pour le CardElement avec tous les champs visibles
+  // Style corrigé pour le CardElement - SIMPLE et FONCTIONNEL
   const cardElementOptions = {
     style: {
       base: {
         fontSize: '16px',
         color: '#ffffff',
-        backgroundColor: 'transparent',
         fontFamily: 'system-ui, -apple-system, sans-serif',
         '::placeholder': {
           color: '#9ca3af',
         },
-        iconColor: '#ffffff',
       },
       invalid: {
         color: '#ef4444',
-        iconColor: '#ef4444',
-      },
-      complete: {
-        color: '#10b981',
-        iconColor: '#10b981',
       },
     },
-    hidePostalCode: true, // On cache seulement le code postal car on l'a déjà dans l'adresse
+    hidePostalCode: true,
   };
 
   // Calculer le sous-total (total sans livraison)
@@ -230,10 +222,10 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
                 />
               </div>
 
-              {/* Informations de carte - Numéro, Date, CVC */}
+              {/* Informations de carte - CORRIGÉ */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white">Informations de carte</label>
-                <div className="glass-card border border-white/20 rounded-lg p-4 bg-white/5 backdrop-blur-sm min-h-[50px]">
+                <div className="p-4 border border-white/20 rounded-lg bg-white text-black">
                   <CardElement options={cardElementOptions} />
                 </div>
                 <p className="text-xs text-gray-400">
