@@ -14,10 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/context/CartContext';
-import AIImageGenerator from '@/components/product/AIImageGenerator';
-import AIImageGallery from '@/components/product/AIImageGallery';
 import CustomizationAccordion from '@/components/product/CustomizationAccordion';
-import CaptureMockupButton from '@/components/product/CaptureMockupButton';
 import { fetchProductById, fetchMockupById } from '@/services/api.service';
 import { SocialShareButton } from '@/components/SocialShareButton';
 import { AddToCartDialog } from '@/components/cart/AddToCartDialog';
@@ -311,53 +308,44 @@ const ProductDetail = () => {
                   <AccordionContent className="space-y-6 pt-6">
                     <div className="grid lg:grid-cols-2 gap-8">
                       <div className="space-y-6">
-                        <CustomizationAccordion
-                          customText={customText}
-                          setCustomText={setCustomText}
-                          selectedPosition={selectedPosition}
-                          setSelectedPosition={setSelectedPosition}
-                          selectedFont={selectedFont}
-                          setSelectedFont={setSelectedFont}
-                          textColor={textColor}
-                          setTextColor={setTextColor}
-                          mockup={mockup}
-                        />
-                        
-                        <Separator />
-                        
-                        <AIImageGenerator onImageGenerated={(url) => {
-                          setSelectedImages(prev => [...prev, url]);
-                          setCurrentImageIndex(selectedImages.length + 1);
-                        }} />
-                        
-                        <AIImageGallery 
-                          selectedImages={selectedImages}
-                          onImageSelect={(url) => {
-                            const index = selectedImages.indexOf(url);
-                            if (index !== -1) {
-                              setCurrentImageIndex(index + 1);
-                            }
-                          }}
-                          onImageRemove={(url) => {
-                            const newImages = selectedImages.filter(img => img !== url);
-                            setSelectedImages(newImages);
-                            if (currentImageIndex > newImages.length) {
-                              setCurrentImageIndex(0);
-                            }
-                          }}
-                        />
-                      </div>
-                      
-                      <div className="space-y-4">
-                        <CaptureMockupButton 
-                          mockup={mockup}
-                          selectedColor={selectedColor}
-                          customText={customText}
-                          selectedPosition={selectedPosition}
-                          selectedFont={selectedFont}
-                          textColor={textColor}
-                          selectedImages={selectedImages}
-                        />
+                        <CustomizationAccordion>
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="custom-text">Texte personnalisé</Label>
+                              <input
+                                id="custom-text"
+                                type="text"
+                                value={customText}
+                                onChange={(e) => setCustomText(e.target.value)}
+                                placeholder="Votre texte ici..."
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="text-color">Couleur du texte</Label>
+                              <input
+                                id="text-color"
+                                type="color"
+                                value={textColor}
+                                onChange={(e) => setTextColor(e.target.value)}
+                                className="w-full h-10 border border-gray-300 rounded-md"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="font-select">Police</Label>
+                              <Select value={selectedFont} onValueChange={setSelectedFont}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Choisir une police" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Arial">Arial</SelectItem>
+                                  <SelectItem value="Helvetica">Helvetica</SelectItem>
+                                  <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </CustomizationAccordion>
                       </div>
                     </div>
                   </AccordionContent>

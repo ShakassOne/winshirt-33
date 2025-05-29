@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
@@ -142,11 +142,7 @@ const UsersAdmin = () => {
     } catch (error: any) {
       console.error("Error loading users:", error);
       setError(error.message || "Erreur lors du chargement des utilisateurs");
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les utilisateurs. Vous n'avez peut-être pas les droits d'administrateur.",
-        variant: "destructive",
-      });
+      toast.error("Impossible de charger les utilisateurs. Vous n'avez peut-être pas les droits d'administrateur.");
     } finally {
       setIsLoading(false);
     }
@@ -175,17 +171,10 @@ const UsersAdmin = () => {
         user.id === userId ? { ...user, role: newRole } : user
       ));
       
-      toast({
-        title: "Rôle modifié",
-        description: `Le rôle a été changé en ${newRole}`,
-      });
+      toast.success(`Le rôle a été changé en ${newRole}`);
     } catch (error: any) {
       console.error("Error updating role:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de modifier le rôle de l'utilisateur. Vérifiez que vous avez les droits d'administration.",
-        variant: "destructive",
-      });
+      toast.error("Impossible de modifier le rôle de l'utilisateur. Vérifiez que vous avez les droits d'administration.");
     }
   };
 
@@ -202,19 +191,12 @@ const UsersAdmin = () => {
         user.id === userId ? { ...user, is_banned: !currentBanStatus } : user
       ));
       
-      toast({
-        title: currentBanStatus ? "Utilisateur débloqué" : "Utilisateur bloqué",
-        description: currentBanStatus ? "L'utilisateur peut désormais se connecter" : "L'utilisateur ne peut plus se connecter",
-      });
+      toast.success(currentBanStatus ? "L'utilisateur peut désormais se connecter" : "L'utilisateur ne peut plus se connecter");
       
       setOpenDialog(false);
     } catch (error: any) {
       console.error("Error toggling ban status:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de modifier le statut de l'utilisateur. Vérifiez que vous avez les droits d'administration.",
-        variant: "destructive",
-      });
+      toast.error("Impossible de modifier le statut de l'utilisateur. Vérifiez que vous avez les droits d'administration.");
     }
   };
 
