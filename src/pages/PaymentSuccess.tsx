@@ -1,74 +1,62 @@
 
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
-import { Check, AlertCircle } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckCircle, Package, Truck, ArrowRight } from 'lucide-react';
+import { ExtendedOrder } from '@/types/supabase.types';
 
 const PaymentSuccess = () => {
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
-  const sessionId = searchParams.get('session_id');
-  const orderId = searchParams.get('order_id');
-  
-  const [verifying, setVerifying] = useState(true);
-  const [paymentVerified, setPaymentVerified] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [order, setOrder] = useState<ExtendedOrder | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const orderId = location.state?.orderId;
 
   useEffect(() => {
-    if (!sessionId || !orderId) {
-      setError("Paramètres de paiement manquants");
-      setVerifying(false);
+    if (!orderId) {
+      navigate('/');
       return;
     }
 
-    const verifyPayment = async () => {
+    const fetchOrder = async () => {
       try {
-        console.log("Verifying payment for session:", sessionId, "order:", orderId);
-        
-        const { data, error } = await supabase.functions.invoke('verify-stripe-payment', {
-          body: {
-            sessionId,
-            orderId,
-          },
-        });
+        const { data: orderData, error } = await supabase
+          .from('orders')
+          .select(`
+            *,
+            order_items (
+              *,
+              products:product_id (*)
+            )
+          `)
+          .eq('id', orderId)
+          .single();
 
-        if (error) {
-          console.error("Error verifying payment:", error);
-          throw error;
-        }
-
-        if (data?.success) {
-          setPaymentVerified(true);
-          toast({
-            title: "Paiement confirmé !",
-            description: "Votre commande a été traitée avec succès.",
-          });
-        } else {
-          setError("Le paiement n'a pas pu être vérifié");
-        }
-      } catch (err) {
-        console.error("Error during payment verification:", err);
-        setError("Erreur lors de la vérification du paiement");
+        if (error) throw error;
+        setOrder(orderData);
+      } catch (error) {
+        console.error('Error fetching order:', error);
       } finally {
-        setVerifying(false);
+        setLoading(false);
       }
     };
 
-    verifyPayment();
-  }, [sessionId, orderId]);
+    fetchOrder();
+  }, [orderId, navigate]);
 
-  if (verifying) {
+  if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <div className="container mx-auto px-4 py-8 mt-16 flex-grow flex items-center justify-center">
+        <div className="flex-grow flex items-center justify-center">
           <div className="text-center">
-            <div className="spinner"></div>
-            <p className="mt-4">Vérification du paiement en cours...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
+            <p>Chargement des détails de votre commande...</p>
           </div>
         </div>
         <Footer />
@@ -76,23 +64,16 @@ const PaymentSuccess = () => {
     );
   }
 
-  if (error || !paymentVerified) {
+  if (!order) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <div className="container mx-auto px-4 py-8 mt-16 flex-grow">
-          <div className="max-w-2xl mx-auto glass-card p-8 text-center">
-            <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-            <h1 className="text-xl font-bold mb-4">Problème avec le paiement</h1>
-            <p className="mb-6">{error || "Le paiement n'a pas pu être vérifié"}</p>
-            <div className="flex gap-4 justify-center">
-              <Button onClick={() => navigate('/cart')}>
-                Retourner au panier
-              </Button>
-              <Button variant="outline" asChild>
-                <Link to="/">Retourner à l'accueil</Link>
-              </Button>
-            </div>
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Commande introuvable</h1>
+            <Button onClick={() => navigate('/')}>
+              Retour à l'accueil
+            </Button>
           </div>
         </div>
         <Footer />
@@ -105,39 +86,121 @@ const PaymentSuccess = () => {
       <Navbar />
       
       <div className="container mx-auto px-4 py-8 mt-16 flex-grow">
-        <div className="max-w-2xl mx-auto glass-card p-8 text-center">
-          <div className="mx-auto h-16 w-16 flex items-center justify-center bg-green-500/20 rounded-full mb-6">
-            <Check className="h-8 w-8 text-green-500" />
+        <div className="max-w-2xl mx-auto text-center">
+          {/* Success Header */}
+          <div className="mb-8">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Paiement réussi !
+            </h1>
+            <p className="text-gray-600">
+              Votre commande a été confirmée et sera traitée dans les plus brefs délais.
+            </p>
           </div>
-          <h1 className="text-2xl font-bold mb-2">Paiement réussi !</h1>
-          <p className="mb-2">Votre commande a été confirmée et traitée</p>
-          <p className="text-gray-400 mb-6">Numéro de commande: {orderId}</p>
-          
-          <div className="mb-8 text-left bg-gray-800/50 rounded-lg p-4">
-            <h2 className="font-semibold mb-2">Prochaines étapes</h2>
-            <ul className="space-y-2 text-sm">
-              <li>✅ Paiement confirmé</li>
-              <li>📧 Email de confirmation envoyé</li>
-              <li>📦 Votre commande est en cours de préparation</li>
-              <li>🚚 Vous recevrez un email avec le suivi de livraison</li>
-            </ul>
-          </div>
-          
-          <p className="text-gray-400 mb-6">
-            Un email de confirmation détaillé a été envoyé à votre adresse email
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" asChild>
-              <Link to={`/order-confirmation/${orderId}`}>
-                Voir ma commande
-              </Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild>
-              <Link to="/">
+
+          {/* Order Details */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="w-5 h-5" />
+                Détails de votre commande
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-left">
+                <div>
+                  <p className="text-sm text-gray-500">Numéro de commande</p>
+                  <p className="font-medium">#{order.id.slice(-8)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Montant total</p>
+                  <p className="font-medium">{order.total_amount.toFixed(2)} €</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Date de commande</p>
+                  <p className="font-medium">
+                    {new Date(order.created_at).toLocaleDateString('fr-FR')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Statut</p>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    En cours de traitement
+                  </span>
+                </div>
+              </div>
+
+              {/* Shipping Address */}
+              <div className="border-t pt-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Truck className="w-4 h-4 text-gray-500" />
+                  <p className="text-sm font-medium">Adresse de livraison</p>
+                </div>
+                <div className="text-left bg-gray-50 p-3 rounded-lg">
+                  <p className="font-medium">
+                    {order.shipping_first_name} {order.shipping_last_name}
+                  </p>
+                  <p className="text-sm text-gray-600">{order.shipping_address}</p>
+                  <p className="text-sm text-gray-600">
+                    {order.shipping_postal_code} {order.shipping_city}
+                  </p>
+                  <p className="text-sm text-gray-600">{order.shipping_country}</p>
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium mb-3 text-left">Articles commandés</p>
+                <div className="space-y-2">
+                  {order.items?.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <img
+                        src={item.products.image_url}
+                        alt={item.products.name}
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                      <div className="flex-grow text-left">
+                        <p className="font-medium text-sm">{item.products.name}</p>
+                        <p className="text-xs text-gray-500">
+                          Quantité: {item.quantity}
+                          {item.selected_color && ` • ${item.selected_color}`}
+                          {item.selected_size && ` • ${item.selected_size}`}
+                        </p>
+                      </div>
+                      <p className="font-medium">{(item.price * item.quantity).toFixed(2)} €</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Button
+                onClick={() => navigate('/orders')}
+                className="w-full"
+              >
+                Voir mes commandes
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/products')}
+                className="w-full"
+              >
                 Continuer mes achats
-              </Link>
-            </Button>
+              </Button>
+            </div>
+            
+            <div className="text-center pt-4">
+              <p className="text-sm text-gray-500">
+                Un email de confirmation a été envoyé à {order.shipping_email}
+              </p>
+            </div>
           </div>
         </div>
       </div>

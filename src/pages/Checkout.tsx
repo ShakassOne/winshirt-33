@@ -13,6 +13,8 @@ import { createOrder } from '@/services/order.service';
 import { migrateCartToUser } from '@/services/cart.service';
 import { getShippingOptions } from '@/services/shipping.service';
 import ShippingOptions from '@/components/checkout/ShippingOptions';
+import StripeProvider from '@/components/payment/StripeProvider';
+import StripePaymentModal from '@/components/payment/StripePaymentModal';
 import { 
   Form, 
   FormControl, 
@@ -56,6 +58,8 @@ const Checkout = () => {
   const [user, setUser] = useState<any>(null);
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [selectedShippingCost, setSelectedShippingCost] = useState(0);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
 
   // Vérifie si l'utilisateur est connecté
   React.useEffect(() => {
@@ -237,21 +241,13 @@ const Checkout = () => {
       const order = await createOrder(data, items, cartToken, userId);
       console.log("Order created:", order);
       
-      // Redirige vers la page de paiement avec les données nécessaires
-      navigate('/payment', { 
-        state: { 
-          checkoutData: data, 
-          orderId: order.id,
-          orderTotal: total
-        } 
-      });
-      
-      // Vide le panier après la création de la commande
-      await clearCart();
+      // Ouvrir la modal de paiement au lieu de rediriger
+      setCurrentOrderId(order.id);
+      setShowPaymentModal(true);
       
       toast({
         title: "Commande créée avec succès!",
-        description: "Vous allez être redirigé vers la page de paiement.",
+        description: "Procédez maintenant au paiement.",
       });
     } catch (error) {
       console.error("Erreur lors de la création de la commande:", error);
@@ -265,6 +261,14 @@ const Checkout = () => {
     }
   };
 
+  const handlePaymentSuccess = async (orderId: string) => {
+    setShowPaymentModal(false);
+    await clearCart();
+    navigate('/payment-success', { 
+      state: { orderId } 
+    });
+  };
+
   const handleFormSubmit = (e: React.FormEvent) => {
     console.log("Form submit triggered");
     e.preventDefault();
@@ -274,290 +278,305 @@ const Checkout = () => {
   const finalTotal = total + selectedShippingCost;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
-      <div className="container mx-auto px-4 py-8 mt-16 flex-grow">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">Finaliser votre commande</h1>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <div className="glass-card p-6">
-                <h2 className="text-xl font-semibold mb-4">Informations de livraison</h2>
-                
-                <Form {...form}>
-                  <form onSubmit={handleFormSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="firstName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Prénom</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Prénom" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="lastName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nom</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Nom" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Email" type="email" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Téléphone</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Téléphone" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <FormField
-                      control={form.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Adresse</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Adresse" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="city"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Ville</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Ville" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="postalCode"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Code Postal</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Code Postal" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="country"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Pays</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Pays" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <FormField
-                      control={form.control}
-                      name="deliveryNotes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Instructions de livraison (optionnel)</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Instructions spéciales pour la livraison..." 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    {/* Options de livraison */}
-                    <div className="pt-6 border-t border-gray-100/10">
-                      <FormField
-                        control={form.control}
-                        name="selectedShippingOption"
-                        render={({ field }) => (
-                          <FormItem>
-                            <ShippingOptions
-                              options={shippingOptions}
-                              selectedOption={field.value}
-                              onOptionChange={handleShippingOptionChange}
-                            />
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    {!user && (
-                      <div className="space-y-4">
+    <StripeProvider>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        
+        <div className="container mx-auto px-4 py-8 mt-16 flex-grow">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold mb-6">Finaliser votre commande</h1>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <div className="glass-card p-6">
+                  <h2 className="text-xl font-semibold mb-4">Informations de livraison</h2>
+                  
+                  <Form {...form}>
+                    <form onSubmit={handleFormSubmit} className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
-                          name="createAccount"
+                          name="firstName"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormItem>
+                              <FormLabel>Prénom</FormLabel>
                               <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
+                                <Input placeholder="Prénom" {...field} />
                               </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel>Créer un compte</FormLabel>
-                                <p className="text-sm text-muted-foreground">
-                                  Créez un compte pour suivre vos commandes et conserver vos informations
-                                </p>
-                              </div>
+                              <FormMessage />
                             </FormItem>
                           )}
                         />
                         
-                        {createAccount && (
+                        <FormField
+                          control={form.control}
+                          name="lastName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nom</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Nom" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Email" type="email" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Téléphone</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Téléphone" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={form.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Adresse</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Adresse" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="city"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Ville</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Ville" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="postalCode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Code Postal</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Code Postal" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="country"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Pays</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Pays" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={form.control}
+                        name="deliveryNotes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Instructions de livraison (optionnel)</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Instructions spéciales pour la livraison..." 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      {/* Options de livraison */}
+                      <div className="pt-6 border-t border-gray-100/10">
+                        <FormField
+                          control={form.control}
+                          name="selectedShippingOption"
+                          render={({ field }) => (
+                            <FormItem>
+                              <ShippingOptions
+                                options={shippingOptions}
+                                selectedOption={field.value}
+                                onOptionChange={handleShippingOptionChange}
+                              />
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      {!user && (
+                        <div className="space-y-4">
                           <FormField
                             control={form.control}
-                            name="password"
+                            name="createAccount"
                             render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Mot de passe</FormLabel>
+                              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                                 <FormControl>
-                                  <Input 
-                                    placeholder="Mot de passe" 
-                                    type="password" 
-                                    {...field} 
+                                  <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
                                   />
                                 </FormControl>
-                                <FormMessage />
+                                <div className="space-y-1 leading-none">
+                                  <FormLabel>Créer un compte</FormLabel>
+                                  <p className="text-sm text-muted-foreground">
+                                    Créez un compte pour suivre vos commandes et conserver vos informations
+                                  </p>
+                                </div>
                               </FormItem>
                             )}
                           />
-                        )}
-                      </div>
-                    )}
-                    
-                    <div className="pt-4">
-                      <Button 
-                        type="submit" 
-                        className="w-full" 
-                        size="lg"
-                        disabled={isLoading}
-                        onClick={(e) => {
-                          console.log("Button clicked");
-                          // Le handleFormSubmit sera appelé automatiquement par le type="submit"
-                        }}
-                      >
-                        {isLoading ? "Traitement en cours..." : "Procéder au paiement"}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </div>
-            </div>
-            
-            <div className="lg:col-span-1">
-              <div className="glass-card p-6">
-                <h2 className="text-lg font-semibold mb-4">Résumé de la commande</h2>
-                
-                <div className="space-y-4">
-                  {items.map((item) => (
-                    <div key={item.productId} className="flex gap-3">
-                      <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
-                        <img 
-                          src={item.image_url} 
-                          alt={item.name} 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-grow">
-                        <div className="flex justify-between">
-                          <p className="font-medium">{item.name}</p>
-                          <p>{(item.price * item.quantity).toFixed(2)} €</p>
+                          
+                          {createAccount && (
+                            <FormField
+                              control={form.control}
+                              name="password"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Mot de passe</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      placeholder="Mot de passe" 
+                                      type="password" 
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
                         </div>
-                        <div className="text-sm text-gray-400">
-                          Qté: {item.quantity}
-                          {item.color && ` • ${item.color}`}
-                          {item.size && ` • ${item.size}`}
-                        </div>
+                      )}
+                      
+                      <div className="pt-4">
+                        <Button 
+                          type="submit" 
+                          className="w-full" 
+                          size="lg"
+                          disabled={isLoading}
+                          onClick={(e) => {
+                            console.log("Button clicked");
+                            // Le handleFormSubmit sera appelé automatiquement par le type="submit"
+                          }}
+                        >
+                          {isLoading ? "Création de la commande..." : "Procéder au paiement"}
+                        </Button>
                       </div>
-                    </div>
-                  ))}
+                    </form>
+                  </Form>
                 </div>
-                
-                <div className="mt-6 pt-4 border-t border-gray-100/10 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Sous-total</span>
-                    <span>{total.toFixed(2)} €</span>
+              </div>
+              
+              <div className="lg:col-span-1">
+                <div className="glass-card p-6">
+                  <h2 className="text-lg font-semibold mb-4">Résumé de la commande</h2>
+                  
+                  <div className="space-y-4">
+                    {items.map((item) => (
+                      <div key={item.productId} className="flex gap-3">
+                        <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
+                          <img 
+                            src={item.image_url} 
+                            alt={item.name} 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-grow">
+                          <div className="flex justify-between">
+                            <p className="font-medium">{item.name}</p>
+                            <p>{(item.price * item.quantity).toFixed(2)} €</p>
+                          </div>
+                          <div className="text-sm text-gray-400">
+                            Qté: {item.quantity}
+                            {item.color && ` • ${item.color}`}
+                            {item.size && ` • ${item.size}`}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Livraison</span>
-                    <span>
-                      {selectedShippingCost > 0 ? `${selectedShippingCost.toFixed(2)} €` : 'Gratuite'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between font-semibold pt-2 text-lg">
-                    <span>Total</span>
-                    <span>{finalTotal.toFixed(2)} €</span>
+                  
+                  <div className="mt-6 pt-4 border-t border-gray-100/10 space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Sous-total</span>
+                      <span>{total.toFixed(2)} €</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Livraison</span>
+                      <span>
+                        {selectedShippingCost > 0 ? `${selectedShippingCost.toFixed(2)} €` : 'Gratuite'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between font-semibold pt-2 text-lg">
+                      <span>Total</span>
+                      <span>{finalTotal.toFixed(2)} €</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+        
+        {/* Modal de paiement Stripe */}
+        {showPaymentModal && currentOrderId && (
+          <StripePaymentModal
+            isOpen={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            onSuccess={handlePaymentSuccess}
+            checkoutData={form.getValues()}
+            items={items}
+            total={finalTotal}
+            orderId={currentOrderId}
+          />
+        )}
+        
+        <Footer />
       </div>
-      
-      <Footer />
-    </div>
+    </StripeProvider>
   );
 };
 
