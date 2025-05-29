@@ -28,6 +28,26 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+// Liste des pays avec codes ISO
+const countries = [
+  { code: 'FR', name: 'France' },
+  { code: 'BE', name: 'Belgique' },
+  { code: 'CH', name: 'Suisse' },
+  { code: 'ES', name: 'Espagne' },
+  { code: 'IT', name: 'Italie' },
+  { code: 'DE', name: 'Allemagne' },
+  { code: 'GB', name: 'Royaume-Uni' },
+  { code: 'US', name: 'États-Unis' },
+  { code: 'CA', name: 'Canada' },
+];
 
 // Schéma de validation pour le formulaire de checkout
 const checkoutSchema = z.object({
@@ -84,7 +104,7 @@ const Checkout = () => {
             address: profileData.address || '',
             city: profileData.city || '',
             postalCode: profileData.postal_code || '',
-            country: profileData.country || '',
+            country: profileData.country || 'FR', // Défaut à FR
             deliveryNotes: '',
             createAccount: false
           });
@@ -105,7 +125,7 @@ const Checkout = () => {
       address: '',
       city: '',
       postalCode: '',
-      country: '',
+      country: 'FR', // Défaut à FR
       deliveryNotes: '',
       createAccount: false,
       password: '',
@@ -402,9 +422,20 @@ const Checkout = () => {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Pays</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Pays" {...field} />
-                              </FormControl>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Sélectionnez un pays" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {countries.map((country) => (
+                                    <SelectItem key={country.code} value={country.code}>
+                                      {country.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                               <FormMessage />
                             </FormItem>
                           )}
