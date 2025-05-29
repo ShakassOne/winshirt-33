@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import GlassCard from '@/components/ui/GlassCard';
-import { ShoppingBag, Ticket, Award, ShoppingCart, Users, Image, Palette, Settings, BarChart } from 'lucide-react';
+import { ShoppingBag, Ticket, Award, ShoppingCart, Users, Image, Palette, Settings, BarChart, Truck, Share2 } from 'lucide-react';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -64,6 +65,20 @@ const AdminDashboard = () => {
       icon: <Users className="h-8 w-8 text-amber-500" />,
       route: '/admin/users',
       color: 'from-amber-500/20 to-amber-500/5'
+    },
+    {
+      title: 'Options de livraison',
+      description: 'Gérez les options de livraison',
+      icon: <Truck className="h-8 w-8 text-blue-500" />,
+      route: '/admin/shipping',
+      color: 'from-blue-500/20 to-blue-500/5'
+    },
+    {
+      title: 'Réseaux sociaux',
+      description: 'Gérez les liens de partage social',
+      icon: <Share2 className="h-8 w-8 text-pink-500" />,
+      route: '/admin/social',
+      color: 'from-pink-500/20 to-pink-500/5'
     },
     {
       title: 'Thème',

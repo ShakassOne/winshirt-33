@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { Slider } from "@/components/ui/slider";
+import SocialShareSection from '@/components/SocialShareSection';
 
 const LotteryDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -225,6 +225,15 @@ const LotteryDetail = () => {
                   </Carousel>
                 </div>
               )}
+
+              {/* Social Share Section */}
+              <div className="mb-8">
+                <SocialShareSection
+                  url={`/lotteries/${id}`}
+                  title={`Loterie ${lottery.title} - ${formattedValue}`}
+                  description={lottery.description}
+                />
+              </div>
             </div>
 
             {/* Lottery Status */}

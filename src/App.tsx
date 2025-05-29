@@ -34,6 +34,7 @@ import UsersAdmin from "./pages/admin/UsersAdmin";
 import ThemeSettings from "./pages/admin/ThemeSettings";
 import SocialNetworksAdmin from "./pages/admin/SocialNetworksAdmin";
 import AnalyticsAdmin from "./pages/admin/AnalyticsAdmin";
+import ShippingOptionsAdmin from "./pages/admin/ShippingOptionsAdmin";
 import { OptimizedAuthProvider } from "./context/OptimizedAuthContext";
 import { CartProvider } from "./context/CartContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -161,6 +162,14 @@ function App() {
                     element={
                       <ProtectedRoute requireAdmin={true}>
                         <UsersAdmin />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/shipping" 
+                    element={
+                      <ProtectedRoute requireAdmin={true}>
+                        <ShippingOptionsAdmin />
                       </ProtectedRoute>
                     } 
                   />
