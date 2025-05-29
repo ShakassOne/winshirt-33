@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -6,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import SocialShareSection from '@/components/SocialShareSection';
+import { SocialShare } from '@/components/SocialShare';
 import CustomizationAccordion from '@/components/product/CustomizationAccordion';
 import AIImageGallery from '@/components/product/AIImageGallery';
 import AIImageGenerator from '@/components/product/AIImageGenerator';
@@ -13,15 +13,16 @@ import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { ShoppingCart, Star, Award } from 'lucide-react';
+import { ShoppingCart, Star, Award, Sparkles } from 'lucide-react';
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const { addToCart } = useCart();
+  const { addItem } = useCart();
   const { toast } = useToast();
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [customization, setCustomization] = useState<any>({});
+  const [showAIGenerator, setShowAIGenerator] = useState(false);
 
   const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', id],
@@ -71,7 +72,7 @@ const ProductDetail = () => {
       return;
     }
 
-    addToCart({
+    addItem({
       productId: product.id,
       name: product.name,
       price: product.price,
@@ -79,12 +80,36 @@ const ProductDetail = () => {
       quantity: 1,
       color: selectedColor,
       size: selectedSize,
-      customization: customization
+      customization: customization,
+      available_colors: product.available_colors,
+      available_sizes: product.available_sizes
     });
 
     toast({
       title: "Produit ajouté au panier",
       description: `${product.name} a été ajouté à votre panier`,
+    });
+  };
+
+  const handleImageSelect = (imageUrl: string, imageName: string) => {
+    setCustomization(prev => ({
+      ...prev,
+      selectedImage: { url: imageUrl, name: imageName }
+    }));
+    toast({
+      title: "Image sélectionnée",
+      description: imageName,
+    });
+  };
+
+  const handleImageGenerated = (imageUrl: string, imageName: string) => {
+    setCustomization(prev => ({
+      ...prev,
+      generatedImage: { url: imageUrl, name: imageName }
+    }));
+    toast({
+      title: "Image générée",
+      description: imageName,
     });
   };
 
@@ -143,7 +168,7 @@ const ProductDetail = () => {
               {product.is_customizable && (
                 <div className="mt-6">
                   <h3 className="text-lg font-semibold mb-4">Inspirations IA</h3>
-                  <AIImageGallery />
+                  <AIImageGallery onImageSelect={handleImageSelect} />
                 </div>
               )}
             </div>
@@ -226,40 +251,65 @@ const ProductDetail = () => {
                 )}
               </div>
 
-              {/* Bouton d'ajout au panier */}
-              <Button 
-                onClick={handleAddToCart}
-                size="lg" 
-                className="w-full bg-gradient-to-r from-winshirt-blue to-winshirt-purple hover:opacity-90"
-              >
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                Ajouter au panier
-              </Button>
+              {/* Boutons d'action */}
+              <div className="space-y-3">
+                <Button 
+                  onClick={handleAddToCart}
+                  size="lg" 
+                  className="w-full bg-gradient-to-r from-winshirt-blue to-winshirt-purple hover:opacity-90"
+                >
+                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  Ajouter au panier
+                </Button>
+
+                {/* Bouton générateur IA */}
+                {product.is_customizable && (
+                  <Button 
+                    variant="outline"
+                    onClick={() => setShowAIGenerator(true)}
+                    size="lg" 
+                    className="w-full"
+                  >
+                    <Sparkles className="h-5 w-5 mr-2" />
+                    Générer avec l'IA
+                  </Button>
+                )}
+              </div>
 
               {/* Section de partage social */}
-              <SocialShareSection 
-                url={currentUrl}
-                title={shareTitle}
-                description={shareDescription}
-              />
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-medium mb-2">Partager ce produit</h3>
+                <SocialShare 
+                  url={currentUrl}
+                  title={shareTitle}
+                  description={shareDescription}
+                  variant="outline"
+                />
+              </div>
             </div>
           </div>
 
           {/* Personnalisation */}
           {product.is_customizable && product.mockups && (
             <div className="mt-12">
-              <CustomizationAccordion 
-                mockup={product.mockups}
-                onCustomizationChange={setCustomization}
-              />
+              <CustomizationAccordion>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Personnalisez votre produit avec nos outils de design avancés.
+                  </p>
+                  {/* Ici on pourrait ajouter des outils de personnalisation */}
+                </div>
+              </CustomizationAccordion>
             </div>
           )}
 
           {/* Générateur d'images IA */}
           {product.is_customizable && (
-            <div className="mt-12">
-              <AIImageGenerator />
-            </div>
+            <AIImageGenerator 
+              isOpen={showAIGenerator}
+              onClose={() => setShowAIGenerator(false)}
+              onImageGenerated={handleImageGenerated}
+            />
           )}
         </div>
       </main>
