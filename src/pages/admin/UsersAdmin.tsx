@@ -45,27 +45,41 @@ const UsersAdmin = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Load profiles with user roles
+      // First, get all profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          user_roles!inner(role)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
       
       if (profilesError) {
         throw profilesError;
       }
 
+      // Then, get all user roles
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+      
+      if (rolesError) {
+        console.error('Error loading roles:', rolesError);
+        // Continue without roles if there's an error
+      }
+
       if (profilesData) {
-        console.log("Loaded profiles with roles:", profilesData.length);
+        console.log("Loaded profiles:", profilesData.length);
+        console.log("Loaded roles:", rolesData?.length || 0);
         
-        // Map profiles to AdminUser format
+        // Create a map of user roles for easy lookup
+        const roleMap = new Map();
+        if (rolesData) {
+          rolesData.forEach(roleItem => {
+            roleMap.set(roleItem.user_id, roleItem.role);
+          });
+        }
+        
+        // Map profiles to AdminUser format with roles
         const usersWithRoles = profilesData.map((profile) => {
-          const userRole = Array.isArray(profile.user_roles) 
-            ? profile.user_roles[0]?.role 
-            : profile.user_roles?.role;
+          const userRole = roleMap.get(profile.id) || 'user';
           
           return {
             id: profile.id,
@@ -77,7 +91,7 @@ const UsersAdmin = () => {
               last_name: profile.last_name,
             },
             is_banned: false, // Would need admin API access to check this
-            role: userRole || 'user'
+            role: userRole
           };
         });
         
@@ -117,12 +131,15 @@ const UsersAdmin = () => {
         throw new Error('Invalid role');
       }
 
+      // Cast newRole to the correct type
+      const roleValue = newRole as 'admin' | 'user';
+
       // Update or insert user role
       const { error } = await supabase
         .from('user_roles')
         .upsert({
           user_id: userId,
-          role: newRole,
+          role: roleValue,
         });
       
       if (error) throw error;
