@@ -15,7 +15,7 @@ import { SocialShareButton } from '@/components/SocialShareButton';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { addItemToCart } = useCart();
+  const { addItem } = useCart();
   const { toast } = useToast();
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
@@ -28,8 +28,8 @@ const ProductDetail = () => {
   });
 
   useEffect(() => {
-    if (product && product.sizes && product.sizes.length > 0) {
-      setSelectedSize(product.sizes[0]);
+    if (product && product.available_sizes && product.available_sizes.length > 0) {
+      setSelectedSize(product.available_sizes[0]);
     }
   }, [product]);
 
@@ -53,7 +53,7 @@ const ProductDetail = () => {
       customText: customText,
     };
 
-    addItemToCart(cartItem);
+    addItem(cartItem);
     toast({
       title: "Produit ajouté",
       description: "Le produit a été ajouté à votre panier.",
@@ -87,17 +87,6 @@ const ProductDetail = () => {
                     className="w-full h-auto rounded-lg"
                   />
                 </GlassCard>
-                <div className="flex space-x-2 overflow-x-auto">
-                  {product.mockup_urls && product.mockup_urls.map((url, index) => (
-                    <GlassCard key={index} className="p-2 w-32 flex-shrink-0">
-                      <img
-                        src={url}
-                        alt={`${product.name} Mockup ${index + 1}`}
-                        className="w-full h-auto rounded-md"
-                      />
-                    </GlassCard>
-                  ))}
-                </div>
               </div>
 
               {/* Right Column - Product Info & Customization */}
@@ -136,7 +125,7 @@ const ProductDetail = () => {
                   <div>
                     <h3 className="text-lg font-semibold mb-2">Tailles disponibles</h3>
                     <div className="flex space-x-2">
-                      {product.sizes && product.sizes.map((size) => (
+                      {product.available_sizes && product.available_sizes.map((size) => (
                         <Badge
                           key={size}
                           variant={selectedSize === size ? "default" : "secondary"}
@@ -149,11 +138,11 @@ const ProductDetail = () => {
                     </div>
                   </div>
 
-                  {product.colors && product.colors.length > 0 && (
+                  {product.available_colors && product.available_colors.length > 0 && (
                     <div className="mt-4">
                       <h3 className="text-lg font-semibold mb-2">Couleurs disponibles</h3>
                       <div className="flex space-x-2">
-                        {product.colors.map((color) => (
+                        {product.available_colors.map((color) => (
                           <Badge
                             key={color}
                             variant={selectedColor === color ? "default" : "secondary"}

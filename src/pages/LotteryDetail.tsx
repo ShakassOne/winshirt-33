@@ -25,18 +25,16 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
   const [participationCount, setParticipationCount] = useState(0);
   const [isParticipating, setIsParticipating] = useState(false);
 
-  const { data: lottery, isLoading } = useQuery(
-    ['lottery', id],
-    () => fetchLotteryById(id as string)
-  );
+  const { data: lottery, isLoading } = useQuery({
+    queryKey: ['lottery', id],
+    queryFn: () => fetchLotteryById(id as string)
+  });
 
-  const { data: productsWithTickets, isLoading: isLoadingProducts } = useQuery(
-    ['productsWithTickets', id],
-    () => fetchProductsWithTickets(id as string),
-    {
-      enabled: !!id, // Only run this query if `id` is not null
-    }
-  );
+  const { data: productsWithTickets, isLoading: isLoadingProducts } = useQuery({
+    queryKey: ['productsWithTickets', id],
+    queryFn: () => fetchProductsWithTickets(id as string),
+    enabled: !!id,
+  });
 
   useEffect(() => {
     if (productsWithTickets) {
@@ -145,7 +143,7 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
                       {products.map((product) => (
                         <ProductCard
                           key={product.id}
-                          product={product}
+                          {...product}
                           onClick={() => handleViewProduct(product.id)}
                         />
                       ))}
