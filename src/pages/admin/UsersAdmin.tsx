@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/layout/Navbar';
@@ -44,10 +45,13 @@ const UsersAdmin = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Use the profiles table with proper RLS policies
+      // Load profiles with user roles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          user_roles!inner(role)
+        `)
         .order('created_at', { ascending: false });
       
       if (profilesError) {
@@ -55,13 +59,13 @@ const UsersAdmin = () => {
       }
 
       if (profilesData) {
-        console.log("Loaded profiles:", profilesData.length);
+        console.log("Loaded profiles with roles:", profilesData.length);
         
-        // Map profiles to AdminUser format with fallback role assignment
+        // Map profiles to AdminUser format
         const usersWithRoles = profilesData.map((profile) => {
-          // Fallback admin detection using email
-          const adminEmails = ['alan@shakass.com', 'admin@example.com'];
-          const isAdmin = adminEmails.includes(profile.email || '');
+          const userRole = Array.isArray(profile.user_roles) 
+            ? profile.user_roles[0]?.role 
+            : profile.user_roles?.role;
           
           return {
             id: profile.id,
@@ -73,7 +77,7 @@ const UsersAdmin = () => {
               last_name: profile.last_name,
             },
             is_banned: false, // Would need admin API access to check this
-            role: isAdmin ? 'admin' : 'user'
+            role: userRole || 'user'
           };
         });
         
@@ -113,26 +117,30 @@ const UsersAdmin = () => {
         throw new Error('Invalid role');
       }
 
-      // For now, show a message that role management will be available once the database is properly set up
+      // Update or insert user role
+      const { error } = await supabase
+        .from('user_roles')
+        .upsert({
+          user_id: userId,
+          role: newRole,
+        });
+      
+      if (error) throw error;
+      
+      // Update local state
+      setUsers(prevUsers => prevUsers.map(user => 
+        user.id === userId ? { ...user, role: newRole } : user
+      ));
+      
+      // Update selected user if it's the same one
+      if (selectedUser && selectedUser.id === userId) {
+        setSelectedUser({ ...selectedUser, role: newRole });
+      }
+      
       toast({
-        title: "Fonctionnalité en cours de développement",
-        description: "La gestion des rôles sera disponible une fois que la base de données sera mise à jour.",
-        variant: "default",
+        title: "Succès",
+        description: `Le rôle de l'utilisateur a été mis à jour vers ${newRole === 'admin' ? 'Administrateur' : 'Utilisateur'}.`,
       });
-      
-      // TODO: Implement proper role management once user_roles table is available
-      // const { error } = await supabase
-      //   .from('user_roles')
-      //   .upsert({
-      //     user_id: userId,
-      //     role: newRole,
-      //   });
-      
-      // if (error) throw error;
-      
-      // setUsers(prevUsers => prevUsers.map(user => 
-      //   user.id === userId ? { ...user, role: newRole } : user
-      // ));
       
     } catch (error: any) {
       console.error("Error updating role:", error);
@@ -320,9 +328,6 @@ const UsersAdmin = () => {
                       Admin
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    La gestion des rôles sera disponible une fois la base de données mise à jour.
-                  </p>
                 </div>
               </div>
               

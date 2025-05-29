@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useSecureAdminCheck = () => {
   const { user } = useOptimizedAuth();
@@ -16,16 +17,27 @@ export const useSecureAdminCheck = () => {
       }
 
       try {
-        // Fallback admin check using email for now
-        // TODO: Replace with proper role-based system once user_roles table is available
-        const adminEmails = ['alan@shakass.com', 'admin@example.com'];
-        const userIsAdmin = adminEmails.includes(user.email || '');
-        setIsAdmin(userIsAdmin);
-        
-        console.log('[useSecureAdminCheck] Admin check result:', { 
-          email: user.email, 
-          isAdmin: userIsAdmin 
-        });
+        // Check user role from the user_roles table
+        const { data: roleData, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error checking admin role:', error);
+          setIsAdmin(false);
+        } else {
+          const userIsAdmin = roleData !== null;
+          setIsAdmin(userIsAdmin);
+          
+          console.log('[useSecureAdminCheck] Admin check result:', { 
+            userId: user.id,
+            email: user.email, 
+            isAdmin: userIsAdmin 
+          });
+        }
       } catch (error) {
         console.error('Error in admin check:', error);
         setIsAdmin(false);
