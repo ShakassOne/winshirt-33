@@ -57,46 +57,25 @@ const UsersAdmin = () => {
       if (profilesData) {
         console.log("Loaded profiles:", profilesData.length);
         
-        // Get user roles for each profile
-        const usersWithRoles = await Promise.all(
-          profilesData.map(async (profile) => {
-            try {
-              // Get user role from user_roles table
-              const { data: roleData } = await supabase
-                .from('user_roles')
-                .select('role')
-                .eq('user_id', profile.id)
-                .single();
-              
-              return {
-                id: profile.id,
-                email: profile.email || 'Email inconnu',
-                created_at: profile.created_at || new Date().toISOString(),
-                last_sign_in_at: null, // We can't access auth.users directly
-                user_metadata: {
-                  first_name: profile.first_name,
-                  last_name: profile.last_name,
-                },
-                is_banned: false, // Would need admin API access to check this
-                role: roleData?.role || 'user'
-              };
-            } catch (e) {
-              console.error(`Error fetching user data for ${profile.id}:`, e);
-              return {
-                id: profile.id,
-                email: profile.email || 'Email inconnu',
-                created_at: profile.created_at || new Date().toISOString(),
-                last_sign_in_at: null,
-                user_metadata: {
-                  first_name: profile.first_name,
-                  last_name: profile.last_name,
-                },
-                is_banned: false,
-                role: 'user'
-              };
-            }
-          })
-        );
+        // Map profiles to AdminUser format with fallback role assignment
+        const usersWithRoles = profilesData.map((profile) => {
+          // Fallback admin detection using email
+          const adminEmails = ['alan@shakass.com', 'admin@example.com'];
+          const isAdmin = adminEmails.includes(profile.email || '');
+          
+          return {
+            id: profile.id,
+            email: profile.email || 'Email inconnu',
+            created_at: profile.created_at || new Date().toISOString(),
+            last_sign_in_at: null, // We can't access auth.users directly
+            user_metadata: {
+              first_name: profile.first_name,
+              last_name: profile.last_name,
+            },
+            is_banned: false, // Would need admin API access to check this
+            role: isAdmin ? 'admin' : 'user'
+          };
+        });
         
         setUsers(usersWithRoles);
       } else {
@@ -134,24 +113,27 @@ const UsersAdmin = () => {
         throw new Error('Invalid role');
       }
 
-      // Use the user_roles table instead of auth.admin API
-      const { error } = await supabase
-        .from('user_roles')
-        .upsert({
-          user_id: userId,
-          role: newRole,
-        });
-      
-      if (error) throw error;
-      
-      setUsers(prevUsers => prevUsers.map(user => 
-        user.id === userId ? { ...user, role: newRole } : user
-      ));
-      
+      // For now, show a message that role management will be available once the database is properly set up
       toast({
-        title: "Rôle modifié",
-        description: `Le rôle a été changé en ${newRole}`,
+        title: "Fonctionnalité en cours de développement",
+        description: "La gestion des rôles sera disponible une fois que la base de données sera mise à jour.",
+        variant: "default",
       });
+      
+      // TODO: Implement proper role management once user_roles table is available
+      // const { error } = await supabase
+      //   .from('user_roles')
+      //   .upsert({
+      //     user_id: userId,
+      //     role: newRole,
+      //   });
+      
+      // if (error) throw error;
+      
+      // setUsers(prevUsers => prevUsers.map(user => 
+      //   user.id === userId ? { ...user, role: newRole } : user
+      // ));
+      
     } catch (error: any) {
       console.error("Error updating role:", error);
       toast({
@@ -202,11 +184,7 @@ const UsersAdmin = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Utilisateurs ({users.filter(user => 
-              user.email.toLowerCase().includes(searchQuery.toLowerCase()) || 
-              (user.user_metadata?.first_name && user.user_metadata.first_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-              (user.user_metadata?.last_name && user.user_metadata.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
-            ).length})</CardTitle>
+            <CardTitle>Utilisateurs ({filteredUsers.length})</CardTitle>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[60vh]">
@@ -229,22 +207,14 @@ const UsersAdmin = () => {
                         Chargement des utilisateurs...
                       </TableCell>
                     </TableRow>
-                  ) : users.filter(user => 
-                      user.email.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                      (user.user_metadata?.first_name && user.user_metadata.first_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                      (user.user_metadata?.last_name && user.user_metadata.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
-                    ).length === 0 ? (
+                  ) : filteredUsers.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-8">
                         {searchQuery ? "Aucun utilisateur ne correspond à votre recherche" : "Aucun utilisateur trouvé"}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    users.filter(user => 
-                      user.email.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                      (user.user_metadata?.first_name && user.user_metadata.first_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                      (user.user_metadata?.last_name && user.user_metadata.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
-                    ).map((user) => (
+                    filteredUsers.map((user) => (
                       <TableRow 
                         key={user.id}
                         className="cursor-pointer hover:bg-muted/50"
@@ -350,6 +320,9 @@ const UsersAdmin = () => {
                       Admin
                     </Button>
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    La gestion des rôles sera disponible une fois la base de données mise à jour.
+                  </p>
                 </div>
               </div>
               
