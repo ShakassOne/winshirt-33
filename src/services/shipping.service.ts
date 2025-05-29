@@ -33,22 +33,6 @@ export const getAllShippingOptions = async (): Promise<ShippingOption[]> => {
   }
 };
 
-export const getShippingOptionById = async (id: string): Promise<ShippingOption | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('shipping_options')
-      .select('*')
-      .eq('id', id)
-      .single();
-      
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error("Error fetching shipping option:", error);
-    throw error;
-  }
-};
-
 export const createShippingOption = async (shippingOption: Omit<ShippingOption, 'id' | 'created_at' | 'updated_at'>): Promise<ShippingOption> => {
   try {
     const { data, error } = await supabase

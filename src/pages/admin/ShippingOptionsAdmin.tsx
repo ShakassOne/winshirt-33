@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import GlassCard from '@/components/ui/GlassCard';
@@ -9,10 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Truck, Plus, Edit, Trash2 } from 'lucide-react';
-import { getShippingOptions, createShippingOption, updateShippingOption, deleteShippingOption } from '@/services/shipping.service';
+import { getAllShippingOptions, createShippingOption, updateShippingOption, deleteShippingOption } from '@/services/shipping.service';
 import { ShippingOption } from '@/types/shipping.types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -30,39 +29,78 @@ const ShippingOptionsAdmin = () => {
   });
 
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const { data: shippingOptions, isLoading, refetch } = useQuery({
-    queryKey: ['shippingOptions'],
-    queryFn: getShippingOptions,
+  const { data: shippingOptions, isLoading } = useQuery({
+    queryKey: ['allShippingOptions'],
+    queryFn: getAllShippingOptions,
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      if (editingOption) {
-        await updateShippingOption(editingOption.id, formData);
-        toast({
-          title: "Option de livraison mise à jour",
-          description: "L'option de livraison a été mise à jour avec succès.",
-        });
-      } else {
-        await createShippingOption(formData);
-        toast({
-          title: "Option de livraison créée",
-          description: "L'option de livraison a été créée avec succès.",
-        });
-      }
-      
-      refetch();
+  const createMutation = useMutation({
+    mutationFn: createShippingOption,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allShippingOptions'] });
+      toast({
+        title: "Option de livraison créée",
+        description: "L'option de livraison a été créée avec succès.",
+      });
       setIsDialogOpen(false);
       resetForm();
-    } catch (error) {
+    },
+    onError: () => {
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'enregistrement.",
+        description: "Une erreur est survenue lors de la création.",
         variant: "destructive",
       });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => updateShippingOption(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allShippingOptions'] });
+      toast({
+        title: "Option mise à jour",
+        description: "L'option de livraison a été mise à jour avec succès.",
+      });
+      setIsDialogOpen(false);
+      resetForm();
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la mise à jour.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteShippingOption,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allShippingOptions'] });
+      toast({
+        title: "Option supprimée",
+        description: "L'option de livraison a été supprimée avec succès.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la suppression.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (editingOption) {
+      updateMutation.mutate({ id: editingOption.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
@@ -80,22 +118,9 @@ const ShippingOptionsAdmin = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette option de livraison ?')) return;
-    
-    try {
-      await deleteShippingOption(id);
-      toast({
-        title: "Option supprimée",
-        description: "L'option de livraison a été supprimée avec succès.",
-      });
-      refetch();
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la suppression.",
-        variant: "destructive",
-      });
+  const handleDelete = (id: string) => {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette option de livraison ?')) {
+      deleteMutation.mutate(id);
     }
   };
 

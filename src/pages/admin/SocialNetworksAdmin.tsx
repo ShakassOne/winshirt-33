@@ -1,35 +1,19 @@
 
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Trash, Plus, Save, X, MoveUp, MoveDown, Check, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose } from "@/components/ui/sheet";
-import { fetchAllSocialNetworks, createSocialNetwork, updateSocialNetwork, deleteSocialNetwork } from "@/services/api.service";
-import { SocialNetwork } from "@/types/supabase.types";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
-import { Badge } from "@/components/ui/badge";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
+import GlassCard from '@/components/ui/GlassCard';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Share2, Plus, Edit, Trash2, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { fetchAllSocialNetworks, createSocialNetwork, updateSocialNetwork, deleteSocialNetwork } from '@/services/api.service';
+import { SocialNetwork } from '@/types/supabase.types';
+import { useToast } from '@/hooks/use-toast';
 
-// Social network form schema
-const formSchema = z.object({
-  name: z.string().nonempty("Le nom est requis"),
-  url: z.string().nullable(),
-  icon: z.string().nonempty("L'icône est requise"),
-  is_active: z.boolean().default(true),
-  priority: z.number().int().default(0),
-});
-
-// Available icons for social networks
 const availableIcons = [
   { id: "facebook", label: "Facebook", icon: <Facebook className="h-4 w-4" /> },
   { id: "twitter", label: "Twitter", icon: <Twitter className="h-4 w-4" /> },
@@ -38,464 +22,292 @@ const availableIcons = [
 ];
 
 const SocialNetworksAdmin = () => {
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingSocial, setEditingSocial] = useState<SocialNetwork | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingNetwork, setEditingNetwork] = useState<SocialNetwork | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    url: '',
+    icon: 'facebook',
+    is_active: true,
+    priority: 1
+  });
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Form setup
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      url: "",
-      icon: "facebook",
-      is_active: true,
-      priority: 0,
-    },
-  });
-
-  // Fetch social networks
-  const { data: socialNetworks = [], isLoading } = useQuery({
-    queryKey: ["socialNetworks"],
+  const { data: socialNetworks, isLoading } = useQuery({
+    queryKey: ['allSocialNetworks'],
     queryFn: fetchAllSocialNetworks,
   });
 
-  // Create mutation
   const createMutation = useMutation({
-    mutationFn: (data: Omit<SocialNetwork, "id" | "created_at" | "updated_at">) => {
-      return createSocialNetwork(data);
-    },
+    mutationFn: createSocialNetwork,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["socialNetworks"] });
+      queryClient.invalidateQueries({ queryKey: ['allSocialNetworks'] });
       toast({
-        title: "Réseau social ajouté",
+        title: "Réseau social créé",
         description: "Le réseau social a été créé avec succès.",
       });
-      setIsFormOpen(false);
-      form.reset();
+      setIsDialogOpen(false);
+      resetForm();
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la création du réseau social.",
+        description: "Une erreur est survenue lors de la création.",
         variant: "destructive",
       });
-      console.error(error);
     },
   });
 
-  // Update mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<SocialNetwork> }) => {
-      return updateSocialNetwork(id, data);
-    },
+    mutationFn: ({ id, data }: { id: string; data: any }) => updateSocialNetwork(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["socialNetworks"] });
+      queryClient.invalidateQueries({ queryKey: ['allSocialNetworks'] });
       toast({
-        title: "Réseau social modifié",
+        title: "Réseau social mis à jour",
         description: "Le réseau social a été mis à jour avec succès.",
       });
-      setIsFormOpen(false);
-      setEditingSocial(null);
+      setIsDialogOpen(false);
+      resetForm();
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la mise à jour du réseau social.",
+        description: "Une erreur est survenue lors de la mise à jour.",
         variant: "destructive",
       });
-      console.error(error);
     },
   });
 
-  // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => {
-      return deleteSocialNetwork(id);
-    },
+    mutationFn: deleteSocialNetwork,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["socialNetworks"] });
+      queryClient.invalidateQueries({ queryKey: ['allSocialNetworks'] });
       toast({
         title: "Réseau social supprimé",
         description: "Le réseau social a été supprimé avec succès.",
       });
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la suppression du réseau social.",
+        description: "Une erreur est survenue lors de la suppression.",
         variant: "destructive",
       });
-      console.error(error);
     },
   });
 
-  // Update priority mutation
-  const updatePriorityMutation = useMutation({
-    mutationFn: ({ id, priority }: { id: string; priority: number }) => {
-      return updateSocialNetwork(id, { priority });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["socialNetworks"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la mise à jour de la priorité.",
-        variant: "destructive",
-      });
-      console.error(error);
-    },
-  });
-
-  // Update active status mutation
-  const updateActiveMutation = useMutation({
-    mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) => {
-      return updateSocialNetwork(id, { is_active });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["socialNetworks"] });
-      toast({
-        title: "Statut modifié",
-        description: "Le statut du réseau social a été modifié avec succès.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la mise à jour du statut.",
-        variant: "destructive",
-      });
-      console.error(error);
-    },
-  });
-
-  // Reset form when editing social network changes
-  useEffect(() => {
-    if (editingSocial) {
-      form.reset({
-        name: editingSocial.name,
-        url: editingSocial.url,
-        icon: editingSocial.icon,
-        is_active: editingSocial.is_active,
-        priority: editingSocial.priority,
-      });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (editingNetwork) {
+      updateMutation.mutate({ id: editingNetwork.id, data: formData });
     } else {
-      form.reset({
-        name: "",
-        url: "",
-        icon: "facebook",
-        is_active: true,
-        priority: 0,
-      });
-    }
-  }, [editingSocial, form]);
-
-  // Handle form submission
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    if (editingSocial) {
-      updateMutation.mutate({
-        id: editingSocial.id,
-        data: values,
-      });
-    } else {
-      createMutation.mutate(values as any);
+      createMutation.mutate(formData);
     }
   };
 
-  // Move social network up (decrease priority)
-  const moveSocialUp = (social: SocialNetwork, index: number) => {
-    if (index <= 0) return;
-    const prevSocial = socialNetworks[index - 1];
-    updatePriorityMutation.mutate({ id: social.id, priority: prevSocial.priority });
-    updatePriorityMutation.mutate({ id: prevSocial.id, priority: social.priority });
+  const handleEdit = (network: SocialNetwork) => {
+    setEditingNetwork(network);
+    setFormData({
+      name: network.name,
+      url: network.url || '',
+      icon: network.icon,
+      is_active: network.is_active,
+      priority: network.priority
+    });
+    setIsDialogOpen(true);
   };
 
-  // Move social network down (increase priority)
-  const moveSocialDown = (social: SocialNetwork, index: number) => {
-    if (index >= socialNetworks.length - 1) return;
-    const nextSocial = socialNetworks[index + 1];
-    updatePriorityMutation.mutate({ id: social.id, priority: nextSocial.priority });
-    updatePriorityMutation.mutate({ id: nextSocial.id, priority: social.priority });
+  const handleDelete = (id: string) => {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce réseau social ?')) {
+      deleteMutation.mutate(id);
+    }
   };
 
-  // Toggle social network active status
-  const toggleActive = (social: SocialNetwork) => {
-    updateActiveMutation.mutate({
-      id: social.id,
-      is_active: !social.is_active,
+  const resetForm = () => {
+    setEditingNetwork(null);
+    setFormData({
+      name: '',
+      url: '',
+      icon: 'facebook',
+      is_active: true,
+      priority: 1
     });
   };
 
-  // Render icon based on name
   const renderIcon = (iconName: string) => {
     const icon = availableIcons.find((i) => i.id === iconName);
     return icon ? icon.icon : null;
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Gestion des Réseaux Sociaux</CardTitle>
-          <Button variant="default" onClick={() => setIsFormOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Ajouter un réseau
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="py-8 text-center">Chargement des réseaux sociaux...</div>
-          ) : socialNetworks.length === 0 ? (
-            <div className="py-8 text-center">Aucun réseau social configuré</div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Priorité</TableHead>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Icône</TableHead>
-                  <TableHead>URL</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {socialNetworks.map((social, index) => (
-                  <TableRow key={social.id}>
-                    <TableCell className="w-24">
-                      <div className="flex items-center space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={index === 0}
-                          onClick={() => moveSocialUp(social, index)}
-                        >
-                          <MoveUp className="h-4 w-4" />
-                        </Button>
-                        <span>{social.priority}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={index === socialNetworks.length - 1}
-                          onClick={() => moveSocialDown(social, index)}
-                        >
-                          <MoveDown className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell>{social.name}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        {renderIcon(social.icon)}
-                        <span className="ml-2">{social.icon}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {social.url || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <Switch
-                          checked={social.is_active}
-                          onCheckedChange={() => toggleActive(social)}
-                          className="mr-2"
-                        />
-                        <Badge variant={social.is_active ? "outline" : "secondary"}>
-                          {social.is_active ? "Actif" : "Inactif"}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setEditingSocial(social);
-                            setIsFormOpen(true);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <Trash className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Confirmation</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Êtes-vous sûr de vouloir supprimer ce réseau social ?
-                                Cette action est irréversible.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Annuler</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => deleteMutation.mutate(social.id)}
-                              >
-                                Supprimer
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      
+      <main className="flex-grow mt-16 pb-20">
+        <section className="relative py-16 bg-gradient-to-b from-winshirt-blue/20 to-transparent">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center gap-4 mb-4">
+              <Share2 className="h-8 w-8 text-winshirt-blue" />
+              <h1 className="text-3xl md:text-4xl font-bold">
+                Réseaux <span className="text-gradient">Sociaux</span>
+              </h1>
+            </div>
+            <p className="text-white/70">
+              Gérez vos liens de réseaux sociaux
+            </p>
+          </div>
+        </section>
 
-      {/* Form Sheet */}
-      <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <SheetContent className="sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle>
-              {editingSocial ? "Modifier un réseau social" : "Ajouter un réseau social"}
-            </SheetTitle>
-          </SheetHeader>
-
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nom</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: Facebook" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>URL de partage</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Ex: https://www.facebook.com/sharer/sharer.php?u=" 
-                        {...field} 
-                        value={field.value || ""} 
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      URL de partage incluant le paramètre pour l'URL de la page à partager.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="icon"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Icône</FormLabel>
-                    <FormControl>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sélectionnez une icône" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableIcons.map((icon) => (
-                            <SelectItem key={icon.id} value={icon.id}>
-                              <div className="flex items-center">
-                                {icon.icon}
-                                <span className="ml-2">{icon.label}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="is_active"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between p-3 rounded-md border">
-                    <div className="space-y-0.5">
-                      <FormLabel>Actif</FormLabel>
-                      <FormDescription>
-                        Activer ou désactiver ce réseau social
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="priority"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Priorité</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="Ex: 0" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      L'ordre d'affichage des réseaux sociaux (du plus petit au plus grand)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <SheetFooter className="pt-4">
-                <SheetClose asChild>
-                  <Button variant="outline" type="button">
-                    <X className="mr-2 h-4 w-4" /> Annuler
+        <section className="py-10">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold">Réseaux sociaux</h2>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={resetForm} className="bg-gradient-purple hover:opacity-90">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Ajouter un réseau
                   </Button>
-                </SheetClose>
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {createMutation.isPending || updateMutation.isPending ? (
-                    "Chargement..."
-                  ) : editingSocial ? (
-                    <>
-                      <Save className="mr-2 h-4 w-4" /> Mettre à jour
-                    </>
-                  ) : (
-                    <>
-                      <Check className="mr-2 h-4 w-4" /> Créer
-                    </>
-                  )}
-                </Button>
-              </SheetFooter>
-            </form>
-          </Form>
-        </SheetContent>
-      </Sheet>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingNetwork ? 'Modifier le réseau' : 'Nouveau réseau social'}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">Nom</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="url">URL</Label>
+                      <Input
+                        id="url"
+                        type="url"
+                        value={formData.url}
+                        onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                        placeholder="https://facebook.com/votrepage"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="icon">Icône</Label>
+                      <select
+                        id="icon"
+                        value={formData.icon}
+                        onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                        className="w-full p-2 border rounded-md bg-background"
+                      >
+                        {availableIcons.map((icon) => (
+                          <option key={icon.id} value={icon.id}>
+                            {icon.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="priority">Priorité</Label>
+                      <Input
+                        id="priority"
+                        type="number"
+                        min="1"
+                        value={formData.priority}
+                        onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="is_active"
+                        checked={formData.is_active}
+                        onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                      />
+                      <Label htmlFor="is_active">Réseau actif</Label>
+                    </div>
+                    
+                    <div className="flex gap-2 pt-4">
+                      <Button type="submit" className="flex-1">
+                        {editingNetwork ? 'Mettre à jour' : 'Créer'}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Annuler
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {isLoading ? (
+              <div className="text-center py-8">
+                <p>Chargement des réseaux sociaux...</p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {socialNetworks?.map((network) => (
+                  <GlassCard key={network.id} className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-grow">
+                        <div className="flex items-center gap-2 mb-2">
+                          {renderIcon(network.icon)}
+                          <h3 className="text-lg font-semibold">{network.name}</h3>
+                          {!network.is_active && (
+                            <span className="px-2 py-1 bg-red-500/20 text-red-300 text-xs rounded">
+                              Inactif
+                            </span>
+                          )}
+                        </div>
+                        {network.url && (
+                          <p className="text-white/70 mb-2 truncate">{network.url}</p>
+                        )}
+                        <div className="flex gap-4 text-sm text-white/60">
+                          <span>Priorité: {network.priority}</span>
+                          <span>Icône: {network.icon}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(network)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(network.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </GlassCard>
+                ))}
+                
+                {(!socialNetworks || socialNetworks.length === 0) && (
+                  <div className="text-center py-8">
+                    <p className="text-white/60">Aucun réseau social configuré</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+      </main>
+      
+      <Footer />
     </div>
   );
 };
