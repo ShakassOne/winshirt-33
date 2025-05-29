@@ -136,18 +136,26 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
     }
   };
 
+  // Style glass-morphism pour le CardElement
   const cardElementOptions = {
     style: {
       base: {
         fontSize: '16px',
-        color: '#424770',
-        '::placeholder': {
-          color: '#aab7c4',
-        },
+        color: '#ffffff',
+        backgroundColor: 'transparent',
         fontFamily: 'system-ui, -apple-system, sans-serif',
+        '::placeholder': {
+          color: '#9ca3af',
+        },
+        iconColor: '#ffffff',
       },
       invalid: {
-        color: '#9e2146',
+        color: '#ef4444',
+        iconColor: '#ef4444',
+      },
+      complete: {
+        color: '#10b981',
+        iconColor: '#10b981',
       },
     },
     hidePostalCode: true,
@@ -159,39 +167,39 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md glass-card border-white/20">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-white">
             <CreditCard className="h-5 w-5" />
             Paiement sécurisé
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-gray-300">
             Finalisez votre commande de {total.toFixed(2)} €
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Résumé de la commande */}
-          <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-            <h4 className="font-medium text-sm">Récapitulatif</h4>
-            <div className="flex justify-between text-sm">
+          <div className="glass-card p-4 space-y-2 border-white/10">
+            <h4 className="font-medium text-sm text-white">Récapitulatif</h4>
+            <div className="flex justify-between text-sm text-gray-300">
               <span>Sous-total</span>
               <span>{subtotal.toFixed(2)} €</span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-sm text-gray-300">
               <span>Livraison</span>
               <span>{shippingCost.toFixed(2)} €</span>
             </div>
-            <div className="flex justify-between font-medium text-base border-t pt-2">
+            <div className="flex justify-between font-medium text-base border-t border-white/20 pt-2 text-white">
               <span>Total</span>
               <span>{total.toFixed(2)} €</span>
             </div>
           </div>
 
           {/* Informations de livraison */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-medium text-sm mb-2">Livraison</h4>
-            <p className="text-sm text-gray-600">
+          <div className="glass-card p-4 border-white/10">
+            <h4 className="font-medium text-sm mb-2 text-white">Livraison</h4>
+            <p className="text-sm text-gray-300">
               {checkoutData.firstName} {checkoutData.lastName}<br />
               {checkoutData.address}<br />
               {checkoutData.postalCode} {checkoutData.city}<br />
@@ -203,13 +211,13 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
           {clientSecret && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Informations de carte</label>
-                <div className="border rounded-lg p-3">
+                <label className="text-sm font-medium text-white">Informations de carte</label>
+                <div className="glass-card border border-white/20 rounded-lg p-4 bg-white/5">
                   <CardElement options={cardElementOptions} />
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 text-xs text-gray-500">
+              <div className="flex items-center gap-2 text-xs text-gray-400">
                 <Lock className="h-3 w-3" />
                 <span>Paiement sécurisé par Stripe</span>
               </div>
@@ -220,14 +228,14 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
                   variant="outline"
                   onClick={onClose}
                   disabled={isProcessing}
-                  className="flex-1"
+                  className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
                 >
                   Annuler
                 </Button>
                 <Button
                   type="submit"
                   disabled={!stripe || isProcessing}
-                  className="flex-1"
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                 >
                   {isProcessing ? (
                     <>
@@ -244,8 +252,8 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
 
           {!clientSecret && (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <span className="ml-2">Initialisation du paiement...</span>
+              <Loader2 className="h-6 w-6 animate-spin text-white" />
+              <span className="ml-2 text-white">Initialisation du paiement...</span>
             </div>
           )}
         </div>
