@@ -20,7 +20,7 @@ const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { addToCart } = useCart();
+  const { addItem } = useCart();
   
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [selectedSize, setSelectedSize] = useState<string>('');
@@ -72,8 +72,8 @@ const ProductDetail = () => {
       return;
     }
 
-    addToCart({
-      id: product.id,
+    addItem({
+      productId: product.id,
       name: product.name,
       price: product.price,
       image_url: product.image_url,
@@ -81,6 +81,8 @@ const ProductDetail = () => {
       color: selectedColor,
       size: selectedSize,
       customization,
+      available_colors: product.available_colors,
+      available_sizes: product.available_sizes,
     });
 
     toast({
@@ -236,7 +238,7 @@ const ProductDetail = () => {
             )}
 
             {/* Customization */}
-            {product.is_customizable && mockup && (
+            {product.is_customizable && (
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <Palette className="h-5 w-5" />
@@ -244,10 +246,17 @@ const ProductDetail = () => {
                 </h3>
                 <Card>
                   <CardContent className="p-4">
-                    <CustomizationAccordion
-                      mockup={mockup}
-                      onCustomizationChange={setCustomization}
-                    />
+                    <CustomizationAccordion>
+                      <div className="space-y-4">
+                        <p className="text-sm text-gray-600">
+                          Personnalisez votre produit avec des options de design uniques.
+                        </p>
+                        {/* Placeholder for customization options */}
+                        <div className="p-4 border border-dashed border-gray-300 rounded-lg text-center">
+                          <p className="text-gray-500">Options de personnalisation disponibles bientôt</p>
+                        </div>
+                      </div>
+                    </CustomizationAccordion>
                   </CardContent>
                 </Card>
               </div>
