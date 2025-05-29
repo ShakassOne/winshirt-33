@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -10,16 +11,14 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/context/CartContext';
-import { AIImageGenerator } from '@/components/product/AIImageGenerator';
-import { AIImageGallery } from '@/components/product/AIImageGallery';
-import { CustomizationAccordion } from '@/components/product/CustomizationAccordion';
-import { CaptureMockupButton } from '@/components/product/CaptureMockupButton';
-import { getProductById } from '@/services/api.service';
-import { getMockupById } from '@/services/api.service';
+import AIImageGenerator from '@/components/product/AIImageGenerator';
+import AIImageGallery from '@/components/product/AIImageGallery';
+import CustomizationAccordion from '@/components/product/CustomizationAccordion';
+import CaptureMockupButton from '@/components/product/CaptureMockupButton';
+import { fetchProductById, fetchMockupById } from '@/services/api.service';
 import { SocialShareButton } from '@/components/SocialShareButton';
 import { AddToCartDialog } from '@/components/cart/AddToCartDialog';
 import { toast } from 'sonner';
@@ -42,13 +41,13 @@ const ProductDetail = () => {
 
   const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', id],
-    queryFn: () => getProductById(id!),
+    queryFn: () => fetchProductById(id!),
     enabled: !!id,
   });
 
   const { data: mockup } = useQuery({
     queryKey: ['mockup', product?.mockup_id],
-    queryFn: () => getMockupById(product!.mockup_id!),
+    queryFn: () => fetchMockupById(product!.mockup_id!),
     enabled: !!product?.mockup_id,
   });
 
@@ -65,11 +64,10 @@ const ProductDetail = () => {
     if (!product) return;
 
     const customization = product.is_customizable ? {
-      text: customText,
-      position: selectedPosition,
-      font: selectedFont,
-      color: textColor,
-      images: selectedImages
+      customText: customText,
+      textColor: textColor,
+      textFont: selectedFont,
+      designUrl: selectedImages.length > 0 ? selectedImages[0] : undefined,
     } : undefined;
 
     const cartItem = {
