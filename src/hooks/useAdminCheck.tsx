@@ -1,12 +1,8 @@
 
-import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
+import { useSecureAdminCheck } from '@/hooks/useSecureAdminCheck';
 
 export const useAdminCheck = () => {
-  const { user } = useOptimizedAuth();
+  const { isAdmin, isLoading } = useSecureAdminCheck();
   
-  const isAdmin = user?.email?.includes('admin') || 
-                  user?.email === 'alan@shakass.com' ||
-                  user?.user_metadata?.role === 'admin';
-  
-  return { isAdmin };
+  return { isAdmin, isLoading };
 };

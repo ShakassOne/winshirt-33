@@ -2,6 +2,7 @@
 import React, { memo } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useOptimizedAuth } from "@/context/OptimizedAuthContext";
+import { useSecureAdminCheck } from "@/hooks/useSecureAdminCheck";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface ProtectedRouteProps {
@@ -10,13 +11,14 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = memo(({ children, requireAdmin = false }) => {
-  const { isAuthenticated, isLoading, user } = useOptimizedAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useOptimizedAuth();
+  const { isAdmin, isLoading: adminLoading } = useSecureAdminCheck();
   const location = useLocation();
   
-  console.log('[ProtectedRoute] Auth state:', { isAuthenticated, isLoading, requireAdmin, path: location.pathname });
+  console.log('[ProtectedRoute] Auth state:', { isAuthenticated, authLoading, requireAdmin, path: location.pathname });
   
   // Wait for auth status to be verified
-  if (isLoading) {
+  if (authLoading || (requireAdmin && adminLoading)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" text="Vérification de l'authentification..." />
@@ -31,17 +33,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = memo(({ children, requireA
   }
   
   // Check admin permissions if required
-  if (requireAdmin) {
-    // For now, we'll check if user email contains "admin" or is a specific admin email
-    // In a real app, you'd check against a roles table in your database
-    const isAdmin = user?.email?.includes('admin') || 
-                   user?.email === 'alan@shakass.com' ||
-                   user?.user_metadata?.role === 'admin';
-    
-    if (!isAdmin) {
-      console.log('[ProtectedRoute] User not admin, redirecting to home');
-      return <Navigate to="/" replace />;
-    }
+  if (requireAdmin && !isAdmin) {
+    console.log('[ProtectedRoute] User not admin, redirecting to home');
+    return <Navigate to="/" replace />;
   }
   
   // Show protected content if authenticated (and admin if required)

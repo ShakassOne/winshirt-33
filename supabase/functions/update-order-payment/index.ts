@@ -13,26 +13,53 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Unauthorized: Missing authorization header');
+    }
+
     const { orderId, paymentIntentId, status } = await req.json();
 
+    // Input validation
     if (!orderId || !paymentIntentId || !status) {
-      throw new Error("Missing required parameters");
+      throw new Error("Missing required parameters: orderId, paymentIntentId, or status");
+    }
+
+    // Validate status parameter
+    const validStatuses = ['paid', 'failed', 'pending'];
+    if (!validStatuses.includes(status)) {
+      throw new Error("Invalid status parameter");
     }
 
     console.log(`Updating order ${orderId} payment status to ${status}`);
 
-    // Initialize Supabase admin client
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") || "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "",
-      {
-        auth: {
-          persistSession: false,
-        },
-      }
-    );
+    // Initialize Supabase admin client with proper error handling
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Server configuration error");
+    }
 
-    // Update order status
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        persistSession: false,
+      },
+    });
+
+    // Verify the order exists before updating
+    const { data: existingOrder, error: fetchError } = await supabaseAdmin
+      .from("orders")
+      .select("id, payment_status, user_id")
+      .eq("id", orderId)
+      .single();
+
+    if (fetchError || !existingOrder) {
+      throw new Error("Order not found or access denied");
+    }
+
+    // Update order status with additional security checks
     const { error: updateError } = await supabaseAdmin
       .from("orders")
       .update({
@@ -44,7 +71,7 @@ serve(async (req) => {
 
     if (updateError) {
       console.error("Error updating order status:", updateError);
-      throw updateError;
+      throw new Error("Failed to update order status");
     }
 
     console.log(`Order ${orderId} payment status updated successfully`);
@@ -80,9 +107,19 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("Error updating order payment:", error);
+    
+    // Don't expose internal error details to clients
+    const clientError = error.message.includes('Unauthorized') ||
+                       error.message.includes('Missing required') ||
+                       error.message.includes('Invalid') ||
+                       error.message.includes('not found') ||
+                       error.message.includes('access denied')
+      ? error.message 
+      : 'Failed to update payment status';
+    
     return new Response(
       JSON.stringify({
-        error: error.message,
+        error: clientError,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/layout/Navbar';
@@ -45,79 +44,44 @@ const UsersAdmin = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Utilisons une requête à la table des utilisateurs
-      const { data: authUsers, error: authError } = await supabase
+      // Use the profiles table with proper RLS policies
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      if (authError) {
-        throw authError;
+      if (profilesError) {
+        throw profilesError;
       }
 
-      if (authUsers) {
-        console.log("Loaded profiles:", authUsers.length);
+      if (profilesData) {
+        console.log("Loaded profiles:", profilesData.length);
         
-        // Get additional user data for each profile
-        const usersWithData = await Promise.all(
-          authUsers.map(async (profile) => {
+        // Get user roles for each profile
+        const usersWithRoles = await Promise.all(
+          profilesData.map(async (profile) => {
             try {
-              // Try to get user data - this might fail if not admin
-              const { data: userData, error: userError } = await supabase.auth
-                .admin.getUserById(profile.id);
-                
-              if (userError) {
-                console.log(`Could not get detailed user info for ${profile.id}:`, userError);
-                // Return basic profile data
-                return {
-                  id: profile.id,
-                  email: profile.email || 'Email inconnu',
-                  created_at: profile.created_at || new Date().toISOString(),
-                  last_sign_in_at: null,
-                  user_metadata: {
-                    first_name: profile.first_name,
-                    last_name: profile.last_name,
-                  },
-                  is_banned: false,
-                  role: 'user'
-                };
-              }
+              // Get user role from user_roles table
+              const { data: roleData } = await supabase
+                .from('user_roles')
+                .select('role')
+                .eq('user_id', profile.id)
+                .single();
               
-              if (userData) {
-                // Check if the user has ban information to indicate they are banned
-                // Access the ban_duration using type assertion since it's not in the type definition
-                const banDuration = (userData.user as any).ban_duration;
-                const isBanned = banDuration !== null && 
-                                banDuration !== undefined && 
-                                banDuration !== '0 seconds';
-                
-                return {
-                  id: userData.user.id,
-                  email: userData.user.email || 'Email inconnu',
-                  created_at: userData.user.created_at,
-                  last_sign_in_at: userData.user.last_sign_in_at,
-                  user_metadata: userData.user.user_metadata,
-                  // Use the ban_duration to determine if banned
-                  is_banned: isBanned,
-                  role: (userData.user.app_metadata?.role || 'user') as string
-                };
-              }
-              
-              // Fallback
               return {
                 id: profile.id,
                 email: profile.email || 'Email inconnu',
                 created_at: profile.created_at || new Date().toISOString(),
-                last_sign_in_at: null,
+                last_sign_in_at: null, // We can't access auth.users directly
                 user_metadata: {
                   first_name: profile.first_name,
                   last_name: profile.last_name,
                 },
-                is_banned: false,
-                role: 'user'
+                is_banned: false, // Would need admin API access to check this
+                role: roleData?.role || 'user'
               };
             } catch (e) {
               console.error(`Error fetching user data for ${profile.id}:`, e);
-              // Return basic profile data on error
               return {
                 id: profile.id,
                 email: profile.email || 'Email inconnu',
@@ -134,7 +98,7 @@ const UsersAdmin = () => {
           })
         );
         
-        setUsers(usersWithData);
+        setUsers(usersWithRoles);
       } else {
         console.log("No users found or not authorized");
         setUsers([]);
@@ -144,7 +108,7 @@ const UsersAdmin = () => {
       setError(error.message || "Erreur lors du chargement des utilisateurs");
       toast({
         title: "Erreur",
-        description: "Impossible de charger les utilisateurs. Vous n'avez peut-être pas les droits d'administrateur.",
+        description: "Impossible de charger les utilisateurs. Vérifiez que vous avez les droits d'administrateur.",
         variant: "destructive",
       });
     } finally {
@@ -165,9 +129,18 @@ const UsersAdmin = () => {
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      const { error } = await supabase.auth.admin.updateUserById(userId, {
-        app_metadata: { role: newRole }
-      });
+      // Validate role
+      if (!['admin', 'user'].includes(newRole)) {
+        throw new Error('Invalid role');
+      }
+
+      // Use the user_roles table instead of auth.admin API
+      const { error } = await supabase
+        .from('user_roles')
+        .upsert({
+          user_id: userId,
+          role: newRole,
+        });
       
       if (error) throw error;
       
@@ -183,36 +156,7 @@ const UsersAdmin = () => {
       console.error("Error updating role:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de modifier le rôle de l'utilisateur. Vérifiez que vous avez les droits d'administration.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleToggleBan = async (userId: string, currentBanStatus: boolean) => {
-    try {
-      // Use the ban_duration parameter for the updateUserById method
-      const { error } = await supabase.auth.admin.updateUserById(userId, {
-        ban_duration: currentBanStatus ? '0 seconds' : 'none'
-      });
-      
-      if (error) throw error;
-      
-      setUsers(prevUsers => prevUsers.map(user => 
-        user.id === userId ? { ...user, is_banned: !currentBanStatus } : user
-      ));
-      
-      toast({
-        title: currentBanStatus ? "Utilisateur débloqué" : "Utilisateur bloqué",
-        description: currentBanStatus ? "L'utilisateur peut désormais se connecter" : "L'utilisateur ne peut plus se connecter",
-      });
-      
-      setOpenDialog(false);
-    } catch (error: any) {
-      console.error("Error toggling ban status:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de modifier le statut de l'utilisateur. Vérifiez que vous avez les droits d'administration.",
+        description: "Impossible de modifier le rôle de l'utilisateur.",
         variant: "destructive",
       });
     }
@@ -241,10 +185,6 @@ const UsersAdmin = () => {
               <p className="text-red-500 font-medium">Erreur</p>
             </div>
             <p className="mt-2 text-red-500/90">{error}</p>
-            <p className="mt-2 text-red-500/90">
-              Pour accéder à l'API d'administration des utilisateurs, vous devez utiliser une clé de service
-              dans votre application. Les utilisateurs normaux ne peuvent pas accéder à cette fonctionnalité.
-            </p>
           </div>
         )}
 
@@ -413,13 +353,7 @@ const UsersAdmin = () => {
                 </div>
               </div>
               
-              <DialogFooter className="flex justify-between sm:justify-between">
-                <Button 
-                  variant="destructive" 
-                  onClick={() => handleToggleBan(selectedUser.id, !!selectedUser.is_banned)}
-                >
-                  {selectedUser.is_banned ? 'Débloquer' : 'Bloquer'} l'utilisateur
-                </Button>
+              <DialogFooter className="flex justify-end">
                 <Button variant="outline" onClick={() => setOpenDialog(false)}>
                   Fermer
                 </Button>
