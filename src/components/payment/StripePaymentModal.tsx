@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -40,6 +41,13 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [cardholderName, setCardholderName] = useState(`${checkoutData.firstName} ${checkoutData.lastName}`);
 
+  // Debug logs pour vérifier le chargement de Stripe
+  useEffect(() => {
+    console.log('Stripe instance:', stripe);
+    console.log('Elements instance:', elements);
+    console.log('Modal open:', isOpen);
+  }, [stripe, elements, isOpen]);
+
   // Créer le PaymentIntent quand la modal s'ouvre
   useEffect(() => {
     if (isOpen && !clientSecret) {
@@ -66,6 +74,7 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
 
       if (error) throw error;
       setClientSecret(data.clientSecret);
+      console.log('PaymentIntent created with clientSecret:', data.clientSecret);
     } catch (error) {
       console.error('Erreur lors de la création du PaymentIntent:', error);
       toast({
@@ -80,6 +89,7 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
     event.preventDefault();
 
     if (!stripe || !elements || !clientSecret) {
+      console.log('Missing requirements - stripe:', !!stripe, 'elements:', !!elements, 'clientSecret:', !!clientSecret);
       return;
     }
 
@@ -87,9 +97,12 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
 
     const cardElement = elements.getElement(CardElement);
     if (!cardElement) {
+      console.error('CardElement not found');
       setIsProcessing(false);
       return;
     }
+
+    console.log('Processing payment with cardElement:', cardElement);
 
     try {
       const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
@@ -142,19 +155,19 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
     }
   };
 
-  // Style corrigé pour le CardElement - SIMPLE et FONCTIONNEL
+  // Style CORRIGÉ pour le CardElement - texte NOIR sur fond BLANC
   const cardElementOptions = {
     style: {
       base: {
         fontSize: '16px',
-        color: '#ffffff',
+        color: '#000000', // NOIR au lieu de blanc !
         fontFamily: 'system-ui, -apple-system, sans-serif',
         '::placeholder': {
-          color: '#9ca3af',
+          color: '#6b7280', // Gris pour les placeholders
         },
       },
       invalid: {
-        color: '#ef4444',
+        color: '#ef4444', // Rouge pour les erreurs
       },
     },
     hidePostalCode: true,
@@ -222,11 +235,15 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
                 />
               </div>
 
-              {/* Informations de carte - CORRIGÉ */}
+              {/* Informations de carte - CORRIGÉ avec fond blanc et texte noir */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white">Informations de carte</label>
-                <div className="p-4 border border-white/20 rounded-lg bg-white text-black">
-                  <CardElement options={cardElementOptions} />
+                <div className="p-4 border border-white/20 rounded-lg bg-white">
+                  <CardElement 
+                    options={cardElementOptions}
+                    onReady={() => console.log('CardElement is ready')}
+                    onChange={(event) => console.log('CardElement changed:', event)}
+                  />
                 </div>
                 <p className="text-xs text-gray-400">
                   Saisissez le numéro de carte, la date d'expiration et le code CVC
