@@ -7,7 +7,7 @@ import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Package, Truck, ArrowRight } from 'lucide-react';
-import { ExtendedOrder, OrderStatus, PaymentStatus } from '@/types/supabase.types';
+import { ExtendedOrder, OrderStatus, PaymentStatus, ExtendedOrderItem } from '@/types/supabase.types';
 
 const PaymentSuccess = () => {
   const location = useLocation();
@@ -39,7 +39,15 @@ const PaymentSuccess = () => {
 
         if (error) throw error;
         
-        // Valider et convertir les types
+        // Valider et convertir les types pour les items
+        const validatedItems: ExtendedOrderItem[] = orderData.order_items.map((item: any) => ({
+          ...item,
+          customization: typeof item.customization === 'string' 
+            ? JSON.parse(item.customization) 
+            : item.customization || null
+        }));
+        
+        // Valider et convertir les types pour la commande
         const validatedOrder: ExtendedOrder = {
           ...orderData,
           status: (['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(orderData.status) 
@@ -48,7 +56,7 @@ const PaymentSuccess = () => {
           payment_status: (['pending', 'paid', 'failed'].includes(orderData.payment_status) 
             ? orderData.payment_status 
             : 'pending') as PaymentStatus,
-          items: orderData.order_items
+          items: validatedItems
         };
         
         setOrder(validatedOrder);
