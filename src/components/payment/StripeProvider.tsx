@@ -3,8 +3,8 @@ import React from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 
-// Récupérer la clé publique Stripe depuis les variables d'environnement
-const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+// Clé publique Stripe (test)
+const stripePublishableKey = 'pk_test_51RG3RwQZp9KyWcDgNqtcHRoqMDR9pa2QzxVgaItN32kXpllhwRFYHMaaOUmn9jAZ56duJwIZ4OIFEVlYcd2pa6O600qTFJdlH8';
 
 // Debug détaillé
 console.log('=== STRIPE CONFIGURATION DEBUG ===');
