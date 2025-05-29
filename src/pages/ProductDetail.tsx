@@ -1150,7 +1150,7 @@ const ProductDetail = () => {
                                 <Sparkles className="h-4 w-4 mr-2" />
                                 Générer IA
                               </Button>
-                              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                              <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="bg-gradient-to-r from-winshirt-purple/20 to-winshirt-blue/20">
                                 <Upload className="h-4 w-4 mr-2" />
                                 Importer
                               </Button>
