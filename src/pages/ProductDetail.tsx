@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -84,8 +85,9 @@ import {
 import AIImageGenerator from '@/components/product/AIImageGenerator';
 import { RemoveFlatBackground } from '@/components/product/RemoveFlatBackground';
 import { supabase } from '@/integrations/supabase/client';
+import { SocialShareButton } from '@/components/SocialShareButton';
 
-// DÃ©finition des polices Google Fonts
+// Définition des polices Google Fonts
 const googleFonts = [
   { value: 'Roboto', label: 'Roboto' },
   { value: 'Open Sans', label: 'Open Sans' },
@@ -183,7 +185,7 @@ const googleFonts = [
   { value: 'Fira Code', label: 'Fira Code' }
 ];
 
-// Correspondances entre formats et Ã©chelles
+// Correspondances entre formats et échelles
 const sizePresets = [
   { label: 'A3', min: 81, max: 100 },
   { label: 'A4', min: 61, max: 80 },
@@ -211,11 +213,11 @@ const ProductDetail = () => {
   const [customizationMode, setCustomizationMode] = useState(false);
   const [selectedMockupColor, setSelectedMockupColor] = useState<MockupColor | null>(null);
   
-  // Ã‰tat pour les designs - maintenant sÃ©parÃ©s par cÃ´tÃ© (recto/verso)
+  // État pour les designs - maintenant séparés par côté (recto/verso)
   const [selectedDesignFront, setSelectedDesignFront] = useState<Design | null>(null);
   const [selectedDesignBack, setSelectedDesignBack] = useState<Design | null>(null);
   
-  // Ã‰tat pour les transformations des designs - sÃ©parÃ©s par cÃ´tÃ©
+  // État pour les transformations des designs - séparés par côté
   const [designTransformFront, setDesignTransformFront] = useState({
     position: { x: 0, y: 0 },
     scale: 1,
@@ -227,15 +229,15 @@ const ProductDetail = () => {
     rotation: 0
   });
   
-  // Ã‰tat pour les tailles d'impression - sÃ©parÃ©es par cÃ´tÃ©
+  // État pour les tailles d'impression - séparées par côté
   const [printSizeFront, setPrintSizeFront] = useState<string>('A4');
   const [printSizeBack, setPrintSizeBack] = useState<string>('A4');
 
-  // Nouveaux Ã©tats pour la synchronisation Ã©chelle â†” formats
+  // Nouveaux états pour la synchronisation échelle ↔ formats
   const [selectedSizeFront, setSelectedSizeFront] = useState<string>('A4');
   const [selectedSizeBack, setSelectedSizeBack] = useState<string>('A4');
 
-  // Ã‰tat pour le texte - sÃ©parÃ© par cÃ´tÃ©
+  // État pour le texte - séparé par côté
   const [textContentFront, setTextContentFront] = useState('');
   const [textContentBack, setTextContentBack] = useState('');
   const [textFontFront, setTextFontFront] = useState('Roboto');
@@ -290,7 +292,7 @@ const ProductDetail = () => {
   const handleSizeClick = (label: string) => {
     const preset = sizePresets.find(p => p.label === label);
     if (preset) {
-      const newScale = (preset.min + preset.max) / 200; // Convertir en Ã©chelle (0-1)
+      const newScale = (preset.min + preset.max) / 200; // Convertir en échelle (0-1)
       
       if (currentViewSide === 'front') {
         setDesignTransformFront(prev => ({ ...prev, scale: newScale }));
@@ -305,7 +307,7 @@ const ProductDetail = () => {
   };
 
   const handleScaleChange = (value: number[]) => {
-    const newScale = value[0] / 100; // Convertir de pourcentage Ã  Ã©chelle (0-1)
+    const newScale = value[0] / 100; // Convertir de pourcentage à échelle (0-1)
     const newSizeLabel = getSizeLabel(newScale);
     
     if (currentViewSide === 'front') {
@@ -436,12 +438,12 @@ const ProductDetail = () => {
 
   const handleLotteryToggle = (lottery: Lottery, index: number) => {
     if (selectedLotteryIds.includes(lottery.id)) {
-      // Si la loterie est dÃ©jÃ  sÃ©lectionnÃ©e, on la dÃ©sÃ©lectionne
+      // Si la loterie est déjà sélectionnée, on la désélectionne
       setSelectedLotteries(prev => prev.filter(l => l.id !== lottery.id));
       setSelectedLotteryIds(prev => prev.filter(id => id !== lottery.id));
     } 
     else {
-      // Si on a dÃ©jÃ  une loterie Ã  cet index, on la remplace directement
+      // Si on a déjà une loterie à cet index, on la remplace directement
       if (index < (product?.tickets_offered || 0)) {
         const updatedLotteries = [...selectedLotteries];
         
@@ -450,7 +452,7 @@ const ProductDetail = () => {
           updatedLotteries.push(null as unknown as Lottery);
         }
         
-        // Remplacer la loterie Ã  l'index spÃ©cifiÃ©
+        // Remplacer la loterie à l'index spécifié
         updatedLotteries[index] = lottery;
         
         // Filtrer les valeurs null
@@ -459,9 +461,9 @@ const ProductDetail = () => {
         setSelectedLotteries(filteredLotteries);
         setSelectedLotteryIds(filteredLotteries.map(l => l.id));
       }
-      // Si on dÃ©passe le nombre de tickets offerts ET qu'on n'a pas de loterie Ã  remplacer Ã  cet index
+      // Si on dépasse le nombre de tickets offerts ET qu'on n'a pas de loterie à remplacer à cet index
       else if (selectedLotteries.length >= (product?.tickets_offered || 0)) {
-        toast.error(`Vous ne pouvez sÃ©lectionner que ${product?.tickets_offered} loterie(s) maximum pour ce produit.`);
+        toast.error(`Vous ne pouvez sélectionner que ${product?.tickets_offered} loterie(s) maximum pour ce produit.`);
       }
     }
   };
@@ -565,7 +567,7 @@ const ProductDetail = () => {
       reader.onloadend = () => {
         const design: Design = {
           id: `custom-${Date.now()}`,
-          name: 'Mon design personnalisÃ©',
+          name: 'Mon design personnalisé',
           image_url: reader.result as string,
           category: 'custom',
           is_active: true
@@ -614,7 +616,7 @@ const ProductDetail = () => {
 
   useEffect(() => {
     if (selectedTab === 'text') {
-      // Le texte est automatiquement activÃ© dans cette version
+      // Le texte est automatiquement activé dans cette version
     }
   }, [selectedTab]);
 
@@ -769,7 +771,7 @@ const ProductDetail = () => {
     }
 
     addItem(cartItem);
-    toast.success('Produit ajoutÃ© au panier !');
+    toast.success('Produit ajouté au panier !');
   };
   
   if (isLoading || !product) {
@@ -842,7 +844,7 @@ const ProductDetail = () => {
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        toast.error('Erreur lors de la sauvegarde de l\'image');
+        toast.error("Erreur lors de la sauvegarde de l'image");
         return;
       }
 
@@ -851,7 +853,7 @@ const ProductDetail = () => {
         .getPublicUrl(fileName);
 
       if (!urlData.publicUrl) {
-        toast.error('Erreur lors de la rÃ©cupÃ©ration de l\'URL');
+        toast.error("Erreur lors de la récupération de l'URL");
         return;
       }
 
@@ -869,7 +871,7 @@ const ProductDetail = () => {
         setSelectedDesignBack(cleanedDesign);
       }
 
-      toast.success('Fond supprimÃ© avec succÃ¨s !');
+      toast.success('Fond supprimé avec succès !');
     } catch (error) {
       console.error('Error removing background:', error);
       toast.error('Erreur lors de la suppression du fond');
@@ -1009,7 +1011,7 @@ const ProductDetail = () => {
                     className="text-sm data-[state=on]:bg-winshirt-purple/70"
                     aria-label="Voir le verso"
                   >
-                    ArriÃ¨re
+                    Arrière
                   </ToggleGroupItem>
                 </ToggleGroup>
               </div>
@@ -1018,7 +1020,15 @@ const ProductDetail = () => {
 
           {/* Informations du produit et options */}
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">{product.name}</h1>
+            <div className="flex items-start justify-between mb-2">
+              <h1 className="text-2xl md:text-3xl font-bold">{product.name}</h1>
+              <SocialShareButton
+                url={window.location.href}
+                title={product.name}
+                description={product.description || "Découvrez ce produit personnalisable"}
+                className="ml-4"
+              />
+            </div>
             
             <div className="flex items-center gap-2 mb-4">
               <Badge className="bg-gradient-to-r from-winshirt-purple to-winshirt-blue text-white">
@@ -1035,7 +1045,7 @@ const ProductDetail = () => {
             <p className="text-white/70 mb-6">{product.description}</p>
             
             <div className="text-2xl font-bold mb-6">
-              {calculatePrice().toFixed(2)} â‚¬
+              {calculatePrice().toFixed(2)} €
             </div>
 
             <div className="space-y-6">
@@ -1087,7 +1097,7 @@ const ProductDetail = () => {
                     >
                       <span className="flex items-center">
                         <PenTool className="mr-2 h-4 w-4" />
-                        <span>{customizationMode ? "Masquer" : "Commencer Ã "} la personnalisation</span>
+                        <span>{customizationMode ? "Masquer" : "Commencer à"} la personnalisation</span>
                       </span>
                     </AccordionTrigger>
                     
@@ -1142,8 +1152,8 @@ const ProductDetail = () => {
                                 onClick={() => setDesignDialogOpen(true)}
                               >
                                 {currentViewSide === 'front' ? 
-                                  (selectedDesignFront ? 'Changer' : 'SÃ©lectionner') : 
-                                  (selectedDesignBack ? 'Changer' : 'SÃ©lectionner')
+                                  (selectedDesignFront ? 'Changer' : 'Sélectionner') : 
+                                  (selectedDesignBack ? 'Changer' : 'Sélectionner')
                                 }
                               </Button>
                               <Button
@@ -1152,7 +1162,7 @@ const ProductDetail = () => {
                                 className="bg-gradient-to-r from-winshirt-purple/20 to-winshirt-blue/20"
                               >
                                 <Sparkles className="h-4 w-4 mr-2" />
-                                GÃ©nÃ©rer IA
+                                Générer IA
                               </Button>
                               <Button
                                 variant="outline"
@@ -1177,7 +1187,7 @@ const ProductDetail = () => {
                                 <div className="flex justify-between items-center mb-2">
                                   <Label className="block">Taille d'impression</Label>
                                   <span className="text-sm text-winshirt-blue">
-                                    Format sÃ©lectionnÃ© : {getCurrentSelectedSize()}
+                                    Format sélectionné : {getCurrentSelectedSize()}
                                   </span>
                                 </div>
                                 <div className="flex gap-2 mb-2">
@@ -1198,12 +1208,12 @@ const ProductDetail = () => {
                                   ))}
                                 </div>
                                 <p className="text-xs text-white/60 mt-2">
-                                  Les tailles A3 Ã  A7 correspondent Ã  l'Ã©chelle approximative d'impression.
+                                  Les tailles A3 à A7 correspondent à l'échelle approximative d'impression.
                                 </p>
                               </div>
                               
                               <div className="space-y-2">
-                                <Label>Ã‰chelle ({Math.round(getCurrentDesignTransform().scale * 100)}%)</Label>
+                                <Label>Échelle ({Math.round(getCurrentDesignTransform().scale * 100)}%)</Label>
                                 <Slider
                                   value={[getCurrentDesignTransform().scale * 100]}
                                   min={1}
@@ -1215,7 +1225,7 @@ const ProductDetail = () => {
                               </div>
                               
                               <div className="space-y-2">
-                                <Label>Rotation ({getCurrentDesignTransform().rotation}Â°)</Label>
+                                <Label>Rotation ({getCurrentDesignTransform().rotation}°)</Label>
                                 <div className="flex gap-2 items-center">
                                   <Slider
                                     value={[getCurrentDesignTransform().rotation + 180]}
@@ -1410,7 +1420,7 @@ const ProductDetail = () => {
                           </div>
                           
                           <div className="space-y-2">
-                            <Label>Ã‰chelle ({Math.round(getCurrentTextTransform().scale * 100)}%)</Label>
+                            <Label>Échelle ({Math.round(getCurrentTextTransform().scale * 100)}%)</Label>
                             <Slider
                               value={[getCurrentTextTransform().scale * 100]}
                               min={50}
@@ -1424,7 +1434,7 @@ const ProductDetail = () => {
                           </div>
                           
                           <div className="space-y-2">
-                            <Label>Rotation ({getCurrentTextTransform().rotation}Â°)</Label>
+                            <Label>Rotation ({getCurrentTextTransform().rotation}°)</Label>
                             <div className="flex gap-2 items-center">
                               <Slider
                                 value={[getCurrentTextTransform().rotation + 180]}
@@ -1457,7 +1467,7 @@ const ProductDetail = () => {
               <Dialog open={designDialogOpen} onOpenChange={setDesignDialogOpen}>
                 <DialogContent className="bg-black/70 backdrop-blur-lg border-white/20 max-w-4xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>SÃ©lectionner un design</DialogTitle>
+                    <DialogTitle>Sélectionner un design</DialogTitle>
                   </DialogHeader>
                   
                   <div className="mt-4">
@@ -1498,7 +1508,7 @@ const ProductDetail = () => {
                     
                     {filteredDesigns.length === 0 && (
                       <div className="text-center py-8 text-white/50">
-                        {isLoadingDesigns ? "Chargement..." : "Aucun design trouvÃ© dans cette catÃ©gorie."}
+                        {isLoadingDesigns ? "Chargement..." : "Aucun design trouvé dans cette catégorie."}
                       </div>
                     )}
                   </div>
@@ -1515,12 +1525,12 @@ const ProductDetail = () => {
                 <div className="space-y-4 p-4 bg-white/5 border border-white/10 rounded-lg">
                   <h3 className="flex items-center text-lg font-medium">
                     <UsersRound className="h-5 w-5 mr-2 text-winshirt-purple" />
-                    Participez Ã  {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}
+                    Participez à {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}
                   </h3>
                   
                   <p className="text-sm text-white/70">
-                    Ce produit vous permet de participer Ã  {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}.
-                    SÃ©lectionnez {product.tickets_offered > 1 ? 'celles qui vous intÃ©ressent' : 'celle qui vous intÃ©resse'}.
+                    Ce produit vous permet de participer à {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}.
+                    Sélectionnez {product.tickets_offered > 1 ? 'celles qui vous intéressent' : 'celle qui vous intéresse'}.
                   </p>
                   
                   <div className="space-y-3">
