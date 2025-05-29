@@ -716,3 +716,27 @@ export const uploadToExternalScript = async (file: File): Promise<string> => {
     }
   }
 };
+
+// Products with tickets for lotteries
+export const fetchProductsWithTickets = async (lotteryId: string) => {
+  try {
+    console.log(`[API] Fetching products with tickets for lottery: ${lotteryId}`);
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .gt("tickets_offered", 0)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching products with tickets:", error);
+      throw new Error(`Failed to fetch products with tickets: ${error.message}`);
+    }
+
+    console.log(`[API] Successfully fetched ${data?.length || 0} products with tickets`);
+    return data || [];
+  } catch (err) {
+    console.error("Critical error in fetchProductsWithTickets:", err);
+    throw err;
+  }
+};
