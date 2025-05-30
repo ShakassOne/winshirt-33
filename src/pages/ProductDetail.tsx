@@ -1,1270 +1,1446 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useCart } from '@/context/CartContext';
-import { getProductById } from '@/services/product.service';
-import { Product, CartItem, Design } from '@/types/supabase.types';
+import { useParams, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { ShoppingCart, ChevronDown, ChevronUp, Check, ArrowLeft, RotateCw, Minus, Plus, Type, Image as ImageIcon, Bold, Italic, Underline, Upload, UsersRound, Target, PenTool, Sparkles } from 'lucide-react';
+import { fetchProductById, fetchAllLotteries, fetchAllDesigns, fetchMockupById } from '@/services/api.service';
+import { Design, Lottery, CartItem } from '@/types/supabase.types';
+import { MockupColor } from '@/types/mockup.types';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Slider } from "@/components/ui/slider";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/use-toast';
-import { Minus, Plus, ShoppingCart } from 'lucide-react';
-import { getDesigns } from '@/services/design.service';
-import { getLotteries } from '@/services/lottery.service';
-import { getMockupById } from '@/services/mockup.service';
-import { MockupWithColors } from '@/types/mockup.types';
-import { generateMockupImage } from '@/services/mockup.service';
-import { createDesign } from '@/services/design.service';
-import { v4 as uuidv4 } from 'uuid';
+import { Switch } from '@/components/ui/switch';
+import { HexColorPicker } from 'react-colorful';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useCart } from '@/context/CartContext';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import AIImageGenerator from '@/components/product/AIImageGenerator';
+import { RemoveFlatBackground } from '@/components/product/RemoveFlatBackground';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
-import { Lottery } from '@/types/supabase.types';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
-import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { SocialShareButton } from '@/components/SocialShareButton';
 
+// Définition des polices Google Fonts
+const googleFonts = [{
+  value: 'Roboto',
+  label: 'Roboto'
+}, {
+  value: 'Open Sans',
+  label: 'Open Sans'
+}, {
+  value: 'Lato',
+  label: 'Lato'
+}, {
+  value: 'Montserrat',
+  label: 'Montserrat'
+}, {
+  value: 'Playfair Display',
+  label: 'Playfair Display'
+}, {
+  value: 'Raleway',
+  label: 'Raleway'
+}, {
+  value: 'Nunito',
+  label: 'Nunito'
+}, {
+  value: 'Oswald',
+  label: 'Oswald'
+}, {
+  value: 'Source Sans Pro',
+  label: 'Source Sans Pro'
+}, {
+  value: 'PT Sans',
+  label: 'PT Sans'
+}, {
+  value: 'Poppins',
+  label: 'Poppins'
+}, {
+  value: 'Ubuntu',
+  label: 'Ubuntu'
+}, {
+  value: 'Merriweather',
+  label: 'Merriweather'
+}, {
+  value: 'Noto Sans',
+  label: 'Noto Sans'
+}, {
+  value: 'Fira Sans',
+  label: 'Fira Sans'
+}, {
+  value: 'Quicksand',
+  label: 'Quicksand'
+}, {
+  value: 'Dancing Script',
+  label: 'Dancing Script'
+}, {
+  value: 'Pacifico',
+  label: 'Pacifico'
+}, {
+  value: 'Shadows Into Light',
+  label: 'Shadows Into Light'
+}, {
+  value: 'Lobster',
+  label: 'Lobster'
+}, {
+  value: 'Caveat',
+  label: 'Caveat'
+}, {
+  value: 'Comfortaa',
+  label: 'Comfortaa'
+}, {
+  value: 'Indie Flower',
+  label: 'Indie Flower'
+}, {
+  value: 'Sacramento',
+  label: 'Sacramento'
+}, {
+  value: 'Architects Daughter',
+  label: 'Architects Daughter'
+}, {
+  value: 'Permanent Marker',
+  label: 'Permanent Marker'
+}, {
+  value: 'Satisfy',
+  label: 'Satisfy'
+}, {
+  value: 'Amatic SC',
+  label: 'Amatic SC'
+}, {
+  value: 'Pathway Gothic One',
+  label: 'Pathway Gothic One'
+}, {
+  value: 'Abel',
+  label: 'Abel'
+}, {
+  value: 'Barlow',
+  label: 'Barlow'
+}, {
+  value: 'Cabin',
+  label: 'Cabin'
+}, {
+  value: 'Crimson Text',
+  label: 'Crimson Text'
+}, {
+  value: 'Exo 2',
+  label: 'Exo 2'
+}, {
+  value: 'Fjalla One',
+  label: 'Fjalla One'
+}, {
+  value: 'Josefin Sans',
+  label: 'Josefin Sans'
+}, {
+  value: 'Karla',
+  label: 'Karla'
+}, {
+  value: 'Libre Baskerville',
+  label: 'Libre Baskerville'
+}, {
+  value: 'Muli',
+  label: 'Muli'
+}, {
+  value: 'Noto Serif',
+  label: 'Noto Serif'
+}, {
+  value: 'Oxygen',
+  label: 'Oxygen'
+}, {
+  value: 'Prompt',
+  label: 'Prompt'
+}, {
+  value: 'Rubik',
+  label: 'Rubik'
+}, {
+  value: 'Space Mono',
+  label: 'Space Mono'
+}, {
+  value: 'Work Sans',
+  label: 'Work Sans'
+}, {
+  value: 'Yanone Kaffeesatz',
+  label: 'Yanone Kaffeesatz'
+}, {
+  value: 'Bree Serif',
+  label: 'Bree Serif'
+}, {
+  value: 'Crete Round',
+  label: 'Crete Round'
+}, {
+  value: 'Abril Fatface',
+  label: 'Abril Fatface'
+}, {
+  value: 'Righteous',
+  label: 'Righteous'
+}, {
+  value: 'Philosopher',
+  label: 'Philosopher'
+}, {
+  value: 'Kanit',
+  label: 'Kanit'
+}, {
+  value: 'Russo One',
+  label: 'Russo One'
+}, {
+  value: 'Archivo',
+  label: 'Archivo'
+}, {
+  value: 'Arvo',
+  label: 'Arvo'
+}, {
+  value: 'Bitter',
+  label: 'Bitter'
+}, {
+  value: 'Cairo',
+  label: 'Cairo'
+}, {
+  value: 'Cormorant Garamond',
+  label: 'Cormorant Garamond'
+}, {
+  value: 'Didact Gothic',
+  label: 'Didact Gothic'
+}, {
+  value: 'EB Garamond',
+  label: 'EB Garamond'
+}, {
+  value: 'Fredoka One',
+  label: 'Fredoka One'
+}, {
+  value: 'Gloria Hallelujah',
+  label: 'Gloria Hallelujah'
+}, {
+  value: 'Hind',
+  label: 'Hind'
+}, {
+  value: 'IBM Plex Sans',
+  label: 'IBM Plex Sans'
+}, {
+  value: 'Inter',
+  label: 'Inter'
+}, {
+  value: 'Kalam',
+  label: 'Kalam'
+}, {
+  value: 'Lora',
+  label: 'Lora'
+}, {
+  value: 'Maven Pro',
+  label: 'Maven Pro'
+}, {
+  value: 'Neucha',
+  label: 'Neucha'
+}, {
+  value: 'Overpass',
+  label: 'Overpass'
+}, {
+  value: 'Patrick Hand',
+  label: 'Patrick Hand'
+}, {
+  value: 'Quattrocento Sans',
+  label: 'Quattrocento Sans'
+}, {
+  value: 'Roboto Condensed',
+  label: 'Roboto Condensed'
+}, {
+  value: 'Roboto Mono',
+  label: 'Roboto Mono'
+}, {
+  value: 'Roboto Slab',
+  label: 'Roboto Slab'
+}, {
+  value: 'Signika',
+  label: 'Signika'
+}, {
+  value: 'Teko',
+  label: 'Teko'
+}, {
+  value: 'Ubuntu Condensed',
+  label: 'Ubuntu Condensed'
+}, {
+  value: 'Varela Round',
+  label: 'Varela Round'
+}, {
+  value: 'Acme',
+  label: 'Acme'
+}, {
+  value: 'Alegreya',
+  label: 'Alegreya'
+}, {
+  value: 'Anton',
+  label: 'Anton'
+}, {
+  value: 'Asap',
+  label: 'Asap'
+}, {
+  value: 'Assistant',
+  label: 'Assistant'
+}, {
+  value: 'Baloo 2',
+  label: 'Baloo 2'
+}, {
+  value: 'Bangers',
+  label: 'Bangers'
+}, {
+  value: 'BioRhyme',
+  label: 'BioRhyme'
+}, {
+  value: 'Catamaran',
+  label: 'Catamaran'
+}, {
+  value: 'Coda',
+  label: 'Coda'
+}, {
+  value: 'Courgette',
+  label: 'Courgette'
+}, {
+  value: 'Cousine',
+  label: 'Cousine'
+}, {
+  value: 'DM Sans',
+  label: 'DM Sans'
+}, {
+  value: 'Dosis',
+  label: 'Dosis'
+}, {
+  value: 'Fira Code',
+  label: 'Fira Code'
+}];
+
+// Correspondances entre formats et échelles
+const sizePresets = [{
+  label: 'A3',
+  min: 81,
+  max: 100
+}, {
+  label: 'A4',
+  min: 61,
+  max: 80
+}, {
+  label: 'A5',
+  min: 41,
+  max: 60
+}, {
+  label: 'A6',
+  min: 21,
+  max: 40
+}, {
+  label: 'A7',
+  min: 1,
+  max: 20
+}];
 const ProductDetail = () => {
-  const { id } = useParams<{ id: string }>();
-  const { addItem } = useCart();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const { toast: showToast } = useToast();
-  
-  const [product, setProduct] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [designs, setDesigns] = useState<Design[]>([]);
-  const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
-  const [activeTab, setActiveTab] = useState('product');
-  const [mockup, setMockup] = useState<MockupWithColors | null>(null);
-  const [customText, setCustomText] = useState('');
-  const [textColor, setTextColor] = useState('#000000');
-  const [selectedFont, setSelectedFont] = useState('Arial');
-  const [textSize, setTextSize] = useState(24);
-  const [textPosition, setTextPosition] = useState({ x: 50, y: 50 });
-  const [isGeneratingMockup, setIsGeneratingMockup] = useState(false);
-  const [rectoMockupUrl, setRectoMockupUrl] = useState<string | null>(null);
-  const [versoMockupUrl, setVersoMockupUrl] = useState<string | null>(null);
-  const [lotteries, setLotteries] = useState<Lottery[]>([]);
-  const [selectedLottery, setSelectedLottery] = useState<string | null>(null);
-  const [isDesignDialogOpen, setIsDesignDialogOpen] = useState(false);
-  const [isTextDialogOpen, setIsTextDialogOpen] = useState(false);
-  const [isLotteryDialogOpen, setIsLotteryDialogOpen] = useState(false);
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [selectedDesignTab, setSelectedDesignTab] = useState('gallery');
-  const [uploadedDesignFile, setUploadedDesignFile] = useState<File | null>(null);
-  const [uploadedDesignPreview, setUploadedDesignPreview] = useState<string | null>(null);
-  const [isUploadingDesign, setIsUploadingDesign] = useState(false);
-  const [uploadedDesignName, setUploadedDesignName] = useState('');
-  const [isGeneratingDesign, setIsGeneratingDesign] = useState(false);
-  const [aiPrompt, setAiPrompt] = useState('');
-  const [generatedDesignUrl, setGeneratedDesignUrl] = useState<string | null>(null);
-  const [generatedDesignName, setGeneratedDesignName] = useState('');
+  const {
+    id
+  } = useParams<{
+    id: string;
+  }>();
+  const isMobile = useIsMobile();
+  const {
+    addItem
+  } = useCart();
+  const productCanvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedTab, setSelectedTab] = useState('design');
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [designDialogOpen, setDesignDialogOpen] = useState(false);
+  const [aiGeneratorOpen, setAiGeneratorOpen] = useState(false);
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
+  const [pageScrollLocked, setPageScrollLocked] = useState(false);
+  const [currentViewSide, setCurrentViewSide] = useState<'front' | 'back'>('front');
+  const [customizationMode, setCustomizationMode] = useState(false);
+  const [selectedMockupColor, setSelectedMockupColor] = useState<MockupColor | null>(null);
 
-  const fonts = [
-    'Arial',
-    'Verdana',
-    'Helvetica',
-    'Times New Roman',
-    'Courier New',
-    'Georgia',
-    'Palatino',
-    'Garamond',
-    'Comic Sans MS',
-    'Impact'
-  ];
+  // État pour les designs - maintenant séparés par côté (recto/verso)
+  const [selectedDesignFront, setSelectedDesignFront] = useState<Design | null>(null);
+  const [selectedDesignBack, setSelectedDesignBack] = useState<Design | null>(null);
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!id) return;
-      
-      try {
-        setIsLoading(true);
-        const productData = await getProductById(id);
-        setProduct(productData);
-        
-        // Set default size and color if available
-        if (productData?.available_sizes && productData.available_sizes.length > 0) {
-          setSelectedSize(productData.available_sizes[0]);
-        }
-        
-        if (productData?.available_colors && productData.available_colors.length > 0) {
-          setSelectedColor(productData.available_colors[0]);
-        }
-        
-        // Fetch mockup if product has mockup_id
-        if (productData?.mockup_id) {
-          const mockupData = await getMockupById(productData.mockup_id);
-          setMockup(mockupData as MockupWithColors);
-        }
-        
-        // Fetch designs
-        const designsData = await getDesigns();
-        setDesigns(designsData);
-        
-        // Fetch lotteries
-        const lotteriesData = await getLotteries();
-        setLotteries(lotteriesData);
-        
-      } catch (error) {
-        console.error('Error fetching product:', error);
-        toast({
-          title: 'Erreur',
-          description: 'Impossible de charger les détails du produit',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
+  // État pour les transformations des designs - séparés par côté
+  const [designTransformFront, setDesignTransformFront] = useState({
+    position: {
+      x: 0,
+      y: 0
+    },
+    scale: 1,
+    rotation: 0
+  });
+  const [designTransformBack, setDesignTransformBack] = useState({
+    position: {
+      x: 0,
+      y: 0
+    },
+    scale: 1,
+    rotation: 0
+  });
+
+  // État pour les tailles d'impression - séparées par côté
+  const [printSizeFront, setPrintSizeFront] = useState<string>('A4');
+  const [printSizeBack, setPrintSizeBack] = useState<string>('A4');
+
+  // Nouveaux états pour la synchronisation échelle ↔ formats
+  const [selectedSizeFront, setSelectedSizeFront] = useState<string>('A4');
+  const [selectedSizeBack, setSelectedSizeBack] = useState<string>('A4');
+
+  // État pour le texte - séparé par côté
+  const [textContentFront, setTextContentFront] = useState('');
+  const [textContentBack, setTextContentBack] = useState('');
+  const [textFontFront, setTextFontFront] = useState('Roboto');
+  const [textFontBack, setTextFontBack] = useState('Roboto');
+  const [textColorFront, setTextColorFront] = useState('#ffffff');
+  const [textColorBack, setTextColorBack] = useState('#ffffff');
+  const [textShowColorPickerFront, setTextShowColorPickerFront] = useState(false);
+  const [textShowColorPickerBack, setTextShowColorPickerBack] = useState(false);
+  const [textTransformFront, setTextTransformFront] = useState({
+    position: {
+      x: 0,
+      y: 0
+    },
+    scale: 1,
+    rotation: 0
+  });
+  const [textTransformBack, setTextTransformBack] = useState({
+    position: {
+      x: 0,
+      y: 0
+    },
+    scale: 1,
+    rotation: 0
+  });
+  const [textStylesFront, setTextStylesFront] = useState({
+    bold: false,
+    italic: false,
+    underline: false
+  });
+  const [textStylesBack, setTextStylesBack] = useState({
+    bold: false,
+    italic: false,
+    underline: false
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const [startPos, setStartPos] = useState({
+    x: 0,
+    y: 0
+  });
+  const [isDraggingText, setIsDraggingText] = useState(false);
+  const [startPosText, setStartPosText] = useState({
+    x: 0,
+    y: 0
+  });
+  const [activeDesignSide, setActiveDesignSide] = useState<'front' | 'back'>('front');
+  const [activeTextSide, setActiveTextSide] = useState<'front' | 'back'>('front');
+  const [selectedLotteryIds, setSelectedLotteryIds] = useState<string[]>([]);
+  const [selectedLotteries, setSelectedLotteries] = useState<Lottery[]>([]);
+  const [isRemovingBackground, setIsRemovingBackground] = useState(false);
+  const [backgroundRemovalImage, setBackgroundRemovalImage] = useState<string | null>(null);
+
+  // Fonctions utilitaires pour la synchronisation
+  const getSizeLabel = (scale: number): string => {
+    const scalePercent = Math.round(scale * 100);
+    const preset = sizePresets.find(p => scalePercent >= p.min && scalePercent <= p.max);
+    return preset?.label || 'Custom';
+  };
+  const handleSizeClick = (label: string) => {
+    const preset = sizePresets.find(p => p.label === label);
+    if (preset) {
+      const newScale = (preset.min + preset.max) / 200; // Convertir en échelle (0-1)
+
+      if (currentViewSide === 'front') {
+        setDesignTransformFront(prev => ({
+          ...prev,
+          scale: newScale
+        }));
+        setSelectedSizeFront(label);
+        setPrintSizeFront(label);
+      } else {
+        setDesignTransformBack(prev => ({
+          ...prev,
+          scale: newScale
+        }));
+        setSelectedSizeBack(label);
+        setPrintSizeBack(label);
       }
-    };
-    
-    fetchProduct();
-  }, [id]);
-  
-  const handleQuantityChange = (change: number) => {
-    const newQuantity = quantity + change;
-    if (newQuantity >= 1) {
-      setQuantity(newQuantity);
     }
   };
-  
+  const handleScaleChange = (value: number[]) => {
+    const newScale = value[0] / 100; // Convertir de pourcentage à échelle (0-1)
+    const newSizeLabel = getSizeLabel(newScale);
+    if (currentViewSide === 'front') {
+      setDesignTransformFront(prev => ({
+        ...prev,
+        scale: newScale
+      }));
+      setSelectedSizeFront(newSizeLabel);
+      setPrintSizeFront(newSizeLabel);
+    } else {
+      setDesignTransformBack(prev => ({
+        ...prev,
+        scale: newScale
+      }));
+      setSelectedSizeBack(newSizeLabel);
+      setPrintSizeBack(newSizeLabel);
+    }
+  };
+  const {
+    data: product,
+    isLoading
+  } = useQuery({
+    queryKey: ['product', id],
+    queryFn: () => fetchProductById(id!),
+    enabled: !!id
+  });
+  const {
+    data: mockup,
+    isLoading: isLoadingMockup
+  } = useQuery({
+    queryKey: ['mockup', product?.mockup_id],
+    queryFn: () => fetchMockupById(product?.mockup_id!),
+    enabled: !!product?.mockup_id
+  });
+  const {
+    data: lotteries = [],
+    isLoading: isLoadingLotteries
+  } = useQuery({
+    queryKey: ['lotteries'],
+    queryFn: fetchAllLotteries
+  });
+  const {
+    data: designs = [],
+    isLoading: isLoadingDesigns
+  } = useQuery({
+    queryKey: ['designs'],
+    queryFn: fetchAllDesigns
+  });
+  const uniqueCategories = React.useMemo(() => {
+    if (!designs) return ['all'];
+    const categories = designs.map(design => design.category);
+    return ['all', ...new Set(categories)];
+  }, [designs]);
+  const filteredDesigns = React.useMemo(() => {
+    if (!designs) return [];
+    if (selectedCategoryFilter === 'all') {
+      return designs.filter(design => design.is_active !== false);
+    } else {
+      return designs.filter(design => design.is_active !== false && design.category === selectedCategoryFilter);
+    }
+  }, [designs, selectedCategoryFilter]);
+  useEffect(() => {
+    if (product) {
+      if (product.available_colors && product.available_colors.length > 0) {
+        setSelectedColor(product.available_colors[0]);
+      }
+      if (product.available_sizes && product.available_sizes.length > 0) {
+        setSelectedSize(product.available_sizes[0]);
+      }
+    }
+  }, [product]);
+  useEffect(() => {
+    if (mockup?.colors && mockup.colors.length > 0) {
+      setSelectedMockupColor(mockup.colors[0]);
+    }
+  }, [mockup]);
+  useEffect(() => {
+    if (isDragging || isDraggingText || pageScrollLocked && customizationMode) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [pageScrollLocked, isDragging, isDraggingText, customizationMode]);
+  const handleQuantityChange = (type: 'increase' | 'decrease') => {
+    if (type === 'increase') {
+      setQuantity(prev => prev + 1);
+    } else if (type === 'decrease' && quantity > 1) {
+      setQuantity(prev => prev - 1);
+    }
+  };
+  const handleDesignSelect = (design: Design) => {
+    if (currentViewSide === 'front') {
+      setSelectedDesignFront(design);
+      setActiveDesignSide('front');
+    } else {
+      setSelectedDesignBack(design);
+      setActiveDesignSide('back');
+    }
+    setDesignDialogOpen(false);
+  };
+  const handleDesignTransformChange = (property: keyof typeof designTransformFront, value: any) => {
+    if (activeDesignSide === 'front') {
+      setDesignTransformFront(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    } else {
+      setDesignTransformBack(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    }
+  };
+  const handleTextTransformChange = (property: keyof typeof textTransformFront, value: any) => {
+    if (activeTextSide === 'front') {
+      setTextTransformFront(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    } else {
+      setTextTransformBack(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    }
+  };
+  const handleLotteryToggle = (lottery: Lottery, index: number) => {
+    if (selectedLotteryIds.includes(lottery.id)) {
+      // Si la loterie est déjà sélectionnée, on la désélectionne
+      setSelectedLotteries(prev => prev.filter(l => l.id !== lottery.id));
+      setSelectedLotteryIds(prev => prev.filter(id => id !== lottery.id));
+    } else {
+      // Si on a déjà une loterie à cet index, on la remplace directement
+      if (index < (product?.tickets_offered || 0)) {
+        const updatedLotteries = [...selectedLotteries];
+
+        // S'assurer que le tableau a la bonne taille
+        while (updatedLotteries.length <= index) {
+          updatedLotteries.push(null as unknown as Lottery);
+        }
+
+        // Remplacer la loterie à l'index spécifié
+        updatedLotteries[index] = lottery;
+
+        // Filtrer les valeurs null
+        const filteredLotteries = updatedLotteries.filter(l => l !== null);
+        setSelectedLotteries(filteredLotteries);
+        setSelectedLotteryIds(filteredLotteries.map(l => l.id));
+      }
+      // Si on dépasse le nombre de tickets offerts ET qu'on n'a pas de loterie à remplacer à cet index
+      else if (selectedLotteries.length >= (product?.tickets_offered || 0)) {
+        toast.error(`Vous ne pouvez sélectionner que ${product?.tickets_offered} loterie(s) maximum pour ce produit.`);
+      }
+    }
+  };
+  const handleMouseDown = (event: React.MouseEvent | React.TouchEvent, isText: boolean = false) => {
+    event.preventDefault();
+    let clientX: number, clientY: number;
+    if ('touches' in event) {
+      clientX = event.touches[0].clientX;
+      clientY = event.touches[0].clientY;
+    } else {
+      clientX = event.clientX;
+      clientY = event.clientY;
+    }
+    if (isText) {
+      setIsDraggingText(true);
+      setStartPosText({
+        x: clientX,
+        y: clientY
+      });
+    } else {
+      setIsDragging(true);
+      setStartPos({
+        x: clientX,
+        y: clientY
+      });
+    }
+    setPageScrollLocked(true);
+  };
+  const handleMouseMove = (event: MouseEvent | TouchEvent) => {
+    let clientX: number, clientY: number;
+    if ('touches' in event) {
+      clientX = event.touches[0].clientX;
+      clientY = event.touches[0].clientY;
+    } else {
+      clientX = event.clientX;
+      clientY = event.clientY;
+    }
+    if (isDragging) {
+      const deltaX = clientX - startPos.x;
+      const deltaY = clientY - startPos.y;
+      if (activeDesignSide === 'front') {
+        setDesignTransformFront(prev => ({
+          ...prev,
+          position: {
+            x: prev.position.x + deltaX,
+            y: prev.position.y + deltaY
+          }
+        }));
+      } else {
+        setDesignTransformBack(prev => ({
+          ...prev,
+          position: {
+            x: prev.position.x + deltaX,
+            y: prev.position.y + deltaY
+          }
+        }));
+      }
+      setStartPos({
+        x: clientX,
+        y: clientY
+      });
+    } else if (isDraggingText) {
+      const deltaX = clientX - startPosText.x;
+      const deltaY = clientY - startPosText.y;
+      if (activeTextSide === 'front') {
+        setTextTransformFront(prev => ({
+          ...prev,
+          position: {
+            x: prev.position.x + deltaX,
+            y: prev.position.y + deltaY
+          }
+        }));
+      } else {
+        setTextTransformBack(prev => ({
+          ...prev,
+          position: {
+            x: prev.position.x + deltaX,
+            y: prev.position.y + deltaY
+          }
+        }));
+      }
+      setStartPosText({
+        x: clientX,
+        y: clientY
+      });
+    }
+  };
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setIsDraggingText(false);
+    setPageScrollLocked(false);
+  };
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const design: Design = {
+          id: `custom-${Date.now()}`,
+          name: 'Mon design personnalisé',
+          image_url: reader.result as string,
+          category: 'custom',
+          is_active: true
+        };
+        if (currentViewSide === 'front') {
+          setSelectedDesignFront(design);
+          setActiveDesignSide('front');
+        } else {
+          setSelectedDesignBack(design);
+          setActiveDesignSide('back');
+        }
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleMouseMove, {
+      passive: false
+    });
+    window.addEventListener('touchend', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleMouseMove);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [isDragging, startPos, isDraggingText, startPosText]);
+  useEffect(() => {
+    if (currentViewSide === 'front') {
+      setActiveDesignSide('front');
+      setActiveTextSide('front');
+    } else {
+      setActiveDesignSide('back');
+      setActiveTextSide('back');
+    }
+  }, [currentViewSide]);
+  useEffect(() => {
+    if (selectedTab === 'text') {
+      // Le texte est automatiquement activé dans cette version
+    }
+  }, [selectedTab]);
+  const calculatePrice = () => {
+    if (!product) return 0;
+    let price = product.price * quantity;
+    if (customizationMode) {
+      const frontDesignPrice = selectedDesignFront ? printSizeFront === 'A3' ? mockup?.price_a3 || 15 : printSizeFront === 'A4' ? mockup?.price_a4 || 10 : printSizeFront === 'A5' ? mockup?.price_a5 || 8 : mockup?.price_a6 || 5 : 0;
+      const backDesignPrice = selectedDesignBack ? printSizeBack === 'A3' ? mockup?.price_a3 || 15 : printSizeBack === 'A4' ? mockup?.price_a4 || 10 : printSizeBack === 'A5' ? mockup?.price_a5 || 8 : mockup?.price_a6 || 5 : 0;
+      const frontTextPrice = textContentFront ? mockup?.text_price_front || 3 : 0;
+      const backTextPrice = textContentBack ? mockup?.text_price_back || 3 : 0;
+      price += frontDesignPrice + backDesignPrice + frontTextPrice + backTextPrice;
+    }
+    return price;
+  };
+  const getColorHexCode = (colorName: string) => {
+    const colorMap: {
+      [key: string]: string;
+    } = {
+      'white': '#ffffff',
+      'black': '#000000',
+      'red': '#ff0000',
+      'blue': '#0000ff',
+      'gray': '#808080',
+      'navy': '#000080'
+    };
+    return colorName.startsWith('#') ? colorName : colorMap[colorName.toLowerCase()] || '#000000';
+  };
+  const getProductImage = () => {
+    if (!customizationMode) {
+      return product?.image_url;
+    }
+    if (selectedMockupColor) {
+      return currentViewSide === 'front' ? selectedMockupColor.front_image_url : selectedMockupColor.back_image_url || product?.image_url;
+    } else if (mockup) {
+      return currentViewSide === 'front' ? mockup.svg_front_url : mockup.svg_back_url || product?.image_url;
+    }
+    return product?.image_url;
+  };
+  const getCurrentDesign = () => {
+    return currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack;
+  };
+  const getCurrentDesignTransform = () => {
+    return currentViewSide === 'front' ? designTransformFront : designTransformBack;
+  };
+  const getCurrentTextContent = () => {
+    return currentViewSide === 'front' ? textContentFront : textContentBack;
+  };
+  const getCurrentTextTransform = () => {
+    return currentViewSide === 'front' ? textTransformFront : textTransformBack;
+  };
+  const getCurrentTextFont = () => {
+    return currentViewSide === 'front' ? textFontFront : textFontBack;
+  };
+  const getCurrentTextColor = () => {
+    return currentViewSide === 'front' ? textColorFront : textColorBack;
+  };
+  const getCurrentTextStyles = () => {
+    return currentViewSide === 'front' ? textStylesFront : textStylesBack;
+  };
+  const getCurrentSelectedSize = () => {
+    return currentViewSide === 'front' ? selectedSizeFront : selectedSizeBack;
+  };
   const handleAddToCart = () => {
     if (!product) return;
-    
-    // Check if size is required
-    if (product.available_sizes && product.available_sizes.length > 0 && !selectedSize) {
-      toast({
-        title: 'Sélection requise',
-        description: 'Veuillez sélectionner une taille',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    // Check if color is required
-    if (product.available_colors && product.available_colors.length > 0 && !selectedColor) {
-      toast({
-        title: 'Sélection requise',
-        description: 'Veuillez sélectionner une couleur',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    const item: CartItem = {
+    const cartItem: CartItem = {
       productId: product.id,
       name: product.name,
-      price: product.price,
-      quantity,
-      image_url: product.image_url,
+      price: calculatePrice(),
+      quantity: quantity,
       color: selectedColor,
       size: selectedSize,
-      available_colors: product.available_colors,
-      available_sizes: product.available_sizes,
-    };
-    
-    addItem(item);
-    toast({
-      title: 'Produit ajouté',
-      description: `${product.name} a été ajouté à votre panier`,
-    });
-  };
-  
-  const handleDesignSelect = (design: Design) => {
-    setSelectedDesign(design);
-    setIsDesignDialogOpen(true);
-  };
-  
-  const handleAddDesignToCart = async (design: Design) => {
-    if (!product) return;
-    
-    // Create proper Design object with required timestamps
-    const designWithTimestamps = {
-      ...design,
-      created_at: design.created_at || new Date().toISOString(),
-      updated_at: design.updated_at || new Date().toISOString(),
-    };
-
-    const item: CartItem = {
-      productId: product.id,
-      name: product.name,
-      price: getCustomizationPrice(),
-      quantity: 1,
       image_url: product.image_url,
-      color: selectedColor,
-      size: selectedSize,
-      available_colors: product.available_colors,
-      available_sizes: product.available_sizes,
-      customization: {
-        designId: designWithTimestamps.id,
-        designUrl: designWithTimestamps.image_url,
-        designName: designWithTimestamps.name,
-        selectedSize: selectedSize,
-        selectedColor: selectedColor,
-        mockupRectoUrl: rectoMockupUrl,
-        mockupVersoUrl: versoMockupUrl,
-        lotteryName: selectedLottery
-      }
+      lotteries: selectedLotteryIds.length > 0 ? selectedLotteryIds : undefined
     };
-    
-    setIsAddingToCart(true);
-    try {
-      await addItem(item);
-      toast({
-        title: 'Produit personnalisé ajouté',
-        description: `${product.name} avec design "${design.name}" a été ajouté à votre panier`,
-      });
-      setIsDesignDialogOpen(false);
-      setSelectedDesign(null);
-      setRectoMockupUrl(null);
-      setVersoMockupUrl(null);
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible d\'ajouter le produit au panier',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsAddingToCart(false);
-    }
-  };
-  
-  const handleTextCustomization = () => {
-    setIsTextDialogOpen(true);
-  };
-  
-  const handleLotterySelect = (lotteryName: string) => {
-    setSelectedLottery(lotteryName);
-    setIsLotteryDialogOpen(true);
-  };
-  
-  const handleGenerateMockup = async () => {
-    if (!product || !mockup) return;
-    
-    setIsGeneratingMockup(true);
-    try {
-      let mockupData;
-      
-      if (selectedDesign) {
-        // Generate mockup with design
-        mockupData = await generateMockupImage({
-          mockupId: mockup.id,
-          designId: selectedDesign.id,
-          color: selectedColor || undefined,
-          customText: null,
-          textColor: null,
-          textFont: null,
-          textSize: null,
-        });
-      } else if (customText) {
-        // Generate mockup with text
-        mockupData = await generateMockupImage({
-          mockupId: mockup.id,
-          designId: null,
-          color: selectedColor || undefined,
-          customText,
-          textColor,
-          textFont: selectedFont,
-          textSize,
-        });
+    if (customizationMode) {
+      const customization: any = {};
+      if (selectedDesignFront) {
+        customization.frontDesign = {
+          designId: selectedDesignFront.id,
+          designName: selectedDesignFront.name,
+          designUrl: selectedDesignFront.image_url,
+          printSize: printSizeFront,
+          transform: designTransformFront
+        };
       }
-      
-      if (mockupData) {
-        setRectoMockupUrl(mockupData.rectoUrl);
-        if (mockupData.versoUrl) {
-          setVersoMockupUrl(mockupData.versoUrl);
-        }
+      if (selectedDesignBack) {
+        customization.backDesign = {
+          designId: selectedDesignBack.id,
+          designName: selectedDesignBack.name,
+          designUrl: selectedDesignBack.image_url,
+          printSize: printSizeBack,
+          transform: designTransformBack
+        };
       }
-    } catch (error) {
-      console.error('Error generating mockup:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de générer l\'aperçu',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsGeneratingMockup(false);
-    }
-  };
-  
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    setUploadedDesignFile(file);
-    
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setUploadedDesignPreview(event.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-  
-  const handleUploadDesign = async () => {
-    if (!uploadedDesignFile || !uploadedDesignName) {
-      toast({
-        title: 'Information manquante',
-        description: 'Veuillez sélectionner un fichier et donner un nom au design',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    setIsUploadingDesign(true);
-    try {
-      // Upload file to storage
-      const fileExt = uploadedDesignFile.name.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExt}`;
-      const filePath = `designs/${fileName}`;
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('public')
-        .upload(filePath, uploadedDesignFile);
-      
-      if (uploadError) throw uploadError;
-      
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('public')
-        .getPublicUrl(filePath);
-      
-      const publicUrl = urlData.publicUrl;
-      
-      // Create design in database
-      const newDesign = await createDesign({
-        name: uploadedDesignName,
-        image_url: publicUrl,
-        user_id: user?.id || null,
-        is_public: false,
-        category: 'custom',
-      });
-      
-      // Add to designs list and select it
-      setDesigns([newDesign, ...designs]);
-      setSelectedDesign(newDesign);
-      
-      // Reset upload form
-      setUploadedDesignFile(null);
-      setUploadedDesignPreview(null);
-      setUploadedDesignName('');
-      
-      toast({
-        title: 'Design téléchargé',
-        description: 'Votre design a été téléchargé avec succès',
-      });
-      
-      // Switch back to gallery tab
-      setSelectedDesignTab('gallery');
-    } catch (error) {
-      console.error('Error uploading design:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de télécharger le design',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsUploadingDesign(false);
-    }
-  };
-  
-  const handleGenerateAIDesign = async () => {
-    if (!aiPrompt) {
-      toast({
-        title: 'Prompt requis',
-        description: 'Veuillez entrer une description pour générer un design',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    setIsGeneratingDesign(true);
-    try {
-      // Call AI generation service (mock for now)
-      // In a real implementation, this would call an API endpoint
-      setTimeout(() => {
-        const mockUrl = 'https://placehold.co/600x400/png';
-        setGeneratedDesignUrl(mockUrl);
-        setGeneratedDesignName(`AI Design: ${aiPrompt.substring(0, 20)}...`);
-      }, 2000);
-      
-    } catch (error) {
-      console.error('Error generating AI design:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de générer le design',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsGeneratingDesign(false);
-    }
-  };
-  
-  const handleSaveGeneratedDesign = async () => {
-    if (!generatedDesignUrl || !generatedDesignName) return;
-    
-    try {
-      // Create design in database
-      const newDesign = await createDesign({
-        name: generatedDesignName,
-        image_url: generatedDesignUrl,
-        user_id: user?.id || null,
-        is_public: false,
-        category: 'ai-generated',
-      });
-      
-      // Add to designs list and select it
-      setDesigns([newDesign, ...designs]);
-      setSelectedDesign(newDesign);
-      
-      // Reset generation form
-      setGeneratedDesignUrl(null);
-      setGeneratedDesignName('');
-      setAiPrompt('');
-      
-      toast({
-        title: 'Design sauvegardé',
-        description: 'Votre design généré a été sauvegardé',
-      });
-      
-      // Switch back to gallery tab
-      setSelectedDesignTab('gallery');
-    } catch (error) {
-      console.error('Error saving generated design:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de sauvegarder le design',
-        variant: 'destructive',
-      });
-    }
-  };
-  
-  const handleAddTextToCart = async () => {
-    if (!product) return;
-
-    const item: CartItem = {
-      productId: product.id,
-      name: product.name,
-      price: getCustomizationPrice(),
-      quantity: 1,
-      image_url: product.image_url,
-      color: selectedColor,
-      size: selectedSize,
-      available_colors: product.available_colors,
-      available_sizes: product.available_sizes,
-      customization: {
-        customText: customText,
-        textColor: textColor,
-        textFont: selectedFont,
-        selectedSize: selectedSize,
-        selectedColor: selectedColor,
-        mockupRectoUrl: rectoMockupUrl,
-        mockupVersoUrl: versoMockupUrl,
-        lotteryName: selectedLottery
+      if (textContentFront.trim()) {
+        customization.frontText = {
+          content: textContentFront,
+          font: textFontFront,
+          color: textColorFront,
+          transform: textTransformFront,
+          styles: textStylesFront
+        };
       }
-    };
-    
-    setIsAddingToCart(true);
-    try {
-      await addItem(item);
-      toast({
-        title: 'Produit personnalisé ajouté',
-        description: `${product.name} avec texte personnalisé a été ajouté à votre panier`,
-      });
-      setIsTextDialogOpen(false);
-      setCustomText('');
-      setRectoMockupUrl(null);
-      setVersoMockupUrl(null);
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible d\'ajouter le produit au panier',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsAddingToCart(false);
-    }
-  };
-  
-  const handleAddLotteryToCart = async () => {
-    if (!product || !selectedLottery) return;
-    
-    const item: CartItem = {
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      quantity: 1,
-      image_url: product.image_url,
-      color: selectedColor,
-      size: selectedSize,
-      available_colors: product.available_colors,
-      available_sizes: product.available_sizes,
-      customization: {
-        lotteryName: selectedLottery,
-        selectedSize: selectedSize,
-        selectedColor: selectedColor
+      if (textContentBack.trim()) {
+        customization.backText = {
+          content: textContentBack,
+          font: textFontBack,
+          color: textColorBack,
+          transform: textTransformBack,
+          styles: textStylesBack
+        };
       }
-    };
-    
-    setIsAddingToCart(true);
-    try {
-      await addItem(item);
-      toast({
-        title: 'Produit personnalisé ajouté',
-        description: `${product.name} avec loterie "${selectedLottery}" a été ajouté à votre panier`,
-      });
-      setIsLotteryDialogOpen(false);
-      setSelectedLottery(null);
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible d\'ajouter le produit au panier',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsAddingToCart(false);
-    }
-  };
-  
-  const handleAddGeneratedDesignToCart = async (design: Design) => {
-    if (!product) return;
-    
-    // Create proper Design object with required timestamps
-    const designWithTimestamps = {
-      ...design,
-      created_at: design.created_at || new Date().toISOString(),
-      updated_at: design.updated_at || new Date().toISOString(),
-    };
-
-    const item: CartItem = {
-      productId: product.id,
-      name: product.name,
-      price: getCustomizationPrice(),
-      quantity: 1,
-      image_url: product.image_url,
-      color: selectedColor,
-      size: selectedSize,
-      available_colors: product.available_colors,
-      available_sizes: product.available_sizes,
-      customization: {
-        designId: designWithTimestamps.id,
-        designUrl: designWithTimestamps.image_url,
-        designName: designWithTimestamps.name,
-        selectedSize: selectedSize,
-        selectedColor: selectedColor,
-        mockupRectoUrl: rectoMockupUrl,
-        mockupVersoUrl: versoMockupUrl,
-        lotteryName: selectedLottery
+      if (Object.keys(customization).length > 0) {
+        cartItem.customization = customization;
       }
-    };
-    
-    setIsAddingToCart(true);
-    try {
-      await addItem(item);
-      toast({
-        title: 'Produit personnalisé ajouté',
-        description: `${product.name} avec design généré a été ajouté à votre panier`,
-      });
-      setGeneratedDesignUrl(null);
-      setGeneratedDesignName('');
-      setAiPrompt('');
-      setSelectedDesignTab('gallery');
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible d\'ajouter le produit au panier',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsAddingToCart(false);
     }
+    addItem(cartItem);
+    toast.success('Produit ajouté au panier !');
   };
-  
-  const getCustomizationPrice = () => {
-    if (!product) return 0;
-    
-    let basePrice = product.price;
-    
-    // Add design or text customization price
-    if (selectedDesign || customText) {
-      basePrice += 5; // Example: add 5€ for customization
-    }
-    
-    // Add lottery price if applicable
-    if (selectedLottery) {
-      basePrice += 2; // Example: add 2€ for lottery
-    }
-    
-    return basePrice;
-  };
-  
-  if (isLoading) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <Skeleton className="w-full h-[400px] rounded-lg" />
-          </div>
-          <div className="space-y-4">
-            <Skeleton className="w-3/4 h-10" />
-            <Skeleton className="w-1/2 h-6" />
-            <Skeleton className="w-full h-32" />
-            <div className="space-y-2">
-              <Skeleton className="w-1/3 h-6" />
-              <div className="flex gap-2">
-                <Skeleton className="w-12 h-12 rounded-md" />
-                <Skeleton className="w-12 h-12 rounded-md" />
-                <Skeleton className="w-12 h-12 rounded-md" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Skeleton className="w-1/3 h-6" />
-              <div className="flex gap-2">
-                <Skeleton className="w-12 h-8 rounded-md" />
-                <Skeleton className="w-12 h-8 rounded-md" />
-                <Skeleton className="w-12 h-8 rounded-md" />
-              </div>
-            </div>
-            <Skeleton className="w-full h-12" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  if (!product) {
-    return (
-      <div className="container mx-auto py-8 px-4 text-center">
-        <h2 className="text-2xl font-bold">Produit non trouvé</h2>
-        <p className="mt-2">Le produit que vous recherchez n'existe pas ou a été supprimé.</p>
-        <Button className="mt-4" onClick={() => navigate('/products')}>
-          Retour aux produits
-        </Button>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Product Image */}
-        <div>
-          <img 
-            src={product.image_url} 
-            alt={product.name} 
-            className="w-full h-auto rounded-lg object-cover"
-          />
-        </div>
-        
-        {/* Product Details */}
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">{product.name}</h1>
-            <p className="text-xl font-semibold mt-2">{product.price.toFixed(2)} €</p>
-          </div>
-          
-          <p className="text-gray-300">{product.description}</p>
-          
-          {/* Color Selection */}
-          {product.available_colors && product.available_colors.length > 0 && (
-            <div className="space-y-2">
-              <Label>Couleur</Label>
-              <div className="flex flex-wrap gap-2">
-                {product.available_colors.map((color) => (
-                  <button
-                    key={color}
-                    className={`w-8 h-8 rounded-full border-2 ${
-                      selectedColor === color ? 'border-white' : 'border-transparent'
-                    }`}
-                    style={{ backgroundColor: color }}
-                    onClick={() => setSelectedColor(color)}
-                    aria-label={`Couleur ${color}`}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Size Selection */}
-          {product.available_sizes && product.available_sizes.length > 0 && (
-            <div className="space-y-2">
-              <Label>Taille</Label>
-              <div className="flex flex-wrap gap-2">
-                {product.available_sizes.map((size) => (
-                  <button
-                    key={size}
-                    className={`px-4 py-2 border rounded-md ${
-                      selectedSize === size 
-                        ? 'bg-white text-black' 
-                        : 'bg-transparent border-white/30'
-                    }`}
-                    onClick={() => setSelectedSize(size)}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Quantity */}
-          <div className="space-y-2">
-            <Label>Quantité</Label>
-            <div className="flex items-center w-32 border border-white/30 rounded-md">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="rounded-r-none"
-                onClick={() => handleQuantityChange(-1)}
-                disabled={quantity <= 1}
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-              <div className="flex-1 text-center">{quantity}</div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="rounded-l-none"
-                onClick={() => handleQuantityChange(1)}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          
-          {/* Add to Cart Button */}
-          <Button 
-            className="w-full flex items-center justify-center gap-2"
-            onClick={handleAddToCart}
-          >
-            <ShoppingCart className="h-5 w-5" />
-            Ajouter au panier
-          </Button>
-          
-          {/* Customization Options */}
-          {mockup && (
-            <div className="space-y-4 pt-4">
-              <Separator />
-              <h3 className="text-xl font-semibold">Personnalisation</h3>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <Card className="bg-black/30 border-white/10 hover:border-white/30 transition-all cursor-pointer" onClick={() => setIsDesignDialogOpen(true)}>
-                  <CardContent className="p-4 flex flex-col items-center justify-center text-center h-32">
-                    <div className="text-3xl mb-2">🎨</div>
-                    <div className="font-medium">Ajouter un design</div>
-                  </CardContent>
-                </Card>
-                
-                <Card className="bg-black/30 border-white/10 hover:border-white/30 transition-all cursor-pointer" onClick={handleTextCustomization}>
-                  <CardContent className="p-4 flex flex-col items-center justify-center text-center h-32">
-                    <div className="text-3xl mb-2">✏️</div>
-                    <div className="font-medium">Ajouter du texte</div>
-                  </CardContent>
-                </Card>
-                
-                {lotteries.length > 0 && (
-                  <Card className="bg-black/30 border-white/10 hover:border-white/30 transition-all cursor-pointer" onClick={() => setIsLotteryDialogOpen(true)}>
-                    <CardContent className="p-4 flex flex-col items-center justify-center text-center h-32">
-                      <div className="text-3xl mb-2">🎟️</div>
-                      <div className="font-medium">Ajouter une loterie</div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Product Tabs */}
-      <div className="mt-12">
-        <Tabs defaultValue="description" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="description">Description</TabsTrigger>
-            <TabsTrigger value="details">Détails</TabsTrigger>
-            <TabsTrigger value="shipping">Livraison</TabsTrigger>
-          </TabsList>
-          <TabsContent value="description" className="mt-4 p-4 bg-black/30 rounded-md">
-            <div className="prose prose-invert max-w-none">
-              <p>{product.description}</p>
-            </div>
-          </TabsContent>
-          <TabsContent value="details" className="mt-4 p-4 bg-black/30 rounded-md">
-            <div className="prose prose-invert max-w-none">
-              <ul>
-                <li>Catégorie: {product.category}</li>
-                <li>Couleur: {product.color || 'Non spécifiée'}</li>
-                <li>Personnalisable: {product.is_customizable ? 'Oui' : 'Non'}</li>
-                <li>Tickets offerts: {product.tickets_offered || 0}</li>
-              </ul>
-            </div>
-          </TabsContent>
-          <TabsContent value="shipping" className="mt-4 p-4 bg-black/30 rounded-md">
-            <div className="prose prose-invert max-w-none">
-              <p>Livraison standard en 3-5 jours ouvrables.</p>
-              <p>Livraison express disponible en 24-48h (supplément).</p>
-              <p>Livraison gratuite pour les commandes de plus de 50€.</p>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-      
-      {/* Design Selection Dialog */}
-      <Dialog open={isDesignDialogOpen} onOpenChange={setIsDesignDialogOpen}>
-        <DialogContent className="bg-black/50 backdrop-blur-xl border-white/20 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Choisir un design</DialogTitle>
-            <DialogDescription>
-              Sélectionnez un design à appliquer sur votre produit
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Tabs value={selectedDesignTab} onValueChange={setSelectedDesignTab}>
-            <TabsList className="grid grid-cols-3">
-              <TabsTrigger value="gallery">Galerie</TabsTrigger>
-              <TabsTrigger value="upload">Télécharger</TabsTrigger>
-              <TabsTrigger value="generate">Générer avec IA</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="gallery" className="mt-4">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {designs.map((design) => (
-                  <div 
-                    key={design.id} 
-                    className={`relative aspect-square rounded-md overflow-hidden border-2 cursor-pointer ${
-                      selectedDesign?.id === design.id ? 'border-white' : 'border-transparent'
-                    }`}
-                    onClick={() => setSelectedDesign(design)}
-                  >
-                    <img 
-                      src={design.image_url} 
-                      alt={design.name} 
-                      className="w-full h-full object-cover"
-                    />
-                    {selectedDesign?.id === design.id && (
-                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                        <Badge variant="outline">Sélectionné</Badge>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              
-              {designs.length === 0 && (
-                <div className="text-center py-8">
-                  <p>Aucun design disponible</p>
+  if (isLoading || !product) {
+    return <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
+          <div className="animate-pulse flex space-x-4">
+            <div className="rounded-full bg-slate-700 h-10 w-10"></div>
+            <div className="flex-1 space-y-6 py-1">
+              <div className="h-2 bg-slate-700 rounded"></div>
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="h-2 bg-slate-700 rounded col-span-2"></div>
+                  <div className="h-2 bg-slate-700 rounded col-span-1"></div>
                 </div>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="upload" className="mt-4 space-y-4">
-              <div className="border-2 border-dashed border-white/30 rounded-lg p-8 text-center">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-                
-                {uploadedDesignPreview ? (
-                  <div className="space-y-4">
-                    <img 
-                      src={uploadedDesignPreview} 
-                      alt="Design preview" 
-                      className="max-h-64 mx-auto"
-                    />
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setUploadedDesignFile(null);
-                        setUploadedDesignPreview(null);
-                      }}
-                    >
-                      Changer l'image
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-white/70">Cliquez pour sélectionner une image ou glissez-déposez</p>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      Sélectionner un fichier
-                    </Button>
-                  </div>
-                )}
+                <div className="h-2 bg-slate-700 rounded"></div>
               </div>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>;
+  }
+  const activeLotteries = lotteries.filter(lottery => lottery.is_active);
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isDragging || isDraggingText) {
+      e.preventDefault();
+    }
+  };
+  const handleAIImageGenerated = (imageUrl: string, imageName: string) => {
+    const design: Design = {
+      id: `ai-${Date.now()}`,
+      name: imageName,
+      image_url: imageUrl,
+      category: 'ai-generated',
+      is_active: true
+    };
+    if (currentViewSide === 'front') {
+      setSelectedDesignFront(design);
+      setActiveDesignSide('front');
+    } else {
+      setSelectedDesignBack(design);
+      setActiveDesignSide('back');
+    }
+  };
+  const handleRemoveBackground = async () => {
+    const currentDesign = getCurrentDesign();
+    if (!currentDesign) return;
+    setIsRemovingBackground(true);
+    setBackgroundRemovalImage(currentDesign.image_url);
+  };
+  const handleBackgroundRemovalReady = async (cleanedImageUrl: string) => {
+    try {
+      const response = await fetch(cleanedImageUrl);
+      const blob = await response.blob();
+      const fileName = `bg-removed-${Date.now()}.png`;
+      const {
+        data: uploadData,
+        error: uploadError
+      } = await supabase.storage.from('ai-images').upload(fileName, blob);
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        toast.error("Erreur lors de la sauvegarde de l'image");
+        return;
+      }
+      const {
+        data: urlData
+      } = supabase.storage.from('ai-images').getPublicUrl(fileName);
+      if (!urlData.publicUrl) {
+        toast.error("Erreur lors de la récupération de l'URL");
+        return;
+      }
+      const cleanedDesign = {
+        ...getCurrentDesign()!,
+        id: `cleaned-${Date.now()}`,
+        name: `${getCurrentDesign()!.name} (sans fond)`,
+        image_url: urlData.publicUrl,
+        category: 'ai-generated-cleaned'
+      };
+      if (currentViewSide === 'front') {
+        setSelectedDesignFront(cleanedDesign);
+      } else {
+        setSelectedDesignBack(cleanedDesign);
+      }
+      toast.success('Fond supprimé avec succès !');
+    } catch (error) {
+      console.error('Error removing background:', error);
+      toast.error('Erreur lors de la suppression du fond');
+    } finally {
+      setIsRemovingBackground(false);
+      setBackgroundRemovalImage(null);
+    }
+  };
+  return <div className="min-h-screen flex flex-col">
+      <Navbar />
+
+      <main className="flex-grow container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <Link to="/products" className="flex items-center text-sm text-winshirt-purple hover:text-winshirt-blue transition-colors">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Retour aux produits
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Image et visualisation du produit */}
+          <div className="relative">
+            <div ref={productCanvasRef} className="relative bg-black/30 rounded-lg overflow-hidden shadow-xl aspect-square flex justify-center items-center" style={{
+            touchAction: 'none'
+          }} onTouchMove={handleTouchMove}>
+              <img src={getProductImage()} alt={product.name} className="w-full h-full object-contain" />
+
+              {customizationMode && getCurrentDesign() && <div className="absolute cursor-move select-none" style={{
+              transform: `translate(${getCurrentDesignTransform().position.x}px, ${getCurrentDesignTransform().position.y}px) 
+                               rotate(${getCurrentDesignTransform().rotation}deg) 
+                               scale(${getCurrentDesignTransform().scale})`,
+              transformOrigin: 'center',
+              zIndex: 10
+            }} onMouseDown={e => handleMouseDown(e)} onTouchStart={e => handleMouseDown(e)}>
+                  <img src={getCurrentDesign()!.image_url} alt={getCurrentDesign()!.name} className="max-w-[200px] max-h-[200px] w-auto h-auto" draggable={false} />
+                </div>}
               
-              {uploadedDesignPreview && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="design-name">Nom du design</Label>
-                    <Input 
-                      id="design-name" 
-                      value={uploadedDesignName} 
-                      onChange={(e) => setUploadedDesignName(e.target.value)}
-                      placeholder="Mon design personnalisé"
-                    />
-                  </div>
-                  
-                  <Button 
-                    onClick={handleUploadDesign} 
-                    disabled={isUploadingDesign || !uploadedDesignName}
-                    className="w-full"
-                  >
-                    {isUploadingDesign ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Téléchargement...
-                      </>
-                    ) : (
-                      'Télécharger et utiliser ce design'
-                    )}
+              {customizationMode && getCurrentTextContent() && <div className="absolute cursor-move select-none" style={{
+              transform: `translate(${getCurrentTextTransform().position.x}px, ${getCurrentTextTransform().position.y}px) 
+                               rotate(${getCurrentTextTransform().rotation}deg) 
+                               scale(${getCurrentTextTransform().scale})`,
+              transformOrigin: 'center',
+              fontFamily: getCurrentTextFont(),
+              color: getCurrentTextColor(),
+              fontWeight: getCurrentTextStyles().bold ? 'bold' : 'normal',
+              fontStyle: getCurrentTextStyles().italic ? 'italic' : 'normal',
+              textDecoration: getCurrentTextStyles().underline ? 'underline' : 'none',
+              fontSize: '24px',
+              textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
+              zIndex: 20
+            }} onMouseDown={e => handleMouseDown(e, true)} onTouchStart={e => handleMouseDown(e, true)}>
+                  {getCurrentTextContent()}
+                </div>}
+
+              {customizationMode && getCurrentDesign() && (getCurrentDesign()!.category === 'ai-generated' || getCurrentDesign()!.category === 'ai-generated-cleaned') && <div className="absolute bottom-4 right-4 z-30">
+                  <Button size="sm" variant="secondary" onClick={handleRemoveBackground} disabled={isRemovingBackground} className="bg-black/60 hover:bg-black/80 text-white border-white/20" title="Supprimer le fond de l'image">
+                    {isRemovingBackground ? <>
+                        <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                        Traitement...
+                      </> : <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Supprimer fond
+                      </>}
                   </Button>
-                </div>
-              )}
-            </TabsContent>
+                </div>}
+            </div>
+
+            {backgroundRemovalImage && <div style={{
+            display: 'none'
+          }}>
+                <RemoveFlatBackground imageUrl={backgroundRemovalImage} tolerance={35} onReady={handleBackgroundRemovalReady} />
+              </div>}
+
+            {customizationMode && mockup && mockup.svg_back_url && <div className="flex justify-center mt-4">
+                <ToggleGroup type="single" value={currentViewSide} onValueChange={value => value && setCurrentViewSide(value as 'front' | 'back')} className="bg-black/40 backdrop-blur-sm rounded-lg">
+                  <ToggleGroupItem value="front" className="text-sm data-[state=on]:bg-winshirt-purple/70" aria-label="Voir le recto">
+                    Avant
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="back" className="text-sm data-[state=on]:bg-winshirt-purple/70" aria-label="Voir le verso">
+                    Arrière
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>}
+          </div>
+
+          {/* Informations du produit et options */}
+          <div>
+            <div className="flex items-start justify-between mb-2">
+              <h1 className="text-2xl md:text-3xl font-bold">{product.name}</h1>
+              <SocialShareButton url={window.location.href} title={product.name} description={product.description || "Découvrez ce produit personnalisable"} className="ml-4" />
+            </div>
             
-            <TabsContent value="generate" className="mt-4 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="ai-prompt">Décrivez le design que vous souhaitez</Label>
-                <Textarea 
-                  id="ai-prompt" 
-                  value={aiPrompt} 
-                  onChange={(e) => setAiPrompt(e.target.value)}
-                  placeholder="Par exemple: Un chat avec des lunettes de soleil sur une planche de surf"
-                  rows={3}
-                />
-              </div>
+            <div className="flex items-center gap-2 mb-4">
+              <Badge className="bg-gradient-to-r from-winshirt-purple to-winshirt-blue text-white">
+                {product.category}
+              </Badge>
               
-              <Button 
-                onClick={handleGenerateAIDesign} 
-                disabled={isGeneratingDesign || !aiPrompt}
-                className="w-full"
-              >
-                {isGeneratingDesign ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Génération en cours...
-                  </>
-                ) : (
-                  'Générer un design avec IA'
-                )}
-              </Button>
-              
-              {generatedDesignUrl && (
-                <div className="space-y-4 pt-4">
-                  <div className="border border-white/30 rounded-lg p-4">
-                    <img 
-                      src={generatedDesignUrl} 
-                      alt="Generated design" 
-                      className="max-h-64 mx-auto"
-                    />
+              {product.is_customizable && <Badge variant="outline" className="bg-white/5">
+                  Personnalisable
+                </Badge>}
+            </div>
+            
+            <p className="text-white/70 mb-6">{product.description}</p>
+            
+            <div className="text-2xl font-bold mb-6">
+              {calculatePrice().toFixed(2)} €
+            </div>
+
+            <div className="space-y-6">
+              {product.available_colors && product.available_colors.length > 0 && <div>
+                  <h3 className="text-sm font-medium mb-3">Couleur</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.available_colors.map(color => <div key={color} className={`w-8 h-8 rounded-full cursor-pointer border-2 ${selectedColor === color ? 'border-winshirt-purple' : 'border-transparent'}`} style={{
+                  backgroundColor: getColorHexCode(color)
+                }} onClick={() => setSelectedColor(color)} />)}
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="generated-design-name">Nom du design</Label>
-                    <Input 
-                      id="generated-design-name" 
-                      value={generatedDesignName} 
-                      onChange={(e) => setGeneratedDesignName(e.target.value)}
-                      placeholder="Mon design généré"
-                    />
+                </div>}
+
+              {product.available_sizes && product.available_sizes.length > 0 && <div>
+                  <h3 className="text-sm font-medium mb-3">Taille</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.available_sizes.map(size => <div key={size} className={`px-3 py-1 rounded cursor-pointer ${selectedSize === size ? 'bg-winshirt-purple text-white' : 'bg-black/20 hover:bg-black/30'}`} onClick={() => setSelectedSize(size)}>
+                        {size}
+                      </div>)}
                   </div>
-                  
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setGeneratedDesignUrl(null);
-                        setGeneratedDesignName('');
-                      }}
-                      className="flex-1"
-                    >
-                      Régénérer
-                    </Button>
+                </div>}
+
+              {product.is_customizable && <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="customization" className="border-b-0">
+                    <AccordionTrigger className="py-3 px-4 bg-gradient-to-r from-winshirt-purple/30 to-winshirt-blue/30 rounded-lg hover:no-underline" onClick={() => setCustomizationMode(prevState => !prevState)}>
+                      <span className="flex items-center">
+                        <PenTool className="mr-2 h-4 w-4" />
+                        <span>{customizationMode ? "Masquer" : "Commencer à"} la personnalisation</span>
+                      </span>
+                    </AccordionTrigger>
                     
-                    <Button 
-                      onClick={handleSaveGeneratedDesign} 
-                      disabled={!generatedDesignName}
-                      className="flex-1"
-                    >
-                      Utiliser ce design
+                    <AccordionContent className="pt-4">
+                      {mockup?.colors && mockup.colors.length > 0 && <div className="mb-6">
+                          <h3 className="text-sm font-medium mb-3">Couleur du produit</h3>
+                          <div className="flex flex-wrap gap-3">
+                            {mockup.colors.map((color, index) => <div key={index} className={`relative flex flex-col items-center gap-1 cursor-pointer`} onClick={() => setSelectedMockupColor(color)}>
+                                <div className={`w-10 h-10 rounded-full border-2 ${selectedMockupColor === color ? 'border-winshirt-purple' : 'border-gray-600'}`} style={{
+                          backgroundColor: color.color_code
+                        }}>
+                                  {selectedMockupColor === color && <div className="absolute inset-0 flex items-center justify-center">
+                                      <Check className="text-white h-4 w-4 drop-shadow-[0_0,2px_rgba(0,0,0,0.5)]" />
+                                    </div>}
+                                </div>
+                                <span className="text-xs truncate max-w-[80px] text-center">{color.name}</span>
+                              </div>)}
+                          </div>
+                        </div>}
+                      
+                      <Tabs defaultValue="design" value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 mb-4">
+                          <TabsTrigger value="design">
+                            <ImageIcon className="h-4 w-4 mr-2" />
+                            Design
+                          </TabsTrigger>
+                          <TabsTrigger value="text">
+                            <Type className="h-4 w-4 mr-2" />
+                            Texte
+                          </TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="design" className="space-y-4">
+                          <div className="flex justify-between items-center mb-4">
+                            <h4 className="font-medium">Ajouter un design</h4>
+                            <div className="flex gap-2">
+                              <Button variant="outline" onClick={() => setDesignDialogOpen(true)} className="bg-gradient-to-r from-winshirt-purple/20 to-winshirt-blue/20">
+                                {currentViewSide === 'front' ? selectedDesignFront ? 'Changer' : 'Sélectionner' : selectedDesignBack ? 'Changer' : 'Sélectionner'}
+                              </Button>
+                              <Button variant="outline" onClick={() => setAiGeneratorOpen(true)} className="bg-gradient-to-r from-winshirt-purple/20 to-winshirt-blue/20">
+                                <Sparkles className="h-4 w-4 mr-2" />
+                                Générer IA
+                              </Button>
+                              <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="bg-gradient-to-r from-winshirt-purple/20 to-winshirt-blue/20">
+                                <Upload className="h-4 w-4 mr-2" />
+                                Importer
+                              </Button>
+                              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
+                            </div>
+                          </div>
+                          
+                          {getCurrentDesign() && <div className="space-y-4 p-4 bg-white/5 rounded-lg">
+                              <div>
+                                <div className="flex justify-between items-center mb-2">
+                                  <Label className="block">Taille d'impression</Label>
+                                  <span className="text-sm text-winshirt-blue">
+                                    Format sélectionné : {getCurrentSelectedSize()}
+                                  </span>
+                                </div>
+                                <div className="flex gap-2 mb-2">
+                                  {sizePresets.map(preset => <Button key={preset.label} variant="outline" size="sm" className={`${getCurrentSelectedSize() === preset.label ? 'bg-winshirt-purple text-white' : 'hover:bg-winshirt-purple/20'}`} onClick={() => handleSizeClick(preset.label)}>
+                                      {preset.label}
+                                    </Button>)}
+                                </div>
+                                <p className="text-xs text-white/60 mt-2">
+                                  Les tailles A3 à A7 correspondent à l'échelle approximative d'impression.
+                                </p>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label>Échelle ({Math.round(getCurrentDesignTransform().scale * 100)}%)</Label>
+                                <Slider value={[getCurrentDesignTransform().scale * 100]} min={1} max={100} step={1} onValueChange={handleScaleChange} className="flex-1" />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label>Rotation ({getCurrentDesignTransform().rotation}°)</Label>
+                                <div className="flex gap-2 items-center">
+                                  <Slider value={[getCurrentDesignTransform().rotation + 180]} min={0} max={360} step={5} onValueChange={value => handleDesignTransformChange('rotation', value[0] - 180)} className="flex-1" />
+                                  <Button variant="outline" size="icon" onClick={() => handleDesignTransformChange('rotation', 0)}>
+                                    <RotateCw className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>}
+                        </TabsContent>
+                        
+                        <TabsContent value="text" className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="textContent">Texte</Label>
+                            <Input id="textContent" value={getCurrentTextContent()} onChange={e => {
+                          if (currentViewSide === 'front') {
+                            setTextContentFront(e.target.value);
+                          } else {
+                            setTextContentBack(e.target.value);
+                          }
+                        }} placeholder="Entrez votre texte ici..." />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="textFont">Police</Label>
+                            <Select value={getCurrentTextFont()} onValueChange={value => {
+                          if (currentViewSide === 'front') {
+                            setTextFontFront(value);
+                          } else {
+                            setTextFontBack(value);
+                          }
+                        }}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Choisir une police" />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-[300px]">
+                                <SelectGroup>
+                                  {googleFonts.map(font => <SelectItem key={font.value} value={font.value}>
+                                      {font.label}
+                                    </SelectItem>)}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>Style de texte</Label>
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="icon" className={getCurrentTextStyles().bold ? 'bg-winshirt-purple/40' : ''} onClick={() => {
+                            if (currentViewSide === 'front') {
+                              setTextStylesFront({
+                                ...textStylesFront,
+                                bold: !textStylesFront.bold
+                              });
+                            } else {
+                              setTextStylesBack({
+                                ...textStylesBack,
+                                bold: !textStylesBack.bold
+                              });
+                            }
+                          }}>
+                                <Bold className="h-4 w-4" />
+                              </Button>
+                              <Button variant="outline" size="icon" className={getCurrentTextStyles().italic ? 'bg-winshirt-purple/40' : ''} onClick={() => {
+                            if (currentViewSide === 'front') {
+                              setTextStylesFront({
+                                ...textStylesFront,
+                                italic: !textStylesFront.italic
+                              });
+                            } else {
+                              setTextStylesBack({
+                                ...textStylesBack,
+                                italic: !textStylesBack.italic
+                              });
+                            }
+                          }}>
+                                <Italic className="h-4 w-4" />
+                              </Button>
+                              <Button variant="outline" size="icon" className={getCurrentTextStyles().underline ? 'bg-winshirt-purple/40' : ''} onClick={() => {
+                            if (currentViewSide === 'front') {
+                              setTextStylesFront({
+                                ...textStylesFront,
+                                underline: !textStylesFront.underline
+                              });
+                            } else {
+                              setTextStylesBack({
+                                ...textStylesBack,
+                                underline: !textStylesBack.underline
+                              });
+                            }
+                          }}>
+                                <Underline className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <Label>Couleur</Label>
+                              <Button variant="outline" size="sm" onClick={() => {
+                            if (currentViewSide === 'front') {
+                              setTextShowColorPickerFront(!textShowColorPickerFront);
+                              setTextShowColorPickerBack(false);
+                            } else {
+                              setTextShowColorPickerBack(!textShowColorPickerBack);
+                              setTextShowColorPickerFront(false);
+                            }
+                          }}>
+                                <div className="w-4 h-4 mr-2 rounded" style={{
+                              backgroundColor: getCurrentTextColor()
+                            }}></div>
+                                {currentViewSide === 'front' ? textShowColorPickerFront ? 'Fermer' : 'Choisir' : textShowColorPickerBack ? 'Fermer' : 'Choisir'}
+                              </Button>
+                            </div>
+                            
+                            {(currentViewSide === 'front' && textShowColorPickerFront || currentViewSide === 'back' && textShowColorPickerBack) && <div className="mt-2">
+                                <HexColorPicker color={getCurrentTextColor()} onChange={color => {
+                            if (currentViewSide === 'front') {
+                              setTextColorFront(color);
+                            } else {
+                              setTextColorBack(color);
+                            }
+                          }} className="w-full" />
+                              </div>}
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>Échelle ({Math.round(getCurrentTextTransform().scale * 100)}%)</Label>
+                            <Slider value={[getCurrentTextTransform().scale * 100]} min={50} max={200} step={5} onValueChange={value => handleTextTransformChange('scale', value[0] / 100)} className="flex-1" />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>Rotation ({getCurrentTextTransform().rotation}°)</Label>
+                            <div className="flex gap-2 items-center">
+                              <Slider value={[getCurrentTextTransform().rotation + 180]} min={0} max={360} step={5} onValueChange={value => handleTextTransformChange('rotation', value[0] - 180)} className="flex-1" />
+                              <Button variant="outline" size="icon" onClick={() => handleTextTransformChange('rotation', 0)}>
+                                <RotateCw className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>}
+
+              <Dialog open={designDialogOpen} onOpenChange={setDesignDialogOpen}>
+                <DialogContent className="bg-black/70 backdrop-blur-lg border-white/20 max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Sélectionner un design</DialogTitle>
+                  </DialogHeader>
+                  
+                  <div className="mt-4">
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {uniqueCategories.map(category => <Button key={category} variant="outline" size="sm" className={selectedCategoryFilter === category ? "bg-winshirt-purple" : ""} onClick={() => setSelectedCategoryFilter(category)}>
+                          {category === 'all' ? 'Tous' : category}
+                        </Button>)}
+                    </div>
+                    
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {filteredDesigns.map(design => <Card key={design.id} className="bg-black/40 overflow-hidden cursor-pointer transition-all hover:scale-[1.02] border-white/10 hover:border-winshirt-purple/30" onClick={() => handleDesignSelect(design)}>
+                          <div className="aspect-square overflow-hidden bg-gray-900/40">
+                            <img src={design.image_url} alt={design.name} className="object-contain w-full h-full p-2" />
+                          </div>
+                          <div className="p-2">
+                            <p className="text-xs truncate">{design.name}</p>
+                          </div>
+                        </Card>)}
+                    </div>
+                    
+                    {filteredDesigns.length === 0 && <div className="text-center py-8 text-white/50">
+                        {isLoadingDesigns ? "Chargement..." : "Aucun design trouvé dans cette catégorie."}
+                      </div>}
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <AIImageGenerator isOpen={aiGeneratorOpen} onClose={() => setAiGeneratorOpen(false)} onImageGenerated={handleAIImageGenerated} />
+
+              {product.tickets_offered > 0 && activeLotteries.length > 0 && <div className="space-y-4 p-4 bg-white/5 border border-white/10 rounded-lg">
+                  <h3 className="flex items-center text-lg font-medium">
+                    <UsersRound className="h-5 w-5 mr-2 text-winshirt-purple" />
+                    Participez à {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}
+                  </h3>
+                  
+                  <p className="text-sm text-white/70">
+                    Ce produit vous permet de participer à {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}.
+                    Sélectionnez {product.tickets_offered > 1 ? 'celles qui vous intéressent' : 'celle qui vous intéresse'}.
+                  </p>
+                  
+                  <div className="space-y-3">
+                    {Array.from({
+                  length: product.tickets_offered
+                }).map((_, index) => <div key={index} className="relative">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                              {selectedLotteries[index] ? <div className="flex items-center justify-between w-full">
+                                  <div className="flex items-center">
+                                    <Target className="h-4 w-4 mr-2 text-winshirt-purple" />
+                                    <span>{selectedLotteries[index].title}</span>
+                                  </div>
+                                  <Badge variant="secondary" className="ml-2">
+                                    {new Intl.NumberFormat('fr-FR', {
+                              style: 'currency',
+                              currency: 'EUR',
+                              maximumFractionDigits: 0
+                            }).format(selectedLotteries[index].value)}
+                                  </Badge>
+                                </div> : <>
+                                  <Target className="h-4 w-4 mr-2 text-winshirt-purple" />
+                                  <span>Choisir une loterie</span>
+                                </>}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-[280px]">
+                            <DropdownMenuLabel>Loteries disponibles</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <div className="max-h-[200px] overflow-y-auto">
+                              {activeLotteries.map(lottery => {
+                          const isSelected = selectedLotteryIds.includes(lottery.id);
+                          return <DropdownMenuItem key={lottery.id} className={`flex justify-between cursor-pointer ${isSelected ? 'bg-winshirt-purple/20' : ''}`} onClick={() => handleLotteryToggle(lottery, index)}>
+                                    <span>{lottery.title}</span>
+                                    {isSelected && <Check className="h-4 w-4" />}
+                                  </DropdownMenuItem>;
+                        })}
+                            </div>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>)}
+                  </div>
+                </div>}
+
+              <div>
+                <div className="flex flex-wrap gap-4 items-center">
+                  <div className="flex items-center rounded-md overflow-hidden">
+                    <Button variant="outline" size="icon" onClick={() => handleQuantityChange('decrease')} disabled={quantity <= 1} className="rounded-r-none">
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <div className="w-12 py-2 text-center bg-white/5 border-y border-input">
+                      {quantity}
+                    </div>
+                    <Button variant="outline" size="icon" onClick={() => handleQuantityChange('increase')} className="rounded-l-none">
+                      <Plus className="h-4 w-4" />
                     </Button>
                   </div>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-          
-          {selectedDesign && (
-            <div className="mt-6 space-y-4">
-              <Separator />
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <h4 className="font-medium mb-2">Design sélectionné</h4>
-                  <div className="border border-white/30 rounded-lg p-2">
-                    <img 
-                      src={selectedDesign.image_url} 
-                      alt={selectedDesign.name} 
-                      className="max-h-48 mx-auto"
-                    />
-                    <p className="text-center mt-2">{selectedDesign.name}</p>
-                  </div>
-                </div>
-                
-                <div className="flex-1">
-                  <h4 className="font-medium mb-2">Aperçu</h4>
-                  <div className="border border-white/30 rounded-lg p-2 h-full flex items-center justify-center">
-                    {isGeneratingMockup ? (
-                      <div className="text-center py-8">
-                        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-                        <p>Génération de l'aperçu...</p>
-                      </div>
-                    ) : rectoMockupUrl ? (
-                      <img 
-                        src={rectoMockupUrl} 
-                        alt="Mockup preview" 
-                        className="max-h-48 mx-auto"
-                      />
-                    ) : (
-                      <Button onClick={handleGenerateMockup}>
-                        Générer un aperçu
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              <Button 
-                className="w-full" 
-                onClick={() => handleAddDesignToCart(selectedDesign)}
-                disabled={isAddingToCart}
-              >
-                {isAddingToCart ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Ajout en cours...
-                  </>
-                ) : (
-                  'Ajouter au panier avec ce design'
-                )}
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-      
-      {/* Text Customization Dialog */}
-      <Dialog open={isTextDialogOpen} onOpenChange={setIsTextDialogOpen}>
-        <DialogContent className="bg-black/50 backdrop-blur-xl border-white/20 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Personnaliser avec du texte</DialogTitle>
-            <DialogDescription>
-              Ajoutez votre texte personnalisé sur le produit
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="custom-text">Votre texte</Label>
-                <Textarea 
-                  id="custom-text" 
-                  value={customText} 
-                  onChange={(e) => setCustomText(e.target.value)}
-                  placeholder="Entrez votre texte ici"
-                  rows={3}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="text-color">Couleur du texte</Label>
-                <div className="flex items-center gap-2">
-                  <input 
-                    type="color" 
-                    id="text-color" 
-                    value={textColor} 
-                    onChange={(e) => setTextColor(e.target.value)}
-                    className="w-10 h-10 rounded-md border-0 cursor-pointer"
-                  />
-                  <span>{textColor}</span>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="text-font">Police</Label>
-                <Select value={selectedFont} onValueChange={setSelectedFont}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une police" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fonts.map((font) => (
-                      <SelectItem key={font} value={font}>
-                        <span style={{ fontFamily: font }}>{font}</span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="text-size">Taille du texte: {textSize}px</Label>
-                <Slider 
-                  id="text-size"
-                  min={12} 
-                  max={72} 
-                  step={1} 
-                  value={[textSize]} 
-                  onValueChange={(value) => setTextSize(value[0])}
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <h4 className="font-medium">Aperçu</h4>
-              <div className="border border-white/30 rounded-lg p-4 h-64 flex items-center justify-center">
-                {isGeneratingMockup ? (
-                  <div className="text-center">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-                    <p>Génération de l'aperçu...</p>
-                  </div>
-                ) : rectoMockupUrl ? (
-                  <img 
-                    src={rectoMockupUrl} 
-                    alt="Mockup preview" 
-                    className="max-h-full mx-auto"
-                  />
-                ) : customText ? (
-                  <Button onClick={handleGenerateMockup}>
-                    Générer un aperçu
-                  </Button>
-                ) : (
-                  <p className="text-white/50">Entrez du texte pour générer un aperçu</p>
-                )}
-              </div>
-              
-              <div className="pt-4">
-                <div className="bg-black/30 rounded-lg p-4">
-                  <div className="font-medium mb-2">Aperçu du texte</div>
-                  <div 
-                    className="min-h-16 p-4 border border-white/20 rounded-md flex items-center justify-center"
-                    style={{ 
-                      color: textColor, 
-                      fontFamily: selectedFont,
-                      fontSize: `${textSize}px`
-                    }}
-                  >
-                    {customText || 'Votre texte ici'}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter className="mt-6">
-            <Button variant="outline" onClick={() => setIsTextDialogOpen(false)}>
-              Annuler
-            </Button>
-            <Button 
-              onClick={handleAddTextToCart} 
-              disabled={!customText || isAddingToCart}
-            >
-              {isAddingToCart ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Ajout en cours...
-                </>
-              ) : (
-                'Ajouter au panier avec ce texte'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Lottery Selection Dialog */}
-      <Dialog open={isLotteryDialogOpen} onOpenChange={setIsLotteryDialogOpen}>
-        <DialogContent className="bg-black/50 backdrop-blur-xl border-white/20 text-white">
-          <DialogHeader>
-            <DialogTitle>Choisir une loterie</DialogTitle>
-            <DialogDescription>
-              Sélectionnez une loterie à associer à votre produit
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <RadioGroup value={selectedLottery || ''} onValueChange={setSelectedLottery}>
-              <div className="space-y-2">
-                {lotteries.map((lottery) => (
-                  <div
-                    key={lottery.id}
-                    className={`flex items-center space-x-2 rounded-lg border p-4 ${
-                      selectedLottery === lottery.title 
-                        ? 'border-white bg-white/10' 
-                        : 'border-white/20'
-                    }`}
-                  >
-                    <RadioGroupItem value={lottery.title} id={lottery.id} />
-                    <Label htmlFor={lottery.id} className="flex-1 cursor-pointer">
-                      <div className="font-medium">{lottery.title}</div>
-                      <div className="text-sm text-white/70">{lottery.description}</div>
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </RadioGroup>
-            
-            {lotteries.length === 0 && (
-              <div className="text-center py-4">
-                <p>Aucune loterie disponible</p>
-              </div>
-            )}
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsLotteryDialogOpen(false)}>
-              Annuler
-            </Button>
-            <Button 
-              onClick={handleAddLotteryToCart} 
-              disabled={!selectedLottery || isAddingToCart}
-            >
-              {isAddingToCart ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Ajout en cours...
-                </>
-              ) : (
-                'Ajouter au panier avec cette loterie'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
 
+                  <Button size="lg" className="flex-1 bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90" onClick={handleAddToCart}>
+                    <ShoppingCart className="h-5 w-5 mr-2" />
+                    Ajouter au panier
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+      
+      <Footer />
+    </div>;
+};
 export default ProductDetail;

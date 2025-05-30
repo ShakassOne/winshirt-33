@@ -1,6 +1,6 @@
 
 // Mockup color variants type
-import { Database } from '@/integrations/supabase/types';
+import { Mockup as BaseMockup } from '@/types/supabase.types';
 
 export interface MockupColor {
   id?: string;
@@ -22,10 +22,16 @@ export interface PrintArea {
   y?: number;
 }
 
-// Use the base Mockup type from Supabase
-export type BaseMockup = Database['public']['Tables']['mockups']['Row'];
-
-// Create a specialized type for working with mockups that properly handles colors
-export interface MockupWithColors extends Omit<BaseMockup, 'colors'> {
+// Étend le type BaseMockup en ajoutant la propriété colors
+export interface MockupWithColors extends BaseMockup {
   colors: MockupColor[];
+  // Assurons-nous que toutes les propriétés nécessaires sont présentes
+  price_a3: number;
+  price_a4: number;
+  price_a5: number;
+  price_a6: number;
+  text_price_front: number;
+  text_price_back: number;
+  svg_front_url: string;
+  svg_back_url?: string | null;
 }

@@ -1,21 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Lottery } from '@/types/supabase.types';
-
-export const getLotteries = async (): Promise<Lottery[]> => {
-  const { data, error } = await supabase
-    .from('lotteries')
-    .select('*')
-    .eq('is_active', true)
-    .order('draw_date', { ascending: true });
-  
-  if (error) {
-    console.error('Error fetching lotteries:', error);
-    throw error;
-  }
-  
-  return data || [];
-};
 
 export const processExistingOrdersForLottery = async () => {
   try {
