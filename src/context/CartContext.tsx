@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { CartContextType } from '@/types/cart.types';
@@ -15,6 +14,16 @@ import {
 } from '@/services/cart.service';
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
+
+// Create a unique identifier for cart items
+const createCartItemKey = (productId: string, customization?: any, color?: string, size?: string) => {
+  const customizationString = customization ? JSON.stringify(customization) : '';
+  const colorString = color || '';
+  const sizeString = size || '';
+  
+  const combinedString = `${productId}-${customizationString}-${colorString}-${sizeString}`;
+  return btoa(combinedString).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
+};
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -171,9 +180,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       await addToCart(cartToken, item, currentUser?.id);
       await loadCartItems();
       
+      const itemDescription = item.customization ? 
+        `${item.name} (personnalisé)` : 
+        item.name;
+      
       toast({
         title: "Produit ajouté au panier",
-        description: `${item.name} a été ajouté à votre panier`,
+        description: `${itemDescription} a été ajouté à votre panier`,
       });
       
       console.log("Item added successfully");
@@ -190,13 +203,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [cartToken, currentUser?.id, loadCartItems]);
   
-  const removeItem = useCallback(async (productId: string) => {
+  const removeItem = useCallback(async (productIdOrKey: string) => {
     if (!cartToken) return;
     
-    console.log("Removing item from cart:", productId);
+    console.log("Removing item from cart:", productIdOrKey);
     setIsLoading(true);
     try {
-      await removeFromCart(cartToken, productId, currentUser?.id);
+      await removeFromCart(cartToken, productIdOrKey, currentUser?.id);
       toast({
         title: "Produit retiré du panier",
         description: "Le produit a été retiré de votre panier",
@@ -216,13 +229,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [cartToken, currentUser?.id, loadCartItems]);
   
-  const updateItemQuantity = useCallback(async (productId: string, quantity: number) => {
+  const updateItemQuantity = useCallback(async (productIdOrKey: string, quantity: number) => {
     if (!cartToken || quantity < 1) return;
     
-    console.log("Updating item quantity:", productId, quantity);
+    console.log("Updating item quantity:", productIdOrKey, quantity);
     setIsLoading(true);
     try {
-      await updateCartItemQuantity(cartToken, productId, quantity, currentUser?.id);
+      await updateCartItemQuantity(cartToken, productIdOrKey, quantity, currentUser?.id);
       await loadCartItems();
       console.log("Item quantity updated successfully");
     } catch (err: any) {

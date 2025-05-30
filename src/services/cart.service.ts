@@ -1,6 +1,17 @@
 import { supabase } from "@/integrations/supabase/client";
 import { CartItem } from "@/types/supabase.types";
 
+// Create a unique identifier for cart items based on product and customization
+const createCartItemKey = (productId: string, customization?: any, color?: string, size?: string) => {
+  const customizationString = customization ? JSON.stringify(customization) : '';
+  const colorString = color || '';
+  const sizeString = size || '';
+  
+  // Create a simple hash of the combination
+  const combinedString = `${productId}-${customizationString}-${colorString}-${sizeString}`;
+  return btoa(combinedString).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
+};
+
 // Create or get cart token from the database
 export const getOrCreateCartToken = async (token: string, userId?: string) => {
   try {
@@ -143,7 +154,7 @@ export const getOrCreateCartSession = async (token: string, userId?: string) => 
   }
 };
 
-// Add item to cart
+// Add item to cart - modified to handle personalized products separately
 export const addToCart = async (token: string, item: CartItem, userId?: string) => {
   try {
     if (!token) {
@@ -163,7 +174,8 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
       price: item.price,
       quantity: item.quantity,
       color: item.color || "N/A",
-      size: item.size || "N/A"
+      size: item.size || "N/A",
+      customization: item.customization
     });
     
     // Get or create cart token
@@ -183,64 +195,122 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
     console.log("Cart token:", cartToken);
     console.log("Cart session:", cartSession);
     
-    // Check if item already exists in cart
-    const { data: existingItems, error: fetchError } = await supabase
-      .from('cart_items')
-      .select('*')
-      .eq('cart_token_id', cartToken.id)
-      .eq('product_id', item.productId);
+    // Create unique item key for personalized products
+    const itemKey = createCartItemKey(item.productId, item.customization, item.color, item.size);
+    console.log("Generated item key:", itemKey);
     
-    if (fetchError) {
-      console.error("Error fetching existing items:", fetchError);
-      throw fetchError;
-    }
+    // For personalized products, always check if exact same customization exists
+    let whereClause = {
+      cart_token_id: cartToken.id,
+      product_id: item.productId
+    };
     
-    console.log("Existing items:", existingItems);
-    
-    if (existingItems && existingItems.length > 0) {
-      const existingItem = existingItems[0];
-      console.log("Updating existing item:", existingItem);
-      
-      // Update quantity if item exists
-      const { error: updateError } = await supabase
+    // If the product has customization, color, or size, we need to check for exact matches
+    if (item.customization || item.color || item.size) {
+      // Check for items with exact same customization, color, and size
+      const { data: existingItems, error: fetchError } = await supabase
         .from('cart_items')
-        .update({ 
-          quantity: existingItem.quantity + item.quantity,
-          customization: item.customization || existingItem.customization,
-          color: item.color || existingItem.color,
-          size: item.size || existingItem.size
-        })
-        .eq('id', existingItem.id);
+        .select('*')
+        .eq('cart_token_id', cartToken.id)
+        .eq('product_id', item.productId);
+      
+      if (fetchError) {
+        console.error("Error fetching existing items:", fetchError);
+        throw fetchError;
+      }
+      
+      console.log("Existing items found:", existingItems);
+      
+      // Find exact match based on customization, color, and size
+      const exactMatch = existingItems?.find(existingItem => {
+        const customizationMatch = JSON.stringify(existingItem.customization) === JSON.stringify(item.customization);
+        const colorMatch = existingItem.color === item.color;
+        const sizeMatch = existingItem.size === item.size;
         
-      if (updateError) {
-        console.error("Error updating cart item:", updateError);
-        throw updateError;
-      }
-      
-      console.log("Item quantity updated successfully");
-    } else {
-      console.log("Inserting new item");
-      
-      // Prepare customization data
-      let customizationData = item.customization;
-      if (customizationData) {
-        console.log("Item has customization:", customizationData);
-      }
-
-      // Log insertion attempt
-      console.log("Attempting to insert cart item with:", {
-        cart_token_id: cartToken.id,
-        cart_session_id: cartSession.id,
-        product_id: item.productId,
-        quantity: item.quantity,
-        price: item.price,
-        color: item.color || null,
-        size: item.size || null,
-        customization: customizationData || null
+        return customizationMatch && colorMatch && sizeMatch;
       });
       
-      // Insert new item
-      const { data: insertedItem, error: insertError } = await supabase
+      if (exactMatch) {
+        console.log("Found exact match, updating quantity:", exactMatch);
+        
+        // Update quantity if exact match exists
+        const { error: updateError } = await supabase
+          .from('cart_items')
+          .update({ 
+            quantity: exactMatch.quantity + item.quantity
+          })
+          .eq('id', exactMatch.id);
+          
+        if (updateError) {
+          console.error("Error updating cart item:", updateError);
+          throw updateError;
+        }
+        
+        console.log("Item quantity updated successfully");
+        return true;
+      }
+    } else {
+      // For non-personalized products, use the original logic
+      const { data: existingItems, error: fetchError } = await supabase
+        .from('cart_items')
+        .select('*')
+        .eq('cart_token_id', cartToken.id)
+        .eq('product_id', item.productId);
+      
+      if (fetchError) {
+        console.error("Error fetching existing items:", fetchError);
+        throw fetchError;
+      }
+      
+      console.log("Existing items:", existingItems);
+      
+      if (existingItems && existingItems.length > 0) {
+        const existingItem = existingItems[0];
+        console.log("Updating existing item:", existingItem);
+        
+        // Update quantity if item exists
+        const { error: updateError } = await supabase
+          .from('cart_items')
+          .update({ 
+            quantity: existingItem.quantity + item.quantity,
+            customization: item.customization || existingItem.customization,
+            color: item.color || existingItem.color,
+            size: item.size || existingItem.size
+          })
+          .eq('id', existingItem.id);
+          
+        if (updateError) {
+          console.error("Error updating cart item:", updateError);
+          throw updateError;
+        }
+        
+        console.log("Item quantity updated successfully");
+        return true;
+      }
+    }
+    
+    console.log("Inserting new item");
+    
+    // Prepare customization data
+    let customizationData = item.customization;
+    if (customizationData) {
+      console.log("Item has customization:", customizationData);
+    }
+
+    // Log insertion attempt
+    console.log("Attempting to insert cart item with:", {
+      cart_token_id: cartToken.id,
+      cart_session_id: cartSession.id,
+      product_id: item.productId,
+      quantity: item.quantity,
+      price: item.price,
+      color: item.color || null,
+      size: item.size || null,
+      customization: customizationData || null
+    });
+    
+    // Insert new item
+    const { data: insertedItem, error: insertError } = await supabase
         .from('cart_items')
         .insert([
           {
@@ -256,13 +326,12 @@ export const addToCart = async (token: string, item: CartItem, userId?: string) 
         ])
         .select();
         
-      if (insertError) {
-        console.error("Error inserting cart item:", insertError);
-        throw insertError;
-      }
-      
-      console.log("New item added to cart successfully:", insertedItem);
+    if (insertError) {
+      console.error("Error inserting cart item:", insertError);
+      throw insertError;
     }
+    
+    console.log("New item added to cart successfully:", insertedItem);
     
     console.log("Item added to cart successfully");
     return true;
@@ -317,7 +386,8 @@ export const getCartItems = async (token: string, userId?: string): Promise<Cart
       image_url: item.products?.image_url,
       available_colors: item.products?.available_colors,
       available_sizes: item.products?.available_sizes,
-      customization: item.customization as unknown as CartItem['customization']
+      customization: item.customization as unknown as CartItem['customization'],
+      cartItemId: item.id // Add cart item ID for easier removal
     }));
     
   } catch (error) {
@@ -326,24 +396,47 @@ export const getCartItems = async (token: string, userId?: string): Promise<Cart
   }
 };
 
-// Remove item from cart
-export const removeFromCart = async (token: string, productId: string, userId?: string) => {
+// Remove item from cart - updated to handle personalized products
+export const removeFromCart = async (token: string, productIdOrKey: string, userId?: string) => {
   try {
     // Get cart token
     const cartToken = await getOrCreateCartToken(token, userId);
     
     console.log("Removing item from cart for token:", token);
     console.log("Cart token:", cartToken);
-    console.log("Product ID to remove:", productId);
+    console.log("Product ID or key to remove:", productIdOrKey);
     
-    // Find the cart item
-    const { data: cartItems, error: fetchError } = await supabase
+    // Try to find by product ID first (backward compatibility)
+    let { data: cartItems, error: fetchError } = await supabase
       .from('cart_items')
       .select('id')
       .eq('cart_token_id', cartToken.id)
-      .eq('product_id', productId);
+      .eq('product_id', productIdOrKey);
       
     if (fetchError) throw fetchError;
+    
+    // If not found by product ID, it might be a removal key for personalized items
+    if (!cartItems || cartItems.length === 0) {
+      // For personalized items, we need to get all items and find the match
+      const { data: allItems, error: allItemsError } = await supabase
+        .from('cart_items')
+        .select('*')
+        .eq('cart_token_id', cartToken.id);
+        
+      if (allItemsError) throw allItemsError;
+      
+      console.log("All cart items for matching:", allItems);
+      
+      // Find item that matches the removal key
+      const matchingItem = allItems?.find(item => {
+        const itemKey = createCartItemKey(item.product_id, item.customization, item.color, item.size);
+        return itemKey === productIdOrKey;
+      });
+      
+      if (matchingItem) {
+        cartItems = [{ id: matchingItem.id }];
+      }
+    }
     
     console.log("Found cart items to remove:", cartItems);
     
@@ -367,25 +460,48 @@ export const removeFromCart = async (token: string, productId: string, userId?: 
   }
 };
 
-// Update cart item quantity
-export const updateCartItemQuantity = async (token: string, productId: string, quantity: number, userId?: string) => {
+// Update cart item quantity - updated to handle personalized products
+export const updateCartItemQuantity = async (token: string, productIdOrKey: string, quantity: number, userId?: string) => {
   try {
     // Get cart token
     const cartToken = await getOrCreateCartToken(token, userId);
     
     console.log("Updating cart item quantity for token:", token);
     console.log("Cart token:", cartToken);
-    console.log("Product ID:", productId);
+    console.log("Product ID or key:", productIdOrKey);
     console.log("New quantity:", quantity);
     
-    // Find the cart item
-    const { data: cartItems, error: fetchError } = await supabase
+    // Try to find by product ID first (backward compatibility)
+    let { data: cartItems, error: fetchError } = await supabase
       .from('cart_items')
       .select('id')
       .eq('cart_token_id', cartToken.id)
-      .eq('product_id', productId);
+      .eq('product_id', productIdOrKey);
       
     if (fetchError) throw fetchError;
+    
+    // If not found by product ID, it might be a key for personalized items
+    if (!cartItems || cartItems.length === 0) {
+      // For personalized items, we need to get all items and find the match
+      const { data: allItems, error: allItemsError } = await supabase
+        .from('cart_items')
+        .select('*')
+        .eq('cart_token_id', cartToken.id);
+        
+      if (allItemsError) throw allItemsError;
+      
+      console.log("All cart items for matching:", allItems);
+      
+      // Find item that matches the key
+      const matchingItem = allItems?.find(item => {
+        const itemKey = createCartItemKey(item.product_id, item.customization, item.color, item.size);
+        return itemKey === productIdOrKey;
+      });
+      
+      if (matchingItem) {
+        cartItems = [{ id: matchingItem.id }];
+      }
+    }
     
     console.log("Found cart items to update:", cartItems);
     
