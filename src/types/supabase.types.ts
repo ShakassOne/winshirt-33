@@ -1,5 +1,4 @@
 
-
 export type Json =
   | string
   | number
@@ -640,6 +639,17 @@ export interface Mockup {
   updated_at: string | null;
 }
 
+// PrintArea interface for mockup types
+export interface PrintArea {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation?: number;
+}
+
 // Extended order interfaces
 export interface ExtendedOrderItem extends OrderItem {
   product?: Product;
@@ -673,4 +683,3 @@ export interface CartItem {
   cartItemId?: string;
   uniqueKey?: string; // For separating personalized products
 }
-
