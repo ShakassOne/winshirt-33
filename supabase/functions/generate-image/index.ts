@@ -7,35 +7,42 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Upload image to Supabase Storage
-const uploadImageToSupabase = async (supabase: any, dalleImageUrl: string, fileName: string) => {
+// Upload image vers winshirt.fr/upload-visuel.php
+const uploadImageToWinshirt = async (dalleImageUrl: string, fileName: string) => {
   try {
+    console.log('[Edge Function] Upload image IA vers winshirt.fr...');
+    
     // 1. Récupération du blob depuis l'URL DALL·E
     const response = await fetch(dalleImageUrl);
     if (!response.ok) throw new Error("Impossible de récupérer l'image DALL·E");
     const blob = await response.blob();
 
-    // 2. Upload vers Supabase Storage
-    const { data, error } = await supabase.storage
-      .from("ai-images")
-      .upload(`${fileName}.png`, blob, {
-        contentType: "image/png",
-        upsert: true,
-      });
+    // 2. Création du FormData pour l'upload
+    const formData = new FormData();
+    formData.append('file', blob, `${fileName}.png`);
 
-    if (error) {
-      console.error("Erreur upload Supabase :", error);
-      throw error;
+    // 3. Upload vers votre script PHP
+    const uploadResponse = await fetch('https://winshirt.fr/upload-visuel.php', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(`HTTP ${uploadResponse.status}: ${uploadResponse.statusText}`);
     }
 
-    // 3. Récupération de l'URL publique
-    const { data: { publicUrl } } = supabase.storage
-      .from("ai-images")
-      .getPublicUrl(`${fileName}.png`);
+    const uploadResult = await uploadResponse.json();
+    console.log('[Edge Function] Réponse winshirt.fr:', uploadResult);
 
-    return publicUrl;
+    if (uploadResult.success === true && uploadResult.url) {
+      console.log('[Edge Function] Image IA uploadée avec succès:', uploadResult.url);
+      return uploadResult.url;
+    } else {
+      const errorMessage = uploadResult.error || uploadResult.message || 'Upload échoué sur winshirt.fr';
+      throw new Error(errorMessage);
+    }
   } catch (error) {
-    console.error("Error uploading image to Supabase:", error);
+    console.error("Error uploading image to winshirt.fr:", error);
     throw error;
   }
 };
@@ -191,8 +198,8 @@ serve(async (req) => {
     // Generate unique filename
     const fileName = `ai-${userId || sessionToken}-${Date.now()}`
     
-    // Upload image to Supabase Storage and get permanent URL
-    const permanentImageUrl = await uploadImageToSupabase(supabase, tempImageUrl, fileName)
+    // Upload image to winshirt.fr and get permanent URL
+    const permanentImageUrl = await uploadImageToWinshirt(tempImageUrl, fileName)
 
     // Save to ai_images for recycling with permanent URL
     await supabase

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import axios from 'axios';
 import { Design, Mockup, Product, Lottery, SocialNetwork } from '@/types/supabase.types';
@@ -568,7 +567,7 @@ export const deleteSocialNetwork = async (id: string): Promise<void> => {
 };
 
 export const uploadToExternalScript = async (file: File): Promise<string> => {
-  console.log('[API] Uploading to external script:', file.name);
+  console.log('[API] Upload vers winshirt.fr/upload-visuel.php:', file.name);
   
   const formData = new FormData();
   formData.append('file', file);
@@ -581,46 +580,35 @@ export const uploadToExternalScript = async (file: File): Promise<string> => {
       timeout: 30000,
     });
     
-    if (response.data?.success && response.data?.url) {
-      console.log('[API] External upload successful:', response.data.url);
+    console.log('[API] Réponse du script PHP:', response.data);
+    
+    if (response.data?.success === true && response.data?.url) {
+      console.log('[API] Upload réussi vers winshirt.fr:', response.data.url);
       return response.data.url;
     } else {
-      console.error('[API] External script error:', response.data);
-      throw new Error(response.data?.error || 'Upload failed');
+      console.error('[API] Script PHP retourne success:false:', response.data);
+      const errorMessage = response.data?.error || response.data?.message || 'Upload échoué sur le serveur';
+      throw new Error(errorMessage);
     }
   } catch (error) {
-    console.error('Error uploading to external script:', error);
-    throw error;
+    console.error('[API] Erreur lors de l\'upload vers winshirt.fr:', error);
+    
+    if (axios.isAxiosError(error)) {
+      if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      } else if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.code === 'ECONNABORTED') {
+        throw new Error('Timeout - le serveur met trop de temps à répondre');
+      } else if (error.response?.status === 413) {
+        throw new Error('Fichier trop volumineux');
+      } else if (error.response?.status >= 500) {
+        throw new Error('Erreur serveur - veuillez réessayer plus tard');
+      }
+    }
+    
+    throw new Error('Erreur de connexion au serveur d\'upload');
   }
 };
 
-export const uploadFileToStorage = async (file: File, folder: string = 'uploads'): Promise<string> => {
-  console.log('[API] Uploading to Supabase storage:', file.name);
-  
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${folder}/${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-  
-  try {
-    const { data, error } = await supabase.storage
-      .from('public')
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
-
-    if (error) {
-      console.error('[API] Supabase upload error:', error);
-      throw error;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('public')
-      .getPublicUrl(fileName);
-
-    console.log('[API] Supabase upload successful:', publicUrl);
-    return publicUrl;
-  } catch (error) {
-    console.error('[API] Error uploading to Supabase:', error);
-    throw error;
-  }
-};
+// Suppression de uploadFileToStorage - plus utilisé

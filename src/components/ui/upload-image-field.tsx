@@ -12,7 +12,6 @@ interface UploadImageFieldProps {
   className?: string;
   id?: string;
   showPreview?: boolean;
-  useExternalUpload?: boolean;
 }
 
 export function UploadImageField({
@@ -22,8 +21,7 @@ export function UploadImageField({
   placeholder = "URL de l'image",
   className,
   id,
-  showPreview = true,
-  useExternalUpload = true
+  showPreview = true
 }: UploadImageFieldProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(value || null);
 
@@ -56,7 +54,6 @@ export function UploadImageField({
         <UploadButton
           onUpload={handleUpload}
           variant="outline"
-          useExternalUpload={useExternalUpload}
         />
       </div>
       

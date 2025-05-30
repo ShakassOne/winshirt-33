@@ -3,26 +3,22 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { uploadFileToStorage, uploadToExternalScript } from '@/services/api.service';
+import { uploadToExternalScript } from '@/services/api.service';
 
 interface UploadButtonProps {
   onUpload: (url: string) => void;
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
-  targetFolder?: string;
   acceptTypes?: string;
   className?: string;
-  useExternalUpload?: boolean;
 }
 
 export function UploadButton({
   onUpload,
   variant = 'default',
   size = 'default',
-  targetFolder = 'uploads',
   acceptTypes = 'image/*',
-  className,
-  useExternalUpload = true
+  className
 }: UploadButtonProps) {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -40,33 +36,13 @@ export function UploadButton({
 
     setIsUploading(true);
     try {
-      let url: string;
+      console.log('[UploadButton] Upload vers winshirt.fr/upload-visuel.php...');
+      const url = await uploadToExternalScript(file);
       
-      if (useExternalUpload) {
-        try {
-          console.log('[UploadButton] Tentative upload externe...');
-          url = await uploadToExternalScript(file);
-          toast({
-            title: "Upload réussi",
-            description: "Le fichier a été téléchargé vers le serveur externe",
-          });
-        } catch (externalError) {
-          console.error('[UploadButton] Upload externe échoué, fallback vers Supabase...', externalError);
-          
-          // Fallback vers Supabase avec message informatif
-          url = await uploadFileToStorage(file, targetFolder);
-          toast({
-            title: "Upload réussi (fallback)",
-            description: "Le fichier a été téléchargé vers Supabase Storage",
-          });
-        }
-      } else {
-        url = await uploadFileToStorage(file, targetFolder);
-        toast({
-          title: "Upload réussi",
-          description: "Le fichier a été téléchargé vers Supabase Storage",
-        });
-      }
+      toast({
+        title: "Upload réussi",
+        description: "Le fichier a été téléchargé avec succès",
+      });
       
       onUpload(url);
     } catch (error) {
