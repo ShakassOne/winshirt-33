@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { createMockup, updateMockup, uploadFileToStorage } from '@/services/api.service';
+import { createMockup, updateMockup } from '@/services/api.service';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -309,7 +309,6 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
                       <UploadButton 
                         onUpload={handleSvgFrontUpload} 
                         size="icon"
-                        targetFolder="mockups"
                         acceptTypes=".svg,.png,.jpg,.jpeg"
                       />
                     </div>
@@ -327,7 +326,6 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
                       <UploadButton 
                         onUpload={handleSvgBackUpload} 
                         size="icon"
-                        targetFolder="mockups"
                         acceptTypes=".svg,.png,.jpg,.jpeg"
                       />
                     </div>

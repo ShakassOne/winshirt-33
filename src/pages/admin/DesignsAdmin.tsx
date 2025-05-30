@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import {
@@ -234,7 +233,6 @@ const DesignsAdmin = () => {
                 <UploadButton
                   onUpload={handleImageUpload}
                   variant="outline"
-                  targetFolder="designs"
                 />
               </div>
             </div>
