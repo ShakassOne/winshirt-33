@@ -43,27 +43,39 @@ export function UploadButton({
       let url: string;
       
       if (useExternalUpload) {
-        url = await uploadToExternalScript(file);
-        toast({
-          title: "Téléchargement réussi",
-          description: "Le fichier a été téléchargé vers le serveur externe",
-        });
+        try {
+          console.log('[UploadButton] Tentative upload externe...');
+          url = await uploadToExternalScript(file);
+          toast({
+            title: "Upload réussi",
+            description: "Le fichier a été téléchargé vers le serveur externe",
+          });
+        } catch (externalError) {
+          console.error('[UploadButton] Upload externe échoué, fallback vers Supabase...', externalError);
+          
+          // Fallback vers Supabase avec message informatif
+          url = await uploadFileToStorage(file, targetFolder);
+          toast({
+            title: "Upload réussi (fallback)",
+            description: "Le fichier a été téléchargé vers Supabase Storage",
+          });
+        }
       } else {
         url = await uploadFileToStorage(file, targetFolder);
         toast({
-          title: "Téléchargement réussi",
-          description: "Le fichier a été téléchargé avec succès",
+          title: "Upload réussi",
+          description: "Le fichier a été téléchargé vers Supabase Storage",
         });
       }
       
       onUpload(url);
     } catch (error) {
+      console.error("Upload error:", error);
       toast({
-        title: "Erreur de téléchargement",
-        description: "Une erreur est survenue lors du téléchargement",
+        title: "Erreur d'upload",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors du téléchargement",
         variant: "destructive",
       });
-      console.error("Upload error:", error);
     } finally {
       setIsUploading(false);
       // Reset the input to allow uploading the same file again
