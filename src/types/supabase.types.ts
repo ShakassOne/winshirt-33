@@ -1,4 +1,5 @@
 
+
 export type Json =
   | string
   | number
@@ -181,6 +182,13 @@ export interface Database {
           number_of_entries: number | null
           product_id: string | null
           start_date: string | null
+          title: string
+          value: number
+          goal: number
+          participants: number | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          draw_date: string
         }
         Insert: {
           created_at?: string
@@ -192,6 +200,13 @@ export interface Database {
           number_of_entries?: number | null
           product_id?: string | null
           start_date?: string | null
+          title: string
+          value: number
+          goal: number
+          participants?: number | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          draw_date: string
         }
         Update: {
           created_at?: string
@@ -203,6 +218,13 @@ export interface Database {
           number_of_entries?: number | null
           product_id?: string | null
           start_date?: string | null
+          title?: string
+          value?: number
+          goal?: number
+          participants?: number | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          draw_date?: string
         }
         Relationships: [
           {
@@ -363,6 +385,11 @@ export interface Database {
           image_url: string | null
           name: string | null
           price: number | null
+          category: string
+          is_customizable: boolean | null
+          is_active: boolean | null
+          tickets_offered: number | null
+          mockup_id: string | null
         }
         Insert: {
           available_colors?: string[] | null
@@ -373,6 +400,11 @@ export interface Database {
           image_url?: string | null
           name?: string | null
           price?: number | null
+          category: string
+          is_customizable?: boolean | null
+          is_active?: boolean | null
+          tickets_offered?: number | null
+          mockup_id?: string | null
         }
         Update: {
           available_colors?: string[] | null
@@ -383,6 +415,11 @@ export interface Database {
           image_url?: string | null
           name?: string | null
           price?: number | null
+          category?: string
+          is_customizable?: boolean | null
+          is_active?: boolean | null
+          tickets_offered?: number | null
+          mockup_id?: string | null
         }
         Relationships: []
       }
@@ -548,14 +585,14 @@ export type Enums<
     ? Database["public"]["Enums"][EnumName]
     : never
 
-// Extended interfaces for the application
-export interface Product extends Tables<'products'> {}
-export interface Profile extends Tables<'profiles'> {}
-export interface ShippingOption extends Tables<'shipping_options'> {}
-export interface Order extends Tables<'orders'> {}
-export interface OrderItem extends Tables<'order_items'> {}
-export interface Lottery extends Tables<'lotteries'> {}
-export interface LotteryEntry extends Tables<'lottery_entries'> {}
+// Application-specific type aliases using the generated types
+export type Product = Tables<'products'>;
+export type Profile = Tables<'profiles'>;
+export type ShippingOption = Tables<'shipping_options'>;
+export type Order = Tables<'orders'>;
+export type OrderItem = Tables<'order_items'>;
+export type Lottery = Tables<'lotteries'>;
+export type LotteryEntry = Tables<'lottery_entries'>;
 
 export type OrderStatus = Enums<'order_status'>;
 export type PaymentStatus = Enums<'payment_status'>;
@@ -636,3 +673,4 @@ export interface CartItem {
   cartItemId?: string;
   uniqueKey?: string; // For separating personalized products
 }
+
