@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -80,21 +81,29 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
       setValue('text_price_back', initialData.text_price_back);
       setValue('is_active', initialData.is_active);
 
-      // Ensure print_areas is always an array
+      // Handle print_areas with proper type conversion
       let areas: PrintArea[] = [];
       if (initialData.print_areas) {
-        if (Array.isArray(initialData.print_areas)) {
-          areas = initialData.print_areas;
-        } else if (typeof initialData.print_areas === 'string') {
-          try {
-            areas = JSON.parse(initialData.print_areas);
-            if (!Array.isArray(areas)) {
-              areas = [];
-            }
-          } catch (e) {
-            console.error("Error parsing print_areas JSON:", e);
-            areas = [];
-          }
+        try {
+          const parsedAreas = Array.isArray(initialData.print_areas) 
+            ? initialData.print_areas 
+            : JSON.parse(initialData.print_areas as string);
+          
+          // Convert Json objects to PrintArea with proper typing
+          areas = (parsedAreas as any[]).map((area: any) => ({
+            id: area.id || `${Date.now()}`,
+            name: area.name || 'Zone',
+            width: Number(area.width) || 200,
+            height: Number(area.height) || 200,
+            position_x: Number(area.position_x || area.x) || 100,
+            position_y: Number(area.position_y || area.y) || 100,
+            side: area.side || 'front',
+            x: Number(area.position_x || area.x) || 100,
+            y: Number(area.position_y || area.y) || 100,
+          } as PrintArea));
+        } catch (e) {
+          console.error("Error parsing print_areas:", e);
+          areas = [];
         }
       }
       setPrintAreas(areas);
@@ -104,7 +113,7 @@ const MockupForm = ({ isOpen, onClose, onSuccess, initialData }: MockupFormProps
         try {
           const colors = Array.isArray(initialData.colors) 
             ? initialData.colors 
-            : (typeof initialData.colors === 'string' ? JSON.parse(initialData.colors) : []);
+            : JSON.parse(initialData.colors as string);
           setMockupColors(Array.isArray(colors) ? colors : []);
         } catch (e) {
           console.error("Error loading mockup colors:", e);
