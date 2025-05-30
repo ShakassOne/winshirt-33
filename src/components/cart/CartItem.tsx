@@ -20,29 +20,11 @@ const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity })
     }
   };
 
-  // Generate unique key for removal (important for personalized items)
-  const generateRemovalKey = () => {
-    const customizationString = item.customization ? JSON.stringify(item.customization) : '';
-    const colorString = item.color || '';
-    const sizeString = item.size || '';
-    
-    const combinedString = `${item.productId}-${customizationString}-${colorString}-${sizeString}`;
-    return btoa(combinedString).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
-  };
-
-  // Get the display image - prioritize customization mockup over product image
-  const getDisplayImage = () => {
-    if (item.customization?.mockupRectoUrl) {
-      return item.customization.mockupRectoUrl;
-    }
-    return item.image_url;
-  };
-
   return (
     <div className="flex flex-col sm:flex-row gap-4 p-4 border-b border-gray-100/10">
       <div className="flex-shrink-0 w-full sm:w-24 h-24 rounded-md overflow-hidden">
         <img 
-          src={getDisplayImage()} 
+          src={item.image_url} 
           alt={item.name} 
           className="w-full h-full object-cover"
         />
@@ -57,7 +39,7 @@ const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity })
             variant="ghost" 
             size="icon" 
             className="h-8 w-8 text-gray-500 hover:text-red-500"
-            onClick={() => onRemove(generateRemovalKey())}
+            onClick={() => onRemove(item.productId)}
           >
             <TrashIcon className="h-4 w-4" />
           </Button>
@@ -82,32 +64,13 @@ const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity })
           )}
           
           {item.customization && (
-            <div className="mt-2 space-y-1">
+            <div className="mt-2">
               <Badge variant="outline" className="mb-1">Personnalisé</Badge>
               {item.customization.designId && (
                 <div className="text-xs text-gray-400">Design appliqué</div>
               )}
               {item.customization.customText && (
-                <div className="text-xs text-gray-400">Texte: "{item.customization.customText}"</div>
-              )}
-              {item.customization.lotteryName && (
-                <div className="text-xs text-blue-400">Loterie: {item.customization.lotteryName}</div>
-              )}
-              {item.customization.mockupRectoUrl && (
-                <div className="flex gap-2 mt-2">
-                  <img 
-                    src={item.customization.mockupRectoUrl} 
-                    alt="Aperçu recto" 
-                    className="w-12 h-12 object-cover rounded border"
-                  />
-                  {item.customization.mockupVersoUrl && (
-                    <img 
-                      src={item.customization.mockupVersoUrl} 
-                      alt="Aperçu verso" 
-                      className="w-12 h-12 object-cover rounded border"
-                    />
-                  )}
-                </div>
+                <div className="text-xs text-gray-400">Texte personnalisé</div>
               )}
             </div>
           )}
