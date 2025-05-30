@@ -15,6 +15,7 @@ import { getShippingOptions } from '@/services/shipping.service';
 import ShippingOptions from '@/components/checkout/ShippingOptions';
 import StripeProvider from '@/components/payment/StripeProvider';
 import StripePaymentModal from '@/components/payment/StripePaymentModal';
+import GooglePlacesAutocomplete from '@/components/ui/GooglePlacesAutocomplete';
 import { 
   Form, 
   FormControl, 
@@ -81,14 +82,12 @@ const Checkout = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
 
-  // Vérifie si l'utilisateur est connecté
   React.useEffect(() => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session?.user) {
         setUser(data.session.user);
         
-        // Récupère les informations du profil pour pré-remplir le formulaire
         const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
@@ -104,7 +103,7 @@ const Checkout = () => {
             address: profileData.address || '',
             city: profileData.city || '',
             postalCode: profileData.postal_code || '',
-            country: profileData.country || 'FR', // Défaut à FR
+            country: profileData.country || 'FR',
             deliveryNotes: '',
             createAccount: false
           });
@@ -125,7 +124,7 @@ const Checkout = () => {
       address: '',
       city: '',
       postalCode: '',
-      country: 'FR', // Défaut à FR
+      country: 'FR',
       deliveryNotes: '',
       createAccount: false,
       password: '',
@@ -136,14 +135,12 @@ const Checkout = () => {
   const createAccount = form.watch('createAccount');
   const selectedShippingOption = form.watch('selectedShippingOption');
 
-  // Charger les options de livraison
   useEffect(() => {
     const loadShippingOptions = async () => {
       try {
         const options = await getShippingOptions();
         setShippingOptions(options);
         
-        // Sélectionner automatiquement la première option si disponible
         if (options.length > 0 && !selectedShippingOption) {
           form.setValue('selectedShippingOption', options[0].id);
           setSelectedShippingCost(options[0].price);
@@ -161,7 +158,6 @@ const Checkout = () => {
     loadShippingOptions();
   }, []);
 
-  // Mettre à jour le coût de livraison quand l'option change
   useEffect(() => {
     const option = shippingOptions.find(opt => opt.id === selectedShippingOption);
     if (option) {
@@ -174,6 +170,22 @@ const Checkout = () => {
     const option = shippingOptions.find(opt => opt.id === optionId);
     if (option) {
       setSelectedShippingCost(option.price);
+    }
+  };
+
+  const handleAddressSelect = (addressComponents: any) => {
+    // Auto-fill the form fields when an address is selected
+    if (addressComponents.address) {
+      form.setValue('address', addressComponents.address);
+    }
+    if (addressComponents.city) {
+      form.setValue('city', addressComponents.city);
+    }
+    if (addressComponents.postalCode) {
+      form.setValue('postalCode', addressComponents.postalCode);
+    }
+    if (addressComponents.country) {
+      form.setValue('country', addressComponents.country);
     }
   };
 
@@ -206,7 +218,6 @@ const Checkout = () => {
       
       let userId = user?.id;
       
-      // Si l'utilisateur veut créer un compte et n'est pas connecté
       if (data.createAccount && !user) {
         console.log("Creating new account...");
         const { error, data: authData } = await supabase.auth.signUp({
@@ -227,7 +238,6 @@ const Checkout = () => {
         
         userId = authData.user?.id;
         
-        // Migrate the cart to the new user
         if (userId && cartToken) {
           await migrateCartToUser(userId, cartToken);
           toast({
@@ -236,7 +246,6 @@ const Checkout = () => {
           });
         }
         
-        // Crée ou met à jour le profil utilisateur
         if (userId) {
           const { error: profileError } = await supabase
             .from('profiles')
@@ -257,11 +266,9 @@ const Checkout = () => {
       }
       
       console.log("Creating order...");
-      // Crée la commande
       const order = await createOrder(data, items, cartToken, userId);
       console.log("Order created:", order);
       
-      // Ouvrir la modal de paiement au lieu de rediriger
       setCurrentOrderId(order.id);
       setShowPaymentModal(true);
       
@@ -378,11 +385,14 @@ const Checkout = () => {
                         name="address"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Adresse</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Adresse" {...field} />
-                            </FormControl>
-                            <FormMessage />
+                            <GooglePlacesAutocomplete
+                              onAddressSelect={handleAddressSelect}
+                              value={field.value}
+                              onChange={field.onChange}
+                              error={form.formState.errors.address?.message}
+                              placeholder="Commencez à taper votre adresse..."
+                              label="Adresse"
+                            />
                           </FormItem>
                         )}
                       />
@@ -459,7 +469,6 @@ const Checkout = () => {
                         )}
                       />
                       
-                      {/* Options de livraison */}
                       <div className="pt-6 border-t border-gray-100/10">
                         <FormField
                           control={form.control}
@@ -530,7 +539,6 @@ const Checkout = () => {
                           disabled={isLoading}
                           onClick={(e) => {
                             console.log("Button clicked");
-                            // Le handleFormSubmit sera appelé automatiquement par le type="submit"
                           }}
                         >
                           {isLoading ? "Création de la commande..." : "Procéder au paiement"}
@@ -592,7 +600,6 @@ const Checkout = () => {
           </div>
         </div>
         
-        {/* Modal de paiement Stripe */}
         {showPaymentModal && currentOrderId && (
           <StripePaymentModal
             isOpen={showPaymentModal}
