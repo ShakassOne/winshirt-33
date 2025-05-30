@@ -7,7 +7,6 @@ export type CartItem = {
   image_url?: string;
   color?: string | null;
   size?: string | null;
-  lotteries?: any;
   available_colors?: string[] | null;
   available_sizes?: string[] | null;
   customization?: {
@@ -82,78 +81,21 @@ export type ExtendedOrder = Order & {
   items: ExtendedOrderItem[];
 };
 
-// Ajout des types manquants
-export type Product = {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image_url: string;
-  category: string;
-  is_active?: boolean;
-  is_customizable?: boolean;
-  available_colors?: string[] | null;
-  available_sizes?: string[] | null;
-  color?: string | null;
-  mockup_id?: string | null;
-  model_3d_url?: string | null;
-  use_3d_viewer?: boolean;
-  tickets_offered?: number | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-};
+// Use Supabase types directly for core entities
+import { Database } from '@/integrations/supabase/types';
 
-export type Design = {
-  id: string;
-  name: string;
-  image_url: string;
-  category: string;
-  is_active?: boolean | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-};
+export type Product = Database['public']['Tables']['products']['Row'];
+export type Design = Database['public']['Tables']['designs']['Row'];
+export type Lottery = Database['public']['Tables']['lotteries']['Row'];
+export type Mockup = Database['public']['Tables']['mockups']['Row'];
+export type SocialNetwork = Database['public']['Tables']['social_networks']['Row'];
 
-export type Lottery = {
+// Define PrintArea type for mockups
+export type PrintArea = {
   id: string;
-  title: string;
-  description: string;
-  value: number;
-  goal: number;
-  participants?: number | null;
-  draw_date: string;
-  image_url: string;
-  is_active?: boolean | null;
-  is_featured?: boolean | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-};
-
-export type Mockup = {
-  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
   name: string;
-  category: string;
-  svg_front_url: string;
-  svg_back_url?: string | null;
-  price_a3: number;
-  price_a4: number;
-  price_a5: number;
-  price_a6: number;
-  text_price_front: number;
-  text_price_back: number;
-  print_areas: any;
-  colors?: any | null;
-  is_active: boolean;
-  created_at?: string | null;
-  updated_at?: string | null;
-};
-
-export type SocialNetwork = {
-  id: string;
-  name: string;
-  url: string | null;
-  icon: string;
-  is_active: boolean;
-  priority: number;
-  created_at: string;
-  updated_at: string;
 };
