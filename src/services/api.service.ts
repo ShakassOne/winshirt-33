@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import axios from 'axios';
 import { Design, Mockup, Product, Lottery, SocialNetwork } from '@/types/supabase.types';
@@ -84,6 +85,178 @@ export const deleteDesign = async (id: string): Promise<void> => {
     console.log(`Design with id ${id} deleted successfully`);
   } catch (error) {
     console.error(`Failed to delete design with id ${id}:`, error);
+    throw error;
+  }
+};
+
+export const fetchAllProducts = async (): Promise<Product[]> => {
+  console.log('Fetching all products...');
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching products:', error);
+      throw error;
+    }
+
+    console.log('Products fetched successfully:', data);
+    return data || [];
+  } catch (error) {
+    console.error('Failed to fetch products:', error);
+    return [];
+  }
+};
+
+export const createProduct = async (productData: any): Promise<Product> => {
+  console.log('Creating product:', productData);
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .insert([productData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating product:', error);
+      throw error;
+    }
+
+    console.log('Product created successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('Failed to create product:', error);
+    throw error;
+  }
+};
+
+export const updateProduct = async (id: string, productData: any): Promise<Product> => {
+  console.log(`Updating product with id ${id}:`, productData);
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .update(productData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`Error updating product with id ${id}:`, error);
+      throw error;
+    }
+
+    console.log(`Product with id ${id} updated successfully:`, data);
+    return data;
+  } catch (error) {
+    console.error(`Failed to update product with id ${id}:`, error);
+    throw error;
+  }
+};
+
+export const deleteProduct = async (id: string): Promise<void> => {
+  console.log(`Deleting product with id ${id}`);
+  try {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error(`Error deleting product with id ${id}:`, error);
+      throw error;
+    }
+
+    console.log(`Product with id ${id} deleted successfully`);
+  } catch (error) {
+    console.error(`Failed to delete product with id ${id}:`, error);
+    throw error;
+  }
+};
+
+export const fetchAllMockups = async (): Promise<Mockup[]> => {
+  console.log('Fetching all mockups...');
+  try {
+    const { data, error } = await supabase
+      .from('mockups')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching mockups:', error);
+      throw error;
+    }
+
+    console.log('Mockups fetched successfully:', data);
+    return data || [];
+  } catch (error) {
+    console.error('Failed to fetch mockups:', error);
+    return [];
+  }
+};
+
+export const createMockup = async (mockupData: any): Promise<Mockup> => {
+  console.log('Creating mockup:', mockupData);
+  try {
+    const { data, error } = await supabase
+      .from('mockups')
+      .insert([mockupData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating mockup:', error);
+      throw error;
+    }
+
+    console.log('Mockup created successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('Failed to create mockup:', error);
+    throw error;
+  }
+};
+
+export const updateMockup = async (id: string, mockupData: any): Promise<Mockup> => {
+  console.log(`Updating mockup with id ${id}:`, mockupData);
+  try {
+    const { data, error } = await supabase
+      .from('mockups')
+      .update(mockupData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`Error updating mockup with id ${id}:`, error);
+      throw error;
+    }
+
+    console.log(`Mockup with id ${id} updated successfully:`, data);
+    return data;
+  } catch (error) {
+    console.error(`Failed to update mockup with id ${id}:`, error);
+    throw error;
+  }
+};
+
+export const deleteMockup = async (id: string): Promise<void> => {
+  console.log(`Deleting mockup with id ${id}`);
+  try {
+    const { error } = await supabase
+      .from('mockups')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error(`Error deleting mockup with id ${id}:`, error);
+      throw error;
+    }
+
+    console.log(`Mockup with id ${id} deleted successfully`);
+  } catch (error) {
+    console.error(`Failed to delete mockup with id ${id}:`, error);
     throw error;
   }
 };
@@ -398,14 +571,14 @@ export const uploadToExternalScript = async (file: File): Promise<string> => {
   console.log('[API] Uploading to external script:', file.name);
   
   const formData = new FormData();
-  formData.append('file', file); // ✅ Correction: utilise 'file' au lieu de 'image' pour matcher votre script PHP
+  formData.append('file', file);
   
   try {
     const response = await axios.post('https://winshirt.fr/upload-visuel.php', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 30000, // 30 secondes timeout
+      timeout: 30000,
     });
     
     if (response.data?.success && response.data?.url) {

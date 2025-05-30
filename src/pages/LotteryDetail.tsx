@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -32,8 +31,8 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
   });
 
   const { data: productsWithTickets, isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['productsWithTickets', id],
-    queryFn: () => fetchProductsWithTickets(id as string),
+    queryKey: ['productsWithTickets'],
+    queryFn: () => fetchProductsWithTickets(),
     enabled: !!id,
   });
 

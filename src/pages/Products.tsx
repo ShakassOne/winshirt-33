@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -7,6 +6,7 @@ import { useOptimizedProductsQuery } from '@/hooks/useOptimizedProductsQuery';
 import ProductCard from '@/components/ui/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Search, Filter } from 'lucide-react';
+import { Product } from '@/types/supabase.types';
 
 const Products = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,7 +20,7 @@ const Products = () => {
   const filteredProducts = useMemo(() => {
     if (!products) return [];
     
-    return products.filter(product => {
+    return products.filter((product: Product) => {
       const matchesSearch = searchTerm 
         ? product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
           product.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -35,7 +35,7 @@ const Products = () => {
   // Mémoriser les catégories uniques
   const categories = useMemo(() => {
     if (!products) return [];
-    const uniqueCategories = [...new Set(products.map(product => product.category))];
+    const uniqueCategories = [...new Set(products.map((product: Product) => product.category))];
     return uniqueCategories.filter(Boolean);
   }, [products]);
 
