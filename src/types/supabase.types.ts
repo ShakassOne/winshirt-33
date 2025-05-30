@@ -492,6 +492,63 @@ export interface Database {
         }
         Relationships: []
       }
+      mockups: {
+        Row: {
+          id: string
+          name: string
+          category: string
+          svg_front_url: string
+          svg_back_url: string | null
+          colors: Json | null
+          print_areas: Json
+          price_a3: number
+          price_a4: number
+          price_a5: number
+          price_a6: number
+          text_price_front: number
+          text_price_back: number
+          is_active: boolean
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          category: string
+          svg_front_url: string
+          svg_back_url?: string | null
+          colors?: Json | null
+          print_areas: Json
+          price_a3: number
+          price_a4: number
+          price_a5: number
+          price_a6: number
+          text_price_front: number
+          text_price_back: number
+          is_active?: boolean
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          category?: string
+          svg_front_url?: string
+          svg_back_url?: string | null
+          colors?: Json | null
+          print_areas?: Json
+          price_a3?: number
+          price_a4?: number
+          price_a5?: number
+          price_a6?: number
+          text_price_front?: number
+          text_price_back?: number
+          is_active?: boolean
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -526,43 +583,47 @@ export interface Database {
 
 export type Tables<
   PublicTableNameOrOptions extends
-    | keyof (Database["public"]["Tables"] & { [_ in never]: never })
+    | keyof (Database["public"]["Tables"] & Database["public"]["Views"])
     | { schema: keyof Database },
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
-      ? keyof Database["public"]["Tables"]
-      : never = never
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
+    : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName]["Row"]
-  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
-    ? Database["public"]["Tables"][TableName]["Row"]
+  ? (TableName extends keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+      ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName]["Row"]
+      : TableName extends keyof Database[PublicTableNameOrOptions["schema"]]["Views"]
+        ? Database[PublicTableNameOrOptions["schema"]]["Views"][TableName]["Row"]
+        : never)
+  : PublicTableNameOrOptions extends keyof (Database["public"]["Tables"] &
+        Database["public"]["Views"])
+    ? (PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
+        ? Database["public"]["Tables"][PublicTableNameOrOptions]["Row"]
+        : PublicTableNameOrOptions extends keyof Database["public"]["Views"]
+          ? Database["public"]["Views"][PublicTableNameOrOptions]["Row"]
+          : never)
     : never
 
 export type TablesInsert<
   PublicTableNameOrOptions extends
-    | keyof (Database["public"]["Tables"] & { [_ in never]: never })
+    | keyof Database["public"]["Tables"]
     | { schema: keyof Database },
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
     ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
-      ? keyof Database["public"]["Tables"]
-      : never = never
+    : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName]["Insert"]
   : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
-    ? Database["public"]["Tables"][TableName]["Insert"]
+    ? Database["public"]["Tables"][PublicTableNameOrOptions]["Insert"]
     : never
 
 export type TablesUpdate<
   PublicTableNameOrOptions extends
-    | keyof (Database["public"]["Tables"] & { [_ in never]: never })
+    | keyof Database["public"]["Tables"]
     | { schema: keyof Database },
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
     ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
-      ? keyof Database["public"]["Tables"]
-      : never = never
+    : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName]["Update"]
   : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
@@ -571,13 +632,11 @@ export type TablesUpdate<
 
 export type Enums<
   PublicEnumNameOrOptions extends
-    | keyof (Database["public"]["Enums"] & { [_ in never]: never })
+    | keyof Database["public"]["Enums"]
     | { schema: keyof Database },
   EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
     ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
-    : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
-      ? keyof Database["public"]["Enums"]
-      : never = never
+    : never = never,
 > = PublicEnumNameOrOptions extends { schema: keyof Database }
   ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
@@ -592,6 +651,7 @@ export type Order = Tables<'orders'>;
 export type OrderItem = Tables<'order_items'>;
 export type Lottery = Tables<'lotteries'>;
 export type LotteryEntry = Tables<'lottery_entries'>;
+export type Mockup = Tables<'mockups'>;
 
 export type OrderStatus = Enums<'order_status'>;
 export type PaymentStatus = Enums<'payment_status'>;
@@ -619,26 +679,6 @@ export interface Design {
   updated_at: string | null;
 }
 
-// Mockup interface - based on actual Supabase schema
-export interface Mockup {
-  id: string;
-  name: string;
-  category: string;
-  svg_front_url: string;
-  svg_back_url: string | null;
-  colors: Json | null;
-  print_areas: Json;
-  price_a3: number;
-  price_a4: number;
-  price_a5: number;
-  price_a6: number;
-  text_price_front: number;
-  text_price_back: number;
-  is_active: boolean;
-  created_at: string | null;
-  updated_at: string | null;
-}
-
 // PrintArea interface for mockup types
 export interface PrintArea {
   id: string;
@@ -648,6 +688,17 @@ export interface PrintArea {
   width: number;
   height: number;
   rotation?: number;
+  side?: 'front' | 'back';
+  position_x?: number; // Compatibility alias for x
+  position_y?: number; // Compatibility alias for y
+}
+
+// MockupColor interface for mockup color variants
+export interface MockupColor {
+  name: string;
+  color_code: string;
+  front_image_url: string;
+  back_image_url?: string;
 }
 
 // Extended order interfaces
