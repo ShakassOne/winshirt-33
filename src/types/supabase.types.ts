@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -547,6 +548,7 @@ export type Enums<
     ? Database["public"]["Enums"][EnumName]
     : never
 
+// Extended interfaces for the application
 export interface Product extends Tables<'products'> {}
 export interface Profile extends Tables<'profiles'> {}
 export interface ShippingOption extends Tables<'shipping_options'> {}
@@ -557,6 +559,60 @@ export interface LotteryEntry extends Tables<'lottery_entries'> {}
 
 export type OrderStatus = Enums<'order_status'>;
 export type PaymentStatus = Enums<'payment_status'>;
+
+// Social Network interface - based on actual Supabase schema
+export interface SocialNetwork {
+  id: string;
+  name: string;
+  url: string | null;
+  icon: string;
+  priority: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Design interface - based on actual Supabase schema
+export interface Design {
+  id: string;
+  name: string;
+  category: string;
+  image_url: string;
+  is_active: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+// Mockup interface - based on actual Supabase schema
+export interface Mockup {
+  id: string;
+  name: string;
+  category: string;
+  svg_front_url: string;
+  svg_back_url: string | null;
+  colors: Json | null;
+  print_areas: Json;
+  price_a3: number;
+  price_a4: number;
+  price_a5: number;
+  price_a6: number;
+  text_price_front: number;
+  text_price_back: number;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+// Extended order interfaces
+export interface ExtendedOrderItem extends OrderItem {
+  product?: Product;
+  order?: Order;
+}
+
+export interface ExtendedOrder extends Order {
+  order_items?: ExtendedOrderItem[];
+  shipping_option?: ShippingOption;
+}
 
 export interface CartItem {
   productId: string;
@@ -577,5 +633,6 @@ export interface CartItem {
     selectedSize?: string;
     lotteryName?: string;
   } | null;
-  cartItemId?: string; // Add this for easier identification
+  cartItemId?: string;
+  uniqueKey?: string; // For separating personalized products
 }
