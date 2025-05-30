@@ -810,10 +810,10 @@ const ProductDetail = () => {
           <TabsContent value="details" className="mt-4 p-4 bg-black/30 rounded-md">
             <div className="prose prose-invert max-w-none">
               <ul>
-                <li>Matériau: {product.material || 'Non spécifié'}</li>
-                <li>Poids: {product.weight ? `${product.weight}g` : 'Non spécifié'}</li>
-                <li>Dimensions: {product.dimensions || 'Non spécifiées'}</li>
-                <li>Origine: {product.origin || 'Non spécifiée'}</li>
+                <li>Catégorie: {product.category}</li>
+                <li>Couleur: {product.color || 'Non spécifiée'}</li>
+                <li>Personnalisable: {product.is_customizable ? 'Oui' : 'Non'}</li>
+                <li>Tickets offerts: {product.tickets_offered || 0}</li>
               </ul>
             </div>
           </TabsContent>
@@ -1221,14 +1221,14 @@ const ProductDetail = () => {
                   <div
                     key={lottery.id}
                     className={`flex items-center space-x-2 rounded-lg border p-4 ${
-                      selectedLottery === lottery.name 
+                      selectedLottery === lottery.title 
                         ? 'border-white bg-white/10' 
                         : 'border-white/20'
                     }`}
                   >
-                    <RadioGroupItem value={lottery.name} id={lottery.id} />
+                    <RadioGroupItem value={lottery.title} id={lottery.id} />
                     <Label htmlFor={lottery.id} className="flex-1 cursor-pointer">
-                      <div className="font-medium">{lottery.name}</div>
+                      <div className="font-medium">{lottery.title}</div>
                       <div className="text-sm text-white/70">{lottery.description}</div>
                     </Label>
                   </div>
