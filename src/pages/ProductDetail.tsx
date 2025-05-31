@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -54,14 +55,17 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
     if (!product) return;
 
     addItem({
-      ...product,
+      productId: product.id,
+      name: product.name,
+      price: product.price,
       quantity,
-      customizations: {
-        side: currentSide,
-        design: selectedDesign,
-        customImage,
+      image_url: product.image_url,
+      customization: {
+        designId: selectedDesign?.id,
+        designUrl: selectedDesign?.image_url,
+        designName: selectedDesign?.name,
         customText,
-        svgColor,
+        textColor: svgColor,
       },
     });
 
