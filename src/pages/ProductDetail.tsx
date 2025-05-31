@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ShoppingCart, ChevronDown, ChevronUp, Check, ArrowLeft, RotateCw, Minus, Plus, Type, Image as ImageIcon, Bold, Italic, Underline, Upload, UsersRound, Target, PenTool, Sparkles } from 'lucide-react';
+import { ShoppingCart, ChevronDown, ChevronUp, Check, ArrowLeft, RotateCw, Minus, Plus, Type, Image as ImageIcon, Bold, Italic, Underline, Upload, UsersRound, Target, PenTool, Sparkles, Palette } from 'lucide-react';
 import { fetchProductById, fetchAllLotteries, fetchAllDesigns, fetchMockupById } from '@/services/api.service';
 import { Design, Lottery, CartItem } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
@@ -337,6 +337,92 @@ const sizePresets = [{
   min: 1,
   max: 20
 }];
+
+interface SVGColorEditorProps {
+  imageUrl: string;
+  onColorChange: (color: string) => void;
+  onSvgContentChange: (svgContent: string) => void;
+  defaultColor?: string;
+}
+
+const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
+  imageUrl,
+  onColorChange,
+  onSvgContentChange,
+  defaultColor = '#000000'
+}) => {
+  const [color, setColor] = useState(defaultColor);
+  const [svgContent, setSvgContent] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [originalSvg, setOriginalSvg] = useState('');
+
+  const isSvg = imageUrl.toLowerCase().endsWith('.svg');
+
+  useEffect(() => {
+    if (isSvg && imageUrl) {
+      setIsLoading(true);
+      fetch(imageUrl)
+        .then((res) => res.text())
+        .then((text) => {
+          setOriginalSvg(text);
+          const coloredSvg = text.replace(/fill="[^"]*"/g, `fill="${color}"`);
+          setSvgContent(coloredSvg);
+          onSvgContentChange(coloredSvg);
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error('Erreur lors du chargement du SVG:', error);
+          setIsLoading(false);
+        });
+    }
+  }, [imageUrl, isSvg]);
+
+  useEffect(() => {
+    if (originalSvg && color) {
+      const coloredSvg = originalSvg.replace(/fill="[^"]*"/g, `fill="${color}"`);
+      setSvgContent(coloredSvg);
+      onSvgContentChange(coloredSvg);
+      onColorChange(color);
+    }
+  }, [color, originalSvg, onColorChange, onSvgContentChange]);
+
+  const handleColorChange = (newColor: string) => {
+    setColor(newColor);
+  };
+
+  if (!isSvg) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="flex items-center">
+          <Palette className="h-4 w-4 mr-2 text-winshirt-purple" />
+          Couleur du SVG
+        </Label>
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={color}
+            onChange={(e) => handleColorChange(e.target.value)}
+            className="w-8 h-8 rounded border border-white/20 bg-transparent cursor-pointer"
+            disabled={isLoading}
+          />
+          <span className="text-xs text-white/60">{color}</span>
+        </div>
+      </div>
+      
+      {isLoading && (
+        <div className="text-xs text-white/60 flex items-center">
+          <div className="animate-spin h-3 w-3 mr-2 border border-white border-t-transparent rounded-full"></div>
+          Chargement du SVG...
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ProductDetail = () => {
   const {
     id
@@ -443,6 +529,12 @@ const ProductDetail = () => {
   const [selectedLotteries, setSelectedLotteries] = useState<Lottery[]>([]);
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
   const [backgroundRemovalImage, setBackgroundRemovalImage] = useState<string | null>(null);
+
+  // Nouveaux états pour la gestion SVG - séparés par côté
+  const [svgColorFront, setSvgColorFront] = useState('#000000');
+  const [svgColorBack, setSvgColorBack] = useState('#000000');
+  const [svgContentFront, setSvgContentFront] = useState('');
+  const [svgContentBack, setSvgContentBack] = useState('');
 
   // Fonctions utilitaires pour la synchronisation
   const getSizeLabel = (scale: number): string => {
@@ -774,6 +866,37 @@ const ProductDetail = () => {
       // Le texte est automatiquement activé dans cette version
     }
   }, [selectedTab]);
+
+  // Fonctions utilitaires pour SVG
+  const getCurrentSvgColor = () => {
+    return currentViewSide === 'front' ? svgColorFront : svgColorBack;
+  };
+
+  const getCurrentSvgContent = () => {
+    return currentViewSide === 'front' ? svgContentFront : svgContentBack;
+  };
+
+  const handleSvgColorChange = (color: string) => {
+    if (currentViewSide === 'front') {
+      setSvgColorFront(color);
+    } else {
+      setSvgColorBack(color);
+    }
+  };
+
+  const handleSvgContentChange = (svgContent: string) => {
+    if (currentViewSide === 'front') {
+      setSvgContentFront(svgContent);
+    } else {
+      setSvgContentBack(svgContent);
+    }
+  };
+
+  const isSvgDesign = () => {
+    const currentDesign = getCurrentDesign();
+    return currentDesign?.image_url?.toLowerCase().endsWith('.svg') || false;
+  };
+
   const calculatePrice = () => {
     if (!product) return 0;
     let price = product.price * quantity;
@@ -836,6 +959,7 @@ const ProductDetail = () => {
   };
   const handleAddToCart = () => {
     if (!product) return;
+    
     const cartItem: CartItem = {
       productId: product.id,
       name: product.name,
@@ -846,26 +970,40 @@ const ProductDetail = () => {
       image_url: product.image_url,
       lotteries: selectedLotteryIds.length > 0 ? selectedLotteryIds : undefined
     };
+
     if (customizationMode) {
       const customization: any = {};
+      
       if (selectedDesignFront) {
         customization.frontDesign = {
           designId: selectedDesignFront.id,
           designName: selectedDesignFront.name,
           designUrl: selectedDesignFront.image_url,
           printSize: printSizeFront,
-          transform: designTransformFront
+          transform: designTransformFront,
+          // Ajouter les informations SVG si applicable
+          ...(selectedDesignFront.image_url?.toLowerCase().endsWith('.svg') && {
+            svgColor: svgColorFront,
+            svgContent: svgContentFront
+          })
         };
       }
+      
       if (selectedDesignBack) {
         customization.backDesign = {
           designId: selectedDesignBack.id,
           designName: selectedDesignBack.name,
           designUrl: selectedDesignBack.image_url,
           printSize: printSizeBack,
-          transform: designTransformBack
+          transform: designTransformBack,
+          // Ajouter les informations SVG si applicable
+          ...(selectedDesignBack.image_url?.toLowerCase().endsWith('.svg') && {
+            svgColor: svgColorBack,
+            svgContent: svgContentBack
+          })
         };
       }
+
       if (textContentFront.trim()) {
         customization.frontText = {
           content: textContentFront,
@@ -888,6 +1026,7 @@ const ProductDetail = () => {
         cartItem.customization = customization;
       }
     }
+
     addItem(cartItem);
     toast.success('Produit ajouté au panier !');
   };
@@ -982,7 +1121,8 @@ const ProductDetail = () => {
       setBackgroundRemovalImage(null);
     }
   };
-  return <div className="min-h-screen flex flex-col">
+  return (
+    <div className="min-h-screen flex flex-col">
       <Navbar />
 
       <main className="flex-grow container mx-auto px-4 py-8">
@@ -996,58 +1136,100 @@ const ProductDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Image et visualisation du produit */}
           <div className="relative">
-            <div ref={productCanvasRef} className="relative bg-black/30 rounded-lg overflow-hidden shadow-xl aspect-square flex justify-center items-center" style={{
-            touchAction: 'none'
-          }} onTouchMove={handleTouchMove}>
-              <img src={getProductImage()} alt={product.name} className="w-full h-full object-contain" />
+            <div 
+              ref={productCanvasRef} 
+              className="relative bg-black/30 rounded-lg overflow-hidden shadow-xl aspect-square flex justify-center items-center" 
+              style={{ touchAction: 'none' }} 
+              onTouchMove={handleTouchMove}
+            >
+              <img
+                src={getProductImage()}
+                alt={product.name}
+                className="w-full h-full object-contain"
+              />
 
-              {customizationMode && getCurrentDesign() && <div className="absolute cursor-move select-none" style={{
-              transform: `translate(${getCurrentDesignTransform().position.x}px, ${getCurrentDesignTransform().position.y}px) 
-                               rotate(${getCurrentDesignTransform().rotation}deg) 
-                               scale(${getCurrentDesignTransform().scale})`,
-              transformOrigin: 'center',
-              zIndex: 10
-            }} onMouseDown={e => handleMouseDown(e)} onTouchStart={e => handleMouseDown(e)}>
-                  <img src={getCurrentDesign()!.image_url} alt={getCurrentDesign()!.name} className="max-w-[200px] max-h-[200px] w-auto h-auto" draggable={false} />
-                </div>}
+              {customizationMode && getCurrentDesign() && (
+                <div
+                  className="absolute cursor-move select-none"
+                  style={{
+                    transform: `translate(${getCurrentDesignTransform().position.x}px, ${getCurrentDesignTransform().position.y}px) 
+                                   rotate(${getCurrentDesignTransform().rotation}deg) 
+                                   scale(${getCurrentDesignTransform().scale})`,
+                    transformOrigin: 'center',
+                    zIndex: 10
+                  }}
+                  onMouseDown={(e) => handleMouseDown(e)}
+                  onTouchStart={(e) => handleMouseDown(e)}
+                >
+                  {isSvgDesign() && getCurrentSvgContent() ? (
+                    <div
+                      className="max-w-[200px] max-h-[200px]"
+                      dangerouslySetInnerHTML={{ __html: getCurrentSvgContent() }}
+                    />
+                  ) : (
+                    <img
+                      src={getCurrentDesign()!.image_url}
+                      alt={getCurrentDesign()!.name}
+                      className="max-w-[200px] max-h-[200px] w-auto h-auto"
+                      draggable={false}
+                    />
+                  )}
+                </div>
+              )}
               
-              {customizationMode && getCurrentTextContent() && <div className="absolute cursor-move select-none" style={{
-              transform: `translate(${getCurrentTextTransform().position.x}px, ${getCurrentTextTransform().position.y}px) 
+              {customizationMode && getCurrentTextContent() && (
+                <div className="absolute cursor-move select-none" style={{
+                  transform: `translate(${getCurrentTextTransform().position.x}px, ${getCurrentTextTransform().position.y}px) 
                                rotate(${getCurrentTextTransform().rotation}deg) 
                                scale(${getCurrentTextTransform().scale})`,
-              transformOrigin: 'center',
-              fontFamily: getCurrentTextFont(),
-              color: getCurrentTextColor(),
-              fontWeight: getCurrentTextStyles().bold ? 'bold' : 'normal',
-              fontStyle: getCurrentTextStyles().italic ? 'italic' : 'normal',
-              textDecoration: getCurrentTextStyles().underline ? 'underline' : 'none',
-              fontSize: '24px',
-              textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
-              zIndex: 20
-            }} onMouseDown={e => handleMouseDown(e, true)} onTouchStart={e => handleMouseDown(e, true)}>
+                  transformOrigin: 'center',
+                  fontFamily: getCurrentTextFont(),
+                  color: getCurrentTextColor(),
+                  fontWeight: getCurrentTextStyles().bold ? 'bold' : 'normal',
+                  fontStyle: getCurrentTextStyles().italic ? 'italic' : 'normal',
+                  textDecoration: getCurrentTextStyles().underline ? 'underline' : 'none',
+                  fontSize: '24px',
+                  textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
+                  zIndex: 20
+                }} onMouseDown={e => handleMouseDown(e, true)} onTouchStart={e => handleMouseDown(e, true)}>
                   {getCurrentTextContent()}
-                </div>}
+                </div>
+              )}
 
-              {customizationMode && getCurrentDesign() && (getCurrentDesign()!.category === 'ai-generated' || getCurrentDesign()!.category === 'ai-generated-cleaned') && <div className="absolute bottom-4 right-4 z-30">
-                  <Button size="sm" variant="secondary" onClick={handleRemoveBackground} disabled={isRemovingBackground} className="bg-black/60 hover:bg-black/80 text-white border-white/20" title="Supprimer le fond de l'image">
-                    {isRemovingBackground ? <>
+              {customizationMode && getCurrentDesign() && (getCurrentDesign()!.category === 'ai-generated' || getCurrentDesign()!.category === 'ai-generated-cleaned') && (
+                <div className="absolute bottom-4 right-4 z-30">
+                  <Button 
+                    size="sm" 
+                    variant="secondary" 
+                    onClick={handleRemoveBackground} 
+                    disabled={isRemovingBackground}
+                    className="bg-black/60 hover:bg-black/80 text-white border-white/20"
+                    title="Supprimer le fond de l'image"
+                  >
+                    {isRemovingBackground ? (
+                      <>
                         <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
                         Traitement...
-                      </> : <>
+                      </>
+                    ) : (
+                      <>
                         <Sparkles className="h-4 w-4 mr-2" />
                         Supprimer fond
-                      </>}
+                      </>
+                    )}
                   </Button>
-                </div>}
+                </div>
+              )}
             </div>
 
-            {backgroundRemovalImage && <div style={{
-            display: 'none'
-          }}>
+            {backgroundRemovalImage && (
+              <div style={{ display: 'none' }}>
                 <RemoveFlatBackground imageUrl={backgroundRemovalImage} tolerance={35} onReady={handleBackgroundRemovalReady} />
-              </div>}
+              </div>
+            )}
 
-            {customizationMode && mockup && mockup.svg_back_url && <div className="flex justify-center mt-4">
+            {customizationMode && mockup && mockup.svg_back_url && (
+              <div className="flex justify-center mt-4">
                 <ToggleGroup type="single" value={currentViewSide} onValueChange={value => value && setCurrentViewSide(value as 'front' | 'back')} className="bg-black/40 backdrop-blur-sm rounded-lg">
                   <ToggleGroupItem value="front" className="text-sm data-[state=on]:bg-winshirt-purple/70" aria-label="Voir le recto">
                     Avant
@@ -1056,7 +1238,8 @@ const ProductDetail = () => {
                     Arrière
                   </ToggleGroupItem>
                 </ToggleGroup>
-              </div>}
+              </div>
+            )}
           </div>
 
           {/* Informations du produit et options */}
@@ -1101,9 +1284,13 @@ const ProductDetail = () => {
                   </div>
                 </div>}
 
-              {product.is_customizable && <Accordion type="single" collapsible className="w-full">
+              {product.is_customizable && (
+                <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="customization" className="border-b-0">
-                    <AccordionTrigger className="py-3 px-4 bg-gradient-to-r from-winshirt-purple/30 to-winshirt-blue/30 rounded-lg hover:no-underline" onClick={() => setCustomizationMode(prevState => !prevState)}>
+                    <AccordionTrigger 
+                      className="py-3 px-4 bg-gradient-to-r from-winshirt-purple/30 to-winshirt-blue/30 rounded-lg hover:no-underline"
+                      onClick={() => setCustomizationMode(prevState => !prevState)}
+                    >
                       <span className="flex items-center">
                         <PenTool className="mr-2 h-4 w-4" />
                         <span>{customizationMode ? "Masquer" : "Commencer à"} la personnalisation</span>
@@ -1111,21 +1298,27 @@ const ProductDetail = () => {
                     </AccordionTrigger>
                     
                     <AccordionContent className="pt-4">
-                      {mockup?.colors && mockup.colors.length > 0 && <div className="mb-6">
+                      {mockup?.colors && mockup.colors.length > 0 && (
+                        <div className="mb-6">
                           <h3 className="text-sm font-medium mb-3">Couleur du produit</h3>
                           <div className="flex flex-wrap gap-3">
-                            {mockup.colors.map((color, index) => <div key={index} className={`relative flex flex-col items-center gap-1 cursor-pointer`} onClick={() => setSelectedMockupColor(color)}>
+                            {mockup.colors.map((color, index) => (
+                              <div key={index} className={`relative flex flex-col items-center gap-1 cursor-pointer`} onClick={() => setSelectedMockupColor(color)}>
                                 <div className={`w-10 h-10 rounded-full border-2 ${selectedMockupColor === color ? 'border-winshirt-purple' : 'border-gray-600'}`} style={{
                           backgroundColor: color.color_code
                         }}>
-                                  {selectedMockupColor === color && <div className="absolute inset-0 flex items-center justify-center">
+                                  {selectedMockupColor === color && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
                                       <Check className="text-white h-4 w-4 drop-shadow-[0_0,2px_rgba(0,0,0,0.5)]" />
-                                    </div>}
+                                    </div>
+                                  )}
                                 </div>
                                 <span className="text-xs truncate max-w-[80px] text-center">{color.name}</span>
-                              </div>)}
+                              </div>
+                            ))}
                           </div>
-                        </div>}
+                        </div>
+                      )}
                       
                       <Tabs defaultValue="design" value={selectedTab} onValueChange={setSelectedTab} className="w-full">
                         <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -1158,7 +1351,18 @@ const ProductDetail = () => {
                             </div>
                           </div>
                           
-                          {getCurrentDesign() && <div className="space-y-4 p-4 bg-white/5 rounded-lg">
+                          {getCurrentDesign() && (
+                            <div className="space-y-4 p-4 bg-white/5 rounded-lg">
+                              {/* Éditeur de couleur SVG */}
+                              {isSvgDesign() && (
+                                <SVGColorEditor
+                                  imageUrl={getCurrentDesign()!.image_url}
+                                  onColorChange={handleSvgColorChange}
+                                  onSvgContentChange={handleSvgContentChange}
+                                  defaultColor={getCurrentSvgColor()}
+                                />
+                              )}
+                              
                               <div>
                                 <div className="flex justify-between items-center mb-2">
                                   <Label className="block">Taille d'impression</Label>
@@ -1167,9 +1371,11 @@ const ProductDetail = () => {
                                   </span>
                                 </div>
                                 <div className="flex gap-2 mb-2">
-                                  {sizePresets.map(preset => <Button key={preset.label} variant="outline" size="sm" className={`${getCurrentSelectedSize() === preset.label ? 'bg-winshirt-purple text-white' : 'hover:bg-winshirt-purple/20'}`} onClick={() => handleSizeClick(preset.label)}>
+                                  {sizePresets.map(preset => (
+                                    <Button key={preset.label} variant="outline" size="sm" className={`${getCurrentSelectedSize() === preset.label ? 'bg-winshirt-purple text-white' : 'hover:bg-winshirt-purple/20'}`} onClick={() => handleSizeClick(preset.label)}>
                                       {preset.label}
-                                    </Button>)}
+                                    </Button>
+                                  ))}
                                 </div>
                                 <p className="text-xs text-white/60 mt-2">
                                   Les tailles A3 à A7 correspondent à l'échelle approximative d'impression.
@@ -1190,7 +1396,8 @@ const ProductDetail = () => {
                                   </Button>
                                 </div>
                               </div>
-                            </div>}
+                            </div>
+                          )}
                         </TabsContent>
                         
                         <TabsContent value="text" className="space-y-4">
@@ -1326,7 +1533,8 @@ const ProductDetail = () => {
                       </Tabs>
                     </AccordionContent>
                   </AccordionItem>
-                </Accordion>}
+                </Accordion>
+              )}
 
               <Dialog open={designDialogOpen} onOpenChange={setDesignDialogOpen}>
                 <DialogContent className="bg-black/70 backdrop-blur-lg border-white/20 max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -1441,6 +1649,7 @@ const ProductDetail = () => {
       </main>
       
       <Footer />
-    </div>;
+    </div>
+  );
 };
 export default ProductDetail;
