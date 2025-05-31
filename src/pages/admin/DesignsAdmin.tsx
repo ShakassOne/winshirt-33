@@ -136,6 +136,20 @@ const DesignsAdmin = () => {
     await deleteDesignMutation.mutateAsync(id);
   };
 
+  const handleImageUpload = (url: string) => {
+    setImageUrl(url);
+    console.log('📁 [DesignsAdmin] Image uploaded:', url);
+    
+    // Vérifier si c'est un SVG
+    if (url.toLowerCase().endsWith('.svg')) {
+      console.log('🎨 [DesignsAdmin] SVG détecté:', url);
+      toast({
+        title: "SVG détecté",
+        description: "Ce fichier SVG pourra être recolorisé par les clients",
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -151,10 +165,6 @@ const DesignsAdmin = () => {
     } else {
       await createDesignMutation.mutateAsync(designData);
     }
-  };
-
-  const handleImageUpload = (url: string) => {
-    setImageUrl(url);
   };
 
   if (isLoading) return <div>Chargement des designs...</div>;
@@ -173,9 +183,31 @@ const DesignsAdmin = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {designs?.map((design) => (
           <div key={design.id} className="relative bg-white/5 rounded-lg shadow-md p-4">
-            <img src={design.image_url} alt={design.name} className="w-full h-32 object-contain mb-4" />
+            {design.image_url.toLowerCase().endsWith('.svg') ? (
+              <div className="w-full h-32 flex items-center justify-center mb-4 border border-white/20 rounded">
+                <div 
+                  className="max-w-full max-h-full"
+                  dangerouslySetInnerHTML={{ 
+                    __html: `<svg viewBox="0 0 100 100" width="100" height="100"><text x="50" y="50" text-anchor="middle" fill="white" font-size="12">SVG</text></svg>` 
+                  }}
+                />
+                <span className="ml-2 text-xs text-white/60">SVG</span>
+              </div>
+            ) : (
+              <img src={design.image_url} alt={design.name} className="w-full h-32 object-contain mb-4" />
+            )}
+            
             <h3 className="text-lg font-semibold mb-2">{design.name}</h3>
             <p className="text-sm text-gray-500 mb-2">Catégorie: {design.category}</p>
+            
+            {design.image_url.toLowerCase().endsWith('.svg') && (
+              <div className="mb-2">
+                <span className="inline-block bg-purple-500 text-xs px-2 py-1 rounded">
+                  Recolorisable
+                </span>
+              </div>
+            )}
+            
             <div className="flex items-center justify-between">
               <Switch
                 id={`design-active-${design.id}`}
@@ -233,8 +265,14 @@ const DesignsAdmin = () => {
                 <UploadButton
                   onUpload={handleImageUpload}
                   variant="outline"
+                  acceptTypes="image/*,.svg"
                 />
               </div>
+              {imageUrl && imageUrl.toLowerCase().endsWith('.svg') && (
+                <p className="text-xs text-purple-400 mt-1">
+                  ✨ Ce SVG sera recolorisable par les clients
+                </p>
+              )}
             </div>
             <div>
               <Label htmlFor="category">Catégorie</Label>

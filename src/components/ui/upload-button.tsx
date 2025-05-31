@@ -17,7 +17,7 @@ export function UploadButton({
   onUpload,
   variant = 'default',
   size = 'default',
-  acceptTypes = 'image/*',
+  acceptTypes = 'image/*,.svg',
   className
 }: UploadButtonProps) {
   const [isUploading, setIsUploading] = useState(false);
@@ -47,9 +47,23 @@ export function UploadButton({
       onUpload(url);
     } catch (error) {
       console.error("Upload error:", error);
+      
+      // Amélioration de la gestion d'erreurs
+      let errorMessage = "Une erreur est survenue lors du téléchargement";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Network Error') || error.message.includes('connexion')) {
+          errorMessage = "Impossible de se connecter au serveur d'upload. Vérifiez votre connexion internet.";
+        } else if (error.message.includes('timeout')) {
+          errorMessage = "Le téléchargement a pris trop de temps. Réessayez avec un fichier plus petit.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Erreur d'upload",
-        description: error instanceof Error ? error.message : "Une erreur est survenue lors du téléchargement",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
