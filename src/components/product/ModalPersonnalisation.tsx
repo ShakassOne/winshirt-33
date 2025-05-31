@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
@@ -442,9 +441,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               <DrawerTitle className="text-xl font-semibold">
                 🎨 Personnalisation
               </DrawerTitle>
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X className="h-5 w-5" />
-              </Button>
+              
             </div>
           </DrawerHeader>
           <div className="flex-1 overflow-hidden">
@@ -459,14 +456,12 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="bg-black/90 backdrop-blur-lg border-white/20 max-w-[95vw] w-[95vw] h-[95vh] overflow-hidden">
         <DialogHeader className="border-b border-white/10 pb-4">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl font-semibold">
-              🎨 Personnalisation - {currentViewSide === 'front' ? 'Avant' : 'Arrière'}
-            </DialogTitle>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
+          <DialogTitle className="text-2xl font-semibold">
+            🎨 Personnalisation - {currentViewSide === 'front' ? 'Avant' : 'Arrière'}
+          </DialogTitle>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="h-5 w-5" />
+          </Button>
         </DialogHeader>
         <div className="pt-4 h-full overflow-hidden">
           {desktopContent}
