@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -14,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { fetchProductById } from '@/services/api.service';
 import { Product } from '@/types/supabase.types';
 import { ShoppingCart, Palette } from 'lucide-react';
-import { useCart } from '@/hooks/use-cart';
+import { useCart } from '@/context/CartContext';
 import CaptureMockupButton from '@/components/product/CaptureMockupButton';
 import { CustomizationModal } from '@/components/product/CustomizationModal';
 
@@ -23,7 +24,7 @@ interface ProductDetailProps {}
 const ProductDetail: React.FC<ProductDetailProps> = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addItem } = useCart();
   const { toast } = useToast();
 
   const [quantity, setQuantity] = useState(1);
@@ -52,7 +53,7 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
   const handleAddToCart = () => {
     if (!product) return;
 
-    addToCart({
+    addItem({
       ...product,
       quantity,
       customizations: {
