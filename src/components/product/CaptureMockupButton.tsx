@@ -45,7 +45,7 @@ export default function CaptureMockupButton({
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await axios.post('https://winshirt.fr/upload-visuel.php', formData, {
+      const response = await axios.post('https://media.winshirt.fr/upload-visuel.php', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

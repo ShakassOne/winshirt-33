@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -7,10 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Upload image vers winshirt.fr/upload-visuel.php
+// Upload image vers media.winshirt.fr/upload-visuel.php
 const uploadImageToWinshirt = async (dalleImageUrl: string, fileName: string) => {
   try {
-    console.log('[Edge Function] Upload image IA vers winshirt.fr...');
+    console.log('[Edge Function] Upload image IA vers media.winshirt.fr...');
     
     // 1. Récupération du blob depuis l'URL DALL·E
     const response = await fetch(dalleImageUrl);
@@ -22,7 +21,7 @@ const uploadImageToWinshirt = async (dalleImageUrl: string, fileName: string) =>
     formData.append('file', blob, `${fileName}.png`);
 
     // 3. Upload vers votre script PHP
-    const uploadResponse = await fetch('https://winshirt.fr/upload-visuel.php', {
+    const uploadResponse = await fetch('https://media.winshirt.fr/upload-visuel.php', {
       method: 'POST',
       body: formData,
     });
@@ -32,17 +31,17 @@ const uploadImageToWinshirt = async (dalleImageUrl: string, fileName: string) =>
     }
 
     const uploadResult = await uploadResponse.json();
-    console.log('[Edge Function] Réponse winshirt.fr:', uploadResult);
+    console.log('[Edge Function] Réponse media.winshirt.fr:', uploadResult);
 
     if (uploadResult.success === true && uploadResult.url) {
       console.log('[Edge Function] Image IA uploadée avec succès:', uploadResult.url);
       return uploadResult.url;
     } else {
-      const errorMessage = uploadResult.error || uploadResult.message || 'Upload échoué sur winshirt.fr';
+      const errorMessage = uploadResult.error || uploadResult.message || 'Upload échoué sur media.winshirt.fr';
       throw new Error(errorMessage);
     }
   } catch (error) {
-    console.error("Error uploading image to winshirt.fr:", error);
+    console.error("Error uploading image to media.winshirt.fr:", error);
     throw error;
   }
 };

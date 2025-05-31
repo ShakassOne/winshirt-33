@@ -567,13 +567,13 @@ export const deleteSocialNetwork = async (id: string): Promise<void> => {
 };
 
 export const uploadToExternalScript = async (file: File): Promise<string> => {
-  console.log('[API] Upload vers winshirt.fr/upload-visuel.php:', file.name);
+  console.log('[API] Upload vers media.winshirt.fr/upload-visuel.php:', file.name);
   
   const formData = new FormData();
   formData.append('file', file);
   
   try {
-    const response = await axios.post('https://winshirt.fr/upload-visuel.php', formData, {
+    const response = await axios.post('https://media.winshirt.fr/upload-visuel.php', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -583,7 +583,7 @@ export const uploadToExternalScript = async (file: File): Promise<string> => {
     console.log('[API] Réponse du script PHP:', response.data);
     
     if (response.data?.success === true && response.data?.url) {
-      console.log('[API] Upload réussi vers winshirt.fr:', response.data.url);
+      console.log('[API] Upload réussi vers media.winshirt.fr:', response.data.url);
       return response.data.url;
     } else {
       console.error('[API] Script PHP retourne success:false:', response.data);
@@ -591,7 +591,7 @@ export const uploadToExternalScript = async (file: File): Promise<string> => {
       throw new Error(errorMessage);
     }
   } catch (error) {
-    console.error('[API] Erreur lors de l\'upload vers winshirt.fr:', error);
+    console.error('[API] Erreur lors de l\'upload vers media.winshirt.fr:', error);
     
     if (axios.isAxiosError(error)) {
       if (error.response?.data?.error) {
