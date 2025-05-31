@@ -24,10 +24,41 @@ export function UploadImageField({
   showPreview = true
 }: UploadImageFieldProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(value || null);
+  const [svgContent, setSvgContent] = useState<string>('');
+  const [isLoadingSvg, setIsLoadingSvg] = useState(false);
+
+  const isSvg = value && value.toLowerCase().endsWith('.svg');
 
   useEffect(() => {
     setImagePreview(value || null);
-  }, [value]);
+    
+    // Si c'est un SVG, charger le contenu pour l'affichage inline
+    if (isSvg && value) {
+      setIsLoadingSvg(true);
+      console.log('📁 [UploadImageField] Chargement du SVG pour aperçu:', value);
+      
+      fetch(value)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`Erreur HTTP: ${res.status}`);
+          }
+          return res.text();
+        })
+        .then((text) => {
+          console.log('✅ [UploadImageField] SVG chargé avec succès');
+          setSvgContent(text);
+          setIsLoadingSvg(false);
+        })
+        .catch((error) => {
+          console.error('❌ [UploadImageField] Erreur lors du chargement du SVG:', error);
+          setSvgContent('');
+          setIsLoadingSvg(false);
+        });
+    } else {
+      setSvgContent('');
+      setIsLoadingSvg(false);
+    }
+  }, [value, isSvg]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -36,8 +67,14 @@ export function UploadImageField({
   };
 
   const handleUpload = (url: string) => {
+    console.log('📁 [UploadImageField] Fichier uploadé:', url);
     onChange(url);
     setImagePreview(url);
+    
+    // Si c'est un SVG, indiquer à l'utilisateur
+    if (url.toLowerCase().endsWith('.svg')) {
+      console.log('🎨 [UploadImageField] SVG détecté après upload:', url);
+    }
   };
 
   return (
@@ -54,18 +91,55 @@ export function UploadImageField({
         <UploadButton
           onUpload={handleUpload}
           variant="outline"
+          acceptTypes="image/*,.svg"
         />
       </div>
       
       {showPreview && imagePreview && (
         <div className="mt-2 rounded-lg overflow-hidden border border-dashed p-2 flex flex-col items-center">
-          <p className="text-sm mb-2 text-muted-foreground">Aperçu</p>
-          <img
-            src={imagePreview}
-            alt="Aperçu"
-            className="max-h-32 object-contain rounded"
-            onError={() => setImagePreview(null)}
-          />
+          <div className="flex items-center gap-2 mb-2">
+            <p className="text-sm text-muted-foreground">Aperçu</p>
+            {isSvg && (
+              <span className="inline-block bg-purple-500 text-xs px-2 py-1 rounded text-white">
+                SVG - Recolorisable
+              </span>
+            )}
+          </div>
+          
+          {isSvg ? (
+            <div className="w-full max-w-32 h-32 flex items-center justify-center">
+              {isLoadingSvg ? (
+                <div className="text-xs text-muted-foreground flex items-center">
+                  <div className="animate-spin h-3 w-3 mr-2 border border-gray-400 border-t-transparent rounded-full"></div>
+                  Chargement SVG...
+                </div>
+              ) : svgContent ? (
+                <div 
+                  className="max-w-full max-h-full"
+                  dangerouslySetInnerHTML={{ __html: svgContent }}
+                  style={{ maxHeight: '100px', maxWidth: '100px' }}
+                />
+              ) : (
+                <div className="text-xs text-muted-foreground text-center">
+                  <p>⚠️ Impossible de charger le SVG</p>
+                  <p className="mt-1">Utilisation de l'affichage standard</p>
+                  <img
+                    src={imagePreview}
+                    alt="Aperçu SVG (fallback)"
+                    className="max-h-24 object-contain rounded mt-2"
+                    onError={() => setImagePreview(null)}
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
+            <img
+              src={imagePreview}
+              alt="Aperçu"
+              className="max-h-32 object-contain rounded"
+              onError={() => setImagePreview(null)}
+            />
+          )}
         </div>
       )}
     </div>

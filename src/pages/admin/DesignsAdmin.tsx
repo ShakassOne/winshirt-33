@@ -142,10 +142,15 @@ const DesignsAdmin = () => {
     
     // Vérifier si c'est un SVG
     if (url.toLowerCase().endsWith('.svg')) {
-      console.log('🎨 [DesignsAdmin] SVG détecté:', url);
+      console.log('🎨 [DesignsAdmin] SVG détecté après upload:', url);
       toast({
-        title: "SVG détecté",
-        description: "Ce fichier SVG pourra être recolorisé par les clients",
+        title: "SVG uploadé avec succès",
+        description: "Ce fichier SVG sera recolorisable par les clients et est maintenant visible dans l'aperçu",
+      });
+    } else {
+      toast({
+        title: "Image uploadée",
+        description: "Le fichier a été uploadé avec succès",
       });
     }
   };
@@ -184,14 +189,16 @@ const DesignsAdmin = () => {
         {designs?.map((design) => (
           <div key={design.id} className="relative bg-white/5 rounded-lg shadow-md p-4">
             {design.image_url.toLowerCase().endsWith('.svg') ? (
-              <div className="w-full h-32 flex items-center justify-center mb-4 border border-white/20 rounded">
-                <div 
-                  className="max-w-full max-h-full"
-                  dangerouslySetInnerHTML={{ 
-                    __html: `<svg viewBox="0 0 100 100" width="100" height="100"><text x="50" y="50" text-anchor="middle" fill="white" font-size="12">SVG</text></svg>` 
-                  }}
-                />
-                <span className="ml-2 text-xs text-white/60">SVG</span>
+              <div className="w-full h-32 flex items-center justify-center mb-4 border border-white/20 rounded bg-white/5">
+                <div className="text-center">
+                  <div className="text-2xl mb-2">🎨</div>
+                  <span className="text-xs text-white/80">Fichier SVG</span>
+                  <div className="mt-1">
+                    <span className="inline-block bg-purple-500 text-xs px-2 py-1 rounded">
+                      Recolorisable
+                    </span>
+                  </div>
+                </div>
               </div>
             ) : (
               <img src={design.image_url} alt={design.name} className="w-full h-32 object-contain mb-4" />
@@ -269,9 +276,15 @@ const DesignsAdmin = () => {
                 />
               </div>
               {imageUrl && imageUrl.toLowerCase().endsWith('.svg') && (
-                <p className="text-xs text-purple-400 mt-1">
-                  ✨ Ce SVG sera recolorisable par les clients
-                </p>
+                <div className="mt-2 p-2 bg-purple-500/20 rounded border border-purple-500/30">
+                  <p className="text-xs text-purple-300 mb-1">
+                    ✨ Ce SVG sera recolorisable par les clients
+                  </p>
+                  <div className="text-center">
+                    <div className="text-lg">🎨</div>
+                    <span className="text-xs text-white/60">Fichier SVG détecté</span>
+                  </div>
+                </div>
               )}
             </div>
             <div>
