@@ -1006,103 +1006,112 @@ const ProductDetail = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Product image and visualization */}
+          {/* Product image - Simplified when not in customization mode */}
           <div className="relative">
-            <div 
-              ref={productCanvasRef} 
-              className="relative bg-black/30 rounded-lg overflow-hidden shadow-xl aspect-square flex justify-center items-center" 
-              style={{ touchAction: 'none' }} 
-              onTouchMove={handleTouchMove}
-            >
-              <img
-                src={getProductImage()}
-                alt={product.name}
-                className="w-full h-full object-contain"
-              />
+            {!customizationMode ? (
+              <div className="relative bg-black/30 rounded-lg overflow-hidden shadow-xl aspect-square flex justify-center items-center">
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            ) : (
+              <div 
+                className="relative bg-black/30 rounded-lg overflow-hidden shadow-xl aspect-square flex justify-center items-center" 
+                style={{ touchAction: 'none' }} 
+                onTouchMove={handleTouchMove}
+              >
+                <img
+                  src={getProductImage()}
+                  alt={product.name}
+                  className="w-full h-full object-contain"
+                />
 
-              {customizationMode && getCurrentDesign() && (
-                <div
-                  className="absolute cursor-move select-none"
-                  style={{
-                    transform: `translate(${getCurrentDesignTransform().position.x}px, ${getCurrentDesignTransform().position.y}px) 
-                                   rotate(${getCurrentDesignTransform().rotation}deg) 
-                                   scale(${getCurrentDesignTransform().scale})`,
-                    transformOrigin: 'center',
-                    zIndex: 10
-                  }}
-                  onMouseDown={(e) => handleMouseDown(e)}
-                  onTouchStart={(e) => handleMouseDown(e)}
-                >
-                  {isSvgDesign() && getCurrentSvgContent() ? (
-                    <div
-                      className="w-[200px] h-[200px] flex items-center justify-center"
-                      dangerouslySetInnerHTML={{ 
-                        __html: getCurrentSvgContent().replace(
-                          /<svg([^>]*)>/i, 
-                          '<svg$1 width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">'
-                        )
-                      }}
-                      style={{ 
-                        maxWidth: '200px', 
-                        maxHeight: '200px',
-                        overflow: 'visible'
-                      }}
-                    />
-                  ) : (
-                    <img
-                      src={getCurrentDesign()!.image_url}
-                      alt={getCurrentDesign()!.name}
-                      className="max-w-[200px] max-h-[200px] w-auto h-auto"
-                      draggable={false}
-                    />
-                  )}
-                </div>
-              )}
-              
-              {customizationMode && getCurrentTextContent() && (
-                <div className="absolute cursor-move select-none" style={{
-                  transform: `translate(${getCurrentTextTransform().position.x}px, ${getCurrentTextTransform().position.y}px) 
-                               rotate(${getCurrentTextTransform().rotation}deg) 
-                               scale(${getCurrentTextTransform().scale})`,
-                  transformOrigin: 'center',
-                  fontFamily: getCurrentTextFont(),
-                  color: getCurrentTextColor(),
-                  fontWeight: getCurrentTextStyles().bold ? 'bold' : 'normal',
-                  fontStyle: getCurrentTextStyles().italic ? 'italic' : 'normal',
-                  textDecoration: getCurrentTextStyles().underline ? 'underline' : 'none',
-                  fontSize: '24px',
-                  textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
-                  zIndex: 20
-                }} onMouseDown={e => handleMouseDown(e, true)} onTouchStart={e => handleMouseDown(e, true)}>
-                  {getCurrentTextContent()}
-                </div>
-              )}
-
-              {customizationMode && getCurrentDesign() && (getCurrentDesign()!.category === 'ai-generated' || getCurrentDesign()!.category === 'ai-generated-cleaned') && (
-                <div className="absolute bottom-4 right-4 z-30">
-                  <Button 
-                    size="sm" 
-                    variant="secondary" 
-                    onClick={handleRemoveBackground} 
-                    disabled={isRemovingBackground}
-                    className="bg-black/60 hover:bg-black/80 text-white border-white/20"
-                    title="Supprimer le fond de l'image"
+                {getCurrentDesign() && (
+                  <div
+                    className="absolute cursor-move select-none"
+                    style={{
+                      transform: `translate(${getCurrentDesignTransform().position.x}px, ${getCurrentDesignTransform().position.y}px) 
+                                     rotate(${getCurrentDesignTransform().rotation}deg) 
+                                     scale(${getCurrentDesignTransform().scale})`,
+                      transformOrigin: 'center',
+                      zIndex: 10
+                    }}
+                    onMouseDown={(e) => handleMouseDown(e)}
+                    onTouchStart={(e) => handleMouseDown(e)}
                   >
-                    {isRemovingBackground ? (
-                      <>
-                        <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
-                        Traitement...
-                      </>
+                    {isSvgDesign() && getCurrentSvgContent() ? (
+                      <div
+                        className="w-[200px] h-[200px] flex items-center justify-center"
+                        dangerouslySetInnerHTML={{ 
+                          __html: getCurrentSvgContent().replace(
+                            /<svg([^>]*)>/i, 
+                            '<svg$1 width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">'
+                          )
+                        }}
+                        style={{ 
+                          maxWidth: '200px', 
+                          maxHeight: '200px',
+                          overflow: 'visible'
+                        }}
+                      />
                     ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Supprimer fond
-                      </>
+                      <img
+                        src={getCurrentDesign()!.image_url}
+                        alt={getCurrentDesign()!.name}
+                        className="max-w-[200px] max-h-[200px] w-auto h-auto"
+                        draggable={false}
+                      />
                     )}
-                  </Button>
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+                
+                {getCurrentTextContent() && (
+                  <div className="absolute cursor-move select-none" style={{
+                    transform: `translate(${getCurrentTextTransform().position.x}px, ${getCurrentTextTransform().position.y}px) 
+                                 rotate(${getCurrentTextTransform().rotation}deg) 
+                                 scale(${getCurrentTextTransform().scale})`,
+                    transformOrigin: 'center',
+                    fontFamily: getCurrentTextFont(),
+                    color: getCurrentTextColor(),
+                    fontWeight: getCurrentTextStyles().bold ? 'bold' : 'normal',
+                    fontStyle: getCurrentTextStyles().italic ? 'italic' : 'normal',
+                    textDecoration: getCurrentTextStyles().underline ? 'underline' : 'none',
+                    fontSize: '24px',
+                    textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
+                    zIndex: 20
+                  }} onMouseDown={e => handleMouseDown(e, true)} onTouchStart={e => handleMouseDown(e, true)}>
+                    {getCurrentTextContent()}
+                  </div>
+                )}
+
+                {getCurrentDesign() && (getCurrentDesign()!.category === 'ai-generated' || getCurrentDesign()!.category === 'ai-generated-cleaned') && (
+                  <div className="absolute bottom-4 right-4 z-30">
+                    <Button 
+                      size="sm" 
+                      variant="secondary" 
+                      onClick={handleRemoveBackground} 
+                      disabled={isRemovingBackground}
+                      className="bg-black/60 hover:bg-black/80 text-white border-white/20"
+                      title="Supprimer le fond de l'image"
+                    >
+                      {isRemovingBackground ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                          Traitement...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Supprimer fond
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {backgroundRemovalImage && (
               <div style={{ display: 'none' }}>
@@ -1295,6 +1304,15 @@ const ProductDetail = () => {
           open={customizationModalOpen}
           onClose={() => setCustomizationModalOpen(false)}
           currentViewSide={currentViewSide}
+          onViewSideChange={setCurrentViewSide}
+          
+          // Product data
+          productName={product.name}
+          productImageUrl={product.image_url}
+          
+          // Mockup data
+          mockup={mockup}
+          selectedMockupColor={selectedMockupColor}
           
           // Design props
           selectedDesignFront={selectedDesignFront}
@@ -1361,6 +1379,11 @@ const ProductDetail = () => {
           selectedSizeBack={selectedSizeBack}
           onDesignTransformChange={handleDesignTransformChange}
           onSizeChange={handleSizeClick}
+          
+          // Interaction handlers
+          onDesignMouseDown={handleMouseDown}
+          onTextMouseDown={(e) => handleMouseDown(e, true)}
+          onTouchMove={handleTouchMove}
         />
       </main>
       
