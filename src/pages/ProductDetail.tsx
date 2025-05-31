@@ -15,7 +15,7 @@ import { fetchProductById } from '@/services/api.service';
 import { Product } from '@/types/supabase.types';
 import { ShoppingCart, Palette } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
-import { CaptureMockupButton } from '@/components/product/CaptureMockupButton';
+import CaptureMockupButton from '@/components/product/CaptureMockupButton';
 import { CustomizationModal } from '@/components/product/CustomizationModal';
 
 interface ProductDetailProps {}
@@ -222,15 +222,9 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
 
                     {/* Capture Button */}
                     <CaptureMockupButton
-                      mockupRef={mockupRef}
-                      productName={product.name}
-                      customizations={{
-                        side: currentSide,
-                        design: selectedDesign,
-                        customImage,
-                        customText,
-                        svgColor,
-                      }}
+                      targetId="mockup-container"
+                      side={currentSide === 'front' ? 'recto' : 'verso'}
+                      className="w-full"
                     />
                   </div>
                 </GlassCard>

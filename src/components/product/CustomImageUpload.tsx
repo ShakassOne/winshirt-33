@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Upload, Sparkles, Info, CheckCircle } from 'lucide-react';
-import { AIImageGenerator } from './AIImageGenerator';
+import AIImageGenerator from './AIImageGenerator';
 
 interface CustomImageUploadProps {
   value: string;
@@ -87,14 +87,11 @@ export const CustomImageUpload: React.FC<CustomImageUploadProps> = ({
           Générer avec l'IA
         </Button>
 
-        {showAIGenerator && (
-          <div className="mt-4 p-4 bg-white/5 rounded-lg border border-white/10">
-            <AIImageGenerator
-              onImageGenerated={handleAIImageGenerated}
-              onClose={() => setShowAIGenerator(false)}
-            />
-          </div>
-        )}
+        <AIImageGenerator
+          isOpen={showAIGenerator}
+          onClose={() => setShowAIGenerator(false)}
+          onImageGenerated={handleAIImageGenerated}
+        />
       </div>
 
       <Separator className="bg-white/10" />

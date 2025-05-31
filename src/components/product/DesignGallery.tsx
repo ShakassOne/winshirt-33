@@ -5,15 +5,46 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Grid, List } from 'lucide-react';
-import { fetchDesignsByProductId } from '@/services/api.service';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+
+interface Design {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  image_url: string;
+  side: 'front' | 'back' | 'both';
+}
 
 interface DesignGalleryProps {
   productId: string;
-  selectedDesign: any;
-  onDesignSelect: (design: any) => void;
+  selectedDesign: Design | null;
+  onDesignSelect: (design: Design) => void;
   currentSide: 'front' | 'back';
 }
+
+// Mock function for now - you can replace with actual API call
+const fetchDesignsByProductId = async (productId: string): Promise<Design[]> => {
+  // Mock data for demonstration
+  return [
+    {
+      id: '1',
+      name: 'Design Example 1',
+      description: 'Un design moderne',
+      category: 'moderne',
+      image_url: 'https://via.placeholder.com/200',
+      side: 'both'
+    },
+    {
+      id: '2',
+      name: 'Design Example 2',
+      description: 'Un design vintage',
+      category: 'vintage',
+      image_url: 'https://via.placeholder.com/200',
+      side: 'front'
+    }
+  ];
+};
 
 export const DesignGallery: React.FC<DesignGalleryProps> = ({
   productId,
@@ -31,7 +62,7 @@ export const DesignGallery: React.FC<DesignGalleryProps> = ({
   });
 
   const categories = React.useMemo(() => {
-    if (!designs) return [];
+    if (!designs) return ['all'];
     const cats = Array.from(new Set(designs.map(d => d.category).filter(Boolean)));
     return ['all', ...cats];
   }, [designs]);
