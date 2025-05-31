@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Product, Design } from '@/types/supabase.types';
-import { fetchProductById, fetchActiveDesigns } from '@/services/api.service';
+import { fetchProductById, fetchAllDesigns } from '@/services/api.service';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import GlassCard from '@/components/ui/GlassCard';
@@ -10,7 +11,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UploadButton } from '@/components/ui/upload-button';
+import { UploadImageField } from '@/components/ui/upload-image-field';
 import { RemoveFlatBackground } from '@/components/product/RemoveFlatBackground';
 import CustomizationAccordion from '@/components/product/CustomizationAccordion';
 import CaptureMockupButton from '@/components/product/CaptureMockupButton';
@@ -27,21 +28,27 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
   const [svgContent, setSvgContent] = useState<string>('');
   const [selectedSide, setSelectedSide] = useState<'recto' | 'verso'>('recto');
 
-  const { isLoading, error } = useQuery({
+  const { data: productData, isLoading, error } = useQuery({
     queryKey: ['product', id],
     queryFn: () => fetchProductById(id as string),
-    onSuccess: (data) => {
-      setProduct(data);
-    },
   });
 
-  const { isLoading: isLoadingDesigns, error: errorLoadingDesigns } = useQuery({
+  const { data: designsData, isLoading: isLoadingDesigns, error: errorLoadingDesigns } = useQuery({
     queryKey: ['activeDesigns'],
-    queryFn: fetchActiveDesigns,
-    onSuccess: (data) => {
-      setDesigns(data);
-    },
+    queryFn: fetchAllDesigns,
   });
+
+  useEffect(() => {
+    if (productData) {
+      setProduct(productData);
+    }
+  }, [productData]);
+
+  useEffect(() => {
+    if (designsData) {
+      setDesigns(designsData);
+    }
+  }, [designsData]);
 
   // Fonction améliorée pour détecter si c'est un SVG
   const isSvgDesign = (imageUrl: string): boolean => {
@@ -154,9 +161,7 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
                     id="product-canvas"
                     className="relative w-full h-96 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center overflow-hidden"
                     style={{
-                      backgroundImage: selectedSide === 'recto' 
-                        ? `url(${product?.mockup?.front_image_url})` 
-                        : `url(${product?.mockup?.back_image_url})`,
+                      backgroundImage: `url(${product?.image_url})`,
                       backgroundSize: 'contain',
                       backgroundRepeat: 'no-repeat',
                       backgroundPosition: 'center'
@@ -182,7 +187,7 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
                       <div className="absolute top-4 right-4">
                         <RemoveFlatBackground
                           imageUrl={customImageUrl}
-                          onBackgroundRemoved={handleBackgroundRemoved}
+                          onReady={handleBackgroundRemoved}
                         />
                       </div>
                     )}
@@ -223,16 +228,46 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
                 <GlassCard className="p-6">
                   <h3 className="text-xl font-semibold mb-4">Personnalisation</h3>
                   
-                  <CustomizationAccordion
-                    designs={designs}
-                    selectedDesign={selectedDesign}
-                    onDesignSelect={handleDesignSelect}
-                    customImageUrl={customImageUrl}
-                    onImageUpload={handleImageUpload}
-                    onImageUrlChange={setCustomImageUrl}
-                  />
+                  <CustomizationAccordion>
+                    <div className="space-y-4">
+                      {/* Design Gallery */}
+                      <div>
+                        <Label className="text-sm font-medium">Choisir un design</Label>
+                        <div className="grid grid-cols-3 gap-2 mt-2">
+                          {designs.map((design) => (
+                            <button
+                              key={design.id}
+                              onClick={() => handleDesignSelect(design)}
+                              className={`relative p-2 border rounded-lg hover:border-purple-400 transition-colors ${
+                                selectedDesign?.id === design.id ? 'border-purple-400 bg-purple-500/20' : 'border-white/20'
+                              }`}
+                            >
+                              <img
+                                src={design.image_url}
+                                alt={design.name}
+                                className="w-full h-16 object-contain rounded"
+                              />
+                              {isSvgDesign(design.image_url) && (
+                                <span className="absolute top-1 right-1 text-xs bg-purple-500 text-white px-1 rounded">
+                                  SVG
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
 
-                  {/* Note: SVGColorEditor est maintenant dans FloatingColorPicker */}
+                      {/* Custom Image Upload */}
+                      <div>
+                        <UploadImageField
+                          label="Ou télécharger votre propre image"
+                          value={customImageUrl}
+                          onChange={setCustomImageUrl}
+                          placeholder="URL de votre image"
+                        />
+                      </div>
+                    </div>
+                  </CustomizationAccordion>
                 </GlassCard>
 
                 {/* Add to Cart Section */}
