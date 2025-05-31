@@ -27,6 +27,8 @@ interface ModalPersonnalisationProps {
   // Mockup data
   mockup?: any;
   selectedMockupColor: MockupColor | null;
+  mockupColors?: MockupColor[];
+  onColorSelect?: (color: MockupColor) => void;
   
   // Design states
   selectedDesignFront: Design | null;
@@ -85,6 +87,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   productImageUrl,
   mockup,
   selectedMockupColor,
+  mockupColors = [],
+  onColorSelect,
   selectedDesignFront,
   selectedDesignBack,
   onSelectDesign,
@@ -176,11 +180,27 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
   const hasTwoSides = mockup?.svg_back_url ? true : false;
 
-  // Desktop layout avec 2 colonnes
+  // Wrappers pour ne pas fermer la modal
+  const handleSelectDesignWrapper = (design: Design) => {
+    onSelectDesign(design);
+    // Ne pas fermer la modal - garder open = true
+  };
+
+  const handleFileUploadWrapper = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onFileUpload(event);
+    // Ne pas fermer la modal - garder open = true
+  };
+
+  const handleAIImageGeneratedWrapper = (imageUrl: string, imageName: string) => {
+    onAIImageGenerated(imageUrl, imageName);
+    // Ne pas fermer la modal - garder open = true
+  };
+
+  // Desktop layout avec proportions ajustées (40% preview / 60% outils)
   const desktopContent = (
     <div className="flex h-full gap-6">
-      {/* Colonne de gauche - Preview */}
-      <div className="w-1/2 flex flex-col">
+      {/* Colonne de gauche - Preview (40%) */}
+      <div className="w-2/5 flex flex-col">
         <ProductPreview
           productName={productName}
           productImageUrl={productImageUrl}
@@ -188,6 +208,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           onViewSideChange={onViewSideChange}
           mockup={mockup}
           selectedMockupColor={selectedMockupColor}
+          mockupColors={mockupColors}
+          onColorSelect={onColorSelect}
           hasTwoSides={hasTwoSides}
           selectedDesignFront={selectedDesignFront}
           selectedDesignBack={selectedDesignBack}
@@ -213,8 +235,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         />
       </div>
 
-      {/* Colonne de droite - Outils */}
-      <div className="w-1/2 flex flex-col">
+      {/* Colonne de droite - Outils (60%) */}
+      <div className="w-3/5 flex flex-col">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="designs" className="flex items-center gap-2">
@@ -238,7 +260,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           <div className="flex-1 overflow-hidden">
             <TabsContent value="designs" className="h-full overflow-y-auto">
               <GalleryDesigns
-                onSelectDesign={onSelectDesign}
+                onSelectDesign={handleSelectDesignWrapper}
                 selectedDesign={getCurrentDesign()}
                 currentDesignTransform={getCurrentDesignTransform()}
                 selectedSize={getCurrentSelectedSize()}
@@ -249,8 +271,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
             <TabsContent value="upload" className="h-full overflow-y-auto">
               <UploadDesign
-                onFileUpload={onFileUpload}
-                onAIImageGenerated={onAIImageGenerated}
+                onFileUpload={handleFileUploadWrapper}
+                onAIImageGenerated={handleAIImageGeneratedWrapper}
                 onRemoveBackground={onRemoveBackground}
                 isRemovingBackground={isRemovingBackground}
                 currentDesign={getCurrentDesign()}
@@ -307,6 +329,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         onViewSideChange={onViewSideChange}
         mockup={mockup}
         selectedMockupColor={selectedMockupColor}
+        mockupColors={mockupColors}
+        onColorSelect={onColorSelect}
         hasTwoSides={hasTwoSides}
         selectedDesignFront={selectedDesignFront}
         selectedDesignBack={selectedDesignBack}
@@ -353,7 +377,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
         <TabsContent value="designs" className="space-y-4">
           <GalleryDesigns
-            onSelectDesign={onSelectDesign}
+            onSelectDesign={handleSelectDesignWrapper}
             selectedDesign={getCurrentDesign()}
             currentDesignTransform={getCurrentDesignTransform()}
             selectedSize={getCurrentSelectedSize()}
@@ -364,8 +388,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
         <TabsContent value="upload" className="space-y-4">
           <UploadDesign
-            onFileUpload={onFileUpload}
-            onAIImageGenerated={onAIImageGenerated}
+            onFileUpload={handleFileUploadWrapper}
+            onAIImageGenerated={handleAIImageGeneratedWrapper}
             onRemoveBackground={onRemoveBackground}
             isRemovingBackground={isRemovingBackground}
             currentDesign={getCurrentDesign()}
