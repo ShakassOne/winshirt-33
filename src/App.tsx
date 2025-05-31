@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
-import { ProductDetail } from "./pages/ProductDetail";
+import ProductDetail from "./pages/ProductDetail";
 import Lotteries from "./pages/Lotteries";
 import LotteryDetail from "./pages/LotteryDetail";
 import Cart from "./pages/Cart";
