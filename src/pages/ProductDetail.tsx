@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ShoppingCart, ChevronDown, ChevronUp, Check, ArrowLeft, RotateCw, Minus, Plus, Type, Image as ImageIcon, Bold, Italic, Underline, Upload, UsersRound, Target, PenTool, Sparkles, Palette } from 'lucide-react';
+import { ShoppingCart, Check, ArrowLeft, Minus, Plus, PenTool, Sparkles, UsersRound, Target } from 'lucide-react';
 import { fetchProductById, fetchAllLotteries, fetchAllDesigns, fetchMockupById } from '@/services/api.service';
 import { Design, Lottery, CartItem } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
@@ -10,26 +10,17 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Slider } from "@/components/ui/slider";
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { HexColorPicker } from 'react-colorful';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useCart } from '@/context/CartContext';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import AIImageGenerator from '@/components/product/AIImageGenerator';
 import { RemoveFlatBackground } from '@/components/product/RemoveFlatBackground';
 import { supabase } from '@/integrations/supabase/client';
 import { SocialShareButton } from '@/components/SocialShareButton';
 import { SVGColorEditor } from '@/components/product/SVGColorEditor';
+import { ModalPersonnalisation } from '@/components/product/ModalPersonnalisation';
 
 // Définition des polices Google Fonts
 const googleFonts = [{
@@ -438,6 +429,9 @@ const ProductDetail = () => {
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
   const [backgroundRemovalImage, setBackgroundRemovalImage] = useState<string | null>(null);
 
+  // Missing state variables
+  const [pageScrollLocked, setPageScrollLocked] = useState(false);
+
   // Nouveaux états pour la gestion SVG - séparés par côté
   const [svgColorFront, setSvgColorFront] = useState('#000000');
   const [svgColorBack, setSvgColorBack] = useState('#000000');
@@ -540,23 +534,7 @@ const ProductDetail = () => {
     queryKey: ['lotteries'],
     queryFn: fetchAllLotteries
   });
-  const { data: designs = [], isLoading: isLoadingDesigns } = useQuery({
-    queryKey: ['designs'],
-    queryFn: fetchAllDesigns
-  });
-  const uniqueCategories = React.useMemo(() => {
-    if (!designs) return ['all'];
-    const categories = designs.map(design => design.category);
-    return ['all', ...new Set(categories)];
-  }, [designs]);
-  const filteredDesigns = React.useMemo(() => {
-    if (!designs) return [];
-    if (selectedCategoryFilter === 'all') {
-      return designs.filter(design => design.is_active !== false);
-    } else {
-      return designs.filter(design => design.is_active !== false && design.category === selectedCategoryFilter);
-    }
-  }, [designs, selectedCategoryFilter]);
+
   useEffect(() => {
     if (product) {
       if (product.available_colors && product.available_colors.length > 0) {
@@ -573,7 +551,7 @@ const ProductDetail = () => {
     }
   }, [mockup]);
   useEffect(() => {
-    if (isDragging || isDraggingText || pageScrollLocked && customizationMode) {
+    if (isDragging || isDraggingText || (pageScrollLocked && customizationMode)) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'auto';
@@ -582,6 +560,7 @@ const ProductDetail = () => {
       document.body.style.overflow = 'auto';
     };
   }, [pageScrollLocked, isDragging, isDraggingText, customizationMode]);
+  
   const handleQuantityChange = (type: 'increase' | 'decrease') => {
     if (type === 'increase') {
       setQuantity(prev => prev + 1);
@@ -599,7 +578,7 @@ const ProductDetail = () => {
     }
     setCustomizationModalOpen(false);
   };
-  const handleDesignTransformChange = (property: keyof typeof designTransformFront, value: any) => {
+  const handleDesignTransformChange = (property: string, value: any) => {
     if (activeDesignSide === 'front') {
       setDesignTransformFront(prev => ({
         ...prev,
@@ -612,7 +591,7 @@ const ProductDetail = () => {
       }));
     }
   };
-  const handleTextTransformChange = (property: keyof typeof textTransformFront, value: any) => {
+  const handleTextTransformChange = (property: string, value: any) => {
     if (activeTextSide === 'front') {
       setTextTransformFront(prev => ({
         ...prev,
@@ -792,11 +771,6 @@ const ProductDetail = () => {
       setActiveTextSide('back');
     }
   }, [currentViewSide]);
-  useEffect(() => {
-    if (selectedTab === 'text') {
-      // Le texte est automatiquement activé dans cette version
-    }
-  }, [selectedTab]);
 
   const calculatePrice = () => {
     if (!product) return 0;
@@ -931,6 +905,7 @@ const ProductDetail = () => {
     addItem(cartItem);
     toast.success('Produit ajouté au panier !');
   };
+  
   if (isLoading || !product) {
     return <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -1017,9 +992,6 @@ const ProductDetail = () => {
       setBackgroundRemovalImage(null);
     }
   };
-
-  // Import ModalPersonnalisation component
-  const ModalPersonnalisation = React.lazy(() => import('@/components/product/ModalPersonnalisation').then(module => ({ default: module.ModalPersonnalisation })));
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -1319,79 +1291,77 @@ const ProductDetail = () => {
         </div>
 
         {/* Customization Modal */}
-        <React.Suspense fallback={<div>Chargement...</div>}>
-          <ModalPersonnalisation
-            open={customizationModalOpen}
-            onClose={() => setCustomizationModalOpen(false)}
-            currentViewSide={currentViewSide}
-            
-            // Design props
-            selectedDesignFront={selectedDesignFront}
-            selectedDesignBack={selectedDesignBack}
-            onSelectDesign={handleDesignSelect}
-            onFileUpload={handleFileUpload}
-            onAIImageGenerated={handleAIImageGenerated}
-            onRemoveBackground={handleRemoveBackground}
-            isRemovingBackground={isRemovingBackground}
-            
-            // SVG props
-            svgColorFront={svgColorFront}
-            svgColorBack={svgColorBack}
-            svgContentFront={svgContentFront}
-            svgContentBack={svgContentBack}
-            onSvgColorChange={handleSvgColorChange}
-            onSvgContentChange={handleSvgContentChange}
-            
-            // Text props
-            textContentFront={textContentFront}
-            textContentBack={textContentBack}
-            textFontFront={textFontFront}
-            textFontBack={textFontBack}
-            textColorFront={textColorFront}
-            textColorBack={textColorBack}
-            textStylesFront={textStylesFront}
-            textStylesBack={textStylesBack}
-            textTransformFront={textTransformFront}
-            textTransformBack={textTransformBack}
-            onTextContentChange={(content) => {
-              if (currentViewSide === 'front') {
-                setTextContentFront(content);
-              } else {
-                setTextContentBack(content);
-              }
-            }}
-            onTextFontChange={(font) => {
-              if (currentViewSide === 'front') {
-                setTextFontFront(font);
-              } else {
-                setTextFontBack(font);
-              }
-            }}
-            onTextColorChange={(color) => {
-              if (currentViewSide === 'front') {
-                setTextColorFront(color);
-              } else {
-                setTextColorBack(color);
-              }
-            }}
-            onTextStylesChange={(styles) => {
-              if (currentViewSide === 'front') {
-                setTextStylesFront(styles);
-              } else {
-                setTextStylesBack(styles);
-              }
-            }}
-            onTextTransformChange={handleTextTransformChange}
-            
-            // Design transform props
-            designTransformFront={designTransformFront}
-            designTransformBack={designTransformBack}
-            selectedSizeFront={selectedSizeFront}
-            selectedSizeBack={selectedSizeBack}
-            onDesignTransformChange={handleDesignTransformChange}
-            onSizeChange={handleSizeClick}
-          />
-        </React.Suspense>
+        <ModalPersonnalisation
+          open={customizationModalOpen}
+          onClose={() => setCustomizationModalOpen(false)}
+          currentViewSide={currentViewSide}
+          
+          // Design props
+          selectedDesignFront={selectedDesignFront}
+          selectedDesignBack={selectedDesignBack}
+          onSelectDesign={handleDesignSelect}
+          onFileUpload={handleFileUpload}
+          onAIImageGenerated={handleAIImageGenerated}
+          onRemoveBackground={handleRemoveBackground}
+          isRemovingBackground={isRemovingBackground}
+          
+          // SVG props
+          svgColorFront={svgColorFront}
+          svgColorBack={svgColorBack}
+          svgContentFront={svgContentFront}
+          svgContentBack={svgContentBack}
+          onSvgColorChange={handleSvgColorChange}
+          onSvgContentChange={handleSvgContentChange}
+          
+          // Text props
+          textContentFront={textContentFront}
+          textContentBack={textContentBack}
+          textFontFront={textFontFront}
+          textFontBack={textFontBack}
+          textColorFront={textColorFront}
+          textColorBack={textColorBack}
+          textStylesFront={textStylesFront}
+          textStylesBack={textStylesBack}
+          textTransformFront={textTransformFront}
+          textTransformBack={textTransformBack}
+          onTextContentChange={(content) => {
+            if (currentViewSide === 'front') {
+              setTextContentFront(content);
+            } else {
+              setTextContentBack(content);
+            }
+          }}
+          onTextFontChange={(font) => {
+            if (currentViewSide === 'front') {
+              setTextFontFront(font);
+            } else {
+              setTextFontBack(font);
+            }
+          }}
+          onTextColorChange={(color) => {
+            if (currentViewSide === 'front') {
+              setTextColorFront(color);
+            } else {
+              setTextColorBack(color);
+            }
+          }}
+          onTextStylesChange={(styles) => {
+            if (currentViewSide === 'front') {
+              setTextStylesFront(styles);
+            } else {
+              setTextStylesBack(styles);
+            }
+          }}
+          onTextTransformChange={handleTextTransformChange}
+          
+          // Design transform props
+          designTransformFront={designTransformFront}
+          designTransformBack={designTransformBack}
+          selectedSizeFront={selectedSizeFront}
+          selectedSizeBack={selectedSizeBack}
+          onDesignTransformChange={handleDesignTransformChange}
+          onSizeChange={handleSizeClick}
+        />
       </main>
       
       <Footer />
