@@ -9,11 +9,8 @@ import Footer from '@/components/layout/Footer';
 import GlassCard from '@/components/ui/GlassCard';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { UploadImageField } from '@/components/ui/upload-image-field';
 import { RemoveFlatBackground } from '@/components/product/RemoveFlatBackground';
-import CustomizationAccordion from '@/components/product/CustomizationAccordion';
+import CustomizationModal from '@/components/product/CustomizationModal';
 import CaptureMockupButton from '@/components/product/CaptureMockupButton';
 import { FloatingColorPicker } from '@/components/product/FloatingColorPicker';
 
@@ -228,46 +225,20 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
                 <GlassCard className="p-6">
                   <h3 className="text-xl font-semibold mb-4">Personnalisation</h3>
                   
-                  <CustomizationAccordion>
-                    <div className="space-y-4">
-                      {/* Design Gallery */}
-                      <div>
-                        <Label className="text-sm font-medium">Choisir un design</Label>
-                        <div className="grid grid-cols-3 gap-2 mt-2">
-                          {designs.map((design) => (
-                            <button
-                              key={design.id}
-                              onClick={() => handleDesignSelect(design)}
-                              className={`relative p-2 border rounded-lg hover:border-purple-400 transition-colors ${
-                                selectedDesign?.id === design.id ? 'border-purple-400 bg-purple-500/20' : 'border-white/20'
-                              }`}
-                            >
-                              <img
-                                src={design.image_url}
-                                alt={design.name}
-                                className="w-full h-16 object-contain rounded"
-                              />
-                              {isSvgDesign(design.image_url) && (
-                                <span className="absolute top-1 right-1 text-xs bg-purple-500 text-white px-1 rounded">
-                                  SVG
-                                </span>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Custom Image Upload */}
-                      <div>
-                        <UploadImageField
-                          label="Ou télécharger votre propre image"
-                          value={customImageUrl}
-                          onChange={setCustomImageUrl}
-                          placeholder="URL de votre image"
-                        />
-                      </div>
-                    </div>
-                  </CustomizationAccordion>
+                  <CustomizationModal
+                    designs={designs}
+                    selectedDesign={selectedDesign}
+                    onDesignSelect={handleDesignSelect}
+                    customImageUrl={customImageUrl}
+                    onImageUpload={handleImageUpload}
+                    onImageUrlChange={setCustomImageUrl}
+                    onSvgColorChange={handleSvgColorChange}
+                    onSvgContentChange={handleSvgContentChange}
+                  >
+                    <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium">
+                      Commencer à personnaliser
+                    </Button>
+                  </CustomizationModal>
                 </GlassCard>
 
                 {/* Add to Cart Section */}
