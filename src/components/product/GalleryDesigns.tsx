@@ -58,6 +58,12 @@ export const GalleryDesigns: React.FC<GalleryDesignsProps> = ({
     }
   }, [designs, selectedCategoryFilter]);
 
+  const handleDesignSelect = (design: Design) => {
+    console.log('🎨 [GalleryDesigns] Sélection du design:', design.name);
+    // Ne pas fermer la modal, juste sélectionner le design
+    onSelectDesign(design);
+  };
+
   const handleSizeClick = (label: string) => {
     const preset = sizePresets.find(p => p.label === label);
     if (preset) {
@@ -118,7 +124,7 @@ export const GalleryDesigns: React.FC<GalleryDesignsProps> = ({
                 className={`bg-black/40 overflow-hidden cursor-pointer transition-all hover:scale-[1.02] border-white/10 hover:border-winshirt-purple/30 ${
                   selectedDesign?.id === design.id ? 'border-winshirt-purple' : ''
                 }`}
-                onClick={() => onSelectDesign(design)}
+                onClick={() => handleDesignSelect(design)}
               >
                 <div className="aspect-square overflow-hidden bg-gray-900/40">
                   <img

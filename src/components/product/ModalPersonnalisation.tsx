@@ -241,7 +241,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-4 mb-4">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="designs" className="flex items-center gap-2">
               <ImageIcon className="h-4 w-4" />
               <span className="hidden sm:inline">Designs</span>
@@ -253,10 +253,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             <TabsTrigger value="text" className="flex items-center gap-2">
               <Type className="h-4 w-4" />
               <span className="hidden sm:inline">Texte</span>
-            </TabsTrigger>
-            <TabsTrigger value="svg" className="flex items-center gap-2" disabled={!isSvgDesign()}>
-              <Palette className="h-4 w-4" />
-              <span className="hidden sm:inline">SVG</span>
             </TabsTrigger>
           </TabsList>
 
@@ -279,6 +275,9 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                 onRemoveBackground={onRemoveBackground}
                 isRemovingBackground={isRemovingBackground}
                 currentDesign={getCurrentDesign()}
+                onSvgColorChange={onSvgColorChange}
+                onSvgContentChange={onSvgContentChange}
+                defaultSvgColor={getCurrentSvgColor()}
               />
             </TabsContent>
 
@@ -295,17 +294,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                 onTextStylesChange={onTextStylesChange}
                 onTextTransformChange={onTextTransformChange}
               />
-            </TabsContent>
-
-            <TabsContent value="svg" className="h-full overflow-y-auto">
-              {isSvgDesign() && getCurrentDesign() && (
-                <SVGColorEditor
-                  imageUrl={getCurrentDesign()!.image_url}
-                  onColorChange={onSvgColorChange}
-                  onSvgContentChange={onSvgContentChange}
-                  defaultColor={getCurrentSvgColor()}
-                />
-              )}
             </TabsContent>
           </div>
         </Tabs>
