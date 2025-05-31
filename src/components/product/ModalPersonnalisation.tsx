@@ -13,6 +13,12 @@ import { UploadDesign } from './UploadDesign';
 import { TextCustomizer } from './TextCustomizer';
 import { SVGColorEditor } from './SVGColorEditor';
 import { ProductPreview } from './ProductPreview';
+import { ProductColorSelector } from './ProductColorSelector';
+import { MobileToolbar } from './MobileToolbar';
+import { MobileDesignsModal } from './MobileDesignsModal';
+import { MobileTextModal } from './MobileTextModal';
+import { MobileUploadModal } from './MobileUploadModal';
+import { MobileColorsModal } from './MobileColorsModal';
 
 interface ModalPersonnalisationProps {
   open: boolean;
@@ -27,6 +33,7 @@ interface ModalPersonnalisationProps {
   // Mockup data
   mockup?: any;
   selectedMockupColor: MockupColor | null;
+  onMockupColorChange: (color: MockupColor) => void;
   
   // Design states
   selectedDesignFront: Design | null;
@@ -85,6 +92,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   productImageUrl,
   mockup,
   selectedMockupColor,
+  onMockupColorChange,
   selectedDesignFront,
   selectedDesignBack,
   onSelectDesign,
@@ -125,6 +133,12 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('designs');
+  
+  // Mobile modals state
+  const [mobileDesignsOpen, setMobileDesignsOpen] = useState(false);
+  const [mobileTextOpen, setMobileTextOpen] = useState(false);
+  const [mobileUploadOpen, setMobileUploadOpen] = useState(false);
+  const [mobileColorsOpen, setMobileColorsOpen] = useState(false);
 
   const getCurrentDesign = () => {
     return currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack;
@@ -175,6 +189,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   };
 
   const hasTwoSides = mockup?.svg_back_url ? true : false;
+  const hasDesign = getCurrentDesign() !== null;
 
   // Desktop layout avec 2 colonnes
   const desktopContent = (
@@ -215,6 +230,17 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
       {/* Colonne de droite - Outils */}
       <div className="w-1/2 flex flex-col">
+        {mockup?.colors && mockup.colors.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-lg font-medium mb-3">Couleur du produit</h3>
+            <ProductColorSelector
+              colors={mockup.colors}
+              selectedColor={selectedMockupColor}
+              onColorSelect={onMockupColorChange}
+            />
+          </div>
+        )}
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="designs" className="flex items-center gap-2">
@@ -297,113 +323,110 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     </div>
   );
 
-  // Mobile layout avec onglets
+  // Nouveau layout mobile optimisé
   const mobileContent = (
-    <div className="space-y-4">
-      <ProductPreview
-        productName={productName}
-        productImageUrl={productImageUrl}
-        currentViewSide={currentViewSide}
-        onViewSideChange={onViewSideChange}
-        mockup={mockup}
-        selectedMockupColor={selectedMockupColor}
-        hasTwoSides={hasTwoSides}
-        selectedDesignFront={selectedDesignFront}
-        selectedDesignBack={selectedDesignBack}
-        designTransformFront={designTransformFront}
-        designTransformBack={designTransformBack}
-        svgColorFront={svgColorFront}
-        svgColorBack={svgColorBack}
-        svgContentFront={svgContentFront}
-        svgContentBack={svgContentBack}
-        textContentFront={textContentFront}
-        textContentBack={textContentBack}
-        textFontFront={textFontFront}
-        textFontBack={textFontBack}
-        textColorFront={textColorFront}
-        textColorBack={textColorBack}
-        textStylesFront={textStylesFront}
-        textStylesBack={textStylesBack}
-        textTransformFront={textTransformFront}
-        textTransformBack={textTransformBack}
-        onDesignMouseDown={onDesignMouseDown}
-        onTextMouseDown={onTextMouseDown}
-        onTouchMove={onTouchMove}
+    <div className="flex flex-col h-full pb-20">
+      {/* Preview pleine largeur */}
+      <div className="flex-1 px-4 pt-4">
+        <ProductPreview
+          productName={productName}
+          productImageUrl={productImageUrl}
+          currentViewSide={currentViewSide}
+          onViewSideChange={onViewSideChange}
+          mockup={mockup}
+          selectedMockupColor={selectedMockupColor}
+          hasTwoSides={hasTwoSides}
+          selectedDesignFront={selectedDesignFront}
+          selectedDesignBack={selectedDesignBack}
+          designTransformFront={designTransformFront}
+          designTransformBack={designTransformBack}
+          svgColorFront={svgColorFront}
+          svgColorBack={svgColorBack}
+          svgContentFront={svgContentFront}
+          svgContentBack={svgContentBack}
+          textContentFront={textContentFront}
+          textContentBack={textContentBack}
+          textFontFront={textFontFront}
+          textFontBack={textFontBack}
+          textColorFront={textColorFront}
+          textColorBack={textColorBack}
+          textStylesFront={textStylesFront}
+          textStylesBack={textStylesBack}
+          textTransformFront={textTransformFront}
+          textTransformBack={textTransformBack}
+          onDesignMouseDown={onDesignMouseDown}
+          onTextMouseDown={onTextMouseDown}
+          onTouchMove={onTouchMove}
+        />
+      </div>
+
+      {/* Barre d'outils mobile fixe en bas */}
+      <MobileToolbar
+        onDesignsClick={() => setMobileDesignsOpen(true)}
+        onTextClick={() => setMobileTextOpen(true)}
+        onUploadClick={() => setMobileUploadOpen(true)}
+        onAIClick={() => setMobileUploadOpen(true)}
+        onColorsClick={() => setMobileColorsOpen(true)}
+        isSvgDesign={isSvgDesign()}
+        hasDesign={hasDesign}
       />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-4">
-          <TabsTrigger value="designs" className="flex items-center gap-2">
-            <ImageIcon className="h-4 w-4" />
-            <span className="text-xs">Designs</span>
-          </TabsTrigger>
-          <TabsTrigger value="upload" className="flex items-center gap-2">
-            <Upload className="h-4 w-4" />
-            <span className="text-xs">Upload</span>
-          </TabsTrigger>
-          <TabsTrigger value="text" className="flex items-center gap-2">
-            <Type className="h-4 w-4" />
-            <span className="text-xs">Texte</span>
-          </TabsTrigger>
-          <TabsTrigger value="svg" className="flex items-center gap-2" disabled={!isSvgDesign()}>
-            <Palette className="h-4 w-4" />
-            <span className="text-xs">SVG</span>
-          </TabsTrigger>
-        </TabsList>
+      {/* Modales spécialisées */}
+      <MobileDesignsModal
+        open={mobileDesignsOpen}
+        onClose={() => setMobileDesignsOpen(false)}
+        onSelectDesign={onSelectDesign}
+        selectedDesign={getCurrentDesign()}
+        currentDesignTransform={getCurrentDesignTransform()}
+        selectedSize={getCurrentSelectedSize()}
+        onDesignTransformChange={onDesignTransformChange}
+        onSizeChange={onSizeChange}
+      />
 
-        <TabsContent value="designs" className="space-y-4">
-          <GalleryDesigns
-            onSelectDesign={onSelectDesign}
-            selectedDesign={getCurrentDesign()}
-            currentDesignTransform={getCurrentDesignTransform()}
-            selectedSize={getCurrentSelectedSize()}
-            onDesignTransformChange={onDesignTransformChange}
-            onSizeChange={onSizeChange}
-          />
-        </TabsContent>
+      <MobileTextModal
+        open={mobileTextOpen}
+        onClose={() => setMobileTextOpen(false)}
+        textContent={getCurrentTextContent()}
+        textFont={getCurrentTextFont()}
+        textColor={getCurrentTextColor()}
+        textStyles={getCurrentTextStyles()}
+        textTransform={getCurrentTextTransform()}
+        onTextContentChange={onTextContentChange}
+        onTextFontChange={onTextFontChange}
+        onTextColorChange={onTextColorChange}
+        onTextStylesChange={onTextStylesChange}
+        onTextTransformChange={onTextTransformChange}
+      />
 
-        <TabsContent value="upload" className="space-y-4">
-          <UploadDesign
-            onFileUpload={onFileUpload}
-            onAIImageGenerated={onAIImageGenerated}
-            onRemoveBackground={onRemoveBackground}
-            isRemovingBackground={isRemovingBackground}
-            currentDesign={getCurrentDesign()}
-          />
-        </TabsContent>
+      <MobileUploadModal
+        open={mobileUploadOpen}
+        onClose={() => setMobileUploadOpen(false)}
+        onFileUpload={onFileUpload}
+        onAIImageGenerated={onAIImageGenerated}
+        onRemoveBackground={onRemoveBackground}
+        isRemovingBackground={isRemovingBackground}
+        currentDesign={getCurrentDesign()}
+      />
 
-        <TabsContent value="text" className="space-y-4">
-          <TextCustomizer
-            textContent={getCurrentTextContent()}
-            textFont={getCurrentTextFont()}
-            textColor={getCurrentTextColor()}
-            textStyles={getCurrentTextStyles()}
-            textTransform={getCurrentTextTransform()}
-            onTextContentChange={onTextContentChange}
-            onTextFontChange={onTextFontChange}
-            onTextColorChange={onTextColorChange}
-            onTextStylesChange={onTextStylesChange}
-            onTextTransformChange={onTextTransformChange}
-          />
-        </TabsContent>
+      <MobileColorsModal
+        open={mobileColorsOpen}
+        onClose={() => setMobileColorsOpen(false)}
+        isSvgDesign={isSvgDesign()}
+        currentDesign={getCurrentDesign()}
+        onSvgColorChange={onSvgColorChange}
+        onSvgContentChange={onSvgContentChange}
+        defaultSvgColor={getCurrentSvgColor()}
+        mockupColors={mockup?.colors}
+        selectedMockupColor={selectedMockupColor}
+        onMockupColorChange={onMockupColorChange}
+      />
 
-        <TabsContent value="svg" className="space-y-4">
-          {isSvgDesign() && getCurrentDesign() && (
-            <SVGColorEditor
-              imageUrl={getCurrentDesign()!.image_url}
-              onColorChange={onSvgColorChange}
-              onSvgContentChange={onSvgContentChange}
-              defaultColor={getCurrentSvgColor()}
-            />
-          )}
-        </TabsContent>
-      </Tabs>
-
-      <div className="flex justify-between pt-4 border-t border-white/10">
-        <Button variant="outline" onClick={onClose} className="px-6">
+      {/* Boutons de validation en overlay pour mobile */}
+      <div className="absolute bottom-20 left-4 right-4 flex justify-between bg-black/80 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+        <Button variant="outline" onClick={onClose} className="px-4">
           Annuler
         </Button>
-        <Button onClick={onClose} className="px-6 bg-gradient-to-r from-winshirt-purple to-winshirt-blue">
+        <Button onClick={onClose} className="px-4 bg-gradient-to-r from-winshirt-purple to-winshirt-blue">
           Valider
         </Button>
       </div>
@@ -413,7 +436,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onClose}>
-        <DrawerContent className="bg-black/90 backdrop-blur-lg border-white/20 max-h-[95vh]">
+        <DrawerContent className="bg-black/90 backdrop-blur-lg border-white/20 h-[100vh]">
           <DrawerHeader className="border-b border-white/10">
             <div className="flex items-center justify-between">
               <DrawerTitle className="text-xl font-semibold">
@@ -424,7 +447,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               </Button>
             </div>
           </DrawerHeader>
-          <div className="p-4 overflow-y-auto">
+          <div className="flex-1 overflow-hidden">
             {mobileContent}
           </div>
         </DrawerContent>

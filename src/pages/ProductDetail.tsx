@@ -1313,6 +1313,7 @@ const ProductDetail = () => {
           // Mockup data
           mockup={mockup}
           selectedMockupColor={selectedMockupColor}
+          onMockupColorChange={setSelectedMockupColor}
           
           // Design props
           selectedDesignFront={selectedDesignFront}
