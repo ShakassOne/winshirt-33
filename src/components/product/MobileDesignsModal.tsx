@@ -42,10 +42,7 @@ export const MobileDesignsModal: React.FC<MobileDesignsModalProps> = ({
         </DrawerHeader>
         <div className="p-4 overflow-y-auto">
           <GalleryDesigns
-            onSelectDesign={(design) => {
-              onSelectDesign(design);
-              onClose();
-            }}
+            onSelectDesign={onSelectDesign}
             selectedDesign={selectedDesign}
             currentDesignTransform={currentDesignTransform}
             selectedSize={selectedSize}
