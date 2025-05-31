@@ -37,7 +37,7 @@ export const ProductColorSelector: React.FC<ProductColorSelectorProps> = ({
           >
             <img
               src={color.front_image_url}
-              alt={color.color_name}
+              alt={color.name}
               className="w-full h-full object-cover"
             />
             {selectedMockupColor?.id === color.id && (

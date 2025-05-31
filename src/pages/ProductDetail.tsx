@@ -1,14 +1,16 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Product, Design, MockupColor } from '@/types/supabase.types';
-import { fetchProductById, fetchMockupColorsByMockupId } from '@/services/api.service';
+import { Product, Design } from '@/types/supabase.types';
+import { MockupColor } from '@/types/mockup.types';
+import { fetchProductById } from '@/services/api.service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
-import { useCart } from '@/hooks/use-cart';
+import { useCart } from '@/context/CartContext';
 import { ModalPersonnalisation } from '@/components/product/ModalPersonnalisation';
 
 export const ProductDetail: React.FC = () => {
@@ -46,26 +48,32 @@ export const ProductDetail: React.FC = () => {
     queryFn: () => fetchProductById(id!),
   });
 
-  const { data: mockupColors = [], isLoading: isMockupColorsLoading } = useQuery({
-    queryKey: ['mockupColors', selectedMockup?.id],
-    queryFn: () => fetchMockupColorsByMockupId(selectedMockup?.id),
-    enabled: !!selectedMockup?.id,
-  });
+  // Mock mockup colors - in reality this would come from the mockup data
+  const mockupColors: MockupColor[] = [
+    {
+      id: '1',
+      name: 'Noir',
+      color_code: '#000000',
+      front_image_url: product?.image_url || '',
+      back_image_url: product?.image_url || ''
+    },
+    {
+      id: '2', 
+      name: 'Blanc',
+      color_code: '#FFFFFF',
+      front_image_url: product?.image_url || '',
+      back_image_url: product?.image_url || ''
+    }
+  ];
 
   useEffect(() => {
-    if (product?.mockups && product.mockups.length > 0) {
-      setSelectedMockup(product.mockups[0]);
+    if (product && mockupColors.length > 0) {
+      setSelectedMockupColor(mockupColors[0]);
     }
   }, [product]);
 
-  useEffect(() => {
-    if (mockupColors && mockupColors.length > 0) {
-      setSelectedMockupColor(mockupColors[0]);
-    }
-  }, [mockupColors]);
-
   const handleMockupColorSelect = (color: MockupColor) => {
-    console.log('🎨 [ProductDetail] Sélection d\'une couleur de mockup:', color.color_name);
+    console.log('🎨 [ProductDetail] Sélection d\'une couleur de mockup:', color.name);
     setSelectedMockupColor(color);
   };
 
@@ -180,11 +188,16 @@ export const ProductDetail: React.FC = () => {
     } : null;
 
     addItem({
-      ...product,
+      productId: product.id,
+      name: product.name,
+      price: product.price,
       quantity: 1,
-      selectedMockupColor: selectedMockupColor || undefined,
-      frontDesign: frontDesign,
-      backDesign: backDesign
+      image_url: product.image_url,
+      customization: {
+        selectedColor: selectedMockupColor?.name,
+        mockupRectoUrl: selectedMockupColor?.front_image_url,
+        mockupVersoUrl: selectedMockupColor?.back_image_url
+      }
     });
 
     toast({
@@ -359,10 +372,9 @@ export const ProductDetail: React.FC = () => {
               <p className="text-white/80">{product.description}</p>
             </div>
 
-            {/* Prix et code produit */}
+            {/* Prix */}
             <div className="flex items-center justify-between">
               <span className="text-xl font-semibold text-winshirt-purple">{product.price} €</span>
-              <span className="text-sm text-white/50">Code: {product.code}</span>
             </div>
 
             {/* Mockup colors */}
@@ -383,7 +395,7 @@ export const ProductDetail: React.FC = () => {
                     >
                       <img
                         src={color.front_image_url}
-                        alt={color.color_name}
+                        alt={color.name}
                         className="w-full h-full object-cover"
                       />
                       {selectedMockupColor?.id === color.id && (

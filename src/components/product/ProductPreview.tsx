@@ -268,7 +268,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
               Précédent
             </Button>
             <span className="text-sm text-white/70">
-              {selectedMockupColor?.color_name || 'Couleur'}
+              {selectedMockupColor?.name || 'Couleur'}
             </span>
             <Button
               variant="outline"
