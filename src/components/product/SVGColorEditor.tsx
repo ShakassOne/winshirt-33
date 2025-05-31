@@ -22,10 +22,11 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
   const [originalSvg, setOriginalSvg] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Vérification plus stricte du format SVG
+  // Vérification plus robuste du format SVG
   const isSvg = imageUrl && (
-    imageUrl.toLowerCase().endsWith('.svg') ||
-    imageUrl.includes('data:image/svg+xml')
+    imageUrl.toLowerCase().includes('.svg') || 
+    imageUrl.toLowerCase().includes('svg') ||
+    imageUrl.includes('data:image/svg')
   );
 
   useEffect(() => {
@@ -35,42 +36,18 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
       
       console.log('🎨 [SVGColorEditor] Chargement du SVG:', imageUrl);
       
-      // Ajouter un timeout et des headers pour éviter les erreurs CORS
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-      
-      fetch(imageUrl, {
-        method: 'GET',
-        mode: 'cors',
-        signal: controller.signal,
-        headers: {
-          'Accept': 'image/svg+xml,*/*'
-        }
-      })
+      fetch(imageUrl)
         .then((res) => {
-          clearTimeout(timeoutId);
           if (!res.ok) {
-            throw new Error(`Erreur HTTP: ${res.status} - ${res.statusText}`);
+            throw new Error(`Erreur HTTP: ${res.status}`);
           }
-          
-          // Vérifier le Content-Type si disponible
-          const contentType = res.headers.get('content-type');
-          if (contentType && !contentType.includes('svg') && !contentType.includes('xml') && !contentType.includes('text')) {
-            console.warn('⚠️ [SVGColorEditor] Content-Type suspect:', contentType);
-          }
-          
           return res.text();
         })
         .then((text) => {
-          // Vérifier que le contenu est bien du SVG
-          if (!text.trim().toLowerCase().includes('<svg')) {
-            throw new Error('Le fichier ne contient pas de SVG valide');
-          }
-          
           console.log('✅ [SVGColorEditor] SVG chargé avec succès');
           
           // Nettoyer et améliorer le SVG
-          let cleanedSvg = text.trim();
+          let cleanedSvg = text;
           
           // S'assurer que le SVG a les bons attributs
           if (!cleanedSvg.includes('viewBox')) {
@@ -104,24 +81,10 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
           setIsLoading(false);
         })
         .catch((error) => {
-          clearTimeout(timeoutId);
           console.error('❌ [SVGColorEditor] Erreur lors du chargement du SVG:', error);
-          
-          // Messages d'erreur plus spécifiques
-          if (error.name === 'AbortError') {
-            setError('Timeout: Le SVG met trop de temps à charger');
-          } else if (error.message.includes('Failed to fetch')) {
-            setError('Impossible d\'accéder au fichier SVG. Vérifiez l\'URL ou la connectivité.');
-          } else {
-            setError(`Erreur de chargement: ${error.message}`);
-          }
+          setError(`Impossible de charger le SVG: ${error.message}`);
           setIsLoading(false);
         });
-
-      return () => {
-        clearTimeout(timeoutId);
-        controller.abort();
-      };
     }
   }, [imageUrl, isSvg]);
 
@@ -157,10 +120,10 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 p-3 bg-gradient-to-r from-winshirt-purple/10 to-winshirt-blue/10 rounded-lg border border-white/20">
       <div className="flex items-center justify-between">
-        <Label className="flex items-center font-medium text-white">
-          <Palette className="h-4 w-4 mr-2 text-purple-400" />
+        <Label className="flex items-center font-medium">
+          <Palette className="h-4 w-4 mr-2 text-winshirt-purple" />
           Couleur du SVG
         </Label>
         <div className="flex items-center gap-3">
@@ -168,7 +131,7 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
             type="color"
             value={color}
             onChange={(e) => handleColorChange(e.target.value)}
-            className="w-10 h-10 rounded-lg border-2 border-white/30 bg-transparent cursor-pointer hover:border-purple-400/60 transition-colors"
+            className="w-10 h-10 rounded-lg border-2 border-white/30 bg-transparent cursor-pointer hover:border-winshirt-purple/60 transition-colors"
             disabled={isLoading || !!error}
             title="Choisir une couleur"
           />
@@ -180,7 +143,7 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
       
       {isLoading && (
         <div className="text-sm text-white/70 flex items-center justify-center py-2">
-          <div className="animate-spin h-4 w-4 mr-2 border-2 border-purple-400 border-t-transparent rounded-full"></div>
+          <div className="animate-spin h-4 w-4 mr-2 border-2 border-winshirt-purple border-t-transparent rounded-full"></div>
           Chargement du SVG...
         </div>
       )}
