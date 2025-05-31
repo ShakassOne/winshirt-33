@@ -27,7 +27,11 @@ export function UploadImageField({
   const [svgContent, setSvgContent] = useState<string>('');
   const [isLoadingSvg, setIsLoadingSvg] = useState(false);
 
-  const isSvg = value && value.toLowerCase().endsWith('.svg');
+  // Détection stricte du format SVG
+  const isSvg = value && (
+    value.toLowerCase().endsWith('.svg') ||
+    value.includes('data:image/svg+xml')
+  );
 
   useEffect(() => {
     setImagePreview(value || null);
@@ -45,8 +49,13 @@ export function UploadImageField({
           return res.text();
         })
         .then((text) => {
-          console.log('✅ [UploadImageField] SVG chargé avec succès');
-          setSvgContent(text);
+          // Vérifier que c'est bien du SVG
+          if (text.trim().toLowerCase().includes('<svg')) {
+            console.log('✅ [UploadImageField] SVG chargé avec succès');
+            setSvgContent(text);
+          } else {
+            throw new Error('Le contenu n\'est pas un SVG valide');
+          }
           setIsLoadingSvg(false);
         })
         .catch((error) => {
