@@ -29,6 +29,7 @@ import AIImageGenerator from '@/components/product/AIImageGenerator';
 import { RemoveFlatBackground } from '@/components/product/RemoveFlatBackground';
 import { supabase } from '@/integrations/supabase/client';
 import { SocialShareButton } from '@/components/SocialShareButton';
+import { SVGColorEditor } from '@/components/product/SVGColorEditor';
 
 // Définition des polices Google Fonts
 const googleFonts = [{
@@ -338,91 +339,6 @@ const sizePresets = [{
   max: 20
 }];
 
-interface SVGColorEditorProps {
-  imageUrl: string;
-  onColorChange: (color: string) => void;
-  onSvgContentChange: (svgContent: string) => void;
-  defaultColor?: string;
-}
-
-const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
-  imageUrl,
-  onColorChange,
-  onSvgContentChange,
-  defaultColor = '#000000'
-}) => {
-  const [color, setColor] = useState(defaultColor);
-  const [svgContent, setSvgContent] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [originalSvg, setOriginalSvg] = useState('');
-
-  const isSvg = imageUrl.toLowerCase().endsWith('.svg');
-
-  useEffect(() => {
-    if (isSvg && imageUrl) {
-      setIsLoading(true);
-      fetch(imageUrl)
-        .then((res) => res.text())
-        .then((text) => {
-          setOriginalSvg(text);
-          const coloredSvg = text.replace(/fill="[^"]*"/g, `fill="${color}"`);
-          setSvgContent(coloredSvg);
-          onSvgContentChange(coloredSvg);
-          setIsLoading(false);
-        })
-        .catch((error) => {
-          console.error('Erreur lors du chargement du SVG:', error);
-          setIsLoading(false);
-        });
-    }
-  }, [imageUrl, isSvg]);
-
-  useEffect(() => {
-    if (originalSvg && color) {
-      const coloredSvg = originalSvg.replace(/fill="[^"]*"/g, `fill="${color}"`);
-      setSvgContent(coloredSvg);
-      onSvgContentChange(coloredSvg);
-      onColorChange(color);
-    }
-  }, [color, originalSvg, onColorChange, onSvgContentChange]);
-
-  const handleColorChange = (newColor: string) => {
-    setColor(newColor);
-  };
-
-  if (!isSvg) {
-    return null;
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Label className="flex items-center">
-          <Palette className="h-4 w-4 mr-2 text-winshirt-purple" />
-          Couleur du SVG
-        </Label>
-        <div className="flex items-center gap-2">
-          <input
-            type="color"
-            value={color}
-            onChange={(e) => handleColorChange(e.target.value)}
-            className="w-8 h-8 rounded border border-white/20 bg-transparent cursor-pointer"
-            disabled={isLoading}
-          />
-          <span className="text-xs text-white/60">{color}</span>
-        </div>
-      </div>
-      
-      {isLoading && (
-        <div className="text-xs text-white/60 flex items-center">
-          <div className="animate-spin h-3 w-3 mr-2 border border-white border-t-transparent rounded-full"></div>
-          Chargement du SVG...
-        </div>
-      )}
-    </div>
-  );
-};
-
 const ProductDetail = () => {
   const {
     id
@@ -583,6 +499,41 @@ const ProductDetail = () => {
       setPrintSizeBack(newSizeLabel);
     }
   };
+
+  // Fonctions utilitaires pour SVG - améliorées
+  const getCurrentSvgColor = () => {
+    return currentViewSide === 'front' ? svgColorFront : svgColorBack;
+  };
+
+  const getCurrentSvgContent = () => {
+    return currentViewSide === 'front' ? svgContentFront : svgContentBack;
+  };
+
+  const handleSvgColorChange = (color: string) => {
+    if (currentViewSide === 'front') {
+      setSvgColorFront(color);
+    } else {
+      setSvgColorBack(color);
+    }
+  };
+
+  const handleSvgContentChange = (svgContent: string) => {
+    if (currentViewSide === 'front') {
+      setSvgContentFront(svgContent);
+    } else {
+      setSvgContentBack(svgContent);
+    }
+  };
+
+  const isSvgDesign = () => {
+    const currentDesign = getCurrentDesign();
+    if (!currentDesign?.image_url) return false;
+    
+    // Vérification plus robuste des SVG
+    const url = currentDesign.image_url.toLowerCase();
+    return url.includes('.svg') || url.includes('svg') || currentDesign.image_url.includes('data:image/svg');
+  };
+
   const {
     data: product,
     isLoading
@@ -867,36 +818,6 @@ const ProductDetail = () => {
     }
   }, [selectedTab]);
 
-  // Fonctions utilitaires pour SVG
-  const getCurrentSvgColor = () => {
-    return currentViewSide === 'front' ? svgColorFront : svgColorBack;
-  };
-
-  const getCurrentSvgContent = () => {
-    return currentViewSide === 'front' ? svgContentFront : svgContentBack;
-  };
-
-  const handleSvgColorChange = (color: string) => {
-    if (currentViewSide === 'front') {
-      setSvgColorFront(color);
-    } else {
-      setSvgColorBack(color);
-    }
-  };
-
-  const handleSvgContentChange = (svgContent: string) => {
-    if (currentViewSide === 'front') {
-      setSvgContentFront(svgContent);
-    } else {
-      setSvgContentBack(svgContent);
-    }
-  };
-
-  const isSvgDesign = () => {
-    const currentDesign = getCurrentDesign();
-    return currentDesign?.image_url?.toLowerCase().endsWith('.svg') || false;
-  };
-
   const calculatePrice = () => {
     if (!product) return 0;
     let price = product.price * quantity;
@@ -1163,8 +1084,18 @@ const ProductDetail = () => {
                 >
                   {isSvgDesign() && getCurrentSvgContent() ? (
                     <div
-                      className="max-w-[200px] max-h-[200px]"
-                      dangerouslySetInnerHTML={{ __html: getCurrentSvgContent() }}
+                      className="w-[200px] h-[200px] flex items-center justify-center"
+                      dangerouslySetInnerHTML={{ 
+                        __html: getCurrentSvgContent().replace(
+                          /<svg([^>]*)>/i, 
+                          '<svg$1 width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">'
+                        )
+                      }}
+                      style={{ 
+                        maxWidth: '200px', 
+                        maxHeight: '200px',
+                        overflow: 'visible'
+                      }}
                     />
                   ) : (
                     <img
@@ -1353,14 +1284,16 @@ const ProductDetail = () => {
                           
                           {getCurrentDesign() && (
                             <div className="space-y-4 p-4 bg-white/5 rounded-lg">
-                              {/* Éditeur de couleur SVG */}
+                              {/* Éditeur de couleur SVG - Toujours visible pour les SVG */}
                               {isSvgDesign() && (
-                                <SVGColorEditor
-                                  imageUrl={getCurrentDesign()!.image_url}
-                                  onColorChange={handleSvgColorChange}
-                                  onSvgContentChange={handleSvgContentChange}
-                                  defaultColor={getCurrentSvgColor()}
-                                />
+                                <div className="mb-4">
+                                  <SVGColorEditor
+                                    imageUrl={getCurrentDesign()!.image_url}
+                                    onColorChange={handleSvgColorChange}
+                                    onSvgContentChange={handleSvgContentChange}
+                                    defaultColor={getCurrentSvgColor()}
+                                  />
+                                </div>
                               )}
                               
                               <div>

@@ -22,7 +22,12 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
   const [originalSvg, setOriginalSvg] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const isSvg = imageUrl.toLowerCase().endsWith('.svg');
+  // Vérification plus robuste du format SVG
+  const isSvg = imageUrl && (
+    imageUrl.toLowerCase().includes('.svg') || 
+    imageUrl.toLowerCase().includes('svg') ||
+    imageUrl.includes('data:image/svg')
+  );
 
   useEffect(() => {
     if (isSvg && imageUrl) {
@@ -40,8 +45,37 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
         })
         .then((text) => {
           console.log('✅ [SVGColorEditor] SVG chargé avec succès');
-          setOriginalSvg(text);
-          const coloredSvg = text.replace(/fill="[^"]*"/g, `fill="${color}"`);
+          
+          // Nettoyer et améliorer le SVG
+          let cleanedSvg = text;
+          
+          // S'assurer que le SVG a les bons attributs
+          if (!cleanedSvg.includes('viewBox')) {
+            cleanedSvg = cleanedSvg.replace(
+              /<svg([^>]*)>/i, 
+              '<svg$1 viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">'
+            );
+          }
+          
+          // Ajouter width et height si manquants
+          if (!cleanedSvg.includes('width=') || !cleanedSvg.includes('height=')) {
+            cleanedSvg = cleanedSvg.replace(
+              /<svg([^>]*)>/i, 
+              '<svg$1 width="100%" height="100%">'
+            );
+          }
+          
+          setOriginalSvg(cleanedSvg);
+          
+          // Appliquer la couleur par défaut
+          const coloredSvg = cleanedSvg.replace(
+            /fill="[^"]*"/g, 
+            `fill="${color}"`
+          ).replace(
+            /stroke="[^"]*"/g, 
+            `stroke="${color}"`
+          );
+          
           setSvgContent(coloredSvg);
           onSvgContentChange(coloredSvg);
           setIsLoading(false);
@@ -57,7 +91,14 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
   useEffect(() => {
     if (originalSvg && color) {
       try {
-        const coloredSvg = originalSvg.replace(/fill="[^"]*"/g, `fill="${color}"`);
+        // Remplacer toutes les couleurs fill et stroke
+        const coloredSvg = originalSvg
+          .replace(/fill="[^"]*"/g, `fill="${color}"`)
+          .replace(/stroke="[^"]*"/g, `stroke="${color}"`)
+          // Aussi remplacer les couleurs dans les styles inline
+          .replace(/fill:\s*[^;"\s]+/g, `fill:${color}`)
+          .replace(/stroke:\s*[^;"\s]+/g, `stroke:${color}`);
+        
         setSvgContent(coloredSvg);
         onSvgContentChange(coloredSvg);
         onColorChange(color);
@@ -79,44 +120,57 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3 p-3 bg-gradient-to-r from-winshirt-purple/10 to-winshirt-blue/10 rounded-lg border border-white/20">
       <div className="flex items-center justify-between">
-        <Label className="flex items-center">
+        <Label className="flex items-center font-medium">
           <Palette className="h-4 w-4 mr-2 text-winshirt-purple" />
           Couleur du SVG
         </Label>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <input
             type="color"
             value={color}
             onChange={(e) => handleColorChange(e.target.value)}
-            className="w-8 h-8 rounded border border-white/20 bg-transparent cursor-pointer"
+            className="w-10 h-10 rounded-lg border-2 border-white/30 bg-transparent cursor-pointer hover:border-winshirt-purple/60 transition-colors"
             disabled={isLoading || !!error}
+            title="Choisir une couleur"
           />
-          <span className="text-xs text-white/60">{color}</span>
+          <span className="text-sm text-white/80 font-mono bg-black/20 px-2 py-1 rounded">
+            {color.toUpperCase()}
+          </span>
         </div>
       </div>
       
       {isLoading && (
-        <div className="text-xs text-white/60 flex items-center">
-          <div className="animate-spin h-3 w-3 mr-2 border border-white border-t-transparent rounded-full"></div>
+        <div className="text-sm text-white/70 flex items-center justify-center py-2">
+          <div className="animate-spin h-4 w-4 mr-2 border-2 border-winshirt-purple border-t-transparent rounded-full"></div>
           Chargement du SVG...
         </div>
       )}
       
       {error && (
-        <div className="text-xs text-red-400 p-2 bg-red-900/20 rounded">
+        <div className="text-sm text-red-400 p-3 bg-red-900/20 rounded-lg border border-red-500/30">
           ⚠️ {error}
         </div>
       )}
       
-      {svgContent && !error && (
-        <div className="mt-2 p-2 bg-white/5 rounded border border-white/20">
+      {svgContent && !error && !isLoading && (
+        <div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10">
+          <Label className="text-xs text-white/60 mb-2 block">Aperçu :</Label>
           <div 
-            className="max-w-full"
-            dangerouslySetInnerHTML={{ __html: svgContent }}
-            style={{ maxHeight: '100px', overflow: 'hidden' }}
-          />
+            className="flex items-center justify-center bg-white/10 rounded p-2"
+            style={{ minHeight: '80px' }}
+          >
+            <div 
+              className="w-16 h-16"
+              dangerouslySetInnerHTML={{ 
+                __html: svgContent.replace(
+                  /<svg([^>]*)>/i, 
+                  '<svg$1 width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">'
+                )
+              }}
+            />
+          </div>
         </div>
       )}
     </div>
