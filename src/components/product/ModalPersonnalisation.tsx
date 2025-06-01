@@ -190,6 +190,19 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   const hasTwoSides = mockup?.svg_back_url ? true : false;
   const hasDesign = getCurrentDesign() !== null;
 
+  // Gestionnaire spécial pour la sélection de design qui ne ferme pas la modal
+  const handleDesignSelection = (design: Design) => {
+    console.log('🎨 [ModalPersonnalisation] Sélection du design:', design.name);
+    
+    // Appeler la fonction de sélection sans fermer la modal
+    onSelectDesign(design);
+    
+    // Fermer uniquement les modals mobiles spécialisées si ouvertes
+    if (mobileDesignsOpen) {
+      setMobileDesignsOpen(false);
+    }
+  };
+
   // Desktop layout avec 2 colonnes
   const desktopContent = (
     <div className="flex h-full gap-6">
@@ -241,7 +254,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="designs" className="flex items-center gap-2">
               <ImageIcon className="h-4 w-4" />
               <span className="hidden sm:inline">Designs</span>
@@ -250,16 +263,12 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               <Upload className="h-4 w-4" />
               <span className="hidden sm:inline">Upload</span>
             </TabsTrigger>
-            <TabsTrigger value="text" className="flex items-center gap-2">
-              <Type className="h-4 w-4" />
-              <span className="hidden sm:inline">Texte</span>
-            </TabsTrigger>
           </TabsList>
 
           <div className="flex-1 overflow-hidden">
             <TabsContent value="designs" className="h-full overflow-y-auto">
               <GalleryDesigns
-                onSelectDesign={onSelectDesign}
+                onSelectDesign={handleDesignSelection}
                 selectedDesign={getCurrentDesign()}
                 currentDesignTransform={getCurrentDesignTransform()}
                 selectedSize={getCurrentSelectedSize()}
@@ -362,7 +371,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
       <MobileDesignsModal
         open={mobileDesignsOpen}
         onClose={() => setMobileDesignsOpen(false)}
-        onSelectDesign={onSelectDesign}
+        onSelectDesign={handleDesignSelection}
         selectedDesign={getCurrentDesign()}
         currentDesignTransform={getCurrentDesignTransform()}
         selectedSize={getCurrentSelectedSize()}
@@ -429,7 +438,9 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               <DrawerTitle className="text-xl font-semibold">
                 🎨 Personnalisation
               </DrawerTitle>
-              
+              <Button variant="ghost" size="icon" onClick={onClose}>
+                <X className="h-5 w-5" />
+              </Button>
             </div>
           </DrawerHeader>
           <div className="flex-1 overflow-hidden">

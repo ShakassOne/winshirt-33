@@ -141,10 +141,15 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
         </p>
       </div>
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-0">
         <div 
-          className="relative bg-black/30 rounded-lg overflow-hidden shadow-xl aspect-square flex justify-center items-center mb-4" 
-          style={{ touchAction: 'none' }} 
+          className="relative bg-black/30 rounded-lg overflow-hidden shadow-xl flex justify-center items-center mb-6" 
+          style={{ 
+            touchAction: 'none',
+            minHeight: '400px',
+            maxHeight: 'calc(100vh - 250px)',
+            aspectRatio: '1/1'
+          }} 
           onTouchMove={onTouchMove}
         >
           <img
@@ -218,17 +223,23 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
         </div>
 
         {hasTwoSides && (
-          <div className="flex justify-center">
+          <div className="flex justify-center mt-auto pb-4">
             <ToggleGroup 
               type="single" 
               value={currentViewSide} 
               onValueChange={value => value && onViewSideChange(value as 'front' | 'back')} 
-              className="bg-black/40 backdrop-blur-sm rounded-lg"
+              className="bg-black/40 backdrop-blur-sm rounded-lg p-1"
             >
-              <ToggleGroupItem value="front" className="text-sm data-[state=on]:bg-winshirt-purple/70">
+              <ToggleGroupItem 
+                value="front" 
+                className="text-sm data-[state=on]:bg-winshirt-purple/70 px-4 py-2"
+              >
                 Avant
               </ToggleGroupItem>
-              <ToggleGroupItem value="back" className="text-sm data-[state=on]:bg-winshirt-purple/70">
+              <ToggleGroupItem 
+                value="back" 
+                className="text-sm data-[state=on]:bg-winshirt-purple/70 px-4 py-2"
+              >
                 Arrière
               </ToggleGroupItem>
             </ToggleGroup>

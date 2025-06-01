@@ -60,7 +60,11 @@ export const GalleryDesigns: React.FC<GalleryDesignsProps> = ({
 
   const handleDesignSelect = (design: Design) => {
     console.log('🎨 [GalleryDesigns] Sélection du design:', design.name);
-    // Ne pas fermer la modal, juste sélectionner le design
+    // Empêcher la propagation de l'événement pour éviter la fermeture de la modal
+    event?.stopPropagation();
+    event?.preventDefault();
+    
+    // Sélectionner le design sans fermer la modal
     onSelectDesign(design);
   };
 
@@ -124,7 +128,11 @@ export const GalleryDesigns: React.FC<GalleryDesignsProps> = ({
                 className={`bg-black/40 overflow-hidden cursor-pointer transition-all hover:scale-[1.02] border-white/10 hover:border-winshirt-purple/30 ${
                   selectedDesign?.id === design.id ? 'border-winshirt-purple' : ''
                 }`}
-                onClick={() => handleDesignSelect(design)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleDesignSelect(design);
+                }}
               >
                 <div className="aspect-square overflow-hidden bg-gray-900/40">
                   <img
