@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
@@ -60,11 +59,9 @@ export const GalleryDesigns: React.FC<GalleryDesignsProps> = ({
 
   const handleDesignSelect = (design: Design) => {
     console.log('🎨 [GalleryDesigns] Sélection du design:', design.name);
-    // Empêcher la propagation de l'événement pour éviter la fermeture de la modal
-    event?.stopPropagation();
-    event?.preventDefault();
+    console.log('🔒 Empêchement de la propagation d\'événement');
     
-    // Sélectionner le design sans fermer la modal
+    // Sélectionner le design - la fonction parente gère la non-fermeture
     onSelectDesign(design);
   };
 
@@ -128,11 +125,7 @@ export const GalleryDesigns: React.FC<GalleryDesignsProps> = ({
                 className={`bg-black/40 overflow-hidden cursor-pointer transition-all hover:scale-[1.02] border-white/10 hover:border-winshirt-purple/30 ${
                   selectedDesign?.id === design.id ? 'border-winshirt-purple' : ''
                 }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  handleDesignSelect(design);
-                }}
+                onClick={() => handleDesignSelect(design)}
               >
                 <div className="aspect-square overflow-hidden bg-gray-900/40">
                   <img

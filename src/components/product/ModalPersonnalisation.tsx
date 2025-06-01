@@ -190,22 +190,25 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   const hasTwoSides = mockup?.svg_back_url ? true : false;
   const hasDesign = getCurrentDesign() !== null;
 
-  // Gestionnaire spécial pour la sélection de design qui ne ferme JAMAIS la modal principale
+  // Gestionnaire STRICT pour la sélection de design - NE DOIT JAMAIS fermer de modal
   const handleDesignSelection = (design: Design) => {
     console.log('🎨 [ModalPersonnalisation] Sélection du design:', design.name);
+    console.log('🔒 Mode mobile:', isMobile);
     
-    // Appeler la fonction de sélection sans fermer aucune modal
+    // Appeler la fonction de sélection
     onSelectDesign(design);
     
-    // En mode mobile uniquement, fermer la modal spécialisée des designs
+    // UNIQUEMENT en mode mobile ET si la modal des designs est ouverte, la fermer
     if (isMobile && mobileDesignsOpen) {
+      console.log('📱 Fermeture de la modal mobile des designs');
       setMobileDesignsOpen(false);
     }
     
-    // NE JAMAIS fermer la modal principale en mode desktop
+    // JAMAIS fermer la modal principale, que ce soit en desktop ou mobile
+    console.log('✅ Design sélectionné sans fermer la modal principale');
   };
 
-  // Desktop layout avec 2 colonnes
+  // Desktop layout avec 3 onglets
   const desktopContent = (
     <div className="flex h-full gap-6">
       {/* Colonne de gauche - Preview */}
@@ -256,10 +259,14 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="designs" className="flex items-center gap-2">
               <ImageIcon className="h-4 w-4" />
               <span className="hidden sm:inline">Designs</span>
+            </TabsTrigger>
+            <TabsTrigger value="text" className="flex items-center gap-2">
+              <Type className="h-4 w-4" />
+              <span className="hidden sm:inline">Texte</span>
             </TabsTrigger>
             <TabsTrigger value="upload" className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
@@ -279,19 +286,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               />
             </TabsContent>
 
-            <TabsContent value="upload" className="h-full overflow-y-auto">
-              <UploadDesign
-                onFileUpload={onFileUpload}
-                onAIImageGenerated={onAIImageGenerated}
-                onRemoveBackground={onRemoveBackground}
-                isRemovingBackground={isRemovingBackground}
-                currentDesign={getCurrentDesign()}
-                onSvgColorChange={onSvgColorChange}
-                onSvgContentChange={onSvgContentChange}
-                defaultSvgColor={getCurrentSvgColor()}
-              />
-            </TabsContent>
-
             <TabsContent value="text" className="h-full overflow-y-auto">
               <TextCustomizer
                 textContent={getCurrentTextContent()}
@@ -304,6 +298,19 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                 onTextColorChange={onTextColorChange}
                 onTextStylesChange={onTextStylesChange}
                 onTextTransformChange={onTextTransformChange}
+              />
+            </TabsContent>
+
+            <TabsContent value="upload" className="h-full overflow-y-auto">
+              <UploadDesign
+                onFileUpload={onFileUpload}
+                onAIImageGenerated={onAIImageGenerated}
+                onRemoveBackground={onRemoveBackground}
+                isRemovingBackground={isRemovingBackground}
+                currentDesign={getCurrentDesign()}
+                onSvgColorChange={onSvgColorChange}
+                onSvgContentChange={onSvgContentChange}
+                defaultSvgColor={getCurrentSvgColor()}
               />
             </TabsContent>
           </div>
