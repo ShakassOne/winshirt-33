@@ -424,8 +424,8 @@ const ProductDetail = () => {
   });
   const [activeDesignSide, setActiveDesignSide] = useState<'front' | 'back'>('front');
   const [activeTextSide, setActiveTextSide] = useState<'front' | 'back'>('front');
-  const [selectedLotteryIds, setSelectedLotteryIds] = useState<string[]>([]);
-  const [selectedLotteries, setSelectedLotteries] = useState<Lottery[]>([]);
+  // États pour les loteries - maintenant un tableau simple permettant les doublons
+  const [selectedLotteries, setSelectedLotteries] = useState<(Lottery | null)[]>([]);
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
   const [backgroundRemovalImage, setBackgroundRemovalImage] = useState<string | null>(null);
 
@@ -604,35 +604,28 @@ const ProductDetail = () => {
       }));
     }
   };
-  const handleLotteryToggle = (lottery: Lottery, index: number) => {
-    if (selectedLotteryIds.includes(lottery.id)) {
-      // Si la loterie est déjà sélectionnée, on la désélectionne
-      setSelectedLotteries(prev => prev.filter(l => l.id !== lottery.id));
-      setSelectedLotteryIds(prev => prev.filter(id => id !== lottery.id));
-    } else {
-      // Si on a déjà une loterie à cet index, on la remplace directement
-      if (index < (product?.tickets_offered || 0)) {
-        const updatedLotteries = [...selectedLotteries];
-
-        // S'assurer que le tableau a la bonne taille
-        while (updatedLotteries.length <= index) {
-          updatedLotteries.push(null as unknown as Lottery);
-        }
-
-        // Remplacer la loterie à l'index spécifié
-        updatedLotteries[index] = lottery;
-
-        // Filtrer les valeurs null
-        const filteredLotteries = updatedLotteries.filter(l => l !== null);
-        setSelectedLotteries(filteredLotteries);
-        setSelectedLotteryIds(filteredLotteries.map(l => l.id));
+  // Fonction pour gérer la sélection/désélection des loteries - nouvelle logique
+  const handleLotteryToggle = (lottery: Lottery, slotIndex: number) => {
+    setSelectedLotteries(prev => {
+      const newSelected = [...prev];
+      
+      // S'assurer que le tableau a la bonne taille
+      while (newSelected.length < (product?.tickets_offered || 0)) {
+        newSelected.push(null);
       }
-      // Si on dépasse le nombre de tickets offerts ET qu'on n'a pas de loterie à remplacer à cet index
-      else if (selectedLotteries.length >= (product?.tickets_offered || 0)) {
-        toast.error(`Vous ne pouvez sélectionner que ${product?.tickets_offered} loterie(s) maximum pour ce produit.`);
+      
+      if (newSelected[slotIndex]?.id === lottery.id) {
+        // Si c'est la même loterie au même slot, la désélectionner
+        newSelected[slotIndex] = null;
+      } else {
+        // Sinon, la sélectionner à ce slot
+        newSelected[slotIndex] = lottery;
       }
-    }
+      
+      return newSelected;
+    });
   };
+
   const handleMouseDown = (event: React.MouseEvent | React.TouchEvent, isText: boolean = false) => {
     event.preventDefault();
     let clientX: number, clientY: number;
@@ -834,6 +827,11 @@ const ProductDetail = () => {
   };
   const handleAddToCart = () => {
     if (!product) return;
+    
+    // Créer la liste des IDs de loteries en filtrant les null
+    const selectedLotteryIds = selectedLotteries
+      .filter(lottery => lottery !== null)
+      .map(lottery => lottery!.id);
     
     const cartItem: CartItem = {
       productId: product.id,
@@ -1223,7 +1221,8 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {product.tickets_offered > 0 && activeLotteries.length > 0 && <div className="space-y-4 p-4 bg-white/5 border border-white/10 rounded-lg">
+              {product.tickets_offered > 0 && activeLotteries.length > 0 && (
+                <div className="space-y-4 p-4 bg-white/5 border border-white/10 rounded-lg">
                   <h3 className="flex items-center text-lg font-medium">
                     <UsersRound className="h-5 w-5 mr-2 text-winshirt-purple" />
                     Participez à {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}
@@ -1231,30 +1230,35 @@ const ProductDetail = () => {
                   
                   <p className="text-sm text-white/70">
                     Ce produit vous permet de participer à {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}.
-                    Sélectionnez {product.tickets_offered > 1 ? 'celles qui vous intéressent' : 'celle qui vous intéresse'}.
+                    Vous pouvez sélectionner la même loterie plusieurs fois si vous le souhaitez.
                   </p>
                   
                   <div className="space-y-3">
-                    {Array.from({ length: product.tickets_offered }).map((_, index) => <div key={index} className="relative">
+                    {Array.from({ length: product.tickets_offered }).map((_, index) => (
+                      <div key={index} className="relative">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="w-full justify-start">
-                              {selectedLotteries[index] ? <div className="flex items-center justify-between w-full">
+                              {selectedLotteries[index] ? (
+                                <div className="flex items-center justify-between w-full">
                                   <div className="flex items-center">
                                     <Target className="h-4 w-4 mr-2 text-winshirt-purple" />
-                                    <span>{selectedLotteries[index].title}</span>
+                                    <span>{selectedLotteries[index]!.title}</span>
                                   </div>
                                   <Badge variant="secondary" className="ml-2">
                                     {new Intl.NumberFormat('fr-FR', {
-                              style: 'currency',
-                              currency: 'EUR',
-                              maximumFractionDigits: 0
-                            }).format(selectedLotteries[index].value)}
+                                      style: 'currency',
+                                      currency: 'EUR',
+                                      maximumFractionDigits: 0
+                                    }).format(selectedLotteries[index]!.value)}
                                   </Badge>
-                                </div> : <>
+                                </div>
+                              ) : (
+                                <>
                                   <Target className="h-4 w-4 mr-2 text-winshirt-purple" />
-                                  <span>Choisir une loterie</span>
-                                </>}
+                                  <span>Choisir une loterie (slot {index + 1})</span>
+                                </>
+                              )}
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className="w-[280px]">
@@ -1262,18 +1266,28 @@ const ProductDetail = () => {
                             <DropdownMenuSeparator />
                             <div className="max-h-[200px] overflow-y-auto">
                               {activeLotteries.map(lottery => {
-                          const isSelected = selectedLotteryIds.includes(lottery.id);
-                          return <DropdownMenuItem key={lottery.id} className={`flex justify-between cursor-pointer ${isSelected ? 'bg-winshirt-purple/20' : ''}`} onClick={() => handleLotteryToggle(lottery, index)}>
+                                const isSelectedInThisSlot = selectedLotteries[index]?.id === lottery.id;
+                                return (
+                                  <DropdownMenuItem 
+                                    key={lottery.id} 
+                                    className={`flex justify-between cursor-pointer ${
+                                      isSelectedInThisSlot ? 'bg-winshirt-purple/20' : ''
+                                    }`} 
+                                    onClick={() => handleLotteryToggle(lottery, index)}
+                                  >
                                     <span>{lottery.title}</span>
-                                    {isSelected && <Check className="h-4 w-4" />}
-                                  </DropdownMenuItem>;
-                        })}
+                                    {isSelectedInThisSlot && <Check className="h-4 w-4" />}
+                                  </DropdownMenuItem>
+                                );
+                              })}
                             </div>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </div>)}
+                      </div>
+                    ))}
                   </div>
-                </div>}
+                </div>
+              )}
 
               <div>
                 <div className="flex flex-wrap gap-4 items-center">

@@ -190,17 +190,19 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   const hasTwoSides = mockup?.svg_back_url ? true : false;
   const hasDesign = getCurrentDesign() !== null;
 
-  // Gestionnaire spécial pour la sélection de design qui ne ferme pas la modal
+  // Gestionnaire spécial pour la sélection de design qui ne ferme JAMAIS la modal principale
   const handleDesignSelection = (design: Design) => {
     console.log('🎨 [ModalPersonnalisation] Sélection du design:', design.name);
     
-    // Appeler la fonction de sélection sans fermer la modal
+    // Appeler la fonction de sélection sans fermer aucune modal
     onSelectDesign(design);
     
-    // Fermer uniquement les modals mobiles spécialisées si ouvertes
-    if (mobileDesignsOpen) {
+    // En mode mobile uniquement, fermer la modal spécialisée des designs
+    if (isMobile && mobileDesignsOpen) {
       setMobileDesignsOpen(false);
     }
+    
+    // NE JAMAIS fermer la modal principale en mode desktop
   };
 
   // Desktop layout avec 2 colonnes
