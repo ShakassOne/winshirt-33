@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -210,7 +211,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
                 >
                   <img
                     src={color.front_image_url}
-                    alt={color.color_name}
+                    alt={color.name}
                     className="w-full h-full object-cover"
                   />
                 </button>
