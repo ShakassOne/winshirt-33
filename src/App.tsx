@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { OptimizedAuthProvider } from "@/context/OptimizedAuthContext";
 import { CartProvider } from "@/context/CartContext";
-import { StripeProvider } from "@/components/payment/StripeProvider";
+import StripeProvider from "@/components/payment/StripeProvider";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Products from "./pages/Products";

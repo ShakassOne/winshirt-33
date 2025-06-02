@@ -36,7 +36,14 @@ export const getDTFOrders = async (): Promise<DTFOrderWithDetails[]> => {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    
+    // Transformer les données pour assurer la compatibilité des types
+    const transformedData = (data || []).map(item => ({
+      ...item,
+      production_status: item.production_status as DTFProductionStatus
+    }));
+    
+    return transformedData;
   } catch (error) {
     console.error('Error fetching DTF orders:', error);
     throw error;
