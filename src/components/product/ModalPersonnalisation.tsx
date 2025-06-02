@@ -466,7 +466,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
       }}
     >
       <DialogContent 
-        modal={false}
         className="bg-black/90 backdrop-blur-lg border-white/20 max-w-[95vw] w-[95vw] h-[95vh] overflow-hidden"
       >
         <DialogHeader className="border-b border-white/10 pb-4">

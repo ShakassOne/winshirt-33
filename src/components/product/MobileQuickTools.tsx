@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -59,6 +60,22 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
   onFileUpload,
   onAIImageGenerated
 }) => {
+  const getActiveStylesValue = () => {
+    const activeStyles = [];
+    if (textStyles.bold) activeStyles.push('bold');
+    if (textStyles.italic) activeStyles.push('italic');
+    if (textStyles.underline) activeStyles.push('underline');
+    return activeStyles;
+  };
+
+  const handleStyleChange = (values: string[]) => {
+    onTextStylesChange({
+      bold: values.includes('bold'),
+      italic: values.includes('italic'),
+      underline: values.includes('underline')
+    });
+  };
+
   if (activeTab === 'text') {
     return (
       <Card className="bg-black/80 border-white/20 p-4 space-y-4">
@@ -90,26 +107,19 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
         
         <div>
           <Label className="text-white">Style</Label>
-          <ToggleGroup type="multiple" className="mt-2">
-            <ToggleGroupItem
-              value="bold"
-              pressed={textStyles.bold}
-              onPressedChange={(pressed) => onTextStylesChange({ ...textStyles, bold: pressed })}
-            >
+          <ToggleGroup 
+            type="multiple" 
+            className="mt-2"
+            value={getActiveStylesValue()}
+            onValueChange={handleStyleChange}
+          >
+            <ToggleGroupItem value="bold">
               <Bold className="h-4 w-4" />
             </ToggleGroupItem>
-            <ToggleGroupItem
-              value="italic"
-              pressed={textStyles.italic}
-              onPressedChange={(pressed) => onTextStylesChange({ ...textStyles, italic: pressed })}
-            >
+            <ToggleGroupItem value="italic">
               <Italic className="h-4 w-4" />
             </ToggleGroupItem>
-            <ToggleGroupItem
-              value="underline"
-              pressed={textStyles.underline}
-              onPressedChange={(pressed) => onTextStylesChange({ ...textStyles, underline: pressed })}
-            >
+            <ToggleGroupItem value="underline">
               <Underline className="h-4 w-4" />
             </ToggleGroupItem>
           </ToggleGroup>
