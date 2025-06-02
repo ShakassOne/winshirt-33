@@ -10,7 +10,7 @@ import { MockupColor } from '@/types/mockup.types';
 import { GalleryDesigns } from './GalleryDesigns';
 import { UploadDesign } from './UploadDesign';
 import { TextCustomizer } from './TextCustomizer';
-import { SVGColorEditor } from './SVGColorEditor';
+import { SVGDesigns } from './SVGDesigns';
 import { ProductPreview } from './ProductPreview';
 import { ProductColorSelector } from './ProductColorSelector';
 import { MobileToolbar } from './MobileToolbar';
@@ -190,25 +190,24 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   const hasTwoSides = mockup?.svg_back_url ? true : false;
   const hasDesign = getCurrentDesign() !== null;
 
-  // Gestionnaire STRICT pour la sélection de design - NE DOIT JAMAIS fermer de modal
+  // Gestionnaire STRICT pour la sélection de design - NE FERME JAMAIS LA MODAL
   const handleDesignSelection = (design: Design) => {
     console.log('🎨 [ModalPersonnalisation] Sélection du design:', design.name);
-    console.log('🔒 Mode mobile:', isMobile);
+    console.log('🔒 Modal restera OUVERTE après sélection');
     
-    // Appeler la fonction de sélection
+    // Appeler uniquement la fonction de sélection, SANS FERMER LA MODAL
     onSelectDesign(design);
     
-    // UNIQUEMENT en mode mobile ET si la modal des designs est ouverte, la fermer
+    // En mode mobile, fermer uniquement la sous-modal des designs
     if (isMobile && mobileDesignsOpen) {
-      console.log('📱 Fermeture de la modal mobile des designs');
+      console.log('📱 Fermeture uniquement de la sous-modal mobile des designs');
       setMobileDesignsOpen(false);
     }
     
-    // JAMAIS fermer la modal principale, que ce soit en desktop ou mobile
-    console.log('✅ Design sélectionné sans fermer la modal principale');
+    console.log('✅ Design sélectionné, modal principale reste ouverte');
   };
 
-  // Desktop layout avec 3 onglets
+  // Desktop layout avec 4 onglets maintenant
   const desktopContent = (
     <div className="flex h-full gap-6">
       {/* Colonne de gauche - Preview */}
@@ -259,7 +258,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
+          <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="designs" className="flex items-center gap-2">
               <ImageIcon className="h-4 w-4" />
               <span className="hidden sm:inline">Designs</span>
@@ -271,6 +270,10 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             <TabsTrigger value="upload" className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
               <span className="hidden sm:inline">Upload</span>
+            </TabsTrigger>
+            <TabsTrigger value="svg" className="flex items-center gap-2">
+              <Palette className="h-4 w-4" />
+              <span className="hidden sm:inline">SVG</span>
             </TabsTrigger>
           </TabsList>
 
@@ -308,6 +311,14 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                 onRemoveBackground={onRemoveBackground}
                 isRemovingBackground={isRemovingBackground}
                 currentDesign={getCurrentDesign()}
+              />
+            </TabsContent>
+
+            <TabsContent value="svg" className="h-full overflow-y-auto">
+              <SVGDesigns
+                onSelectDesign={handleDesignSelection}
+                selectedDesign={getCurrentDesign()}
+                onFileUpload={onFileUpload}
                 onSvgColorChange={onSvgColorChange}
                 onSvgContentChange={onSvgContentChange}
                 defaultSvgColor={getCurrentSvgColor()}

@@ -2,10 +2,9 @@
 import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Upload, Sparkles, Wand2, Palette } from 'lucide-react';
+import { Upload, Sparkles, Wand2 } from 'lucide-react';
 import { Design } from '@/types/supabase.types';
 import AIImageGenerator from './AIImageGenerator';
-import { SVGColorEditor } from './SVGColorEditor';
 
 interface UploadDesignProps {
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -13,10 +12,6 @@ interface UploadDesignProps {
   onRemoveBackground: () => void;
   isRemovingBackground: boolean;
   currentDesign: Design | null;
-  // Ajout des props SVG
-  onSvgColorChange?: (color: string) => void;
-  onSvgContentChange?: (content: string) => void;
-  defaultSvgColor?: string;
 }
 
 export const UploadDesign: React.FC<UploadDesignProps> = ({
@@ -24,10 +19,7 @@ export const UploadDesign: React.FC<UploadDesignProps> = ({
   onAIImageGenerated,
   onRemoveBackground,
   isRemovingBackground,
-  currentDesign,
-  onSvgColorChange,
-  onSvgContentChange,
-  defaultSvgColor
+  currentDesign
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [aiGeneratorOpen, setAiGeneratorOpen] = useState(false);
@@ -35,17 +27,11 @@ export const UploadDesign: React.FC<UploadDesignProps> = ({
   const canRemoveBackground = currentDesign && 
     (currentDesign.category === 'ai-generated' || currentDesign.category === 'ai-generated-cleaned');
 
-  const isSvgDesign = () => {
-    if (!currentDesign?.image_url) return false;
-    const url = currentDesign.image_url.toLowerCase();
-    return url.includes('.svg') || url.includes('svg') || currentDesign.image_url.includes('data:image/svg');
-  };
-
   return (
     <div className="space-y-4">
-      {/* Upload fichier */}
+      {/* Upload fichier image uniquement */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium">Importer votre design</Label>
+        <Label className="text-sm font-medium">Importer votre image</Label>
         
         <div className="border-2 border-dashed border-white/20 rounded-lg p-6 text-center hover:border-winshirt-purple/50 transition-colors">
           <Upload className="h-10 w-10 mx-auto mb-3 text-white/40" />
@@ -65,11 +51,11 @@ export const UploadDesign: React.FC<UploadDesignProps> = ({
             type="file"
             ref={fileInputRef}
             className="hidden"
-            accept="image/*,.svg"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
             onChange={onFileUpload}
           />
           <p className="text-xs text-white/50 mt-2">
-            Formats supportés : JPG, PNG, SVG (max. 10MB)
+            Formats supportés : JPG, PNG, WEBP (max. 10MB)
           </p>
         </div>
       </div>
@@ -134,23 +120,6 @@ export const UploadDesign: React.FC<UploadDesignProps> = ({
               </Button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Éditeur SVG intégré */}
-      {isSvgDesign() && currentDesign && onSvgColorChange && onSvgContentChange && (
-        <div className="space-y-3">
-          <Label className="text-sm font-medium flex items-center">
-            <Palette className="h-4 w-4 mr-2 text-winshirt-purple" />
-            Personnaliser le SVG
-          </Label>
-          
-          <SVGColorEditor
-            imageUrl={currentDesign.image_url}
-            onColorChange={onSvgColorChange}
-            onSvgContentChange={onSvgContentChange}
-            defaultColor={defaultSvgColor || '#000000'}
-          />
         </div>
       )}
 

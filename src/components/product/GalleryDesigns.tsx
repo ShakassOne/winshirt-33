@@ -42,26 +42,37 @@ export const GalleryDesigns: React.FC<GalleryDesignsProps> = ({
 
   const uniqueCategories = React.useMemo(() => {
     if (!designs) return ['all'];
-    const categories = designs.map(design => design.category);
+    // Exclure les designs SVG et ne garder que les autres catégories
+    const nonSvgDesigns = designs.filter(design => {
+      const url = design.image_url?.toLowerCase() || '';
+      return !(url.includes('.svg') || url.includes('svg') || design.image_url?.includes('data:image/svg'));
+    });
+    const categories = nonSvgDesigns.map(design => design.category);
     return ['all', ...new Set(categories)];
   }, [designs]);
 
   const filteredDesigns = React.useMemo(() => {
     if (!designs) return [];
+    
+    // Filtrer d'abord pour exclure les SVG
+    const nonSvgDesigns = designs.filter(design => {
+      if (design.is_active === false) return false;
+      const url = design.image_url?.toLowerCase() || '';
+      return !(url.includes('.svg') || url.includes('svg') || design.image_url?.includes('data:image/svg'));
+    });
+
     if (selectedCategoryFilter === 'all') {
-      return designs.filter(design => design.is_active !== false);
+      return nonSvgDesigns;
     } else {
-      return designs.filter(design => 
-        design.is_active !== false && design.category === selectedCategoryFilter
-      );
+      return nonSvgDesigns.filter(design => design.category === selectedCategoryFilter);
     }
   }, [designs, selectedCategoryFilter]);
 
   const handleDesignSelect = (design: Design) => {
     console.log('🎨 [GalleryDesigns] Sélection du design:', design.name);
-    console.log('🔒 Empêchement de la propagation d\'événement');
+    console.log('🔒 Appel de onSelectDesign sans fermeture de modal');
     
-    // Sélectionner le design - la fonction parente gère la non-fermeture
+    // Appeler directement la fonction sans aucune logique de fermeture
     onSelectDesign(design);
   };
 
@@ -105,20 +116,20 @@ export const GalleryDesigns: React.FC<GalleryDesignsProps> = ({
         </div>
       </div>
 
-      {/* Galerie de designs */}
+      {/* Galerie de designs - 6 colonnes au lieu de 4 */}
       <div>
         <Label className="text-sm font-medium mb-3 block">
           Designs disponibles ({filteredDesigns.length})
         </Label>
         
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, index) => (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+            {Array.from({ length: 12 }).map((_, index) => (
               <div key={index} className="aspect-square bg-white/10 rounded-lg animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[300px] overflow-y-auto">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 max-h-[250px] overflow-y-auto">
             {filteredDesigns.map(design => (
               <Card
                 key={design.id}
@@ -131,10 +142,10 @@ export const GalleryDesigns: React.FC<GalleryDesignsProps> = ({
                   <img
                     src={design.image_url}
                     alt={design.name}
-                    className="object-contain w-full h-full p-2"
+                    className="object-contain w-full h-full p-1"
                   />
                 </div>
-                <div className="p-2">
+                <div className="p-1">
                   <p className="text-xs truncate">{design.name}</p>
                 </div>
               </Card>

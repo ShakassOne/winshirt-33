@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { useScrollReset } from "./hooks/useScrollReset";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -41,6 +42,154 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
+function AppContent() {
+  useScrollReset();
+  
+  return (
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/products" element={<Products />} />
+      <Route path="/products/:id" element={<ProductDetail />} />
+      <Route path="/lotteries" element={<Lotteries />} />
+      <Route path="/lotteries/:id" element={<LotteryDetail />} />
+      <Route path="/cart" element={<Cart />} />
+      <Route path="/checkout" element={<Checkout />} />
+      <Route path="/payment" element={<Payment />} />
+      <Route path="/payment-success" element={<PaymentSuccess />} />
+      <Route path="/payment-cancelled" element={<PaymentCancelled />} />
+      <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+      <Route path="/auth" element={<Auth />} />
+      
+      {/* New pages */}
+      <Route path="/faq" element={<FAQ />} />
+      <Route path="/winners" element={<Winners />} />
+      <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
+      <Route path="/conditions-generales" element={<ConditionsGenerales />} />
+      <Route path="/reglement-du-jeu" element={<ReglementDuJeu />} />
+      
+      {/* User account route - unified */}
+      <Route 
+        path="/account" 
+        element={
+          <ProtectedRoute>
+            <Account />
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Legacy routes redirected to account */}
+      <Route 
+        path="/profile" 
+        element={
+          <ProtectedRoute>
+            <Account />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/orders" 
+        element={
+          <ProtectedRoute>
+            <Account />
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Admin routes */}
+      <Route 
+        path="/admin" 
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <Dashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/analytics" 
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <AnalyticsAdmin />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/products" 
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <ProductsAdmin />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/lotteries" 
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <LotteriesAdmin />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/designs" 
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <DesignsAdmin />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/mockups" 
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <MockupsAdmin />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/orders" 
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <OrdersAdmin />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/users" 
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <UsersAdmin />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/shipping" 
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <ShippingOptionsAdmin />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/theme" 
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <ThemeSettings />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/social" 
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <SocialNetworksAdmin />
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -51,147 +200,7 @@ function App() {
           <BrowserRouter>
             <OptimizedAuthProvider>
               <CartProvider>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/products/:id" element={<ProductDetail />} />
-                  <Route path="/lotteries" element={<Lotteries />} />
-                  <Route path="/lotteries/:id" element={<LotteryDetail />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/payment" element={<Payment />} />
-                  <Route path="/payment-success" element={<PaymentSuccess />} />
-                  <Route path="/payment-cancelled" element={<PaymentCancelled />} />
-                  <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-                  <Route path="/auth" element={<Auth />} />
-                  
-                  {/* New pages */}
-                  <Route path="/faq" element={<FAQ />} />
-                  <Route path="/winners" element={<Winners />} />
-                  <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
-                  <Route path="/conditions-generales" element={<ConditionsGenerales />} />
-                  <Route path="/reglement-du-jeu" element={<ReglementDuJeu />} />
-                  
-                  {/* User account route - unified */}
-                  <Route 
-                    path="/account" 
-                    element={
-                      <ProtectedRoute>
-                        <Account />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  
-                  {/* Legacy routes redirected to account */}
-                  <Route 
-                    path="/profile" 
-                    element={
-                      <ProtectedRoute>
-                        <Account />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/orders" 
-                    element={
-                      <ProtectedRoute>
-                        <Account />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  
-                  {/* Admin routes */}
-                  <Route 
-                    path="/admin" 
-                    element={
-                      <ProtectedRoute requireAdmin={true}>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/admin/analytics" 
-                    element={
-                      <ProtectedRoute requireAdmin={true}>
-                        <AnalyticsAdmin />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/admin/products" 
-                    element={
-                      <ProtectedRoute requireAdmin={true}>
-                        <ProductsAdmin />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/admin/lotteries" 
-                    element={
-                      <ProtectedRoute requireAdmin={true}>
-                        <LotteriesAdmin />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/admin/designs" 
-                    element={
-                      <ProtectedRoute requireAdmin={true}>
-                        <DesignsAdmin />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/admin/mockups" 
-                    element={
-                      <ProtectedRoute requireAdmin={true}>
-                        <MockupsAdmin />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/admin/orders" 
-                    element={
-                      <ProtectedRoute requireAdmin={true}>
-                        <OrdersAdmin />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/admin/users" 
-                    element={
-                      <ProtectedRoute requireAdmin={true}>
-                        <UsersAdmin />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/admin/shipping" 
-                    element={
-                      <ProtectedRoute requireAdmin={true}>
-                        <ShippingOptionsAdmin />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/admin/theme" 
-                    element={
-                      <ProtectedRoute requireAdmin={true}>
-                        <ThemeSettings />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/admin/social" 
-                    element={
-                      <ProtectedRoute requireAdmin={true}>
-                        <SocialNetworksAdmin />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <AppContent />
               </CartProvider>
             </OptimizedAuthProvider>
           </BrowserRouter>
