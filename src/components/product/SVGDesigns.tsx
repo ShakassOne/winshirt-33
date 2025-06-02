@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
@@ -60,7 +59,8 @@ export const SVGDesigns: React.FC<SVGDesignsProps> = ({
     }
   }, [designs, selectedCategoryFilter]);
 
-  const handleDesignSelect = (design: Design) => {
+  const handleDesignSelect = (design: Design, e: React.MouseEvent) => {
+    e.stopPropagation(); // ← Empêche le clic de "sortir" du Dialog
     console.log('🎨 [SVGDesigns] Sélection du design SVG:', design.name);
     onSelectDesign(design);
   };
@@ -144,7 +144,7 @@ export const SVGDesigns: React.FC<SVGDesignsProps> = ({
                 className={`bg-black/40 overflow-hidden cursor-pointer transition-all hover:scale-[1.02] border-white/10 hover:border-winshirt-purple/30 ${
                   selectedDesign?.id === design.id ? 'border-winshirt-purple' : ''
                 }`}
-                onClick={() => handleDesignSelect(design)}
+                onClick={(e) => handleDesignSelect(design, e)}
               >
                 <div className="aspect-square overflow-hidden bg-gray-900/40">
                   <img

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
@@ -472,8 +473,20 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-black/90 backdrop-blur-lg border-white/20 max-w-[95vw] w-[95vw] h-[95vh] overflow-hidden">
+    <Dialog 
+      open={open} 
+      onOpenChange={(isOpen) => {
+        // Empêche la fermeture accidentelle
+        if (!isOpen) {
+          console.log("🛑 Tentative de fermeture, validation requise");
+          onClose();
+        }
+      }}
+    >
+      <DialogContent 
+        modal={false}
+        className="bg-black/90 backdrop-blur-lg border-white/20 max-w-[95vw] w-[95vw] h-[95vh] overflow-hidden"
+      >
         <DialogHeader className="border-b border-white/10 pb-4">
           <DialogTitle className="text-2xl font-semibold">
             🎨 Personnalisation - {currentViewSide === 'front' ? 'Avant' : 'Arrière'}
