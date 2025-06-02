@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,11 @@ import { Slider } from '@/components/ui/slider';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Bold, Italic, Underline } from 'lucide-react';
 import { Design } from '@/types/supabase.types';
+import { MockupColor } from '@/types/mockup.types';
+import { CompactDesignGallery } from './CompactDesignGallery';
+import { CompactSVGGallery } from './CompactSVGGallery';
+import { CompactAIGenerator } from './CompactAIGenerator';
+import { CompactUpload } from './CompactUpload';
 
 interface MobileQuickToolsProps {
   activeTab: string;
@@ -18,6 +22,7 @@ interface MobileQuickToolsProps {
   selectedSize: string;
   onDesignTransformChange: (property: string, value: any) => void;
   onSizeChange: (size: string) => void;
+  onSelectDesign: (design: Design) => void;
   
   // Text props
   textContent: string;
@@ -34,9 +39,16 @@ interface MobileQuickToolsProps {
   svgColor: string;
   onSvgColorChange: (color: string) => void;
   
+  // Product color props
+  mockupColors?: MockupColor[];
+  selectedMockupColor: MockupColor | null;
+  onMockupColorChange: (color: MockupColor) => void;
+  
   // Other props
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onAIImageGenerated: (imageUrl: string, imageName: string) => void;
+  onRemoveBackground: () => void;
+  isRemovingBackground: boolean;
 }
 
 export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
@@ -46,6 +58,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
   selectedSize,
   onDesignTransformChange,
   onSizeChange,
+  onSelectDesign,
   textContent,
   textFont,
   textColor,
@@ -57,8 +70,13 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
   isSvgDesign,
   svgColor,
   onSvgColorChange,
+  mockupColors,
+  selectedMockupColor,
+  onMockupColorChange,
   onFileUpload,
-  onAIImageGenerated
+  onAIImageGenerated,
+  onRemoveBackground,
+  isRemovingBackground
 }) => {
   const getActiveStylesValue = () => {
     const activeStyles = [];
@@ -75,6 +93,30 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
       underline: values.includes('underline')
     });
   };
+
+  if (activeTab === 'designs') {
+    return (
+      <Card className="bg-black/80 border-white/20 p-4">
+        <CompactDesignGallery
+          onSelectDesign={onSelectDesign}
+          selectedDesign={selectedDesign}
+        />
+      </Card>
+    );
+  }
+
+  if (activeTab === 'svg') {
+    return (
+      <Card className="bg-black/80 border-white/20 p-4">
+        <CompactSVGGallery
+          onSelectDesign={onSelectDesign}
+          selectedDesign={selectedDesign}
+          svgColor={svgColor}
+          onSvgColorChange={onSvgColorChange}
+        />
+      </Card>
+    );
+  }
 
   if (activeTab === 'text') {
     return (
@@ -130,48 +172,102 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'upload') {
     return (
-      <Card className="bg-black/80 border-white/20 p-4 space-y-4">
-        <div>
-          <Label className="text-white">Télécharger une image</Label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={onFileUpload}
-            className="w-full mt-2 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-winshirt-purple file:text-white"
-          />
-        </div>
-        
-        <Button 
-          className="w-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue"
-          onClick={() => {
-            // This would trigger AI image generation
-            console.log('Generate AI image');
-          }}
-        >
-          Générer avec l'IA
-        </Button>
+      <Card className="bg-black/80 border-white/20 p-4">
+        <CompactUpload
+          onFileUpload={onFileUpload}
+          onRemoveBackground={onRemoveBackground}
+          isRemovingBackground={isRemovingBackground}
+          currentDesign={selectedDesign}
+        />
       </Card>
     );
   }
 
-  if (activeTab === 'colors' && (selectedDesign || isSvgDesign)) {
+  if (activeTab === 'ai') {
+    return (
+      <Card className="bg-black/80 border-white/20 p-4">
+        <CompactAIGenerator
+          onImageGenerated={onAIImageGenerated}
+        />
+      </Card>
+    );
+  }
+
+  if (activeTab === 'colors') {
     return (
       <Card className="bg-black/80 border-white/20 p-4 space-y-4">
+        {mockupColors && mockupColors.length > 0 && (
+          <div>
+            <Label className="text-white text-sm">Couleur du produit</Label>
+            <div className="grid grid-cols-4 gap-2 mt-2">
+              {mockupColors.map((color) => (
+                <button
+                  key={color.id}
+                  className={`aspect-square rounded-lg border-2 overflow-hidden ${
+                    selectedMockupColor?.id === color.id ? 'border-white' : 'border-white/30'
+                  }`}
+                  onClick={() => onMockupColorChange(color)}
+                >
+                  <img
+                    src={color.front_image_url}
+                    alt={color.color_name}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {isSvgDesign && (
           <div>
-            <Label className="text-white">Couleur du design</Label>
-            <div className="flex gap-2 mt-2">
-              {['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff', '#ffff00'].map((color) => (
+            <Label className="text-white text-sm">Couleur du design</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'].map((color) => (
                 <button
                   key={color}
                   className={`w-8 h-8 rounded-full border-2 ${
-                    svgColor === color ? 'border-white' : 'border-white/30'
-                  }`}
+                    svgColor === color ? 'border-white scale-110' : 'border-white/30'
+                  } transition-all`}
                   style={{ backgroundColor: color }}
                   onClick={() => onSvgColorChange(color)}
                 />
               ))}
             </div>
+          </div>
+        )}
+
+        {selectedDesign && (
+          <div className="space-y-3">
+            <div>
+              <Label className="text-white text-sm">Taille ({Math.round(designTransform.scale * 100)}%)</Label>
+              <Slider
+                value={[designTransform.scale * 100]}
+                min={10}
+                max={100}
+                step={5}
+                onValueChange={(value) => onDesignTransformChange('scale', value[0] / 100)}
+                className="mt-2"
+              />
+            </div>
+            
+            <div>
+              <Label className="text-white text-sm">Rotation ({designTransform.rotation}°)</Label>
+              <Slider
+                value={[designTransform.rotation + 180]}
+                min={0}
+                max={360}
+                step={15}
+                onValueChange={(value) => onDesignTransformChange('rotation', value[0] - 180)}
+                className="mt-2"
+              />
+            </div>
+          </div>
+        )}
+
+        {!selectedDesign && !isSvgDesign && !mockupColors?.length && (
+          <div className="text-center py-4 text-white/50 text-sm">
+            Sélectionnez un design ou un produit pour voir les options de couleur
           </div>
         )}
       </Card>

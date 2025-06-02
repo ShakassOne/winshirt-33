@@ -378,6 +378,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           selectedSize={getCurrentSelectedSize()}
           onDesignTransformChange={onDesignTransformChange}
           onSizeChange={onSizeChange}
+          onSelectDesign={handleDesignSelection}
           textContent={getCurrentTextContent()}
           textFont={getCurrentTextFont()}
           textColor={getCurrentTextColor()}
@@ -389,8 +390,13 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           isSvgDesign={isSvgDesign()}
           svgColor={getCurrentSvgColor()}
           onSvgColorChange={onSvgColorChange}
+          mockupColors={mockup?.colors}
+          selectedMockupColor={selectedMockupColor}
+          onMockupColorChange={onMockupColorChange}
           onFileUpload={onFileUpload}
           onAIImageGenerated={onAIImageGenerated}
+          onRemoveBackground={onRemoveBackground}
+          isRemovingBackground={isRemovingBackground}
         />
       </div>
 
@@ -398,6 +404,9 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onOpenFullModal={() => setShowFullModal(true)}
+        hasDesign={hasDesign}
+        isSvgDesign={isSvgDesign()}
+        selectedMockupColor={selectedMockupColor}
       />
 
       <div className="absolute bottom-28 left-4 right-4 flex justify-between bg-black/80 backdrop-blur-sm rounded-lg p-3 border border-white/20">
