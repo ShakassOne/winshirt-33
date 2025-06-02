@@ -20,8 +20,7 @@ import { RemoveFlatBackground } from '@/components/product/RemoveFlatBackground'
 import { supabase } from '@/integrations/supabase/client';
 import { SocialShareButton } from '@/components/SocialShareButton';
 import { SVGColorEditor } from '@/components/product/SVGColorEditor';
-import ModalPersonnalisation from '@/components/product/ModalPersonnalisation';
-import QuickCustomizationTools from '@/components/product/QuickCustomizationTools';
+import { ModalPersonnalisation } from '@/components/product/ModalPersonnalisation';
 
 // Définition des polices Google Fonts
 const googleFonts = [{
@@ -932,10 +931,10 @@ const ProductDetail = () => {
       e.preventDefault();
     }
   };
-  const handleAIImageGenerated = (imageUrl: string) => {
+  const handleAIImageGenerated = (imageUrl: string, imageName: string) => {
     const design: Design = {
       id: `ai-${Date.now()}`,
-      name: 'Image générée par IA',
+      name: imageName,
       image_url: imageUrl,
       category: 'ai-generated',
       is_active: true
@@ -1130,48 +1129,6 @@ const ProductDetail = () => {
                 </ToggleGroup>
               </div>
             )}
-
-            {/* Quick Customization Tools */}
-            {customizationMode && (
-              <QuickCustomizationTools
-                selectedDesign={getCurrentDesign()}
-                designTransform={getCurrentDesignTransform()}
-                onDesignTransformChange={handleDesignTransformChange}
-                selectedSize={getCurrentSelectedSize()}
-                onSizeChange={handleSizeClick}
-                textContent={getCurrentTextContent()}
-                textFont={getCurrentTextFont()}
-                textColor={getCurrentTextColor()}
-                onTextContentChange={(text) => {
-                  if (currentViewSide === 'front') {
-                    setTextContentFront(text);
-                  } else {
-                    setTextContentBack(text);
-                  }
-                }}
-                onTextFontChange={(font) => {
-                  if (currentViewSide === 'front') {
-                    setTextFontFront(font);
-                  } else {
-                    setTextFontBack(font);
-                  }
-                }}
-                onTextColorChange={(color) => {
-                  if (currentViewSide === 'front') {
-                    setTextColorFront(color);
-                  } else {
-                    setTextColorBack(color);
-                  }
-                }}
-                isSvgDesign={isSvgDesign()}
-                svgColor={getCurrentSvgColor()}
-                onSvgColorChange={handleSvgColorChange}
-                currentViewSide={currentViewSide}
-                onViewSideChange={setCurrentViewSide}
-                hasBackSide={!!(mockup?.svg_back_url)}
-                onOpenModal={() => setCustomizationModalOpen(true)}
-              />
-            )}
           </div>
 
           {/* Product info and options */}
@@ -1360,25 +1317,53 @@ const ProductDetail = () => {
         <ModalPersonnalisation
           open={customizationModalOpen}
           onClose={() => setCustomizationModalOpen(false)}
-          product={product}
-          onDesignSelect={handleDesignSelect}
-          selectedDesign={getCurrentDesign()}
-          onCustomTextChange={(text) => {
+          currentViewSide={currentViewSide}
+          onViewSideChange={setCurrentViewSide}
+          
+          // Product data
+          productName={product.name}
+          productImageUrl={product.image_url}
+          
+          // Mockup data
+          mockup={mockup}
+          selectedMockupColor={selectedMockupColor}
+          onMockupColorChange={setSelectedMockupColor}
+          
+          // Design props
+          selectedDesignFront={selectedDesignFront}
+          selectedDesignBack={selectedDesignBack}
+          onSelectDesign={handleDesignSelect}
+          onFileUpload={handleFileUpload}
+          onAIImageGenerated={handleAIImageGenerated}
+          onRemoveBackground={handleRemoveBackground}
+          isRemovingBackground={isRemovingBackground}
+          
+          // SVG props
+          svgColorFront={svgColorFront}
+          svgColorBack={svgColorBack}
+          svgContentFront={svgContentFront}
+          svgContentBack={svgContentBack}
+          onSvgColorChange={handleSvgColorChange}
+          onSvgContentChange={handleSvgContentChange}
+          
+          // Text props
+          textContentFront={textContentFront}
+          textContentBack={textContentBack}
+          textFontFront={textFontFront}
+          textFontBack={textFontBack}
+          textColorFront={textColorFront}
+          textColorBack={textColorBack}
+          textStylesFront={textStylesFront}
+          textStylesBack={textStylesBack}
+          textTransformFront={textTransformFront}
+          textTransformBack={textTransformBack}
+          onTextContentChange={(content) => {
             if (currentViewSide === 'front') {
-              setTextContentFront(text);
+              setTextContentFront(content);
             } else {
-              setTextContentBack(text);
+              setTextContentBack(content);
             }
           }}
-          customText={getCurrentTextContent()}
-          onTextColorChange={(color) => {
-            if (currentViewSide === 'front') {
-              setTextColorFront(color);
-            } else {
-              setTextColorBack(color);
-            }
-          }}
-          selectedTextColor={getCurrentTextColor()}
           onTextFontChange={(font) => {
             if (currentViewSide === 'front') {
               setTextFontFront(font);
@@ -1386,18 +1371,34 @@ const ProductDetail = () => {
               setTextFontBack(font);
             }
           }}
-          selectedTextFont={getCurrentTextFont()}
-          onFileUpload={handleFileUpload}
-          onAIImageSelect={handleAIImageGenerated}
-          onSvgColorChange={handleSvgColorChange}
-          onSvgContentChange={handleSvgContentChange}
-          defaultSvgColor={getCurrentSvgColor()}
-          selectedProductColor={selectedMockupColor}
-          onProductColorSelect={setSelectedMockupColor}
-          currentDesignTransform={getCurrentDesignTransform()}
-          selectedSize={getCurrentSelectedSize()}
+          onTextColorChange={(color) => {
+            if (currentViewSide === 'front') {
+              setTextColorFront(color);
+            } else {
+              setTextColorBack(color);
+            }
+          }}
+          onTextStylesChange={(styles) => {
+            if (currentViewSide === 'front') {
+              setTextStylesFront(styles);
+            } else {
+              setTextStylesBack(styles);
+            }
+          }}
+          onTextTransformChange={handleTextTransformChange}
+          
+          // Design transform props
+          designTransformFront={designTransformFront}
+          designTransformBack={designTransformBack}
+          selectedSizeFront={selectedSizeFront}
+          selectedSizeBack={selectedSizeBack}
           onDesignTransformChange={handleDesignTransformChange}
           onSizeChange={handleSizeClick}
+          
+          // Interaction handlers
+          onDesignMouseDown={handleMouseDown}
+          onTextMouseDown={(e) => handleMouseDown(e, true)}
+          onTouchMove={handleTouchMove}
         />
       </main>
       

@@ -210,47 +210,6 @@ export type Database = {
         }
         Relationships: []
       }
-      dtf_production_status: {
-        Row: {
-          completed_at: string | null
-          created_at: string
-          id: string
-          notes: string | null
-          order_id: string
-          production_status: string
-          started_at: string | null
-          updated_at: string
-        }
-        Insert: {
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          notes?: string | null
-          order_id: string
-          production_status?: string
-          started_at?: string | null
-          updated_at?: string
-        }
-        Update: {
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          notes?: string | null
-          order_id?: string
-          production_status?: string
-          started_at?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dtf_production_status_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: true
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       lotteries: {
         Row: {
           created_at: string | null
@@ -805,7 +764,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "dtf_supplier"
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -921,7 +880,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "dtf_supplier"],
+      app_role: ["admin", "user"],
     },
   },
 } as const
