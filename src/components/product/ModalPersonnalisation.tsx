@@ -92,6 +92,17 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     setActiveTab('gallery');
   };
 
+  // Convert string colors to MockupColor objects
+  const convertToMockupColors = (colors: string[]): MockupColor[] => {
+    return colors.map((color, index) => ({
+      id: `color-${index}`,
+      name: color,
+      color_code: color,
+      front_image_url: '',
+      back_image_url: ''
+    }));
+  };
+
   if (isMobile) {
     return (
       <>
@@ -170,11 +181,11 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                     textColor={selectedTextColor}
                     textStyles={{ bold: false, italic: false, underline: false }}
                     textTransform={{ position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
-                    onTextChange={onCustomTextChange}
-                    onColorChange={onTextColorChange}
-                    onFontChange={onTextFontChange}
-                    onStylesChange={() => {}}
-                    onTransformChange={() => {}}
+                    onTextContentChange={onCustomTextChange}
+                    onTextColorChange={onTextColorChange}
+                    onTextFontChange={onTextFontChange}
+                    onTextStylesChange={() => {}}
+                    onTextTransformChange={() => {}}
                   />
                 )}
                 {activeTab === 'upload' && (
@@ -190,7 +201,7 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
               <div className="p-4 border-t border-white/20">
                 <ProductColorSelector
-                  colors={product.available_colors}
+                  colors={convertToMockupColors(product.available_colors)}
                   selectedColor={selectedProductColor}
                   onColorSelect={onProductColorSelect}
                 />
@@ -303,11 +314,11 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                   textColor={selectedTextColor}
                   textStyles={{ bold: false, italic: false, underline: false }}
                   textTransform={{ position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
-                  onTextChange={onCustomTextChange}
-                  onColorChange={onTextColorChange}
-                  onFontChange={onTextFontChange}
-                  onStylesChange={() => {}}
-                  onTransformChange={() => {}}
+                  onTextContentChange={onCustomTextChange}
+                  onTextColorChange={onTextColorChange}
+                  onTextFontChange={onTextFontChange}
+                  onTextStylesChange={() => {}}
+                  onTextTransformChange={() => {}}
                 />
               )}
               {activeTab === 'upload' && (
@@ -324,7 +335,7 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
           <div className="p-4 border-t border-white/20">
             <ProductColorSelector
-              colors={product.available_colors}
+              colors={convertToMockupColors(product.available_colors)}
               selectedColor={selectedProductColor}
               onColorSelect={onProductColorSelect}
             />
