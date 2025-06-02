@@ -13,6 +13,7 @@ import { TextCustomizer } from './TextCustomizer';
 import { UploadDesign } from './UploadDesign';
 import AIImageGenerator from './AIImageGenerator';
 import { Product, Design } from '@/types/supabase.types';
+import { MockupColor } from '@/types/mockup.types';
 
 interface ModalPersonnalisationProps {
   open: boolean;
@@ -31,8 +32,8 @@ interface ModalPersonnalisationProps {
   onSvgColorChange: (color: string) => void;
   onSvgContentChange: (content: string) => void;
   defaultSvgColor: string;
-  selectedProductColor: string | null;
-  onProductColorSelect: (color: string) => void;
+  selectedProductColor: MockupColor | null;
+  onProductColorSelect: (color: MockupColor) => void;
   // Propriétés additionnelles pour GalleryDesigns
   currentDesignTransform?: { position: { x: number; y: number }; scale: number; rotation: number };
   selectedSize?: string;
@@ -75,25 +76,6 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   const handleClose = () => {
     console.log("Fermeture du modal de personnalisation");
     onClose();
-  };
-
-  // Props simplifiées pour TextCustomizer
-  const textCustomizerProps = {
-    customText,
-    selectedTextColor,
-    selectedTextFont,
-    onTextChange: onCustomTextChange,
-    onColorChange: onTextColorChange,
-    onFontChange: onTextFontChange
-  };
-
-  // Props simplifiées pour UploadDesign
-  const uploadDesignProps = {
-    onFileUpload,
-    onAIImageGenerated: () => {},
-    onRemoveBackground: () => {},
-    isRemovingBackground: false,
-    currentDesign: null
   };
 
   if (isMobile) {
@@ -167,14 +149,31 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                 />
               )}
               {activeTab === 'text' && (
-                <TextCustomizer {...textCustomizerProps} />
+                <TextCustomizer
+                  textContent={customText}
+                  textFont={selectedTextFont}
+                  textColor={selectedTextColor}
+                  textStyles={{ bold: false, italic: false, underline: false }}
+                  textTransform={{ position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
+                  onTextChange={onCustomTextChange}
+                  onColorChange={onTextColorChange}
+                  onFontChange={onTextFontChange}
+                  onStylesChange={() => {}}
+                  onTransformChange={() => {}}
+                />
               )}
               {activeTab === 'upload' && (
-                <UploadDesign {...uploadDesignProps} />
+                <UploadDesign
+                  onFileUpload={onFileUpload}
+                  onAIImageGenerated={() => {}}
+                  onRemoveBackground={() => {}}
+                  isRemovingBackground={false}
+                  currentDesign={null}
+                />
               )}
               {activeTab === 'ai' && (
                 <AIImageGenerator
-                  onAIImageSelect={onAIImageSelect}
+                  onImageGenerated={onAIImageSelect}
                 />
               )}
             </div>
@@ -182,7 +181,7 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             <div className="p-4 border-t border-white/20">
               <ProductColorSelector
                 availableColors={product.available_colors}
-                selectedColor={selectedProductColor || ''}
+                selectedColor={selectedProductColor}
                 onColorSelect={onProductColorSelect}
               />
             </div>
@@ -280,14 +279,31 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               />
             )}
             {activeTab === 'text' && (
-              <TextCustomizer {...textCustomizerProps} />
+              <TextCustomizer
+                textContent={customText}
+                textFont={selectedTextFont}
+                textColor={selectedTextColor}
+                textStyles={{ bold: false, italic: false, underline: false }}
+                textTransform={{ position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
+                onTextChange={onCustomTextChange}
+                onColorChange={onTextColorChange}
+                onFontChange={onTextFontChange}
+                onStylesChange={() => {}}
+                onTransformChange={() => {}}
+              />
             )}
             {activeTab === 'upload' && (
-              <UploadDesign {...uploadDesignProps} />
+              <UploadDesign
+                onFileUpload={onFileUpload}
+                onAIImageGenerated={() => {}}
+                onRemoveBackground={() => {}}
+                isRemovingBackground={false}
+                currentDesign={null}
+              />
             )}
             {activeTab === 'ai' && (
               <AIImageGenerator
-                onAIImageSelect={onAIImageSelect}
+                onImageGenerated={onAIImageSelect}
               />
             )}
           </div>
@@ -296,7 +312,7 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         <div className="p-4 border-t border-white/20">
           <ProductColorSelector
             availableColors={product.available_colors}
-            selectedColor={selectedProductColor || ''}
+            selectedColor={selectedProductColor}
             onColorSelect={onProductColorSelect}
           />
         </div>

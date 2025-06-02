@@ -20,7 +20,7 @@ import { RemoveFlatBackground } from '@/components/product/RemoveFlatBackground'
 import { supabase } from '@/integrations/supabase/client';
 import { SocialShareButton } from '@/components/SocialShareButton';
 import { SVGColorEditor } from '@/components/product/SVGColorEditor';
-import { ModalPersonnalisation } from '@/components/product/ModalPersonnalisation';
+import ModalPersonnalisation from '@/components/product/ModalPersonnalisation';
 
 // Définition des polices Google Fonts
 const googleFonts = [{
@@ -1317,60 +1317,17 @@ const ProductDetail = () => {
         <ModalPersonnalisation
           open={customizationModalOpen}
           onClose={() => setCustomizationModalOpen(false)}
-          currentViewSide={currentViewSide}
-          onViewSideChange={setCurrentViewSide}
-          
-          // Product data
-          productName={product.name}
-          productImageUrl={product.image_url}
-          
-          // Mockup data
-          mockup={mockup}
-          selectedMockupColor={selectedMockupColor}
-          onMockupColorChange={setSelectedMockupColor}
-          
-          // Design props
-          selectedDesignFront={selectedDesignFront}
-          selectedDesignBack={selectedDesignBack}
-          onSelectDesign={handleDesignSelect}
-          onFileUpload={handleFileUpload}
-          onAIImageGenerated={handleAIImageGenerated}
-          onRemoveBackground={handleRemoveBackground}
-          isRemovingBackground={isRemovingBackground}
-          
-          // SVG props
-          svgColorFront={svgColorFront}
-          svgColorBack={svgColorBack}
-          svgContentFront={svgContentFront}
-          svgContentBack={svgContentBack}
-          onSvgColorChange={handleSvgColorChange}
-          onSvgContentChange={handleSvgContentChange}
-          
-          // Text props
-          textContentFront={textContentFront}
-          textContentBack={textContentBack}
-          textFontFront={textFontFront}
-          textFontBack={textFontBack}
-          textColorFront={textColorFront}
-          textColorBack={textColorBack}
-          textStylesFront={textStylesFront}
-          textStylesBack={textStylesBack}
-          textTransformFront={textTransformFront}
-          textTransformBack={textTransformBack}
-          onTextContentChange={(content) => {
+          product={product}
+          onDesignSelect={handleDesignSelect}
+          selectedDesign={getCurrentDesign()}
+          onCustomTextChange={(text) => {
             if (currentViewSide === 'front') {
-              setTextContentFront(content);
+              setTextContentFront(text);
             } else {
-              setTextContentBack(content);
+              setTextContentBack(text);
             }
           }}
-          onTextFontChange={(font) => {
-            if (currentViewSide === 'front') {
-              setTextFontFront(font);
-            } else {
-              setTextFontBack(font);
-            }
-          }}
+          customText={getCurrentTextContent()}
           onTextColorChange={(color) => {
             if (currentViewSide === 'front') {
               setTextColorFront(color);
@@ -1378,27 +1335,26 @@ const ProductDetail = () => {
               setTextColorBack(color);
             }
           }}
-          onTextStylesChange={(styles) => {
+          selectedTextColor={getCurrentTextColor()}
+          onTextFontChange={(font) => {
             if (currentViewSide === 'front') {
-              setTextStylesFront(styles);
+              setTextFontFront(font);
             } else {
-              setTextStylesBack(styles);
+              setTextFontBack(font);
             }
           }}
-          onTextTransformChange={handleTextTransformChange}
-          
-          // Design transform props
-          designTransformFront={designTransformFront}
-          designTransformBack={designTransformBack}
-          selectedSizeFront={selectedSizeFront}
-          selectedSizeBack={selectedSizeBack}
+          selectedTextFont={getCurrentTextFont()}
+          onFileUpload={handleFileUpload}
+          onAIImageSelect={handleAIImageGenerated}
+          onSvgColorChange={handleSvgColorChange}
+          onSvgContentChange={handleSvgContentChange}
+          defaultSvgColor={getCurrentSvgColor()}
+          selectedProductColor={selectedMockupColor}
+          onProductColorSelect={setSelectedMockupColor}
+          currentDesignTransform={getCurrentDesignTransform()}
+          selectedSize={getCurrentSelectedSize()}
           onDesignTransformChange={handleDesignTransformChange}
           onSizeChange={handleSizeClick}
-          
-          // Interaction handlers
-          onDesignMouseDown={handleMouseDown}
-          onTextMouseDown={(e) => handleMouseDown(e, true)}
-          onTouchMove={handleTouchMove}
         />
       </main>
       
