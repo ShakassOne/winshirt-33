@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { X, Palette, Type, Image as ImageIcon, Upload } from 'lucide-react';
+import { X, Palette, Type, Image as ImageIcon, Upload, Sparkles, Paintbrush } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Design } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
@@ -250,10 +251,10 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-4 mb-4">
+          <TabsList className="grid w-full grid-cols-5 mb-4">
             <TabsTrigger value="designs" className="flex items-center gap-2">
               <ImageIcon className="h-4 w-4" />
-              <span className="hidden sm:inline">Designs</span>
+              <span className="hidden sm:inline">Images</span>
             </TabsTrigger>
             <TabsTrigger value="text" className="flex items-center gap-2">
               <Type className="h-4 w-4" />
@@ -263,8 +264,12 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               <Upload className="h-4 w-4" />
               <span className="hidden sm:inline">Upload</span>
             </TabsTrigger>
+            <TabsTrigger value="ai" className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              <span className="hidden sm:inline">IA</span>
+            </TabsTrigger>
             <TabsTrigger value="svg" className="flex items-center gap-2">
-              <Palette className="h-4 w-4" />
+              <Paintbrush className="h-4 w-4" />
               <span className="hidden sm:inline">SVG</span>
             </TabsTrigger>
           </TabsList>
@@ -297,6 +302,16 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             </TabsContent>
 
             <TabsContent value="upload" className="h-full overflow-y-auto">
+              <UploadDesign
+                onFileUpload={onFileUpload}
+                onAIImageGenerated={onAIImageGenerated}
+                onRemoveBackground={onRemoveBackground}
+                isRemovingBackground={isRemovingBackground}
+                currentDesign={getCurrentDesign()}
+              />
+            </TabsContent>
+
+            <TabsContent value="ai" className="h-full overflow-y-auto">
               <UploadDesign
                 onFileUpload={onFileUpload}
                 onAIImageGenerated={onAIImageGenerated}
@@ -420,6 +435,107 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     </div>
   );
 
+  const fullMobileModalContent = (
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+          <TabsList className="grid w-full grid-cols-5 mb-4 mx-4">
+            <TabsTrigger value="designs" className="flex flex-col items-center gap-1 h-auto py-2">
+              <ImageIcon className="h-4 w-4" />
+              <span className="text-xs">Images</span>
+            </TabsTrigger>
+            <TabsTrigger value="text" className="flex flex-col items-center gap-1 h-auto py-2">
+              <Type className="h-4 w-4" />
+              <span className="text-xs">Texte</span>
+            </TabsTrigger>
+            <TabsTrigger value="upload" className="flex flex-col items-center gap-1 h-auto py-2">
+              <Upload className="h-4 w-4" />
+              <span className="text-xs">Upload</span>
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="flex flex-col items-center gap-1 h-auto py-2">
+              <Sparkles className="h-4 w-4" />
+              <span className="text-xs">IA</span>
+            </TabsTrigger>
+            <TabsTrigger value="svg" className="flex flex-col items-center gap-1 h-auto py-2">
+              <Paintbrush className="h-4 w-4" />
+              <span className="text-xs">SVG</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="flex-1 overflow-hidden px-4">
+            <TabsContent value="designs" className="h-full overflow-y-auto mt-0">
+              <GalleryDesigns
+                onSelectDesign={handleDesignSelection}
+                selectedDesign={getCurrentDesign()}
+                currentDesignTransform={getCurrentDesignTransform()}
+                selectedSize={getCurrentSelectedSize()}
+                onDesignTransformChange={onDesignTransformChange}
+                onSizeChange={onSizeChange}
+              />
+            </TabsContent>
+
+            <TabsContent value="text" className="h-full overflow-y-auto mt-0">
+              <TextCustomizer
+                textContent={getCurrentTextContent()}
+                textFont={getCurrentTextFont()}
+                textColor={getCurrentTextColor()}
+                textStyles={getCurrentTextStyles()}
+                textTransform={getCurrentTextTransform()}
+                onTextContentChange={onTextContentChange}
+                onTextFontChange={onTextFontChange}
+                onTextColorChange={onTextColorChange}
+                onTextStylesChange={onTextStylesChange}
+                onTextTransformChange={onTextTransformChange}
+              />
+            </TabsContent>
+
+            <TabsContent value="upload" className="h-full overflow-y-auto mt-0">
+              <UploadDesign
+                onFileUpload={onFileUpload}
+                onAIImageGenerated={onAIImageGenerated}
+                onRemoveBackground={onRemoveBackground}
+                isRemovingBackground={isRemovingBackground}
+                currentDesign={getCurrentDesign()}
+              />
+            </TabsContent>
+
+            <TabsContent value="ai" className="h-full overflow-y-auto mt-0">
+              <UploadDesign
+                onFileUpload={onFileUpload}
+                onAIImageGenerated={onAIImageGenerated}
+                onRemoveBackground={onRemoveBackground}
+                isRemovingBackground={isRemovingBackground}
+                currentDesign={getCurrentDesign()}
+              />
+            </TabsContent>
+
+            <TabsContent value="svg" className="h-full overflow-y-auto mt-0">
+              <SVGDesigns
+                onSelectDesign={handleDesignSelection}
+                selectedDesign={getCurrentDesign()}
+                onFileUpload={onFileUpload}
+                onSvgColorChange={onSvgColorChange}
+                onSvgContentChange={onSvgContentChange}
+                defaultSvgColor={getCurrentSvgColor()}
+              />
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
+
+      <div className="p-4 border-t border-white/10 bg-black/80">
+        <div className="flex justify-between">
+          <Button variant="outline" onClick={() => setShowFullModal(false)} className="px-6">
+            Retour
+          </Button>
+          <Button onClick={onClose} className="px-6 bg-gradient-to-r from-winshirt-purple to-winshirt-blue">
+            Valider
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
   if (isMobile) {
     return (
       <>
@@ -453,10 +569,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                 </Button>
               </div>
             </DrawerHeader>
-            <div className="flex-1 overflow-hidden p-4">
-              <div className="text-white/60 text-center py-8">
-                Options avancées - À implémenter
-              </div>
+            <div className="flex-1 overflow-hidden">
+              {fullMobileModalContent}
             </div>
           </DrawerContent>
         </Drawer>
