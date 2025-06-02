@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
@@ -14,11 +13,9 @@ import { TextCustomizer } from './TextCustomizer';
 import { SVGDesigns } from './SVGDesigns';
 import { ProductPreview } from './ProductPreview';
 import { ProductColorSelector } from './ProductColorSelector';
-import { MobileToolbar } from './MobileToolbar';
-import { MobileDesignsModal } from './MobileDesignsModal';
-import { MobileTextModal } from './MobileTextModal';
-import { MobileUploadModal } from './MobileUploadModal';
-import { MobileColorsModal } from './MobileColorsModal';
+import { EnhancedProductPreview } from './EnhancedProductPreview';
+import { SimplifiedMobileToolbar } from './SimplifiedMobileToolbar';
+import { MobileQuickTools } from './MobileQuickTools';
 
 interface ModalPersonnalisationProps {
   open: boolean;
@@ -133,12 +130,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('designs');
-  
-  // Mobile modals state
-  const [mobileDesignsOpen, setMobileDesignsOpen] = useState(false);
-  const [mobileTextOpen, setMobileTextOpen] = useState(false);
-  const [mobileUploadOpen, setMobileUploadOpen] = useState(false);
-  const [mobileColorsOpen, setMobileColorsOpen] = useState(false);
+  const [showFullModal, setShowFullModal] = useState(false);
 
   const getCurrentDesign = () => {
     return currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack;
@@ -191,27 +183,27 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   const hasTwoSides = mockup?.svg_back_url ? true : false;
   const hasDesign = getCurrentDesign() !== null;
 
-  // Gestionnaire STRICT pour la sélection de design - NE FERME JAMAIS LA MODAL
   const handleDesignSelection = (design: Design) => {
     console.log('🎨 [ModalPersonnalisation] Sélection du design:', design.name);
-    console.log('🔒 Modal restera OUVERTE après sélection');
-    
-    // Appeler uniquement la fonction de sélection, SANS FERMER LA MODAL
     onSelectDesign(design);
     
-    // En mode mobile, fermer uniquement la sous-modal des designs
-    if (isMobile && mobileDesignsOpen) {
-      console.log('📱 Fermeture uniquement de la sous-modal mobile des designs');
-      setMobileDesignsOpen(false);
+    if (isMobile && !showFullModal) {
+      // In simplified mobile mode, just select the design without closing anything
+      setActiveTab('colors'); // Switch to colors tab to show relevant tools
     }
-    
-    console.log('✅ Design sélectionné, modal principale reste ouverte');
   };
 
-  // Desktop layout avec 4 onglets maintenant
+  const handleRemoveDesign = () => {
+    // This would need to be passed as a prop or implemented
+    console.log('Remove design');
+  };
+
+  const handleRemoveText = () => {
+    onTextContentChange('');
+  };
+
   const desktopContent = (
     <div className="flex h-full gap-6">
-      {/* Colonne de gauche - Preview */}
       <div className="w-1/2 flex flex-col">
         <ProductPreview
           productName={productName}
@@ -245,7 +237,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         />
       </div>
 
-      {/* Colonne de droite - Outils */}
       <div className="w-1/2 flex flex-col">
         {mockup?.colors && mockup.colors.length > 0 && (
           <div className="mb-6">
@@ -340,12 +331,10 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     </div>
   );
 
-  // Nouveau layout mobile optimisé
-  const mobileContent = (
-    <div className="flex flex-col h-full pb-20">
-      {/* Preview pleine largeur */}
-      <div className="flex-1 px-4 pt-4">
-        <ProductPreview
+  const simplifiedMobileContent = (
+    <div className="flex flex-col h-full">
+      <div className="flex-1 px-4 pt-4 pb-32">
+        <EnhancedProductPreview
           productName={productName}
           productImageUrl={productImageUrl}
           currentViewSide={currentViewSide}
@@ -374,72 +363,44 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           onDesignMouseDown={onDesignMouseDown}
           onTextMouseDown={onTextMouseDown}
           onTouchMove={onTouchMove}
+          onDesignTransformChange={onDesignTransformChange}
+          onTextTransformChange={onTextTransformChange}
+          onRemoveDesign={handleRemoveDesign}
+          onRemoveText={handleRemoveText}
         />
       </div>
 
-      {/* Barre d'outils mobile fixe en bas */}
-      <MobileToolbar
-        onDesignsClick={() => setMobileDesignsOpen(true)}
-        onTextClick={() => setMobileTextOpen(true)}
-        onUploadClick={() => setMobileUploadOpen(true)}
-        onAIClick={() => setMobileUploadOpen(true)}
-        onColorsClick={() => setMobileColorsOpen(true)}
-        isSvgDesign={isSvgDesign()}
-        hasDesign={hasDesign}
+      <div className="px-4 pb-2">
+        <MobileQuickTools
+          activeTab={activeTab}
+          selectedDesign={getCurrentDesign()}
+          designTransform={getCurrentDesignTransform()}
+          selectedSize={getCurrentSelectedSize()}
+          onDesignTransformChange={onDesignTransformChange}
+          onSizeChange={onSizeChange}
+          textContent={getCurrentTextContent()}
+          textFont={getCurrentTextFont()}
+          textColor={getCurrentTextColor()}
+          textStyles={getCurrentTextStyles()}
+          onTextContentChange={onTextContentChange}
+          onTextFontChange={onTextFontChange}
+          onTextColorChange={onTextColorChange}
+          onTextStylesChange={onTextStylesChange}
+          isSvgDesign={isSvgDesign()}
+          svgColor={getCurrentSvgColor()}
+          onSvgColorChange={onSvgColorChange}
+          onFileUpload={onFileUpload}
+          onAIImageGenerated={onAIImageGenerated}
+        />
+      </div>
+
+      <SimplifiedMobileToolbar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onOpenFullModal={() => setShowFullModal(true)}
       />
 
-      {/* Modales spécialisées */}
-      <MobileDesignsModal
-        open={mobileDesignsOpen}
-        onClose={() => setMobileDesignsOpen(false)}
-        onSelectDesign={handleDesignSelection}
-        selectedDesign={getCurrentDesign()}
-        currentDesignTransform={getCurrentDesignTransform()}
-        selectedSize={getCurrentSelectedSize()}
-        onDesignTransformChange={onDesignTransformChange}
-        onSizeChange={onSizeChange}
-      />
-
-      <MobileTextModal
-        open={mobileTextOpen}
-        onClose={() => setMobileTextOpen(false)}
-        textContent={getCurrentTextContent()}
-        textFont={getCurrentTextFont()}
-        textColor={getCurrentTextColor()}
-        textStyles={getCurrentTextStyles()}
-        textTransform={getCurrentTextTransform()}
-        onTextContentChange={onTextContentChange}
-        onTextFontChange={onTextFontChange}
-        onTextColorChange={onTextColorChange}
-        onTextStylesChange={onTextStylesChange}
-        onTextTransformChange={onTextTransformChange}
-      />
-
-      <MobileUploadModal
-        open={mobileUploadOpen}
-        onClose={() => setMobileUploadOpen(false)}
-        onFileUpload={onFileUpload}
-        onAIImageGenerated={onAIImageGenerated}
-        onRemoveBackground={onRemoveBackground}
-        isRemovingBackground={isRemovingBackground}
-        currentDesign={getCurrentDesign()}
-      />
-
-      <MobileColorsModal
-        open={mobileColorsOpen}
-        onClose={() => setMobileColorsOpen(false)}
-        isSvgDesign={isSvgDesign()}
-        currentDesign={getCurrentDesign()}
-        onSvgColorChange={onSvgColorChange}
-        onSvgContentChange={onSvgContentChange}
-        defaultSvgColor={getCurrentSvgColor()}
-        mockupColors={mockup?.colors}
-        selectedMockupColor={selectedMockupColor}
-        onMockupColorChange={onMockupColorChange}
-      />
-
-      {/* Boutons de validation en overlay pour mobile */}
-      <div className="absolute bottom-20 left-4 right-4 flex justify-between bg-black/80 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+      <div className="absolute bottom-28 left-4 right-4 flex justify-between bg-black/80 backdrop-blur-sm rounded-lg p-3 border border-white/20">
         <Button variant="outline" onClick={onClose} className="px-4">
           Annuler
         </Button>
@@ -452,23 +413,45 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onClose}>
-        <DrawerContent className="bg-black/90 backdrop-blur-lg border-white/20 h-[100vh]">
-          <DrawerHeader className="border-b border-white/10">
-            <div className="flex items-center justify-between">
-              <DrawerTitle className="text-xl font-semibold">
-                🎨 Personnalisation
-              </DrawerTitle>
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X className="h-5 w-5" />
-              </Button>
+      <>
+        <Drawer open={open && !showFullModal} onOpenChange={(isOpen) => !isOpen && onClose()}>
+          <DrawerContent className="bg-black/90 backdrop-blur-lg border-white/20 h-[100vh]">
+            <DrawerHeader className="border-b border-white/10">
+              <div className="flex items-center justify-between">
+                <DrawerTitle className="text-xl font-semibold">
+                  🎨 Personnalisation
+                </DrawerTitle>
+                <Button variant="ghost" size="icon" onClick={onClose}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+            </DrawerHeader>
+            <div className="flex-1 overflow-hidden">
+              {simplifiedMobileContent}
             </div>
-          </DrawerHeader>
-          <div className="flex-1 overflow-hidden">
-            {mobileContent}
-          </div>
-        </DrawerContent>
-      </Drawer>
+          </DrawerContent>
+        </Drawer>
+
+        <Drawer open={showFullModal} onOpenChange={setShowFullModal}>
+          <DrawerContent className="bg-black/90 backdrop-blur-lg border-white/20 h-[100vh]">
+            <DrawerHeader className="border-b border-white/10">
+              <div className="flex items-center justify-between">
+                <DrawerTitle className="text-xl font-semibold">
+                  🎨 Options avancées
+                </DrawerTitle>
+                <Button variant="ghost" size="icon" onClick={() => setShowFullModal(false)}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+            </DrawerHeader>
+            <div className="flex-1 overflow-hidden p-4">
+              <div className="text-white/60 text-center py-8">
+                Options avancées - À implémenter
+              </div>
+            </div>
+          </DrawerContent>
+        </Drawer>
+      </>
     );
   }
 
@@ -476,7 +459,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     <Dialog 
       open={open} 
       onOpenChange={(isOpen) => {
-        // Empêche la fermeture accidentelle
         if (!isOpen) {
           console.log("🛑 Tentative de fermeture, validation requise");
           onClose();
