@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { SocialShareButton } from '@/components/SocialShareButton';
 import { SVGColorEditor } from '@/components/product/SVGColorEditor';
 import ModalPersonnalisation from '@/components/product/ModalPersonnalisation';
+import QuickCustomizationTools from '@/components/product/QuickCustomizationTools';
 
 // Définition des polices Google Fonts
 const googleFonts = [{
@@ -1128,6 +1129,48 @@ const ProductDetail = () => {
                   </ToggleGroupItem>
                 </ToggleGroup>
               </div>
+            )}
+
+            {/* Quick Customization Tools */}
+            {customizationMode && (
+              <QuickCustomizationTools
+                selectedDesign={getCurrentDesign()}
+                designTransform={getCurrentDesignTransform()}
+                onDesignTransformChange={handleDesignTransformChange}
+                selectedSize={getCurrentSelectedSize()}
+                onSizeChange={handleSizeClick}
+                textContent={getCurrentTextContent()}
+                textFont={getCurrentTextFont()}
+                textColor={getCurrentTextColor()}
+                onTextContentChange={(text) => {
+                  if (currentViewSide === 'front') {
+                    setTextContentFront(text);
+                  } else {
+                    setTextContentBack(text);
+                  }
+                }}
+                onTextFontChange={(font) => {
+                  if (currentViewSide === 'front') {
+                    setTextFontFront(font);
+                  } else {
+                    setTextFontBack(font);
+                  }
+                }}
+                onTextColorChange={(color) => {
+                  if (currentViewSide === 'front') {
+                    setTextColorFront(color);
+                  } else {
+                    setTextColorBack(color);
+                  }
+                }}
+                isSvgDesign={isSvgDesign()}
+                svgColor={getCurrentSvgColor()}
+                onSvgColorChange={handleSvgColorChange}
+                currentViewSide={currentViewSide}
+                onViewSideChange={setCurrentViewSide}
+                hasBackSide={!!(mockup?.svg_back_url)}
+                onOpenModal={() => setCustomizationModalOpen(true)}
+              />
             )}
           </div>
 
