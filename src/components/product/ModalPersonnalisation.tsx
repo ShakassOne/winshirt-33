@@ -67,10 +67,14 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<'gallery' | 'svg' | 'text' | 'upload' | 'ai'>('gallery');
+  const [aiModalOpen, setAiModalOpen] = useState(false);
 
   const handleTabChange = (tab: 'gallery' | 'svg' | 'text' | 'upload' | 'ai') => {
     console.log(`[ModalPersonnalisation] Changement d'onglet vers: ${tab}`);
     setActiveTab(tab);
+    if (tab === 'ai') {
+      setAiModalOpen(true);
+    }
   };
 
   const handleClose = () => {
@@ -78,56 +82,200 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     onClose();
   };
 
+  const handleAIImageGenerated = (imageUrl: string) => {
+    onAIImageSelect(imageUrl);
+    setAiModalOpen(false);
+  };
+
+  const handleAIModalClose = () => {
+    setAiModalOpen(false);
+    setActiveTab('gallery');
+  };
+
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onClose}>
-        <DrawerContent className="h-[90vh] bg-black/90 backdrop-blur-lg border-white/20">
-          <DrawerHeader>
-            <DrawerTitle>
-              Personnalisation du produit
-            </DrawerTitle>
-          </DrawerHeader>
+      <>
+        <Drawer open={open} onOpenChange={onClose}>
+          <DrawerContent className="h-[90vh] bg-black/90 backdrop-blur-lg border-white/20">
+            <DrawerHeader>
+              <DrawerTitle>
+                Personnalisation du produit
+              </DrawerTitle>
+            </DrawerHeader>
 
-          <div className="flex flex-col h-full">
-            <div className="flex justify-around mb-4">
-              <Button
-                variant={activeTab === 'gallery' ? 'default' : 'outline'}
-                onClick={() => handleTabChange('gallery')}
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                Galerie
+            <div className="flex flex-col h-full">
+              <div className="flex justify-around mb-4">
+                <Button
+                  variant={activeTab === 'gallery' ? 'default' : 'outline'}
+                  onClick={() => handleTabChange('gallery')}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Galerie
+                </Button>
+                <Button
+                  variant={activeTab === 'svg' ? 'default' : 'outline'}
+                  onClick={() => handleTabChange('svg')}
+                >
+                  <Palette className="h-4 w-4 mr-2" />
+                  SVG
+                </Button>
+                <Button
+                  variant={activeTab === 'text' ? 'default' : 'outline'}
+                  onClick={() => handleTabChange('text')}
+                >
+                  <Type className="h-4 w-4 mr-2" />
+                  Texte
+                </Button>
+                <Button
+                  variant={activeTab === 'upload' ? 'default' : 'outline'}
+                  onClick={() => handleTabChange('upload')}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload
+                </Button>
+                <Button
+                  variant={activeTab === 'ai' ? 'default' : 'outline'}
+                  onClick={() => handleTabChange('ai')}
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  IA
+                </Button>
+              </div>
+
+              <div className="p-4 flex-grow overflow-y-auto">
+                {activeTab === 'gallery' && (
+                  <GalleryDesigns
+                    onSelectDesign={onDesignSelect}
+                    selectedDesign={selectedDesign}
+                    currentDesignTransform={currentDesignTransform}
+                    selectedSize={selectedSize}
+                    onDesignTransformChange={onDesignTransformChange}
+                    onSizeChange={onSizeChange}
+                  />
+                )}
+                {activeTab === 'svg' && (
+                  <SVGDesigns
+                    onSelectDesign={onDesignSelect}
+                    selectedDesign={selectedDesign}
+                    onFileUpload={onFileUpload}
+                    onSvgColorChange={onSvgColorChange}
+                    onSvgContentChange={onSvgContentChange}
+                    defaultSvgColor={defaultSvgColor}
+                  />
+                )}
+                {activeTab === 'text' && (
+                  <TextCustomizer
+                    textContent={customText}
+                    textFont={selectedTextFont}
+                    textColor={selectedTextColor}
+                    textStyles={{ bold: false, italic: false, underline: false }}
+                    textTransform={{ position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
+                    onTextChange={onCustomTextChange}
+                    onColorChange={onTextColorChange}
+                    onFontChange={onTextFontChange}
+                    onStylesChange={() => {}}
+                    onTransformChange={() => {}}
+                  />
+                )}
+                {activeTab === 'upload' && (
+                  <UploadDesign
+                    onFileUpload={onFileUpload}
+                    onAIImageGenerated={() => {}}
+                    onRemoveBackground={() => {}}
+                    isRemovingBackground={false}
+                    currentDesign={null}
+                  />
+                )}
+              </div>
+
+              <div className="p-4 border-t border-white/20">
+                <ProductColorSelector
+                  colors={product.available_colors}
+                  selectedColor={selectedProductColor}
+                  onColorSelect={onProductColorSelect}
+                />
+              </div>
+            </div>
+          </DrawerContent>
+        </Drawer>
+
+        <AIImageGenerator
+          isOpen={aiModalOpen}
+          onClose={handleAIModalClose}
+          onImageGenerated={handleAIImageGenerated}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Dialog 
+        open={open} 
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            console.log("🛑 Tentative de fermeture, validation requise");
+            onClose();
+          }
+        }}
+      >
+        <DialogContent className="bg-black/90 backdrop-blur-lg border-white/20 max-w-[95vw] w-[95vw] h-[95vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              Personnalisation du produit
+              <Button variant="ghost" size="icon" onClick={handleClose}>
+                <X className="h-5 w-5" />
               </Button>
-              <Button
-                variant={activeTab === 'svg' ? 'default' : 'outline'}
-                onClick={() => handleTabChange('svg')}
-              >
-                <Palette className="h-4 w-4 mr-2" />
-                SVG
-              </Button>
-              <Button
-                variant={activeTab === 'text' ? 'default' : 'outline'}
-                onClick={() => handleTabChange('text')}
-              >
-                <Type className="h-4 w-4 mr-2" />
-                Texte
-              </Button>
-              <Button
-                variant={activeTab === 'upload' ? 'default' : 'outline'}
-                onClick={() => handleTabChange('upload')}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Upload
-              </Button>
-              <Button
-                variant={activeTab === 'ai' ? 'default' : 'outline'}
-                onClick={() => handleTabChange('ai')}
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                IA
-              </Button>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex h-full">
+            <div className="w-1/4 p-4 border-r border-white/20">
+              <div className="space-y-3">
+                <Button
+                  variant={activeTab === 'gallery' ? 'default' : 'outline'}
+                  className="w-full justify-start gap-3"
+                  onClick={() => handleTabChange('gallery')}
+                >
+                  <Eye className="h-4 w-4" />
+                  Galerie
+                </Button>
+                <Button
+                  variant={activeTab === 'svg' ? 'default' : 'outline'}
+                  className="w-full justify-start gap-3"
+                  onClick={() => handleTabChange('svg')}
+                >
+                  <Palette className="h-4 w-4" />
+                  SVG
+                </Button>
+                <Button
+                  variant={activeTab === 'text' ? 'default' : 'outline'}
+                  className="w-full justify-start gap-3"
+                  onClick={() => handleTabChange('text')}
+                >
+                  <Type className="h-4 w-4" />
+                  Texte
+                </Button>
+                <Button
+                  variant={activeTab === 'upload' ? 'default' : 'outline'}
+                  className="w-full justify-start gap-3"
+                  onClick={() => handleTabChange('upload')}
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload
+                </Button>
+                <Button
+                  variant={activeTab === 'ai' ? 'default' : 'outline'}
+                  className="w-full justify-start gap-3"
+                  onClick={() => handleTabChange('ai')}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  IA
+                </Button>
+              </div>
             </div>
 
-            <div className="p-4 flex-grow overflow-y-auto">
+            <div className="w-3/4 p-4 overflow-y-auto">
               {activeTab === 'gallery' && (
                 <GalleryDesigns
                   onSelectDesign={onDesignSelect}
@@ -171,153 +319,25 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                   currentDesign={null}
                 />
               )}
-              {activeTab === 'ai' && (
-                <AIImageGenerator
-                  onImageGenerated={onAIImageSelect}
-                />
-              )}
-            </div>
-
-            <div className="p-4 border-t border-white/20">
-              <ProductColorSelector
-                availableColors={product.available_colors}
-                selectedColor={selectedProductColor}
-                onColorSelect={onProductColorSelect}
-              />
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
-  return (
-    <Dialog 
-      open={open} 
-      onOpenChange={(isOpen) => {
-        if (!isOpen) {
-          console.log("🛑 Tentative de fermeture, validation requise");
-          onClose();
-        }
-      }}
-    >
-      <DialogContent className="bg-black/90 backdrop-blur-lg border-white/20 max-w-[95vw] w-[95vw] h-[95vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            Personnalisation du produit
-            <Button variant="ghost" size="icon" onClick={handleClose}>
-              <X className="h-5 w-5" />
-            </Button>
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="flex h-full">
-          <div className="w-1/4 p-4 border-r border-white/20">
-            <div className="space-y-3">
-              <Button
-                variant={activeTab === 'gallery' ? 'default' : 'outline'}
-                className="w-full justify-start gap-3"
-                onClick={() => handleTabChange('gallery')}
-              >
-                <Eye className="h-4 w-4" />
-                Galerie
-              </Button>
-              <Button
-                variant={activeTab === 'svg' ? 'default' : 'outline'}
-                className="w-full justify-start gap-3"
-                onClick={() => handleTabChange('svg')}
-              >
-                <Palette className="h-4 w-4" />
-                SVG
-              </Button>
-              <Button
-                variant={activeTab === 'text' ? 'default' : 'outline'}
-                className="w-full justify-start gap-3"
-                onClick={() => handleTabChange('text')}
-              >
-                <Type className="h-4 w-4" />
-                Texte
-              </Button>
-              <Button
-                variant={activeTab === 'upload' ? 'default' : 'outline'}
-                className="w-full justify-start gap-3"
-                onClick={() => handleTabChange('upload')}
-              >
-                <Upload className="h-4 w-4" />
-                Upload
-              </Button>
-              <Button
-                variant={activeTab === 'ai' ? 'default' : 'outline'}
-                className="w-full justify-start gap-3"
-                onClick={() => handleTabChange('ai')}
-              >
-                <Sparkles className="h-4 w-4" />
-                IA
-              </Button>
             </div>
           </div>
 
-          <div className="w-3/4 p-4 overflow-y-auto">
-            {activeTab === 'gallery' && (
-              <GalleryDesigns
-                onSelectDesign={onDesignSelect}
-                selectedDesign={selectedDesign}
-                currentDesignTransform={currentDesignTransform}
-                selectedSize={selectedSize}
-                onDesignTransformChange={onDesignTransformChange}
-                onSizeChange={onSizeChange}
-              />
-            )}
-            {activeTab === 'svg' && (
-              <SVGDesigns
-                onSelectDesign={onDesignSelect}
-                selectedDesign={selectedDesign}
-                onFileUpload={onFileUpload}
-                onSvgColorChange={onSvgColorChange}
-                onSvgContentChange={onSvgContentChange}
-                defaultSvgColor={defaultSvgColor}
-              />
-            )}
-            {activeTab === 'text' && (
-              <TextCustomizer
-                textContent={customText}
-                textFont={selectedTextFont}
-                textColor={selectedTextColor}
-                textStyles={{ bold: false, italic: false, underline: false }}
-                textTransform={{ position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
-                onTextChange={onCustomTextChange}
-                onColorChange={onTextColorChange}
-                onFontChange={onTextFontChange}
-                onStylesChange={() => {}}
-                onTransformChange={() => {}}
-              />
-            )}
-            {activeTab === 'upload' && (
-              <UploadDesign
-                onFileUpload={onFileUpload}
-                onAIImageGenerated={() => {}}
-                onRemoveBackground={() => {}}
-                isRemovingBackground={false}
-                currentDesign={null}
-              />
-            )}
-            {activeTab === 'ai' && (
-              <AIImageGenerator
-                onImageGenerated={onAIImageSelect}
-              />
-            )}
+          <div className="p-4 border-t border-white/20">
+            <ProductColorSelector
+              colors={product.available_colors}
+              selectedColor={selectedProductColor}
+              onColorSelect={onProductColorSelect}
+            />
           </div>
-        </div>
+        </DialogContent>
+      </Dialog>
 
-        <div className="p-4 border-t border-white/20">
-          <ProductColorSelector
-            availableColors={product.available_colors}
-            selectedColor={selectedProductColor}
-            onColorSelect={onProductColorSelect}
-          />
-        </div>
-      </DialogContent>
-    </Dialog>
+      <AIImageGenerator
+        isOpen={aiModalOpen}
+        onClose={handleAIModalClose}
+        onImageGenerated={handleAIImageGenerated}
+      />
+    </>
   );
 };
 

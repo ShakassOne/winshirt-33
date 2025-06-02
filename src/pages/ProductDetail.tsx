@@ -931,10 +931,10 @@ const ProductDetail = () => {
       e.preventDefault();
     }
   };
-  const handleAIImageGenerated = (imageUrl: string, imageName: string) => {
+  const handleAIImageGenerated = (imageUrl: string) => {
     const design: Design = {
       id: `ai-${Date.now()}`,
-      name: imageName,
+      name: 'Image générée par IA',
       image_url: imageUrl,
       category: 'ai-generated',
       is_active: true
