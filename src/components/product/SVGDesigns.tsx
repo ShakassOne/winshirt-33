@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
@@ -6,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Upload, Palette } from 'lucide-react';
 import { fetchAllDesigns } from '@/services/api.service';
 import { Design } from '@/types/supabase.types';
+import { SVGAnalysisResult, SVGAnalyzerService } from '@/services/svgAnalyzer.service';
+import { SVGCleanupButton } from './SVGCleanupButton';
 import { SVGColorEditor } from './SVGColorEditor';
 
 interface SVGDesignsProps {
@@ -26,6 +29,9 @@ export const SVGDesigns: React.FC<SVGDesignsProps> = ({
   defaultSvgColor
 }) => {
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('svg');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [svgAnalysis, setSvgAnalysis] = useState<SVGAnalysisResult | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const { data: designs = [], isLoading } = useQuery({
     queryKey: ['designs'],
@@ -60,7 +66,7 @@ export const SVGDesigns: React.FC<SVGDesignsProps> = ({
   }, [designs, selectedCategoryFilter]);
 
   const handleDesignSelect = (design: Design, e: React.MouseEvent) => {
-    e.stopPropagation(); // ← Empêche le clic de "sortir" du Dialog
+    e.stopPropagation();
     console.log('🎨 [SVGDesigns] Sélection du design SVG:', design.name);
     onSelectDesign(design);
   };
@@ -71,6 +77,56 @@ export const SVGDesigns: React.FC<SVGDesignsProps> = ({
     if (!selectedDesign?.image_url) return false;
     const url = selectedDesign.image_url.toLowerCase();
     return url.includes('.svg') || url.includes('svg') || selectedDesign.image_url.includes('data:image/svg');
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setSelectedFile(file);
+    setSvgAnalysis(null);
+
+    // Analyser automatiquement le SVG
+    setIsAnalyzing(true);
+    try {
+      console.log('🔍 [SVGDesigns] Analyse du SVG:', file.name);
+      const analysis = await SVGAnalyzerService.analyzeSVG(file);
+      setSvgAnalysis(analysis);
+      
+      if (!analysis.needsFix) {
+        // SVG propre, procéder à l'upload direct
+        onFileUpload(event);
+        setSelectedFile(null);
+      }
+    } catch (error) {
+      console.error('❌ [SVGDesigns] Erreur lors de l\'analyse SVG:', error);
+      // En cas d'erreur d'analyse, procéder à l'upload normal
+      onFileUpload(event);
+      setSelectedFile(null);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleSvgCleanupComplete = (cleanedFile: File) => {
+    console.log('✅ [SVGDesigns] SVG nettoyé, procédure d\'upload:', cleanedFile.name);
+    
+    // Créer un événement synthetic pour le fichier nettoyé
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(cleanedFile);
+    
+    const syntheticEvent = {
+      target: {
+        files: dataTransfer.files
+      }
+    } as React.ChangeEvent<HTMLInputElement>;
+    
+    // Procéder à l'upload du fichier nettoyé
+    onFileUpload(syntheticEvent);
+    
+    // Reset de l'état
+    setSelectedFile(null);
+    setSvgAnalysis(null);
   };
 
   return (
@@ -98,12 +154,29 @@ export const SVGDesigns: React.FC<SVGDesignsProps> = ({
             ref={fileInputRef}
             className="hidden"
             accept=".svg,image/svg+xml"
-            onChange={onFileUpload}
+            onChange={handleFileSelect}
           />
           <p className="text-xs text-white/50 mt-2">
             Format supporté : SVG uniquement
           </p>
         </div>
+
+        {/* Indicateur d'analyse SVG */}
+        {isAnalyzing && (
+          <div className="flex items-center justify-center gap-2 text-winshirt-purple">
+            <div className="animate-spin h-4 w-4 border-2 border-winshirt-purple border-t-transparent rounded-full"></div>
+            <span className="text-sm">Analyse du SVG en cours...</span>
+          </div>
+        )}
+
+        {/* Composant de nettoyage SVG */}
+        {selectedFile && svgAnalysis?.needsFix && (
+          <SVGCleanupButton
+            file={selectedFile}
+            analysisResult={svgAnalysis}
+            onCleanupComplete={handleSvgCleanupComplete}
+          />
+        )}
       </div>
 
       {/* Filtres par catégorie SVG */}

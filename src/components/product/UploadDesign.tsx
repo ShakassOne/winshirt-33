@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Upload, Sparkles, Wand2 } from 'lucide-react';
 import { Design } from '@/types/supabase.types';
+import { SVGAnalysisResult, SVGAnalyzerService } from '@/services/svgAnalyzer.service';
+import { SVGCleanupButton } from './SVGCleanupButton';
 import AIImageGenerator from './AIImageGenerator';
 
 interface UploadDesignProps {
@@ -23,13 +25,73 @@ export const UploadDesign: React.FC<UploadDesignProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [aiGeneratorOpen, setAiGeneratorOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [svgAnalysis, setSvgAnalysis] = useState<SVGAnalysisResult | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const canRemoveBackground = currentDesign && 
     (currentDesign.category === 'ai-generated' || currentDesign.category === 'ai-generated-cleaned');
 
+  const isSvgFile = (file: File) => {
+    return file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setSelectedFile(file);
+    setSvgAnalysis(null);
+
+    // Si c'est un SVG, analyser automatiquement
+    if (isSvgFile(file)) {
+      setIsAnalyzing(true);
+      try {
+        console.log('🔍 [UploadDesign] Analyse du SVG:', file.name);
+        const analysis = await SVGAnalyzerService.analyzeSVG(file);
+        setSvgAnalysis(analysis);
+        
+        if (!analysis.needsFix) {
+          // SVG propre, procéder à l'upload direct
+          onFileUpload(event);
+        }
+      } catch (error) {
+        console.error('❌ [UploadDesign] Erreur lors de l\'analyse SVG:', error);
+        // En cas d'erreur d'analyse, procéder à l'upload normal
+        onFileUpload(event);
+      } finally {
+        setIsAnalyzing(false);
+      }
+    } else {
+      // Fichier non-SVG, upload direct
+      onFileUpload(event);
+    }
+  };
+
+  const handleSvgCleanupComplete = (cleanedFile: File) => {
+    console.log('✅ [UploadDesign] SVG nettoyé, procédure d\'upload:', cleanedFile.name);
+    
+    // Créer un événement synthetic pour le fichier nettoyé
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(cleanedFile);
+    
+    const syntheticEvent = {
+      target: {
+        files: dataTransfer.files
+      }
+    } as React.ChangeEvent<HTMLInputElement>;
+    
+    // Procéder à l'upload du fichier nettoyé
+    onFileUpload(syntheticEvent);
+    
+    // Reset de l'état
+    setSelectedFile(null);
+    setSvgAnalysis(null);
+  };
+
   return (
     <div className="space-y-4">
-      {/* Upload fichier image uniquement */}
+      {/* Upload fichier image */}
       <div className="space-y-3">
         <Label className="text-sm font-medium">Importer votre image</Label>
         
@@ -51,13 +113,30 @@ export const UploadDesign: React.FC<UploadDesignProps> = ({
             type="file"
             ref={fileInputRef}
             className="hidden"
-            accept="image/jpeg,image/jpg,image/png,image/webp"
-            onChange={onFileUpload}
+            accept="image/jpeg,image/jpg,image/png,image/webp,image/svg+xml,.svg"
+            onChange={handleFileSelect}
           />
           <p className="text-xs text-white/50 mt-2">
-            Formats supportés : JPG, PNG, WEBP (max. 10MB)
+            Formats supportés : JPG, PNG, WEBP, SVG (max. 10MB)
           </p>
         </div>
+
+        {/* Indicateur d'analyse SVG */}
+        {isAnalyzing && (
+          <div className="flex items-center justify-center gap-2 text-winshirt-purple">
+            <div className="animate-spin h-4 w-4 border-2 border-winshirt-purple border-t-transparent rounded-full"></div>
+            <span className="text-sm">Analyse du SVG en cours...</span>
+          </div>
+        )}
+
+        {/* Composant de nettoyage SVG */}
+        {selectedFile && svgAnalysis?.needsFix && (
+          <SVGCleanupButton
+            file={selectedFile}
+            analysisResult={svgAnalysis}
+            onCleanupComplete={handleSvgCleanupComplete}
+          />
+        )}
       </div>
 
       {/* Génération IA */}

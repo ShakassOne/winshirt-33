@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { UploadButton } from '@/components/ui/upload-button';
+import { AlertTriangle, CheckCircle } from 'lucide-react';
 
 interface UploadImageFieldProps {
   label: string;
@@ -26,13 +28,14 @@ export function UploadImageField({
   const [imagePreview, setImagePreview] = useState<string | null>(value || null);
   const [svgContent, setSvgContent] = useState<string>('');
   const [isLoadingSvg, setIsLoadingSvg] = useState(false);
+  const [svgStatus, setSvgStatus] = useState<'clean' | 'needs-fix' | 'unknown'>('unknown');
 
   const isSvg = value && value.toLowerCase().endsWith('.svg');
 
   useEffect(() => {
     setImagePreview(value || null);
     
-    // Si c'est un SVG, charger le contenu pour l'affichage inline
+    // Si c'est un SVG, charger le contenu pour l'affichage inline et analyser
     if (isSvg && value) {
       setIsLoadingSvg(true);
       console.log('📁 [UploadImageField] Chargement du SVG pour aperçu:', value);
@@ -47,15 +50,29 @@ export function UploadImageField({
         .then((text) => {
           console.log('✅ [UploadImageField] SVG chargé avec succès');
           setSvgContent(text);
+          
+          // Analyser rapidement le SVG pour déterminer son statut
+          const hasStyle = text.includes('<style');
+          const hasFixedSize = /svg[^>]*\s(width|height)=/.test(text);
+          const missingFill = /<(path|g)[^>]*(?!.*fill=)/.test(text);
+          
+          if (hasStyle || hasFixedSize || missingFill) {
+            setSvgStatus('needs-fix');
+          } else {
+            setSvgStatus('clean');
+          }
+          
           setIsLoadingSvg(false);
         })
         .catch((error) => {
           console.error('❌ [UploadImageField] Erreur lors du chargement du SVG:', error);
           setSvgContent('');
+          setSvgStatus('unknown');
           setIsLoadingSvg(false);
         });
     } else {
       setSvgContent('');
+      setSvgStatus('unknown');
       setIsLoadingSvg(false);
     }
   }, [value, isSvg]);
@@ -74,6 +91,33 @@ export function UploadImageField({
     // Si c'est un SVG, indiquer à l'utilisateur
     if (url.toLowerCase().endsWith('.svg')) {
       console.log('🎨 [UploadImageField] SVG détecté après upload:', url);
+    }
+  };
+
+  const getSvgStatusBadge = () => {
+    if (!isSvg) return null;
+    
+    switch (svgStatus) {
+      case 'clean':
+        return (
+          <Badge variant="secondary" className="bg-green-500/20 text-green-300 border-green-500/30">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            SVG Optimisé
+          </Badge>
+        );
+      case 'needs-fix':
+        return (
+          <Badge variant="secondary" className="bg-orange-500/20 text-orange-300 border-orange-500/30">
+            <AlertTriangle className="h-3 w-3 mr-1" />
+            SVG à corriger
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+            SVG - Recolorisable
+          </Badge>
+        );
     }
   };
 
@@ -99,11 +143,7 @@ export function UploadImageField({
         <div className="mt-2 rounded-lg overflow-hidden border border-dashed p-2 flex flex-col items-center">
           <div className="flex items-center gap-2 mb-2">
             <p className="text-sm text-muted-foreground">Aperçu</p>
-            {isSvg && (
-              <span className="inline-block bg-purple-500 text-xs px-2 py-1 rounded text-white">
-                SVG - Recolorisable
-              </span>
-            )}
+            {getSvgStatusBadge()}
           </div>
           
           {isSvg ? (
@@ -111,7 +151,7 @@ export function UploadImageField({
               {isLoadingSvg ? (
                 <div className="text-xs text-muted-foreground flex items-center">
                   <div className="animate-spin h-3 w-3 mr-2 border border-gray-400 border-t-transparent rounded-full"></div>
-                  Chargement SVG...
+                  Analyse SVG...
                 </div>
               ) : svgContent ? (
                 <div 
