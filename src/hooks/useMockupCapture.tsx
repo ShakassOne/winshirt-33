@@ -68,6 +68,9 @@ export const useMockupCapture = () => {
     try {
       console.log(`🎯 [HDCapture] Début capture HD ${side} de l'élément:`, elementId);
       
+      // Attendre un moment pour que l'élément soit bien rendu
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Capture en très haute résolution pour l'impression DTF
       const canvas = await html2canvas(element, {
         useCORS: true,
@@ -92,15 +95,35 @@ export const useMockupCapture = () => {
 
       console.log(`📤 [HDCapture] Upload fichier HD ${side} - Taille: ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
 
-      const response = await axios.post('https://winshirt.fr/upload-visuel.php', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // Gestion d'erreur avec retry
+      let uploadAttempts = 0;
+      const maxAttempts = 3;
       
-      if (response.data?.url) {
-        console.log(`🎉 [HDCapture] Capture HD ${side} réussie:`, response.data.url);
-        return response.data.url;
+      while (uploadAttempts < maxAttempts) {
+        try {
+          const response = await axios.post('https://winshirt.fr/upload-visuel.php', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+            timeout: 30000, // 30 secondes de timeout
+          });
+          
+          if (response.data?.url) {
+            console.log(`🎉 [HDCapture] Capture HD ${side} réussie:`, response.data.url);
+            return response.data.url;
+          }
+          break;
+        } catch (uploadError) {
+          uploadAttempts++;
+          console.warn(`⚠️ [HDCapture] Tentative ${uploadAttempts}/${maxAttempts} échouée pour ${side}:`, uploadError);
+          
+          if (uploadAttempts < maxAttempts) {
+            // Attendre avant de retenter
+            await new Promise(resolve => setTimeout(resolve, 1000 * uploadAttempts));
+          } else {
+            throw uploadError;
+          }
+        }
       }
       
       return null;
@@ -141,11 +164,19 @@ export const useMockupCapture = () => {
     try {
       console.log('🚀 [HDCapture] Début capture HD de tous les visuels');
       
+      // Vérifier que les éléments existent avant de capturer
+      const rectoElement = document.getElementById('customization-recto');
+      const versoElement = document.getElementById('customization-verso');
+      
+      if (!rectoElement && !versoElement) {
+        console.warn('⚠️ [HDCapture] Aucun élément de personnalisation trouvé');
+        return {};
+      }
+      
       // Capturer les éléments de personnalisation sans le produit
-      // On cible les conteneurs de personnalisation plutôt que les mockups complets
       const captures = await Promise.allSettled([
-        captureHDVisual('customization-recto', 'recto'),
-        captureHDVisual('customization-verso', 'verso')
+        rectoElement ? captureHDVisual('customization-recto', 'recto') : Promise.resolve(null),
+        versoElement ? captureHDVisual('customization-verso', 'verso') : Promise.resolve(null)
       ]);
 
       const result: HDCaptureResult = {};

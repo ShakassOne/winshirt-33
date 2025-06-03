@@ -1042,8 +1042,12 @@ const ProductDetail = () => {
                   className="w-full h-full object-contain"
                 />
 
-                {/* Conteneur pour la capture HD - éléments de personnalisation uniquement */}
-                <HDVisualCapture side={currentViewSide === 'front' ? 'recto' : 'verso'}>
+                {/* Conteneur pour la capture HD - visible absolument positionné avec un ID spécifique */}
+                <HDVisualCapture 
+                  side={currentViewSide === 'front' ? 'recto' : 'verso'}
+                  className="w-full h-full"
+                >
+                  {/* Design element */}
                   {getCurrentDesign() && (
                     <div
                       className="absolute cursor-move select-none"
@@ -1052,7 +1056,11 @@ const ProductDetail = () => {
                                        rotate(${getCurrentDesignTransform().rotation}deg) 
                                        scale(${getCurrentDesignTransform().scale})`,
                         transformOrigin: 'center',
-                        zIndex: 10
+                        zIndex: 10,
+                        left: '50%',
+                        top: '50%',
+                        marginLeft: '-100px',
+                        marginTop: '-100px'
                       }}
                       onMouseDown={(e) => handleMouseDown(e)}
                       onTouchStart={(e) => handleMouseDown(e)}
@@ -1083,21 +1091,31 @@ const ProductDetail = () => {
                     </div>
                   )}
                   
+                  {/* Text element */}
                   {getCurrentTextContent() && (
-                    <div className="absolute cursor-move select-none" style={{
-                      transform: `translate(${getCurrentTextTransform().position.x}px, ${getCurrentTextTransform().position.y}px) 
-                                   rotate(${getCurrentTextTransform().rotation}deg) 
-                                   scale(${getCurrentTextTransform().scale})`,
-                      transformOrigin: 'center',
-                      fontFamily: getCurrentTextFont(),
-                      color: getCurrentTextColor(),
-                      fontWeight: getCurrentTextStyles().bold ? 'bold' : 'normal',
-                      fontStyle: getCurrentTextStyles().italic ? 'italic' : 'normal',
-                      textDecoration: getCurrentTextStyles().underline ? 'underline' : 'none',
-                      fontSize: '24px',
-                      textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
-                      zIndex: 20
-                    }} onMouseDown={e => handleMouseDown(e, true)} onTouchStart={e => handleMouseDown(e, true)}>
+                    <div 
+                      className="absolute cursor-move select-none" 
+                      style={{
+                        transform: `translate(${getCurrentTextTransform().position.x}px, ${getCurrentTextTransform().position.y}px) 
+                                     rotate(${getCurrentTextTransform().rotation}deg) 
+                                     scale(${getCurrentTextTransform().scale})`,
+                        transformOrigin: 'center',
+                        fontFamily: getCurrentTextFont(),
+                        color: getCurrentTextColor(),
+                        fontWeight: getCurrentTextStyles().bold ? 'bold' : 'normal',
+                        fontStyle: getCurrentTextStyles().italic ? 'italic' : 'normal',
+                        textDecoration: getCurrentTextStyles().underline ? 'underline' : 'none',
+                        fontSize: '24px',
+                        textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
+                        zIndex: 20,
+                        left: '50%',
+                        top: '50%',
+                        marginLeft: '-50px',
+                        marginTop: '-12px'
+                      }} 
+                      onMouseDown={e => handleMouseDown(e, true)} 
+                      onTouchStart={e => handleMouseDown(e, true)}
+                    >
                       {getCurrentTextContent()}
                     </div>
                   )}

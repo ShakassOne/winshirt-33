@@ -19,10 +19,16 @@ export const HDVisualCapture: React.FC<HDVisualCaptureProps> = ({
       style={{
         // Assurer que les éléments sont bien positionnés pour la capture
         transform: 'translateZ(0)', // Force hardware acceleration
-        backfaceVisibility: 'hidden'
+        backfaceVisibility: 'hidden',
+        width: '100%',
+        height: '100%',
+        top: 0,
+        left: 0
       }}
     >
-      {children}
+      <div className="relative w-full h-full">
+        {children}
+      </div>
     </div>
   );
 };
