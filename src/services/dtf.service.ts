@@ -60,8 +60,23 @@ export const getDTFOrders = async (): Promise<DTFOrderWithDetails[]> => {
           created_at,
           payment_status,
           items:order_items(
-            *,
-            products:product_id(*)
+            id,
+            product_id,
+            quantity,
+            price,
+            customization,
+            mockup_recto_url,
+            mockup_verso_url,
+            selected_size,
+            selected_color,
+            lottery_name,
+            products:product_id(
+              id,
+              name,
+              image_url,
+              description,
+              price
+            )
           )
         )
       `)

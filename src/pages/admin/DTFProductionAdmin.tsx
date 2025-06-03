@@ -242,6 +242,7 @@ const DTFProductionAdmin = () => {
                     className="p-5 cursor-pointer hover:bg-gray-800/30 transition-colors"
                     onClick={() => {
                       setSelectedOrder(order);
+                      setNotes(order.notes || '');
                       setIsDetailOpen(true);
                     }}
                   >
@@ -259,6 +260,9 @@ const DTFProductionAdmin = () => {
                         </p>
                         <p className="text-sm text-gray-400">
                           {order.order.shipping_email}
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          {order.order.items?.length || 0} article(s) à produire
                         </p>
                         {order.notes && (
                           <p className="text-sm text-orange-400 mt-1">
@@ -325,7 +329,7 @@ const DTFProductionAdmin = () => {
                       <Textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        placeholder={selectedOrder.notes || "Ajouter une note..."}
+                        placeholder="Ajouter une note de production..."
                         className="mt-1"
                       />
                     </div>
