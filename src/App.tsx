@@ -36,6 +36,7 @@ import ThemeSettings from "./pages/admin/ThemeSettings";
 import SocialNetworksAdmin from "./pages/admin/SocialNetworksAdmin";
 import AnalyticsAdmin from "./pages/admin/AnalyticsAdmin";
 import ShippingOptionsAdmin from "./pages/admin/ShippingOptionsAdmin";
+import DTFProductionAdmin from "./pages/admin/DTFProductionAdmin";
 import { OptimizedAuthProvider } from "./context/OptimizedAuthContext";
 import { CartProvider } from "./context/CartContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
