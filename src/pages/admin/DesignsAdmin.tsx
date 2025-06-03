@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { UploadButton } from '@/components/ui/upload-button';
+import { AdminSVGUpload } from '@/components/admin/AdminSVGUpload';
 import { useStableAdminQuery } from '@/hooks/useStableAdminQuery';
 import { useStableAdminMutations } from '@/hooks/useStableAdminMutations';
 
@@ -136,25 +136,6 @@ const DesignsAdmin = () => {
     await deleteDesignMutation.mutateAsync(id);
   };
 
-  const handleImageUpload = (url: string) => {
-    setImageUrl(url);
-    console.log('📁 [DesignsAdmin] Image uploaded:', url);
-    
-    // Vérifier si c'est un SVG
-    if (url.toLowerCase().endsWith('.svg')) {
-      console.log('🎨 [DesignsAdmin] SVG détecté après upload:', url);
-      toast({
-        title: "SVG uploadé avec succès",
-        description: "Ce fichier SVG sera recolorisable par les clients et est maintenant visible dans l'aperçu",
-      });
-    } else {
-      toast({
-        title: "Image uploadée",
-        description: "Le fichier a été uploadé avec succès",
-      });
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -243,7 +224,7 @@ const DesignsAdmin = () => {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
-        <DialogContent className="bg-black/50 backdrop-blur-xl border-white/20 text-white max-w-md">
+        <DialogContent className="bg-black/50 backdrop-blur-xl border-white/20 text-white max-w-2xl">
           <DialogHeader>
             <DialogTitle>{isEditing ? 'Modifier Design' : 'Nouveau Design'}</DialogTitle>
           </DialogHeader>
@@ -258,35 +239,14 @@ const DesignsAdmin = () => {
                 required
               />
             </div>
-            <div>
-              <Label htmlFor="imageUrl">URL de l'image</Label>
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  id="imageUrl"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  required
-                  className="flex-1"
-                />
-                <UploadButton
-                  onUpload={handleImageUpload}
-                  variant="outline"
-                  acceptTypes="image/*,.svg"
-                />
-              </div>
-              {imageUrl && imageUrl.toLowerCase().endsWith('.svg') && (
-                <div className="mt-2 p-2 bg-purple-500/20 rounded border border-purple-500/30">
-                  <p className="text-xs text-purple-300 mb-1">
-                    ✨ Ce SVG sera recolorisable par les clients
-                  </p>
-                  <div className="text-center">
-                    <div className="text-lg">🎨</div>
-                    <span className="text-xs text-white/60">Fichier SVG détecté</span>
-                  </div>
-                </div>
-              )}
-            </div>
+            
+            <AdminSVGUpload
+              label="Image du design"
+              value={imageUrl}
+              onChange={setImageUrl}
+              placeholder="URL de l'image ou utilisez le bouton pour uploader"
+            />
+            
             <div>
               <Label htmlFor="category">Catégorie</Label>
               <Input

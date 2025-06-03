@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,7 +20,7 @@ import { Design } from '@/types/supabase.types';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { UploadImageField } from '@/components/ui/upload-image-field';
+import { AdminSVGUpload } from '@/components/admin/AdminSVGUpload';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -120,12 +121,11 @@ const DesignForm: React.FC<DesignFormProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <UploadImageField
+                    <AdminSVGUpload
                       label="Image du design"
                       value={field.value}
                       onChange={field.onChange}
                       placeholder="URL de l'image"
-                      id="design-image"
                     />
                   </FormControl>
                   <FormMessage />
@@ -156,7 +156,7 @@ const DesignForm: React.FC<DesignFormProps> = ({
           </div>
 
           <div>
-            {/* Preview is now handled by UploadImageField */}
+            {/* Preview is now handled by AdminSVGUpload */}
           </div>
         </div>
 
