@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -5,9 +6,6 @@ import { Product as ProductType, Lottery } from '@/types/supabase.types';
 import { fetchProductById, fetchMockupById, fetchAllLotteries, fetchAllDesigns } from '@/services/api.service';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import ProductInfo from '@/components/product/ProductInfo';
-import ProductImages from '@/components/product/ProductImages';
-import ProductCustomization from '@/components/product/ProductCustomization';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
@@ -17,6 +15,7 @@ import { useHDCaptureOnAddToCart } from '@/hooks/useHDCaptureOnAddToCart';
 import { enrichCustomizationWithHD } from '@/services/hdCapture.service';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from "@/components/ui/skeleton"
+import { HDVisualCapture } from '@/components/product/HDVisualCapture';
 
 interface ProductDetailProps {}
 
@@ -41,74 +40,60 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
   const { data: productData, isLoading: isLoadingProduct } = useQuery({
     queryKey: ['product', id],
     queryFn: () => fetchProductById(id as string),
-    onSuccess: (data) => {
-      setProduct(data);
-      setSelectedColor(data?.available_colors?.[0] || '');
-      setSelectedSize(data?.available_sizes?.[0] || '');
-    },
-    onError: (error) => {
-      console.error("Error fetching product:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load product details.",
-        variant: "destructive",
-      });
-    },
     enabled: !!id,
   });
 
   const { data: lotteriesData, isLoading: isLoadingLotteries } = useQuery({
     queryKey: ['lotteries'],
     queryFn: fetchAllLotteries,
-    onSuccess: (data) => {
-      setLotteries(data);
-    },
-    onError: (error) => {
-      console.error("Error fetching lotteries:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load lotteries.",
-        variant: "destructive",
-      });
-    },
   });
 
   const { data: mockupData, isLoading: isLoadingMockup } = useQuery({
     queryKey: ['mockup', product?.mockup_id],
     queryFn: () => fetchMockupById(product?.mockup_id as string),
-    onSuccess: (data) => {
-      setMockup(data);
-    },
-    onError: (error) => {
-      console.error("Error fetching mockup:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load mockup details.",
-        variant: "destructive",
-      });
-    },
     enabled: !!product?.mockup_id,
   });
 
   const { data: designsData, isLoading: isLoadingDesigns } = useQuery({
     queryKey: ['designs'],
     queryFn: fetchAllDesigns,
-    onSuccess: (data) => {
-      setDesigns(data);
-    },
-    onError: (error) => {
-      console.error("Error fetching designs:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load designs.",
-        variant: "destructive",
-      });
-    },
   });
 
+  // Handle product data changes
   useEffect(() => {
-    if (product) {
-      setSelectedLotteries(lotteries.filter(lottery => lottery.product_ids?.includes(product.id)).map(lottery => lottery.id));
+    if (productData) {
+      setProduct(productData);
+      setSelectedColor(productData?.available_colors?.[0] || '');
+      setSelectedSize(productData?.available_sizes?.[0] || '');
+    }
+  }, [productData]);
+
+  // Handle lotteries data changes
+  useEffect(() => {
+    if (lotteriesData) {
+      setLotteries(lotteriesData);
+    }
+  }, [lotteriesData]);
+
+  // Handle mockup data changes
+  useEffect(() => {
+    if (mockupData) {
+      setMockup(mockupData);
+    }
+  }, [mockupData]);
+
+  // Handle designs data changes
+  useEffect(() => {
+    if (designsData) {
+      setDesigns(designsData);
+    }
+  }, [designsData]);
+
+  // Set selected lotteries when product and lotteries are loaded
+  useEffect(() => {
+    if (product && lotteries.length > 0) {
+      // For now, just select the first lottery - adjust logic as needed
+      setSelectedLotteries([lotteries[0]?.id].filter(Boolean));
     }
   }, [product, lotteries]);
 
@@ -259,31 +244,164 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
         <div className="container mx-auto px-4 py-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Product Images Section */}
-            <ProductImages product={product} mockup={mockup} selectedColor={selectedColor} />
+            <div className="relative">
+              <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
+                {product.image_url ? (
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    Pas d'image disponible
+                  </div>
+                )}
+              </div>
+              
+              {/* HD Capture elements for customization */}
+              {product.is_customizable && (
+                <>
+                  <HDVisualCapture 
+                    side="recto" 
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                  >
+                    <div className="text-center">
+                      {customization.frontDesign && (
+                        <img 
+                          src={customization.frontDesign.designUrl} 
+                          alt="Front design"
+                          className="max-w-32 max-h-32 object-contain mx-auto"
+                        />
+                      )}
+                      {customization.frontText && (
+                        <div 
+                          className="mt-2"
+                          style={{ 
+                            color: customization.frontText.color,
+                            fontFamily: customization.frontText.font
+                          }}
+                        >
+                          {customization.frontText.content}
+                        </div>
+                      )}
+                    </div>
+                  </HDVisualCapture>
+                  
+                  <HDVisualCapture 
+                    side="verso" 
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                  >
+                    <div className="text-center">
+                      {customization.backDesign && (
+                        <img 
+                          src={customization.backDesign.designUrl} 
+                          alt="Back design"
+                          className="max-w-32 max-h-32 object-contain mx-auto"
+                        />
+                      )}
+                      {customization.backText && (
+                        <div 
+                          className="mt-2"
+                          style={{ 
+                            color: customization.backText.color,
+                            fontFamily: customization.backText.font
+                          }}
+                        >
+                          {customization.backText.content}
+                        </div>
+                      )}
+                    </div>
+                  </HDVisualCapture>
+                </>
+              )}
+            </div>
 
             {/* Product Info and Options Section */}
-            <div>
-              <ProductInfo
-                product={product}
-                selectedColor={selectedColor}
-                selectedSize={selectedSize}
-                selectedLotteries={selectedLotteries}
-                lotteries={lotteries}
-                onColorSelect={handleColorSelect}
-                onSizeSelect={handleSizeSelect}
-                onLotterySelect={handleLotterySelect}
-                calculatePrice={calculatePrice}
-              />
+            <div className="space-y-6">
+              {/* Product Info */}
+              <div>
+                <h1 className="text-3xl font-bold text-white mb-2">{product.name}</h1>
+                <p className="text-white/60 mb-4">{product.description}</p>
+                <div className="text-2xl font-bold text-white">
+                  {calculatePrice()}€
+                </div>
+              </div>
+
+              {/* Color Selection */}
+              {product.available_colors && product.available_colors.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Couleur</h3>
+                  <div className="flex gap-2">
+                    {product.available_colors.map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => handleColorSelect(color)}
+                        className={`px-4 py-2 rounded-md border transition-colors ${
+                          selectedColor === color
+                            ? 'border-blue-500 bg-blue-500 text-white'
+                            : 'border-gray-300 text-white hover:border-gray-400'
+                        }`}
+                      >
+                        {color}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Size Selection */}
+              {product.available_sizes && product.available_sizes.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Taille</h3>
+                  <div className="flex gap-2">
+                    {product.available_sizes.map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => handleSizeSelect(size)}
+                        className={`px-4 py-2 rounded-md border transition-colors ${
+                          selectedSize === size
+                            ? 'border-blue-500 bg-blue-500 text-white'
+                            : 'border-gray-300 text-white hover:border-gray-400'
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Lottery Selection */}
+              {lotteries.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Loteries disponibles</h3>
+                  <div className="space-y-2">
+                    {lotteries.map((lottery) => (
+                      <label key={lottery.id} className="flex items-center space-x-2 text-white">
+                        <input
+                          type="checkbox"
+                          checked={selectedLotteries.includes(lottery.id)}
+                          onChange={() => handleLotterySelect(lottery.id)}
+                          className="rounded"
+                        />
+                        <span>{lottery.title} (+5€)</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <Separator className="my-4" />
 
-              {/* Product Customization Section */}
+              {/* Basic customization placeholder */}
               {product.is_customizable && (
-                <ProductCustomization
-                  product={product}
-                  designs={designs}
-                  onCustomizationChange={setCustomization}
-                />
+                <div className="p-4 border rounded-lg">
+                  <h3 className="text-lg font-semibold text-white mb-2">Personnalisation</h3>
+                  <p className="text-white/60">
+                    La personnalisation avancée sera disponible bientôt.
+                  </p>
+                </div>
               )}
 
               <Button
