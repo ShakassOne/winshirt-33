@@ -95,9 +95,9 @@ export const useMockupCapture = () => {
 
       console.log(`📤 [HDCapture] Upload fichier HD ${side} - Taille: ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
 
-      // Gestion d'erreur avec retry
+      // Gestion d'erreur avec retry mais timeout plus court
       let uploadAttempts = 0;
-      const maxAttempts = 3;
+      const maxAttempts = 2; // Réduire le nombre de tentatives
       
       while (uploadAttempts < maxAttempts) {
         try {
@@ -105,7 +105,7 @@ export const useMockupCapture = () => {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
-            timeout: 30000, // 30 secondes de timeout
+            timeout: 10000, // Timeout réduit à 10 secondes
           });
           
           if (response.data?.url) {
@@ -118,10 +118,11 @@ export const useMockupCapture = () => {
           console.warn(`⚠️ [HDCapture] Tentative ${uploadAttempts}/${maxAttempts} échouée pour ${side}:`, uploadError);
           
           if (uploadAttempts < maxAttempts) {
-            // Attendre avant de retenter
-            await new Promise(resolve => setTimeout(resolve, 1000 * uploadAttempts));
+            // Attendre moins longtemps avant de retenter
+            await new Promise(resolve => setTimeout(resolve, 500 * uploadAttempts));
           } else {
-            throw uploadError;
+            // Ne pas lever l'erreur, juste logger
+            console.error(`❌ [HDCapture] Échec définitif upload HD ${side} après ${maxAttempts} tentatives`);
           }
         }
       }
@@ -173,26 +174,39 @@ export const useMockupCapture = () => {
         return {};
       }
       
-      // Capturer les éléments de personnalisation sans le produit
-      const captures = await Promise.allSettled([
+      // Capturer les éléments de personnalisation sans le produit avec timeout
+      const capturePromises = [
         rectoElement ? captureHDVisual('customization-recto', 'recto') : Promise.resolve(null),
         versoElement ? captureHDVisual('customization-verso', 'verso') : Promise.resolve(null)
-      ]);
+      ];
+      
+      // Ajouter un timeout global pour éviter de bloquer trop longtemps
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout capture HD')), 30000)
+      );
+      
+      const captures = await Promise.race([
+        Promise.allSettled(capturePromises),
+        timeoutPromise
+      ]) as PromiseSettledResult<string | null>[];
 
       const result: HDCaptureResult = {};
       
-      if (captures[0].status === 'fulfilled' && captures[0].value) {
+      if (captures[0]?.status === 'fulfilled' && captures[0].value) {
         result.hdRectoUrl = captures[0].value;
         console.log('✅ [HDCapture] HD Recto URL:', captures[0].value);
       }
       
-      if (captures[1].status === 'fulfilled' && captures[1].value) {
+      if (captures[1]?.status === 'fulfilled' && captures[1].value) {
         result.hdVersoUrl = captures[1].value;
         console.log('✅ [HDCapture] HD Verso URL:', captures[1].value);
       }
 
       console.log('🎯 [HDCapture] Capture HD terminée:', result);
       return result;
+    } catch (error) {
+      console.error('❌ [HDCapture] Erreur globale capture HD:', error);
+      return {};
     } finally {
       setIsCapturing(false);
     }
