@@ -113,6 +113,14 @@ function AppContent() {
         } 
       />
       <Route 
+        path="/admin/dtf-production" 
+        element={
+          <ProtectedRoute requireDTFSupplier={true}>
+            <DTFProductionAdmin />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
         path="/admin/products" 
         element={
           <ProtectedRoute requireAdmin={true}>
