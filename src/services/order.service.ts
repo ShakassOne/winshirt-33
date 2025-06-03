@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
 import { CartItem, Order, OrderStatus, PaymentStatus } from "@/types/supabase.types";
@@ -62,8 +61,11 @@ export const createOrder = async (
       
       // Extraire les informations de personnalisation
       const customization = item.customization;
+      
+      // Prioriser les URLs de capture finales depuis customization
       const mockupRectoUrl = customization?.mockupRectoUrl || null;
       const mockupVersoUrl = customization?.mockupVersoUrl || null;
+      
       const selectedSize = item.size || customization?.selectedSize || null;
       const selectedColor = item.color || customization?.selectedColor || null;
       const lotteryName = customization?.lotteryName || null;
@@ -82,7 +84,7 @@ export const createOrder = async (
       };
       
       console.log('Order item to insert:', orderItem);
-      console.log('Mockup URLs - Recto:', mockupRectoUrl, 'Verso:', mockupVersoUrl);
+      console.log('Captured Mockup URLs - Recto:', mockupRectoUrl, 'Verso:', mockupVersoUrl);
       console.log('Lottery name being saved:', lotteryName);
       
       return orderItem;
@@ -97,7 +99,7 @@ export const createOrder = async (
       throw itemsError;
     }
     
-    console.log('Order items successfully created with visual and lottery data');
+    console.log('Order items successfully created with captured mockup URLs and lottery data');
     
     return order;
   } catch (error) {

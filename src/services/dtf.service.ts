@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export type DTFProductionStatus = 'pending' | 'in_progress' | 'ready' | 'completed';
@@ -113,12 +114,12 @@ export const getDTFOrders = async (): Promise<DTFOrderWithDetails[]> => {
         ...item.order,
         items: item.order.items?.map(orderItem => ({
           ...orderItem,
-          // Map existing mockup URLs to standardized names
+          // Prioriser les URLs de mockups capturés (avec personnalisations)
           visual_front_url: orderItem.mockup_recto_url,
           visual_back_url: orderItem.mockup_verso_url,
-          // Get mockup URL from products.mockups or fallback to product image
+          // Fallback sur le mockup vierge du produit
           mockup_url: orderItem.products?.mockups?.svg_front_url || orderItem.products?.image_url,
-          // Keep the mockups data with correct structure
+          // Garder la structure des mockups
           mockups: orderItem.products?.mockups || undefined
         })) || []
       }
