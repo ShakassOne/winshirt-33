@@ -3,14 +3,21 @@ import React from 'react';
 import { ExtendedOrderItem } from '@/types/supabase.types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { ProductionFiles } from '@/components/dtf/ProductionFiles';
 
 interface OrderItemDetailsProps {
-  item: ExtendedOrderItem;
+  item: ExtendedOrderItem & {
+    visual_front_url?: string;
+    visual_back_url?: string;
+    mockup_url?: string;
+    mockup_recto_url?: string;
+    mockup_verso_url?: string;
+  };
 }
 
 export const OrderItemDetails: React.FC<OrderItemDetailsProps> = ({ item }) => {
-  const hasRectoMockup = item.mockup_recto_url;
-  const hasVersoMockup = item.mockup_verso_url;
+  const hasRectoMockup = item.mockup_recto_url || item.visual_front_url;
+  const hasVersoMockup = item.mockup_verso_url || item.visual_back_url;
   const customization = typeof item.customization === 'string' 
     ? JSON.parse(item.customization) 
     : item.customization;
@@ -27,7 +34,7 @@ export const OrderItemDetails: React.FC<OrderItemDetailsProps> = ({ item }) => {
                 <div className="text-center">
                   <h5 className="text-sm font-medium mb-2">Recto</h5>
                   <img
-                    src={item.mockup_recto_url}
+                    src={item.visual_front_url || item.mockup_recto_url}
                     alt="Mockup Recto"
                     className="w-full max-w-[600px] h-auto rounded-lg border border-gray-700"
                   />
@@ -37,7 +44,7 @@ export const OrderItemDetails: React.FC<OrderItemDetailsProps> = ({ item }) => {
                 <div className="text-center">
                   <h5 className="text-sm font-medium mb-2">Verso</h5>
                   <img
-                    src={item.mockup_verso_url}
+                    src={item.visual_back_url || item.mockup_verso_url}
                     alt="Mockup Verso"
                     className="w-full max-w-[600px] h-auto rounded-lg border border-gray-700"
                   />
@@ -134,6 +141,9 @@ export const OrderItemDetails: React.FC<OrderItemDetailsProps> = ({ item }) => {
             </div>
           </div>
         </div>
+
+        {/* Fichiers de production */}
+        <ProductionFiles item={item} />
       </CardContent>
     </Card>
   );

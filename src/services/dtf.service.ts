@@ -31,6 +31,9 @@ export interface DTFOrderWithDetails extends DTFProductionStatusRecord {
       customization: any;
       mockup_recto_url?: string;
       mockup_verso_url?: string;
+      visual_front_url?: string;
+      visual_back_url?: string;
+      mockup_url?: string;
       selected_size?: string;
       selected_color?: string;
       lottery_name?: string;
@@ -40,6 +43,13 @@ export interface DTFOrderWithDetails extends DTFProductionStatusRecord {
         image_url: string;
         description: string;
         price: number;
+        mockup_id?: string;
+      };
+      mockups?: {
+        id: string;
+        name: string;
+        svg_front_url: string;
+        svg_back_url?: string;
       };
     }>;
   };
@@ -75,7 +85,16 @@ export const getDTFOrders = async (): Promise<DTFOrderWithDetails[]> => {
               name,
               image_url,
               description,
-              price
+              price,
+              mockup_id
+            ),
+            mockups:products!order_items_product_id_fkey(
+              mockup_id:mockups(
+                id,
+                name,
+                svg_front_url,
+                svg_back_url
+              )
             )
           )
         )
@@ -86,7 +105,18 @@ export const getDTFOrders = async (): Promise<DTFOrderWithDetails[]> => {
 
     return data.map(item => ({
       ...item,
-      production_status: item.production_status as DTFProductionStatus
+      production_status: item.production_status as DTFProductionStatus,
+      order: {
+        ...item.order,
+        items: item.order.items?.map(orderItem => ({
+          ...orderItem,
+          // Map existing mockup URLs to standardized names
+          visual_front_url: orderItem.mockup_recto_url,
+          visual_back_url: orderItem.mockup_verso_url,
+          mockup_url: orderItem.mockups?.svg_front_url || orderItem.products?.image_url,
+          mockups: orderItem.mockups
+        })) || []
+      }
     }));
   } catch (error) {
     console.error("Error fetching DTF orders:", error);
