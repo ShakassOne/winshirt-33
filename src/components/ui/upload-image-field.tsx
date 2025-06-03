@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { UploadButton } from '@/components/ui/upload-button';
-import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info } from 'lucide-react';
 
 interface UploadImageFieldProps {
   label: string;
@@ -28,7 +28,7 @@ export function UploadImageField({
   const [imagePreview, setImagePreview] = useState<string | null>(value || null);
   const [svgContent, setSvgContent] = useState<string>('');
   const [isLoadingSvg, setIsLoadingSvg] = useState(false);
-  const [svgStatus, setSvgStatus] = useState<'clean' | 'needs-fix' | 'unknown'>('unknown');
+  const [svgStatus, setSvgStatus] = useState<'clean' | 'needs-fix' | 'external' | 'unknown'>('unknown');
 
   const isSvg = value && value.toLowerCase().endsWith('.svg');
 
@@ -55,9 +55,12 @@ export function UploadImageField({
           const hasStyle = text.includes('<style');
           const hasFixedSize = /svg[^>]*\s(width|height)=/.test(text);
           const missingFill = /<(path|g)[^>]*(?!.*fill=)/.test(text);
+          const hasCurrentColor = text.includes('currentColor');
           
-          if (hasStyle || hasFixedSize || missingFill) {
+          if (hasStyle || hasFixedSize || (missingFill && !hasCurrentColor)) {
             setSvgStatus('needs-fix');
+          } else if (hasCurrentColor) {
+            setSvgStatus('clean');
           } else {
             setSvgStatus('clean');
           }
@@ -65,9 +68,9 @@ export function UploadImageField({
           setIsLoadingSvg(false);
         })
         .catch((error) => {
-          console.error('❌ [UploadImageField] Erreur lors du chargement du SVG:', error);
+          console.warn('⚠️ [UploadImageField] SVG externe non accessible:', error);
           setSvgContent('');
-          setSvgStatus('unknown');
+          setSvgStatus('external'); // SVG externe, potentiellement recolorisable mais non analysable
           setIsLoadingSvg(false);
         });
     } else {
@@ -112,10 +115,17 @@ export function UploadImageField({
             SVG à corriger
           </Badge>
         );
+      case 'external':
+        return (
+          <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+            <Info className="h-3 w-3 mr-1" />
+            SVG Externe
+          </Badge>
+        );
       default:
         return (
           <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-500/30">
-            SVG - Recolorisable
+            SVG
           </Badge>
         );
     }
@@ -161,14 +171,11 @@ export function UploadImageField({
                 />
               ) : (
                 <div className="text-xs text-muted-foreground text-center">
-                  <p>⚠️ Impossible de charger le SVG</p>
-                  <p className="mt-1">Utilisation de l'affichage standard</p>
-                  <img
-                    src={imagePreview}
-                    alt="Aperçu SVG (fallback)"
-                    className="max-h-24 object-contain rounded mt-2"
-                    onError={() => setImagePreview(null)}
-                  />
+                  <div className="text-center">
+                    <div className="text-2xl mb-2">🎨</div>
+                    <p>SVG Externe</p>
+                    <p className="mt-1 text-xs text-blue-400">Recolorisable côté client</p>
+                  </div>
                 </div>
               )}
             </div>
