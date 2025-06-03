@@ -21,6 +21,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { SocialShareButton } from '@/components/SocialShareButton';
 import { SVGColorEditor } from '@/components/product/SVGColorEditor';
 import { ModalPersonnalisation } from '@/components/product/ModalPersonnalisation';
+import { HDVisualCapture } from '@/components/product/HDVisualCapture';
+import { useHDCaptureOnAddToCart } from '@/hooks/useHDCaptureOnAddToCart';
+import { enrichCustomizationWithHD } from '@/services/hdCapture.service';
 
 // Définition des polices Google Fonts
 const googleFonts = [{
@@ -337,6 +340,10 @@ const ProductDetail = () => {
   const productCanvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Hook pour la capture HD
+  const { captureForProduction, isCapturing } = useHDCaptureOnAddToCart();
+  
+  // États pour la personnalisation et autres
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -825,7 +832,7 @@ const ProductDetail = () => {
   const getCurrentSelectedSize = () => {
     return currentViewSide === 'front' ? selectedSizeFront : selectedSizeBack;
   };
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
     
     // Créer la liste des IDs de loteries en filtrant les null
@@ -833,7 +840,7 @@ const ProductDetail = () => {
       .filter(lottery => lottery !== null)
       .map(lottery => lottery!.id);
     
-    const cartItem: CartItem = {
+    let cartItem: CartItem = {
       productId: product.id,
       name: product.name,
       price: calculatePrice(),
@@ -895,8 +902,17 @@ const ProductDetail = () => {
           styles: textStylesBack
         };
       }
+
       if (Object.keys(customization).length > 0) {
-        cartItem.customization = customization;
+        console.log('🎨 [ProductDetail] Personnalisation détectée, génération des fichiers HD...');
+        
+        // Capturer les visuels HD pour la production
+        const hdData = await captureForProduction();
+        
+        // Enrichir la personnalisation avec les données HD
+        const enrichedCustomization = await enrichCustomizationWithHD(customization, hdData);
+        
+        cartItem.customization = enrichedCustomization;
       }
     }
 
@@ -1026,63 +1042,66 @@ const ProductDetail = () => {
                   className="w-full h-full object-contain"
                 />
 
-                {getCurrentDesign() && (
-                  <div
-                    className="absolute cursor-move select-none"
-                    style={{
-                      transform: `translate(${getCurrentDesignTransform().position.x}px, ${getCurrentDesignTransform().position.y}px) 
-                                     rotate(${getCurrentDesignTransform().rotation}deg) 
-                                     scale(${getCurrentDesignTransform().scale})`,
+                {/* Conteneur pour la capture HD - éléments de personnalisation uniquement */}
+                <HDVisualCapture side={currentViewSide === 'front' ? 'recto' : 'verso'}>
+                  {getCurrentDesign() && (
+                    <div
+                      className="absolute cursor-move select-none"
+                      style={{
+                        transform: `translate(${getCurrentDesignTransform().position.x}px, ${getCurrentDesignTransform().position.y}px) 
+                                       rotate(${getCurrentDesignTransform().rotation}deg) 
+                                       scale(${getCurrentDesignTransform().scale})`,
+                        transformOrigin: 'center',
+                        zIndex: 10
+                      }}
+                      onMouseDown={(e) => handleMouseDown(e)}
+                      onTouchStart={(e) => handleMouseDown(e)}
+                    >
+                      {isSvgDesign() && getCurrentSvgContent() ? (
+                        <div
+                          className="w-[200px] h-[200px] flex items-center justify-center"
+                          dangerouslySetInnerHTML={{ 
+                            __html: getCurrentSvgContent().replace(
+                              /<svg([^>]*)>/i, 
+                              '<svg$1 width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">'
+                            )
+                          }}
+                          style={{ 
+                            maxWidth: '200px', 
+                            maxHeight: '200px',
+                            overflow: 'visible'
+                          }}
+                        />
+                      ) : (
+                        <img
+                          src={getCurrentDesign()!.image_url}
+                          alt={getCurrentDesign()!.name}
+                          className="max-w-[200px] max-h-[200px] w-auto h-auto"
+                          draggable={false}
+                        />
+                      )}
+                    </div>
+                  )}
+                  
+                  {getCurrentTextContent() && (
+                    <div className="absolute cursor-move select-none" style={{
+                      transform: `translate(${getCurrentTextTransform().position.x}px, ${getCurrentTextTransform().position.y}px) 
+                                   rotate(${getCurrentTextTransform().rotation}deg) 
+                                   scale(${getCurrentTextTransform().scale})`,
                       transformOrigin: 'center',
-                      zIndex: 10
-                    }}
-                    onMouseDown={(e) => handleMouseDown(e)}
-                    onTouchStart={(e) => handleMouseDown(e)}
-                  >
-                    {isSvgDesign() && getCurrentSvgContent() ? (
-                      <div
-                        className="w-[200px] h-[200px] flex items-center justify-center"
-                        dangerouslySetInnerHTML={{ 
-                          __html: getCurrentSvgContent().replace(
-                            /<svg([^>]*)>/i, 
-                            '<svg$1 width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">'
-                          )
-                        }}
-                        style={{ 
-                          maxWidth: '200px', 
-                          maxHeight: '200px',
-                          overflow: 'visible'
-                        }}
-                      />
-                    ) : (
-                      <img
-                        src={getCurrentDesign()!.image_url}
-                        alt={getCurrentDesign()!.name}
-                        className="max-w-[200px] max-h-[200px] w-auto h-auto"
-                        draggable={false}
-                      />
-                    )}
-                  </div>
-                )}
-                
-                {getCurrentTextContent() && (
-                  <div className="absolute cursor-move select-none" style={{
-                    transform: `translate(${getCurrentTextTransform().position.x}px, ${getCurrentTextTransform().position.y}px) 
-                                 rotate(${getCurrentTextTransform().rotation}deg) 
-                                 scale(${getCurrentTextTransform().scale})`,
-                    transformOrigin: 'center',
-                    fontFamily: getCurrentTextFont(),
-                    color: getCurrentTextColor(),
-                    fontWeight: getCurrentTextStyles().bold ? 'bold' : 'normal',
-                    fontStyle: getCurrentTextStyles().italic ? 'italic' : 'normal',
-                    textDecoration: getCurrentTextStyles().underline ? 'underline' : 'none',
-                    fontSize: '24px',
-                    textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
-                    zIndex: 20
-                  }} onMouseDown={e => handleMouseDown(e, true)} onTouchStart={e => handleMouseDown(e, true)}>
-                    {getCurrentTextContent()}
-                  </div>
-                )}
+                      fontFamily: getCurrentTextFont(),
+                      color: getCurrentTextColor(),
+                      fontWeight: getCurrentTextStyles().bold ? 'bold' : 'normal',
+                      fontStyle: getCurrentTextStyles().italic ? 'italic' : 'normal',
+                      textDecoration: getCurrentTextStyles().underline ? 'underline' : 'none',
+                      fontSize: '24px',
+                      textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
+                      zIndex: 20
+                    }} onMouseDown={e => handleMouseDown(e, true)} onTouchStart={e => handleMouseDown(e, true)}>
+                      {getCurrentTextContent()}
+                    </div>
+                  )}
+                </HDVisualCapture>
 
                 {getCurrentDesign() && (getCurrentDesign()!.category === 'ai-generated' || getCurrentDesign()!.category === 'ai-generated-cleaned') && (
                   <div className="absolute bottom-4 right-4 z-30">
@@ -1303,9 +1322,23 @@ const ProductDetail = () => {
                     </Button>
                   </div>
 
-                  <Button size="lg" className="flex-1 bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90" onClick={handleAddToCart}>
-                    <ShoppingCart className="h-5 w-5 mr-2" />
-                    Ajouter au panier
+                  <Button 
+                    size="lg" 
+                    className="flex-1 bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90" 
+                    onClick={handleAddToCart}
+                    disabled={isCapturing}
+                  >
+                    {isCapturing ? (
+                      <>
+                        <div className="animate-spin h-5 w-5 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                        Génération HD...
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="h-5 w-5 mr-2" />
+                        Ajouter au panier
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
