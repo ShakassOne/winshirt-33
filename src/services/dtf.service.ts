@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export type DTFProductionStatus = 'pending' | 'in_progress' | 'ready' | 'completed';
@@ -44,6 +43,12 @@ export interface DTFOrderWithDetails extends DTFProductionStatusRecord {
         description: string;
         price: number;
         mockup_id?: string;
+        mockups?: {
+          id: string;
+          name: string;
+          svg_front_url: string;
+          svg_back_url?: string;
+        };
       };
       mockups?: {
         id: string;
@@ -86,10 +91,8 @@ export const getDTFOrders = async (): Promise<DTFOrderWithDetails[]> => {
               image_url,
               description,
               price,
-              mockup_id
-            ),
-            mockups:products!order_items_product_id_fkey(
-              mockup_id:mockups(
+              mockup_id,
+              mockups:mockup_id(
                 id,
                 name,
                 svg_front_url,
@@ -113,8 +116,10 @@ export const getDTFOrders = async (): Promise<DTFOrderWithDetails[]> => {
           // Map existing mockup URLs to standardized names
           visual_front_url: orderItem.mockup_recto_url,
           visual_back_url: orderItem.mockup_verso_url,
-          mockup_url: orderItem.mockups?.svg_front_url || orderItem.products?.image_url,
-          mockups: orderItem.mockups
+          // Get mockup URL from products.mockups or fallback to product image
+          mockup_url: orderItem.products?.mockups?.svg_front_url || orderItem.products?.image_url,
+          // Keep the mockups data with correct structure
+          mockups: orderItem.products?.mockups || undefined
         })) || []
       }
     }));
