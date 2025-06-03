@@ -8,7 +8,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
-import { useCart } from '@/contexts/CartContext';
+import { useCart } from '@/context/CartContext';
 import { useToast } from '@/components/ui/use-toast';
 import { Separator } from "@/components/ui/separator"
 import { useHDCaptureOnAddToCart } from '@/hooks/useHDCaptureOnAddToCart';
@@ -22,7 +22,7 @@ interface ProductDetailProps {}
 const ProductDetail: React.FC<ProductDetailProps> = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addItem } = useCart();
   const { toast } = useToast();
 
   const [product, setProduct] = useState<ProductType | null>(null);
@@ -131,14 +131,14 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
       
       // Préparer les données de base
       const baseCustomization = {
-        ...(customization.frontDesign && { frontDesign: customization.frontDesign }),
-        ...(customization.backDesign && { backDesign: customization.backDesign }),
-        ...(customization.frontText && { frontText: customization.frontText }),
-        ...(customization.backText && { backText: customization.backText }),
+        frontDesign: customization.frontDesign || null,
+        backDesign: customization.backDesign || null,
+        frontText: customization.frontText || null,
+        backText: customization.backText || null,
       };
 
       // Vérifier s'il y a une personnalisation
-      const hasCustomization = Object.keys(baseCustomization).length > 0;
+      const hasCustomization = Object.values(baseCustomization).some(value => value !== null);
       
       let finalCustomization = baseCustomization;
 
@@ -151,7 +151,12 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
           const hdData = await captureForProduction();
           
           // Enrichir avec les données HD (même si vides)
-          finalCustomization = await enrichCustomizationWithHD(baseCustomization, hdData);
+          finalCustomization = {
+            ...baseCustomization,
+            hdRectoUrl: hdData.hdRectoUrl,
+            hdVersoUrl: hdData.hdVersoUrl,
+            hdCaptureTimestamp: new Date().toISOString()
+          };
         } catch (hdError) {
           console.warn('⚠️ [ProductDetail] Erreur capture HD, on continue sans:', hdError);
           // Ajouter juste un timestamp pour indiquer qu'on a essayé
@@ -166,7 +171,7 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
       const finalPrice = calculatePrice();
 
       // Ajouter l'article au panier
-      await addToCart({
+      await addItem({
         productId: product.id,
         name: product.name,
         price: finalPrice,
@@ -175,7 +180,7 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
         size: selectedSize,
         image_url: product.image_url,
         lotteries: selectedLotteries,
-        customization: Object.keys(finalCustomization).length > 0 ? finalCustomization : undefined
+        customization: hasCustomization ? finalCustomization : undefined
       });
 
       // Afficher le succès
