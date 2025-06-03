@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -129,41 +128,43 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
     try {
       setIsAdding(true);
       
-      // Préparer les données de base
-      const baseCustomization = {
-        frontDesign: customization.frontDesign || null,
-        backDesign: customization.backDesign || null,
-        frontText: customization.frontText || null,
-        backText: customization.backText || null,
-      };
+      // Préparer les données de personnalisation pour le panier
+      let cartCustomization: any = undefined;
 
       // Vérifier s'il y a une personnalisation
-      const hasCustomization = Object.values(baseCustomization).some(value => value !== null);
+      const hasCustomization = customization.frontDesign || customization.backDesign || 
+                              customization.frontText || customization.backText;
       
-      let finalCustomization = baseCustomization;
-
-      // Tenter la capture HD uniquement s'il y a une personnalisation
       if (hasCustomization && product.is_customizable) {
         console.log('🎨 [ProductDetail] Personnalisation détectée, génération des fichiers HD...');
         
+        // Structure de base pour la personnalisation
+        cartCustomization = {
+          frontDesign: customization.frontDesign || null,
+          backDesign: customization.backDesign || null,
+          frontText: customization.frontText || null,
+          backText: customization.backText || null,
+        };
+
         try {
           // Tenter la capture HD sans bloquer l'ajout au panier
           const hdData = await captureForProduction();
           
-          // Enrichir avec les données HD (même si vides)
-          finalCustomization = {
-            ...baseCustomization,
-            hdRectoUrl: hdData.hdRectoUrl,
-            hdVersoUrl: hdData.hdVersoUrl,
-            hdCaptureTimestamp: new Date().toISOString()
-          };
+          // Ajouter les données HD si disponibles
+          if (hdData.hdRectoUrl || hdData.hdVersoUrl) {
+            cartCustomization = {
+              ...cartCustomization,
+              hdRectoUrl: hdData.hdRectoUrl,
+              hdVersoUrl: hdData.hdVersoUrl,
+              hdCaptureTimestamp: new Date().toISOString()
+            };
+          } else {
+            cartCustomization.hdCaptureTimestamp = new Date().toISOString();
+          }
         } catch (hdError) {
           console.warn('⚠️ [ProductDetail] Erreur capture HD, on continue sans:', hdError);
           // Ajouter juste un timestamp pour indiquer qu'on a essayé
-          finalCustomization = {
-            ...baseCustomization,
-            hdCaptureTimestamp: new Date().toISOString()
-          };
+          cartCustomization.hdCaptureTimestamp = new Date().toISOString();
         }
       }
 
@@ -180,7 +181,7 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
         size: selectedSize,
         image_url: product.image_url,
         lotteries: selectedLotteries,
-        customization: hasCustomization ? finalCustomization : undefined
+        customization: cartCustomization
       });
 
       // Afficher le succès
