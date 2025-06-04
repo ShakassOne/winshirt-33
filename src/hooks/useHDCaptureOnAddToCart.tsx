@@ -15,7 +15,11 @@ export const useHDCaptureOnAddToCart = () => {
     try {
       console.log('🎬 [HDCaptureOnAddToCart] Début capture pour production');
       
-      // Ne pas bloquer avec un toast de loading
+      toast({
+        title: "Génération des fichiers de production...",
+        description: "Création des visuels haute résolution",
+      });
+
       const hdResult = await captureAllHDVisuals();
       
       if (hdResult.hdRectoUrl || hdResult.hdVersoUrl) {
@@ -28,25 +32,23 @@ export const useHDCaptureOnAddToCart = () => {
         
         return hdResult;
       } else {
-        console.warn('⚠️ [HDCaptureOnAddToCart] Aucun fichier HD généré, mais on continue');
+        console.warn('⚠️ [HDCaptureOnAddToCart] Aucun fichier HD généré');
         
-        // Ne pas afficher d'erreur bloquante, juste un avertissement silencieux
         toast({
-          title: "Produit ajouté au panier",
-          description: "Les fichiers HD seront générés lors de la commande",
-          variant: "default",
+          variant: "destructive",
+          title: "Erreur de génération",
+          description: "Impossible de créer les fichiers de production",
         });
         
         return {};
       }
     } catch (error) {
-      console.error('❌ [HDCaptureOnAddToCart] Erreur capture HD (non bloquante):', error);
+      console.error('❌ [HDCaptureOnAddToCart] Erreur:', error);
       
-      // Erreur silencieuse - l'ajout au panier doit continuer
       toast({
-        title: "Produit ajouté au panier",
-        description: "Les fichiers HD seront générés lors de la commande",
-        variant: "default",
+        variant: "destructive",
+        title: "Erreur de capture",
+        description: "Impossible de générer les fichiers HD",
       });
       
       return {};
