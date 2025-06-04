@@ -563,11 +563,24 @@ const ProductDetail = () => {
       }
     }
   }, [product]);
+
   useEffect(() => {
-    if (mockup?.colors && mockup.colors.length > 0) {
+    // Filter mockup colors based on product's available colors
+    if (mockup?.colors && product?.available_colors) {
+      const filteredColors = mockup.colors.filter(mockupColor => 
+        product.available_colors!.some(availableColor => 
+          mockupColor.name.toLowerCase() === availableColor.toLowerCase()
+        )
+      );
+      if (filteredColors.length > 0) {
+        setSelectedMockupColor(filteredColors[0]);
+      }
+    } else if (mockup?.colors && mockup.colors.length > 0) {
+      // If no available_colors specified, use all mockup colors
       setSelectedMockupColor(mockup.colors[0]);
     }
-  }, [mockup]);
+  }, [mockup, product]);
+
   useEffect(() => {
     if (isDragging || isDraggingText || pageScrollLocked && customizationMode) {
       document.body.style.overflow = 'hidden';
@@ -838,6 +851,22 @@ const ProductDetail = () => {
   const getCurrentSelectedSize = () => {
     return currentViewSide === 'front' ? selectedSizeFront : selectedSizeBack;
   };
+
+  // Helper function to get filtered mockup colors
+  const getFilteredMockupColors = () => {
+    if (!mockup?.colors) return [];
+    
+    if (!product?.available_colors || product.available_colors.length === 0) {
+      return mockup.colors;
+    }
+    
+    return mockup.colors.filter(mockupColor => 
+      product.available_colors!.some(availableColor => 
+        mockupColor.name.toLowerCase() === availableColor.toLowerCase()
+      )
+    );
+  };
+
   const handleAddToCart = async () => {
     if (!product) return;
 
@@ -937,6 +966,8 @@ const ProductDetail = () => {
       </div>;
   }
   const activeLotteries = lotteries.filter(lottery => lottery.is_active);
+  const filteredMockupColors = getFilteredMockupColors();
+
   const handleTouchMove = (e: React.TouchEvent) => {
     if (isDragging || isDraggingText) {
       e.preventDefault();
@@ -1128,15 +1159,6 @@ const ProductDetail = () => {
             </div>
 
             <div className="space-y-6">
-              {product.available_colors && product.available_colors.length > 0 && <div>
-                  <h3 className="text-sm font-medium mb-3">Couleur</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {product.available_colors.map(color => <div key={color} className={`w-8 h-8 rounded-full cursor-pointer border-2 ${selectedColor === color ? 'border-winshirt-purple' : 'border-transparent'}`} style={{
-                  backgroundColor: getColorHexCode(color)
-                }} onClick={() => setSelectedColor(color)} />)}
-                  </div>
-                </div>}
-
               {product.available_sizes && product.available_sizes.length > 0 && <div>
                   <h3 className="text-sm font-medium mb-3">Taille</h3>
                   <div className="flex flex-wrap gap-2">
@@ -1148,10 +1170,10 @@ const ProductDetail = () => {
 
               {/* New customization button */}
               {product.is_customizable && <div className="space-y-4">
-                  {mockup?.colors && mockup.colors.length > 0 && <div>
+                  {filteredMockupColors.length > 0 && <div>
                       <h3 className="text-sm font-medium mb-3">Couleur du produit</h3>
                       <div className="flex flex-wrap gap-3">
-                        {mockup.colors.map((color, index) => <div key={index} className={`relative flex flex-col items-center gap-1 cursor-pointer`} onClick={() => setSelectedMockupColor(color)}>
+                        {filteredMockupColors.map((color, index) => <div key={index} className={`relative flex flex-col items-center gap-1 cursor-pointer`} onClick={() => setSelectedMockupColor(color)}>
                             <div className={`w-10 h-10 rounded-full border-2 ${selectedMockupColor === color ? 'border-winshirt-purple' : 'border-gray-600'}`} style={{
                       backgroundColor: color.color_code
                     }}>
