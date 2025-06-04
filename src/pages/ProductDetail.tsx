@@ -332,22 +332,30 @@ const sizePresets = [{
   min: 1,
   max: 20
 }];
-
 const ProductDetail = () => {
-  const { id } = useParams<{ id: string }>();
+  const {
+    id
+  } = useParams<{
+    id: string;
+  }>();
   const isMobile = useIsMobile();
-  const { addItem } = useCart();
+  const {
+    addItem
+  } = useCart();
   const productCanvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Hook pour la capture HD
-  const { captureForProduction, isCapturing } = useHDCaptureOnAddToCart();
-  
+  const {
+    captureForProduction,
+    isCapturing
+  } = useHDCaptureOnAddToCart();
+
   // États pour la personnalisation et autres
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  
+
   // Modal state
   const [customizationModalOpen, setCustomizationModalOpen] = useState(false);
   const [customizationMode, setCustomizationMode] = useState(false);
@@ -497,11 +505,9 @@ const ProductDetail = () => {
   const getCurrentSvgColor = () => {
     return currentViewSide === 'front' ? svgColorFront : svgColorBack;
   };
-
   const getCurrentSvgContent = () => {
     return currentViewSide === 'front' ? svgContentFront : svgContentBack;
   };
-
   const handleSvgColorChange = (color: string) => {
     if (currentViewSide === 'front') {
       setSvgColorFront(color);
@@ -509,7 +515,6 @@ const ProductDetail = () => {
       setSvgColorBack(color);
     }
   };
-
   const handleSvgContentChange = (svgContent: string) => {
     if (currentViewSide === 'front') {
       setSvgContentFront(svgContent);
@@ -517,31 +522,37 @@ const ProductDetail = () => {
       setSvgContentBack(svgContent);
     }
   };
-
   const isSvgDesign = () => {
     const currentDesign = getCurrentDesign();
     if (!currentDesign?.image_url) return false;
-    
+
     // Vérification plus robuste des SVG
     const url = currentDesign.image_url.toLowerCase();
     return url.includes('.svg') || url.includes('svg') || currentDesign.image_url.includes('data:image/svg');
   };
-
-  const { data: product, isLoading } = useQuery({
+  const {
+    data: product,
+    isLoading
+  } = useQuery({
     queryKey: ['product', id],
     queryFn: () => fetchProductById(id!),
     enabled: !!id
   });
-  const { data: mockup, isLoading: isLoadingMockup } = useQuery({
+  const {
+    data: mockup,
+    isLoading: isLoadingMockup
+  } = useQuery({
     queryKey: ['mockup', product?.mockup_id],
     queryFn: () => fetchMockupById(product?.mockup_id!),
     enabled: !!product?.mockup_id
   });
-  const { data: lotteries = [], isLoading: isLoadingLotteries } = useQuery({
+  const {
+    data: lotteries = [],
+    isLoading: isLoadingLotteries
+  } = useQuery({
     queryKey: ['lotteries'],
     queryFn: fetchAllLotteries
   });
-
   useEffect(() => {
     if (product) {
       if (product.available_colors && product.available_colors.length > 0) {
@@ -558,7 +569,7 @@ const ProductDetail = () => {
     }
   }, [mockup]);
   useEffect(() => {
-    if (isDragging || isDraggingText || (pageScrollLocked && customizationMode)) {
+    if (isDragging || isDraggingText || pageScrollLocked && customizationMode) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'auto';
@@ -567,7 +578,6 @@ const ProductDetail = () => {
       document.body.style.overflow = 'auto';
     };
   }, [pageScrollLocked, isDragging, isDraggingText, customizationMode]);
-  
   const handleQuantityChange = (type: 'increase' | 'decrease') => {
     if (type === 'increase') {
       setQuantity(prev => prev + 1);
@@ -615,12 +625,11 @@ const ProductDetail = () => {
   const handleLotteryToggle = (lottery: Lottery, slotIndex: number) => {
     setSelectedLotteries(prev => {
       const newSelected = [...prev];
-      
+
       // S'assurer que le tableau a la bonne taille
       while (newSelected.length < (product?.tickets_offered || 0)) {
         newSelected.push(null);
       }
-      
       if (newSelected[slotIndex]?.id === lottery.id) {
         // Si c'est la même loterie au même slot, la désélectionner
         newSelected[slotIndex] = null;
@@ -628,11 +637,9 @@ const ProductDetail = () => {
         // Sinon, la sélectionner à ce slot
         newSelected[slotIndex] = lottery;
       }
-      
       return newSelected;
     });
   };
-
   const handleMouseDown = (event: React.MouseEvent | React.TouchEvent, isText: boolean = false) => {
     event.preventDefault();
     let clientX: number, clientY: number;
@@ -771,7 +778,6 @@ const ProductDetail = () => {
       setActiveTextSide('back');
     }
   }, [currentViewSide]);
-
   const calculatePrice = () => {
     if (!product) return 0;
     let price = product.price * quantity;
@@ -834,12 +840,9 @@ const ProductDetail = () => {
   };
   const handleAddToCart = async () => {
     if (!product) return;
-    
+
     // Créer la liste des IDs de loteries en filtrant les null
-    const selectedLotteryIds = selectedLotteries
-      .filter(lottery => lottery !== null)
-      .map(lottery => lottery!.id);
-    
+    const selectedLotteryIds = selectedLotteries.filter(lottery => lottery !== null).map(lottery => lottery!.id);
     let cartItem: CartItem = {
       productId: product.id,
       name: product.name,
@@ -850,10 +853,8 @@ const ProductDetail = () => {
       image_url: product.image_url,
       lotteries: selectedLotteryIds.length > 0 ? selectedLotteryIds : undefined
     };
-
     if (customizationMode) {
       const customization: any = {};
-      
       if (selectedDesignFront) {
         customization.frontDesign = {
           designId: selectedDesignFront.id,
@@ -868,7 +869,6 @@ const ProductDetail = () => {
           })
         };
       }
-      
       if (selectedDesignBack) {
         customization.backDesign = {
           designId: selectedDesignBack.id,
@@ -883,7 +883,6 @@ const ProductDetail = () => {
           })
         };
       }
-
       if (textContentFront.trim()) {
         customization.frontText = {
           content: textContentFront,
@@ -902,24 +901,20 @@ const ProductDetail = () => {
           styles: textStylesBack
         };
       }
-
       if (Object.keys(customization).length > 0) {
         console.log('🎨 [ProductDetail] Personnalisation détectée, génération des fichiers HD...');
-        
+
         // Capturer les visuels HD pour la production
         const hdData = await captureForProduction();
-        
+
         // Enrichir la personnalisation avec les données HD
         const enrichedCustomization = await enrichCustomizationWithHD(customization, hdData);
-        
         cartItem.customization = enrichedCustomization;
       }
     }
-
     addItem(cartItem);
     toast.success('Produit ajouté au panier !');
   };
-  
   if (isLoading || !product) {
     return <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -974,13 +969,18 @@ const ProductDetail = () => {
       const response = await fetch(cleanedImageUrl);
       const blob = await response.blob();
       const fileName = `bg-removed-${Date.now()}.png`;
-      const { data: uploadData, error: uploadError } = await supabase.storage.from('ai-images').upload(fileName, blob);
+      const {
+        data: uploadData,
+        error: uploadError
+      } = await supabase.storage.from('ai-images').upload(fileName, blob);
       if (uploadError) {
         console.error('Upload error:', uploadError);
         toast.error("Erreur lors de la sauvegarde de l'image");
         return;
       }
-      const { data: urlData } = supabase.storage.from('ai-images').getPublicUrl(fileName);
+      const {
+        data: urlData
+      } = supabase.storage.from('ai-images').getPublicUrl(fileName);
       if (!urlData.publicUrl) {
         toast.error("Erreur lors de la récupération de l'URL");
         return;
@@ -1006,12 +1006,10 @@ const ProductDetail = () => {
       setBackgroundRemovalImage(null);
     }
   };
-
-  return (
-    <div className="min-h-screen flex flex-col">
+  return <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="flex-grow container mx-auto px-4 py-8">
+      <main className="flex-grow container mx-auto px-4 py-[85px]">
         <div className="mb-6">
           <Link to="/products" className="flex items-center text-sm text-winshirt-purple hover:text-winshirt-blue transition-colors">
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -1022,140 +1020,79 @@ const ProductDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Product image - Simplified when not in customization mode */}
           <div className="relative">
-            {!customizationMode ? (
-              <div className="relative bg-black/30 rounded-lg overflow-hidden shadow-xl aspect-square flex justify-center items-center">
-                <img
-                  src={product.image_url}
-                  alt={product.name}
-                  className="w-full h-full object-contain"
-                />
-              </div>
-            ) : (
-              <div 
-                className="relative bg-black/30 rounded-lg overflow-hidden shadow-xl aspect-square flex justify-center items-center" 
-                style={{ touchAction: 'none' }} 
-                onTouchMove={handleTouchMove}
-              >
-                <img
-                  src={getProductImage()}
-                  alt={product.name}
-                  className="w-full h-full object-contain"
-                />
+            {!customizationMode ? <div className="relative bg-black/30 rounded-lg overflow-hidden shadow-xl aspect-square flex justify-center items-center">
+                <img src={product.image_url} alt={product.name} className="w-full h-full object-contain" />
+              </div> : <div className="relative bg-black/30 rounded-lg overflow-hidden shadow-xl aspect-square flex justify-center items-center" style={{
+            touchAction: 'none'
+          }} onTouchMove={handleTouchMove}>
+                <img src={getProductImage()} alt={product.name} className="w-full h-full object-contain" />
 
                 {/* Conteneur pour la capture HD - visible absolument positionné avec un ID spécifique */}
-                <HDVisualCapture 
-                  side={currentViewSide === 'front' ? 'recto' : 'verso'}
-                  className="w-full h-full"
-                >
+                <HDVisualCapture side={currentViewSide === 'front' ? 'recto' : 'verso'} className="w-full h-full">
                   {/* Design element */}
-                  {getCurrentDesign() && (
-                    <div
-                      className="absolute cursor-move select-none"
-                      style={{
-                        transform: `translate(${getCurrentDesignTransform().position.x}px, ${getCurrentDesignTransform().position.y}px) 
+                  {getCurrentDesign() && <div className="absolute cursor-move select-none" style={{
+                transform: `translate(${getCurrentDesignTransform().position.x}px, ${getCurrentDesignTransform().position.y}px) 
                                        rotate(${getCurrentDesignTransform().rotation}deg) 
                                        scale(${getCurrentDesignTransform().scale})`,
-                        transformOrigin: 'center',
-                        zIndex: 10,
-                        left: '50%',
-                        top: '50%',
-                        marginLeft: '-100px',
-                        marginTop: '-100px'
-                      }}
-                      onMouseDown={(e) => handleMouseDown(e)}
-                      onTouchStart={(e) => handleMouseDown(e)}
-                    >
-                      {isSvgDesign() && getCurrentSvgContent() ? (
-                        <div
-                          className="w-[200px] h-[200px] flex items-center justify-center"
-                          dangerouslySetInnerHTML={{ 
-                            __html: getCurrentSvgContent().replace(
-                              /<svg([^>]*)>/i, 
-                              '<svg$1 width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">'
-                            )
-                          }}
-                          style={{ 
-                            maxWidth: '200px', 
-                            maxHeight: '200px',
-                            overflow: 'visible'
-                          }}
-                        />
-                      ) : (
-                        <img
-                          src={getCurrentDesign()!.image_url}
-                          alt={getCurrentDesign()!.name}
-                          className="max-w-[200px] max-h-[200px] w-auto h-auto"
-                          draggable={false}
-                        />
-                      )}
-                    </div>
-                  )}
+                transformOrigin: 'center',
+                zIndex: 10,
+                left: '50%',
+                top: '50%',
+                marginLeft: '-100px',
+                marginTop: '-100px'
+              }} onMouseDown={e => handleMouseDown(e)} onTouchStart={e => handleMouseDown(e)}>
+                      {isSvgDesign() && getCurrentSvgContent() ? <div className="w-[200px] h-[200px] flex items-center justify-center" dangerouslySetInnerHTML={{
+                  __html: getCurrentSvgContent().replace(/<svg([^>]*)>/i, '<svg$1 width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">')
+                }} style={{
+                  maxWidth: '200px',
+                  maxHeight: '200px',
+                  overflow: 'visible'
+                }} /> : <img src={getCurrentDesign()!.image_url} alt={getCurrentDesign()!.name} className="max-w-[200px] max-h-[200px] w-auto h-auto" draggable={false} />}
+                    </div>}
                   
                   {/* Text element */}
-                  {getCurrentTextContent() && (
-                    <div 
-                      className="absolute cursor-move select-none" 
-                      style={{
-                        transform: `translate(${getCurrentTextTransform().position.x}px, ${getCurrentTextTransform().position.y}px) 
+                  {getCurrentTextContent() && <div className="absolute cursor-move select-none" style={{
+                transform: `translate(${getCurrentTextTransform().position.x}px, ${getCurrentTextTransform().position.y}px) 
                                      rotate(${getCurrentTextTransform().rotation}deg) 
                                      scale(${getCurrentTextTransform().scale})`,
-                        transformOrigin: 'center',
-                        fontFamily: getCurrentTextFont(),
-                        color: getCurrentTextColor(),
-                        fontWeight: getCurrentTextStyles().bold ? 'bold' : 'normal',
-                        fontStyle: getCurrentTextStyles().italic ? 'italic' : 'normal',
-                        textDecoration: getCurrentTextStyles().underline ? 'underline' : 'none',
-                        fontSize: '24px',
-                        textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
-                        zIndex: 20,
-                        left: '50%',
-                        top: '50%',
-                        marginLeft: '-50px',
-                        marginTop: '-12px'
-                      }} 
-                      onMouseDown={e => handleMouseDown(e, true)} 
-                      onTouchStart={e => handleMouseDown(e, true)}
-                    >
+                transformOrigin: 'center',
+                fontFamily: getCurrentTextFont(),
+                color: getCurrentTextColor(),
+                fontWeight: getCurrentTextStyles().bold ? 'bold' : 'normal',
+                fontStyle: getCurrentTextStyles().italic ? 'italic' : 'normal',
+                textDecoration: getCurrentTextStyles().underline ? 'underline' : 'none',
+                fontSize: '24px',
+                textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
+                zIndex: 20,
+                left: '50%',
+                top: '50%',
+                marginLeft: '-50px',
+                marginTop: '-12px'
+              }} onMouseDown={e => handleMouseDown(e, true)} onTouchStart={e => handleMouseDown(e, true)}>
                       {getCurrentTextContent()}
-                    </div>
-                  )}
+                    </div>}
                 </HDVisualCapture>
 
-                {getCurrentDesign() && (getCurrentDesign()!.category === 'ai-generated' || getCurrentDesign()!.category === 'ai-generated-cleaned') && (
-                  <div className="absolute bottom-4 right-4 z-30">
-                    <Button 
-                      size="sm" 
-                      variant="secondary" 
-                      onClick={handleRemoveBackground} 
-                      disabled={isRemovingBackground}
-                      className="bg-black/60 hover:bg-black/80 text-white border-white/20"
-                      title="Supprimer le fond de l'image"
-                    >
-                      {isRemovingBackground ? (
-                        <>
+                {getCurrentDesign() && (getCurrentDesign()!.category === 'ai-generated' || getCurrentDesign()!.category === 'ai-generated-cleaned') && <div className="absolute bottom-4 right-4 z-30">
+                    <Button size="sm" variant="secondary" onClick={handleRemoveBackground} disabled={isRemovingBackground} className="bg-black/60 hover:bg-black/80 text-white border-white/20" title="Supprimer le fond de l'image">
+                      {isRemovingBackground ? <>
                           <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
                           Traitement...
-                        </>
-                      ) : (
-                        <>
+                        </> : <>
                           <Sparkles className="h-4 w-4 mr-2" />
                           Supprimer fond
-                        </>
-                      )}
+                        </>}
                     </Button>
-                  </div>
-                )}
-              </div>
-            )}
+                  </div>}
+              </div>}
 
-            {backgroundRemovalImage && (
-              <div style={{ display: 'none' }}>
+            {backgroundRemovalImage && <div style={{
+            display: 'none'
+          }}>
                 <RemoveFlatBackground imageUrl={backgroundRemovalImage} tolerance={35} onReady={handleBackgroundRemovalReady} />
-              </div>
-            )}
+              </div>}
 
-            {customizationMode && mockup && mockup.svg_back_url && (
-              <div className="flex justify-center mt-4">
+            {customizationMode && mockup && mockup.svg_back_url && <div className="flex justify-center mt-4">
                 <ToggleGroup type="single" value={currentViewSide} onValueChange={value => value && setCurrentViewSide(value as 'front' | 'back')} className="bg-black/40 backdrop-blur-sm rounded-lg">
                   <ToggleGroupItem value="front" className="text-sm data-[state=on]:bg-winshirt-purple/70" aria-label="Voir le recto">
                     Avant
@@ -1164,8 +1101,7 @@ const ProductDetail = () => {
                     Arrière
                   </ToggleGroupItem>
                 </ToggleGroup>
-              </div>
-            )}
+              </div>}
           </div>
 
           {/* Product info and options */}
@@ -1180,11 +1116,9 @@ const ProductDetail = () => {
                 {product.category}
               </Badge>
               
-              {product.is_customizable && (
-                <Badge variant="outline" className="bg-white/5">
+              {product.is_customizable && <Badge variant="outline" className="bg-white/5">
                   Personnalisable
-                </Badge>
-              )}
+                </Badge>}
             </div>
             
             <p className="text-white/70 mb-6">{product.description}</p>
@@ -1213,27 +1147,22 @@ const ProductDetail = () => {
                 </div>}
 
               {/* New customization button */}
-              {product.is_customizable && (
-                <div className="space-y-4">
-                  {mockup?.colors && mockup.colors.length > 0 && (
-                    <div>
+              {product.is_customizable && <div className="space-y-4">
+                  {mockup?.colors && mockup.colors.length > 0 && <div>
                       <h3 className="text-sm font-medium mb-3">Couleur du produit</h3>
                       <div className="flex flex-wrap gap-3">
-                        {mockup.colors.map((color, index) => (
-                          <div key={index} className={`relative flex flex-col items-center gap-1 cursor-pointer`} onClick={() => setSelectedMockupColor(color)}>
-                            <div className={`w-10 h-10 rounded-full border-2 ${selectedMockupColor === color ? 'border-winshirt-purple' : 'border-gray-600'}`} style={{ backgroundColor: color.color_code }}>
-                              {selectedMockupColor === color && (
-                                <div className="absolute inset-0 flex items-center justify-center">
+                        {mockup.colors.map((color, index) => <div key={index} className={`relative flex flex-col items-center gap-1 cursor-pointer`} onClick={() => setSelectedMockupColor(color)}>
+                            <div className={`w-10 h-10 rounded-full border-2 ${selectedMockupColor === color ? 'border-winshirt-purple' : 'border-gray-600'}`} style={{
+                      backgroundColor: color.color_code
+                    }}>
+                              {selectedMockupColor === color && <div className="absolute inset-0 flex items-center justify-center">
                                   <Check className="text-white h-4 w-4 drop-shadow-[0_0,2px_rgba(0,0,0,0.5)]" />
-                                </div>
-                              )}
+                                </div>}
                             </div>
                             <span className="text-xs truncate max-w-[80px] text-center">{color.name}</span>
-                          </div>
-                        ))}
+                          </div>)}
                       </div>
-                    </div>
-                  )}
+                    </div>}
 
                   <div className="p-4 bg-gradient-to-r from-winshirt-purple/20 to-winshirt-blue/20 rounded-lg border border-white/20">
                     <div className="flex items-center justify-between mb-3">
@@ -1243,23 +1172,17 @@ const ProductDetail = () => {
                       </div>
                       <PenTool className="h-6 w-6 text-winshirt-purple" />
                     </div>
-                    <Button
-                      onClick={() => {
-                        setCustomizationMode(true);
-                        setCustomizationModalOpen(true);
-                      }}
-                      className="w-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90"
-                      size="lg"
-                    >
+                    <Button onClick={() => {
+                  setCustomizationMode(true);
+                  setCustomizationModalOpen(true);
+                }} className="w-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90" size="lg">
                       <PenTool className="h-5 w-5 mr-2" />
                       Commencer la personnalisation
                     </Button>
                   </div>
-                </div>
-              )}
+                </div>}
 
-              {product.tickets_offered > 0 && activeLotteries.length > 0 && (
-                <div className="space-y-4 p-4 bg-white/5 border border-white/10 rounded-lg">
+              {product.tickets_offered > 0 && activeLotteries.length > 0 && <div className="space-y-4 p-4 bg-white/5 border border-white/10 rounded-lg">
                   <h3 className="flex items-center text-lg font-medium">
                     <UsersRound className="h-5 w-5 mr-2 text-winshirt-purple" />
                     Participez à {product.tickets_offered} {product.tickets_offered > 1 ? 'loteries' : 'loterie'}
@@ -1271,31 +1194,28 @@ const ProductDetail = () => {
                   </p>
                   
                   <div className="space-y-3">
-                    {Array.from({ length: product.tickets_offered }).map((_, index) => (
-                      <div key={index} className="relative">
+                    {Array.from({
+                  length: product.tickets_offered
+                }).map((_, index) => <div key={index} className="relative">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="w-full justify-start">
-                              {selectedLotteries[index] ? (
-                                <div className="flex items-center justify-between w-full">
+                              {selectedLotteries[index] ? <div className="flex items-center justify-between w-full">
                                   <div className="flex items-center">
                                     <Target className="h-4 w-4 mr-2 text-winshirt-purple" />
                                     <span>{selectedLotteries[index]!.title}</span>
                                   </div>
                                   <Badge variant="secondary" className="ml-2">
                                     {new Intl.NumberFormat('fr-FR', {
-                                      style: 'currency',
-                                      currency: 'EUR',
-                                      maximumFractionDigits: 0
-                                    }).format(selectedLotteries[index]!.value)}
+                              style: 'currency',
+                              currency: 'EUR',
+                              maximumFractionDigits: 0
+                            }).format(selectedLotteries[index]!.value)}
                                   </Badge>
-                                </div>
-                              ) : (
-                                <>
+                                </div> : <>
                                   <Target className="h-4 w-4 mr-2 text-winshirt-purple" />
                                   <span>Choisir une loterie (slot {index + 1})</span>
-                                </>
-                              )}
+                                </>}
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className="w-[280px]">
@@ -1303,28 +1223,18 @@ const ProductDetail = () => {
                             <DropdownMenuSeparator />
                             <div className="max-h-[200px] overflow-y-auto">
                               {activeLotteries.map(lottery => {
-                                const isSelectedInThisSlot = selectedLotteries[index]?.id === lottery.id;
-                                return (
-                                  <DropdownMenuItem 
-                                    key={lottery.id} 
-                                    className={`flex justify-between cursor-pointer ${
-                                      isSelectedInThisSlot ? 'bg-winshirt-purple/20' : ''
-                                    }`} 
-                                    onClick={() => handleLotteryToggle(lottery, index)}
-                                  >
+                          const isSelectedInThisSlot = selectedLotteries[index]?.id === lottery.id;
+                          return <DropdownMenuItem key={lottery.id} className={`flex justify-between cursor-pointer ${isSelectedInThisSlot ? 'bg-winshirt-purple/20' : ''}`} onClick={() => handleLotteryToggle(lottery, index)}>
                                     <span>{lottery.title}</span>
                                     {isSelectedInThisSlot && <Check className="h-4 w-4" />}
-                                  </DropdownMenuItem>
-                                );
-                              })}
+                                  </DropdownMenuItem>;
+                        })}
                             </div>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </div>
-                    ))}
+                      </div>)}
                   </div>
-                </div>
-              )}
+                </div>}
 
               <div>
                 <div className="flex flex-wrap gap-4 items-center">
@@ -1340,23 +1250,14 @@ const ProductDetail = () => {
                     </Button>
                   </div>
 
-                  <Button 
-                    size="lg" 
-                    className="flex-1 bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90" 
-                    onClick={handleAddToCart}
-                    disabled={isCapturing}
-                  >
-                    {isCapturing ? (
-                      <>
+                  <Button size="lg" className="flex-1 bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90" onClick={handleAddToCart} disabled={isCapturing}>
+                    {isCapturing ? <>
                         <div className="animate-spin h-5 w-5 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
                         Génération HD...
-                      </>
-                    ) : (
-                      <>
+                      </> : <>
                         <ShoppingCart className="h-5 w-5 mr-2" />
                         Ajouter au panier
-                      </>
-                    )}
+                      </>}
                   </Button>
                 </div>
               </div>
@@ -1365,97 +1266,55 @@ const ProductDetail = () => {
         </div>
 
         {/* Customization Modal */}
-        <ModalPersonnalisation
-          open={customizationModalOpen}
-          onClose={() => setCustomizationModalOpen(false)}
-          currentViewSide={currentViewSide}
-          onViewSideChange={setCurrentViewSide}
-          
-          // Product data
-          productName={product.name}
-          productImageUrl={product.image_url}
-          
-          // Mockup data
-          mockup={mockup}
-          selectedMockupColor={selectedMockupColor}
-          onMockupColorChange={setSelectedMockupColor}
-          
-          // Design props
-          selectedDesignFront={selectedDesignFront}
-          selectedDesignBack={selectedDesignBack}
-          onSelectDesign={handleDesignSelect}
-          onFileUpload={handleFileUpload}
-          onAIImageGenerated={handleAIImageGenerated}
-          onRemoveBackground={handleRemoveBackground}
-          isRemovingBackground={isRemovingBackground}
-          
-          // SVG props
-          svgColorFront={svgColorFront}
-          svgColorBack={svgColorBack}
-          svgContentFront={svgContentFront}
-          svgContentBack={svgContentBack}
-          onSvgColorChange={handleSvgColorChange}
-          onSvgContentChange={handleSvgContentChange}
-          
-          // Text props
-          textContentFront={textContentFront}
-          textContentBack={textContentBack}
-          textFontFront={textFontFront}
-          textFontBack={textFontBack}
-          textColorFront={textColorFront}
-          textColorBack={textColorBack}
-          textStylesFront={textStylesFront}
-          textStylesBack={textStylesBack}
-          textTransformFront={textTransformFront}
-          textTransformBack={textTransformBack}
-          onTextContentChange={(content) => {
-            if (currentViewSide === 'front') {
-              setTextContentFront(content);
-            } else {
-              setTextContentBack(content);
-            }
-          }}
-          onTextFontChange={(font) => {
-            if (currentViewSide === 'front') {
-              setTextFontFront(font);
-            } else {
-              setTextFontBack(font);
-            }
-          }}
-          onTextColorChange={(color) => {
-            if (currentViewSide === 'front') {
-              setTextColorFront(color);
-            } else {
-              setTextColorBack(color);
-            }
-          }}
-          onTextStylesChange={(styles) => {
-            if (currentViewSide === 'front') {
-              setTextStylesFront(styles);
-            } else {
-              setTextStylesBack(styles);
-            }
-          }}
-          onTextTransformChange={handleTextTransformChange}
-          
-          // Design transform props
-          designTransformFront={designTransformFront}
-          designTransformBack={designTransformBack}
-          selectedSizeFront={selectedSizeFront}
-          selectedSizeBack={selectedSizeBack}
-          onDesignTransformChange={handleDesignTransformChange}
-          onSizeChange={handleSizeClick}
-          
-          // Interaction handlers
-          onDesignMouseDown={handleMouseDown}
-          onTextMouseDown={(e) => handleMouseDown(e, true)}
-          onTouchMove={handleTouchMove}
-        />
+        <ModalPersonnalisation open={customizationModalOpen} onClose={() => setCustomizationModalOpen(false)} currentViewSide={currentViewSide} onViewSideChange={setCurrentViewSide}
+
+      // Product data
+      productName={product.name} productImageUrl={product.image_url}
+
+      // Mockup data
+      mockup={mockup} selectedMockupColor={selectedMockupColor} onMockupColorChange={setSelectedMockupColor}
+
+      // Design props
+      selectedDesignFront={selectedDesignFront} selectedDesignBack={selectedDesignBack} onSelectDesign={handleDesignSelect} onFileUpload={handleFileUpload} onAIImageGenerated={handleAIImageGenerated} onRemoveBackground={handleRemoveBackground} isRemovingBackground={isRemovingBackground}
+
+      // SVG props
+      svgColorFront={svgColorFront} svgColorBack={svgColorBack} svgContentFront={svgContentFront} svgContentBack={svgContentBack} onSvgColorChange={handleSvgColorChange} onSvgContentChange={handleSvgContentChange}
+
+      // Text props
+      textContentFront={textContentFront} textContentBack={textContentBack} textFontFront={textFontFront} textFontBack={textFontBack} textColorFront={textColorFront} textColorBack={textColorBack} textStylesFront={textStylesFront} textStylesBack={textStylesBack} textTransformFront={textTransformFront} textTransformBack={textTransformBack} onTextContentChange={content => {
+        if (currentViewSide === 'front') {
+          setTextContentFront(content);
+        } else {
+          setTextContentBack(content);
+        }
+      }} onTextFontChange={font => {
+        if (currentViewSide === 'front') {
+          setTextFontFront(font);
+        } else {
+          setTextFontBack(font);
+        }
+      }} onTextColorChange={color => {
+        if (currentViewSide === 'front') {
+          setTextColorFront(color);
+        } else {
+          setTextColorBack(color);
+        }
+      }} onTextStylesChange={styles => {
+        if (currentViewSide === 'front') {
+          setTextStylesFront(styles);
+        } else {
+          setTextStylesBack(styles);
+        }
+      }} onTextTransformChange={handleTextTransformChange}
+
+      // Design transform props
+      designTransformFront={designTransformFront} designTransformBack={designTransformBack} selectedSizeFront={selectedSizeFront} selectedSizeBack={selectedSizeBack} onDesignTransformChange={handleDesignTransformChange} onSizeChange={handleSizeClick}
+
+      // Interaction handlers
+      onDesignMouseDown={handleMouseDown} onTextMouseDown={e => handleMouseDown(e, true)} onTouchMove={handleTouchMove} />
       </main>
       
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default ProductDetail;
