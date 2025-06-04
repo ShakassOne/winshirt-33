@@ -40,7 +40,7 @@ export const useMockupCapture = () => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await axios.post('https://winshirt.fr/media/upload-visuel.php', formData, {
+      const response = await axios.post('https://media.winshirt.fr/upload-visuel.php', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -101,7 +101,7 @@ export const useMockupCapture = () => {
       
       while (uploadAttempts < maxAttempts) {
         try {
-          const response = await axios.post('https://winshirt.fr/media/upload-visuel.php', formData, {
+          const response = await axios.post('https://media.winshirt.fr/upload-visuel.php', formData, {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
