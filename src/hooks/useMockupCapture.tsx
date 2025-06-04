@@ -40,7 +40,7 @@ export const useMockupCapture = () => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await axios.post('https://winshirt.fr/upload-visuel.php', formData, {
+      const response = await axios.post('https://winshirt.fr/media/upload-visuel.php', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -95,17 +95,17 @@ export const useMockupCapture = () => {
 
       console.log(`📤 [HDCapture] Upload fichier HD ${side} - Taille: ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
 
-      // Gestion d'erreur avec retry
+      // Gestion d'erreur avec retry - timeout réduit et moins de tentatives
       let uploadAttempts = 0;
-      const maxAttempts = 3;
+      const maxAttempts = 2;
       
       while (uploadAttempts < maxAttempts) {
         try {
-          const response = await axios.post('https://winshirt.fr/upload-visuel.php', formData, {
+          const response = await axios.post('https://winshirt.fr/media/upload-visuel.php', formData, {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
-            timeout: 30000, // 30 secondes de timeout
+            timeout: 10000, // 10 secondes de timeout
           });
           
           if (response.data?.url) {
