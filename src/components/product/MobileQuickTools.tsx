@@ -11,8 +11,8 @@ import { Design } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
 import { CompactDesignGallery } from './CompactDesignGallery';
 import { CompactSVGGallery } from './CompactSVGGallery';
-import { CompactAIGenerator } from './CompactAIGenerator';
-import { CompactUpload } from './CompactUpload';
+import { UploadDesign } from './UploadDesign';
+import { AIDesignGenerator } from './AIDesignGenerator';
 
 interface MobileQuickToolsProps {
   activeTab: string;
@@ -97,7 +97,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'designs') {
     return (
-      <Card className="bg-black/80 border-white/20 p-4">
+      <Card className="bg-black/80 border-white/20 p-4 max-h-96 overflow-y-auto">
         <CompactDesignGallery
           onSelectDesign={onSelectDesign}
           selectedDesign={selectedDesign}
@@ -108,7 +108,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'svg') {
     return (
-      <Card className="bg-black/80 border-white/20 p-4">
+      <Card className="bg-black/80 border-white/20 p-4 max-h-96 overflow-y-auto">
         <CompactSVGGallery
           onSelectDesign={onSelectDesign}
           selectedDesign={selectedDesign}
@@ -121,7 +121,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'text') {
     return (
-      <Card className="bg-black/80 border-white/20 p-4 space-y-4">
+      <Card className="bg-black/80 border-white/20 p-4 space-y-4 max-h-96 overflow-y-auto">
         <div>
           <Label className="text-white">Texte</Label>
           <Input
@@ -173,8 +173,8 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'upload') {
     return (
-      <Card className="bg-black/80 border-white/20 p-4">
-        <CompactUpload
+      <Card className="bg-black/80 border-white/20 p-4 max-h-96 overflow-y-auto">
+        <UploadDesign
           onFileUpload={onFileUpload}
           onRemoveBackground={onRemoveBackground}
           isRemovingBackground={isRemovingBackground}
@@ -186,8 +186,8 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'ai') {
     return (
-      <Card className="bg-black/80 border-white/20 p-4">
-        <CompactAIGenerator
+      <Card className="bg-black/80 border-white/20 p-4 max-h-96 overflow-y-auto">
+        <AIDesignGenerator
           onImageGenerated={onAIImageGenerated}
         />
       </Card>
@@ -196,7 +196,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'colors') {
     return (
-      <Card className="bg-black/80 border-white/20 p-4 space-y-4">
+      <Card className="bg-black/80 border-white/20 p-4 space-y-4 max-h-96 overflow-y-auto">
         {mockupColors && mockupColors.length > 0 && (
           <div>
             <Label className="text-white text-sm">Couleur du produit</Label>

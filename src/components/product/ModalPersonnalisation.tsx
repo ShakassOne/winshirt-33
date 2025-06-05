@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
@@ -17,6 +16,7 @@ import { ProductColorSelector } from './ProductColorSelector';
 import { EnhancedProductPreview } from './EnhancedProductPreview';
 import { SimplifiedMobileToolbar } from './SimplifiedMobileToolbar';
 import { MobileQuickTools } from './MobileQuickTools';
+import { AIDesignGenerator } from './AIDesignGenerator';
 
 interface ModalPersonnalisationProps {
   open: boolean;
@@ -27,6 +27,7 @@ interface ModalPersonnalisationProps {
   // Product data
   productName: string;
   productImageUrl?: string;
+  productAvailableColors?: string[];
   
   // Mockup data
   mockup?: any;
@@ -88,6 +89,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   onViewSideChange,
   productName,
   productImageUrl,
+  productAvailableColors,
   mockup,
   selectedMockupColor,
   onMockupColorChange,
@@ -181,17 +183,29 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     return url.includes('.svg') || url.includes('svg') || currentDesign.image_url.includes('data:image/svg');
   };
 
+  // Helper function to get filtered mockup colors based on product's available colors
+  const getFilteredMockupColors = () => {
+    if (!mockup?.colors) return [];
+    
+    if (!productAvailableColors || productAvailableColors.length === 0) {
+      return mockup.colors;
+    }
+    
+    return mockup.colors.filter((mockupColor: MockupColor) => 
+      productAvailableColors.some(availableColor => 
+        mockupColor.name.toLowerCase() === availableColor.toLowerCase()
+      )
+    );
+  };
+
+  const filteredMockupColors = getFilteredMockupColors();
   const hasTwoSides = mockup?.svg_back_url ? true : false;
   const hasDesign = getCurrentDesign() !== null;
 
   const handleDesignSelection = (design: Design) => {
     console.log('🎨 [ModalPersonnalisation] Sélection du design:', design.name);
     onSelectDesign(design);
-    
-    if (isMobile && !showFullModal) {
-      // In simplified mobile mode, just select the design without closing anything
-      setActiveTab('colors'); // Switch to colors tab to show relevant tools
-    }
+    // Ne pas fermer la modal automatiquement
   };
 
   const handleRemoveDesign = () => {
@@ -239,11 +253,11 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
       </div>
 
       <div className="w-1/2 flex flex-col">
-        {mockup?.colors && mockup.colors.length > 0 && (
+        {filteredMockupColors.length > 0 && (
           <div className="mb-6">
             <h3 className="text-lg font-medium mb-3">Couleur du produit</h3>
             <ProductColorSelector
-              colors={mockup.colors}
+              colors={filteredMockupColors}
               selectedColor={selectedMockupColor}
               onColorSelect={onMockupColorChange}
             />
@@ -304,7 +318,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             <TabsContent value="upload" className="h-full overflow-y-auto">
               <UploadDesign
                 onFileUpload={onFileUpload}
-                onAIImageGenerated={onAIImageGenerated}
                 onRemoveBackground={onRemoveBackground}
                 isRemovingBackground={isRemovingBackground}
                 currentDesign={getCurrentDesign()}
@@ -312,12 +325,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             </TabsContent>
 
             <TabsContent value="ai" className="h-full overflow-y-auto">
-              <UploadDesign
-                onFileUpload={onFileUpload}
-                onAIImageGenerated={onAIImageGenerated}
-                onRemoveBackground={onRemoveBackground}
-                isRemovingBackground={isRemovingBackground}
-                currentDesign={getCurrentDesign()}
+              <AIDesignGenerator
+                onImageGenerated={onAIImageGenerated}
               />
             </TabsContent>
 
@@ -348,7 +357,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
   const simplifiedMobileContent = (
     <div className="flex flex-col h-full">
-      <div className="flex-1 px-4 pt-4 pb-32">
+      <div className="flex-1 px-4 pt-4 pb-32 overflow-y-auto">
         <EnhancedProductPreview
           productName={productName}
           productImageUrl={productImageUrl}
@@ -405,7 +414,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           isSvgDesign={isSvgDesign()}
           svgColor={getCurrentSvgColor()}
           onSvgColorChange={onSvgColorChange}
-          mockupColors={mockup?.colors}
+          mockupColors={filteredMockupColors}
           selectedMockupColor={selectedMockupColor}
           onMockupColorChange={onMockupColorChange}
           onFileUpload={onFileUpload}
@@ -492,7 +501,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             <TabsContent value="upload" className="h-full overflow-y-auto mt-0">
               <UploadDesign
                 onFileUpload={onFileUpload}
-                onAIImageGenerated={onAIImageGenerated}
                 onRemoveBackground={onRemoveBackground}
                 isRemovingBackground={isRemovingBackground}
                 currentDesign={getCurrentDesign()}
@@ -500,12 +508,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             </TabsContent>
 
             <TabsContent value="ai" className="h-full overflow-y-auto mt-0">
-              <UploadDesign
-                onFileUpload={onFileUpload}
-                onAIImageGenerated={onAIImageGenerated}
-                onRemoveBackground={onRemoveBackground}
-                isRemovingBackground={isRemovingBackground}
-                currentDesign={getCurrentDesign()}
+              <AIDesignGenerator
+                onImageGenerated={onAIImageGenerated}
               />
             </TabsContent>
 
