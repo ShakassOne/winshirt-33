@@ -10,7 +10,6 @@ interface MobileUploadModalProps {
   open: boolean;
   onClose: () => void;
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onAIImageGenerated: (imageUrl: string, imageName: string) => void;
   onRemoveBackground: () => void;
   isRemovingBackground: boolean;
   currentDesign: Design | null;
@@ -20,7 +19,6 @@ export const MobileUploadModal: React.FC<MobileUploadModalProps> = ({
   open,
   onClose,
   onFileUpload,
-  onAIImageGenerated,
   onRemoveBackground,
   isRemovingBackground,
   currentDesign
@@ -42,10 +40,6 @@ export const MobileUploadModal: React.FC<MobileUploadModalProps> = ({
           <UploadDesign
             onFileUpload={(event) => {
               onFileUpload(event);
-              onClose();
-            }}
-            onAIImageGenerated={(url, name) => {
-              onAIImageGenerated(url, name);
               onClose();
             }}
             onRemoveBackground={onRemoveBackground}
