@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
@@ -344,21 +345,14 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           </div>
         </Tabs>
 
-        <div className="flex justify-between pt-4 border-t border-white/10 mt-4">
-          <Button variant="outline" onClick={onClose} className="px-6">
-            Annuler
-          </Button>
-          <Button onClick={onClose} className="px-6 bg-gradient-to-r from-winshirt-purple to-winshirt-blue">
-            Valider
-          </Button>
-        </div>
+        {/* Removed cancel/validate buttons as requested */}
       </div>
     </div>
   );
 
   const simplifiedMobileContent = (
     <div className="flex flex-col h-full">
-      <div className="flex-1 px-4 pt-4 pb-32 overflow-y-auto">
+      <div className="flex-1 px-2 pt-2 pb-32 overflow-y-auto">
         <EnhancedProductPreview
           productName={productName}
           productImageUrl={productImageUrl}
@@ -395,7 +389,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         />
       </div>
 
-      <div className="px-4 pb-2">
+      <div className="px-2 pb-2">
         <MobileQuickTools
           activeTab={activeTab}
           selectedDesign={getCurrentDesign()}
@@ -434,14 +428,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         selectedMockupColor={selectedMockupColor}
       />
 
-      <div className="absolute bottom-28 left-4 right-4 flex justify-between bg-black/80 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-        <Button variant="outline" onClick={onClose} className="px-4">
-          Annuler
-        </Button>
-        <Button onClick={onClose} className="px-4 bg-gradient-to-r from-winshirt-purple to-winshirt-blue">
-          Valider
-        </Button>
-      </div>
+      {/* Removed cancel/validate buttons as requested */}
     </div>
   );
 
@@ -529,13 +516,11 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
       </div>
 
       <div className="p-4 border-t border-white/10 bg-black/80">
-        <div className="flex justify-between">
+        <div className="flex justify-center">
           <Button variant="outline" onClick={() => setShowFullModal(false)} className="px-6">
             Retour
           </Button>
-          <Button onClick={onClose} className="px-6 bg-gradient-to-r from-winshirt-purple to-winshirt-blue">
-            Valider
-          </Button>
+          {/* Removed validate button as requested */}
         </div>
       </div>
     </div>
@@ -546,9 +531,9 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
       <>
         <Drawer open={open && !showFullModal} onOpenChange={(isOpen) => !isOpen && onClose()}>
           <DrawerContent className="bg-black/90 backdrop-blur-lg border-white/20 h-[100vh]">
-            <DrawerHeader className="border-b border-white/10">
+            <DrawerHeader className="border-b border-white/10 pb-2">
               <div className="flex items-center justify-between">
-                <DrawerTitle className="text-xl font-semibold">
+                <DrawerTitle className="text-lg font-semibold">
                   🎨 Personnalisation
                 </DrawerTitle>
                 <Button variant="ghost" size="icon" onClick={onClose}>
@@ -564,9 +549,9 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
         <Drawer open={showFullModal} onOpenChange={setShowFullModal}>
           <DrawerContent className="bg-black/90 backdrop-blur-lg border-white/20 h-[100vh]">
-            <DrawerHeader className="border-b border-white/10">
+            <DrawerHeader className="border-b border-white/10 pb-2">
               <div className="flex items-center justify-between">
-                <DrawerTitle className="text-xl font-semibold">
+                <DrawerTitle className="text-lg font-semibold">
                   🎨 Options avancées
                 </DrawerTitle>
                 <Button variant="ghost" size="icon" onClick={() => setShowFullModal(false)}>

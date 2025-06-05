@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -97,7 +96,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'designs') {
     return (
-      <Card className="bg-black/80 border-white/20 p-3 h-80 overflow-y-auto">
+      <Card className="bg-black/80 border-white/20 p-2 h-[50vh] overflow-y-auto">
         <CompactDesignGallery
           onSelectDesign={onSelectDesign}
           selectedDesign={selectedDesign}
@@ -108,20 +107,39 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'svg') {
     return (
-      <Card className="bg-black/80 border-white/20 p-3 h-80 overflow-y-auto">
-        <CompactSVGGallery
-          onSelectDesign={onSelectDesign}
-          selectedDesign={selectedDesign}
-          svgColor={svgColor}
-          onSvgColorChange={onSvgColorChange}
-        />
+      <Card className="bg-black/80 border-white/20 p-2 h-[50vh] overflow-y-auto">
+        <div className="space-y-3">
+          <CompactSVGGallery
+            onSelectDesign={onSelectDesign}
+            selectedDesign={selectedDesign}
+            svgColor={svgColor}
+            onSvgColorChange={onSvgColorChange}
+          />
+          {isSvgDesign && (
+            <div className="border-t border-white/20 pt-3">
+              <Label className="text-white text-xs mb-2 block">Couleur SVG</Label>
+              <div className="flex flex-wrap gap-2">
+                {['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff', '#ffff00'].map((color) => (
+                  <button
+                    key={color}
+                    className={`w-8 h-8 rounded-full border-2 ${
+                      svgColor === color ? 'border-white scale-110' : 'border-white/30'
+                    } transition-all`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => onSvgColorChange(color)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </Card>
     );
   }
 
   if (activeTab === 'text') {
     return (
-      <Card className="bg-black/80 border-white/20 p-3 space-y-3 h-80 overflow-y-auto">
+      <Card className="bg-black/80 border-white/20 p-3 space-y-3 h-[50vh] overflow-y-auto">
         <div>
           <Label className="text-white text-xs">Texte</Label>
           <Input
@@ -138,7 +156,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
             {['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff', '#ffff00'].map((color) => (
               <button
                 key={color}
-                className={`w-6 h-6 rounded-full border-2 ${
+                className={`w-8 h-8 rounded-full border-2 ${
                   textColor === color ? 'border-white scale-110' : 'border-white/30'
                 } transition-all`}
                 style={{ backgroundColor: color }}
@@ -173,7 +191,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'upload') {
     return (
-      <Card className="bg-black/80 border-white/20 p-3 h-80 overflow-y-auto">
+      <Card className="bg-black/80 border-white/20 p-3 h-[50vh] overflow-y-auto">
         <UploadDesign
           onFileUpload={onFileUpload}
           onRemoveBackground={onRemoveBackground}
@@ -186,7 +204,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'ai') {
     return (
-      <Card className="bg-black/80 border-white/20 p-3 h-80 overflow-y-auto">
+      <Card className="bg-black/80 border-white/20 p-3 h-[50vh] overflow-y-auto">
         <AIDesignGenerator
           onImageGenerated={onAIImageGenerated}
         />
@@ -196,11 +214,11 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'colors') {
     return (
-      <Card className="bg-black/80 border-white/20 p-3 space-y-3 h-80 overflow-y-auto">
+      <Card className="bg-black/80 border-white/20 p-3 space-y-3 h-[50vh] overflow-y-auto">
         {mockupColors && mockupColors.length > 0 && (
           <div>
             <Label className="text-white text-xs">Couleur du produit</Label>
-            <div className="grid grid-cols-5 gap-2 mt-1">
+            <div className="grid grid-cols-4 gap-2 mt-2">
               {mockupColors.map((color) => (
                 <button
                   key={color.id}
@@ -223,45 +241,17 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
         {isSvgDesign && (
           <div>
             <Label className="text-white text-xs">Couleur du design</Label>
-            <div className="flex flex-wrap gap-2 mt-1">
+            <div className="flex flex-wrap gap-2 mt-2">
               {['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'].map((color) => (
                 <button
                   key={color}
-                  className={`w-6 h-6 rounded-full border-2 ${
+                  className={`w-8 h-8 rounded-full border-2 ${
                     svgColor === color ? 'border-white scale-110' : 'border-white/30'
                   } transition-all`}
                   style={{ backgroundColor: color }}
                   onClick={() => onSvgColorChange(color)}
                 />
               ))}
-            </div>
-          </div>
-        )}
-
-        {selectedDesign && (
-          <div className="space-y-2">
-            <div>
-              <Label className="text-white text-xs">Taille ({Math.round(designTransform.scale * 100)}%)</Label>
-              <Slider
-                value={[designTransform.scale * 100]}
-                min={10}
-                max={100}
-                step={5}
-                onValueChange={(value) => onDesignTransformChange('scale', value[0] / 100)}
-                className="mt-1"
-              />
-            </div>
-            
-            <div>
-              <Label className="text-white text-xs">Rotation ({designTransform.rotation}°)</Label>
-              <Slider
-                value={[designTransform.rotation + 180]}
-                min={0}
-                max={360}
-                step={15}
-                onValueChange={(value) => onDesignTransformChange('rotation', value[0] - 180)}
-                className="mt-1"
-              />
             </div>
           </div>
         )}
