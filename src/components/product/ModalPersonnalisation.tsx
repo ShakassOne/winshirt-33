@@ -193,7 +193,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     
     return mockup.colors.filter((mockupColor: MockupColor) => 
       productAvailableColors.some(availableColor => 
-        mockupColor.name.toLowerCase() === availableColor.toLowerCase()
+        mockupColor.name.toLowerCase().includes(availableColor.toLowerCase()) ||
+        availableColor.toLowerCase().includes(mockupColor.name.toLowerCase())
       )
     );
   };

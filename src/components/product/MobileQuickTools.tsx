@@ -40,7 +40,7 @@ interface MobileQuickToolsProps {
   svgColor: string;
   onSvgColorChange: (color: string) => void;
   
-  // Product color props
+  // Product color props - filtered by product's available colors
   mockupColors?: MockupColor[];
   selectedMockupColor: MockupColor | null;
   onMockupColorChange: (color: MockupColor) => void;
@@ -97,7 +97,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'designs') {
     return (
-      <Card className="bg-black/80 border-white/20 p-4 max-h-96 overflow-y-auto">
+      <Card className="bg-black/80 border-white/20 p-3 h-80 overflow-y-auto">
         <CompactDesignGallery
           onSelectDesign={onSelectDesign}
           selectedDesign={selectedDesign}
@@ -108,7 +108,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'svg') {
     return (
-      <Card className="bg-black/80 border-white/20 p-4 max-h-96 overflow-y-auto">
+      <Card className="bg-black/80 border-white/20 p-3 h-80 overflow-y-auto">
         <CompactSVGGallery
           onSelectDesign={onSelectDesign}
           selectedDesign={selectedDesign}
@@ -121,26 +121,26 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'text') {
     return (
-      <Card className="bg-black/80 border-white/20 p-4 space-y-4 max-h-96 overflow-y-auto">
+      <Card className="bg-black/80 border-white/20 p-3 space-y-3 h-80 overflow-y-auto">
         <div>
-          <Label className="text-white">Texte</Label>
+          <Label className="text-white text-xs">Texte</Label>
           <Input
             value={textContent}
             onChange={(e) => onTextContentChange(e.target.value)}
             placeholder="Votre texte..."
-            className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+            className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-8 text-sm mt-1"
           />
         </div>
         
         <div>
-          <Label className="text-white">Couleur</Label>
-          <div className="flex gap-2 mt-2">
+          <Label className="text-white text-xs">Couleur</Label>
+          <div className="flex gap-2 mt-1">
             {['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff', '#ffff00'].map((color) => (
               <button
                 key={color}
-                className={`w-8 h-8 rounded-full border-2 ${
-                  textColor === color ? 'border-white' : 'border-white/30'
-                }`}
+                className={`w-6 h-6 rounded-full border-2 ${
+                  textColor === color ? 'border-white scale-110' : 'border-white/30'
+                } transition-all`}
                 style={{ backgroundColor: color }}
                 onClick={() => onTextColorChange(color)}
               />
@@ -149,21 +149,21 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
         </div>
         
         <div>
-          <Label className="text-white">Style</Label>
+          <Label className="text-white text-xs">Style</Label>
           <ToggleGroup 
             type="multiple" 
-            className="mt-2"
+            className="mt-1 h-8"
             value={getActiveStylesValue()}
             onValueChange={handleStyleChange}
           >
-            <ToggleGroupItem value="bold">
-              <Bold className="h-4 w-4" />
+            <ToggleGroupItem value="bold" className="h-8 w-8 p-0">
+              <Bold className="h-3 w-3" />
             </ToggleGroupItem>
-            <ToggleGroupItem value="italic">
-              <Italic className="h-4 w-4" />
+            <ToggleGroupItem value="italic" className="h-8 w-8 p-0">
+              <Italic className="h-3 w-3" />
             </ToggleGroupItem>
-            <ToggleGroupItem value="underline">
-              <Underline className="h-4 w-4" />
+            <ToggleGroupItem value="underline" className="h-8 w-8 p-0">
+              <Underline className="h-3 w-3" />
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
@@ -173,7 +173,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'upload') {
     return (
-      <Card className="bg-black/80 border-white/20 p-4 max-h-96 overflow-y-auto">
+      <Card className="bg-black/80 border-white/20 p-3 h-80 overflow-y-auto">
         <UploadDesign
           onFileUpload={onFileUpload}
           onRemoveBackground={onRemoveBackground}
@@ -186,7 +186,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'ai') {
     return (
-      <Card className="bg-black/80 border-white/20 p-4 max-h-96 overflow-y-auto">
+      <Card className="bg-black/80 border-white/20 p-3 h-80 overflow-y-auto">
         <AIDesignGenerator
           onImageGenerated={onAIImageGenerated}
         />
@@ -196,11 +196,11 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
   if (activeTab === 'colors') {
     return (
-      <Card className="bg-black/80 border-white/20 p-4 space-y-4 max-h-96 overflow-y-auto">
+      <Card className="bg-black/80 border-white/20 p-3 space-y-3 h-80 overflow-y-auto">
         {mockupColors && mockupColors.length > 0 && (
           <div>
-            <Label className="text-white text-sm">Couleur du produit</Label>
-            <div className="grid grid-cols-4 gap-2 mt-2">
+            <Label className="text-white text-xs">Couleur du produit</Label>
+            <div className="grid grid-cols-5 gap-2 mt-1">
               {mockupColors.map((color) => (
                 <button
                   key={color.id}
@@ -222,12 +222,12 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
 
         {isSvgDesign && (
           <div>
-            <Label className="text-white text-sm">Couleur du design</Label>
-            <div className="flex flex-wrap gap-2 mt-2">
+            <Label className="text-white text-xs">Couleur du design</Label>
+            <div className="flex flex-wrap gap-2 mt-1">
               {['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'].map((color) => (
                 <button
                   key={color}
-                  className={`w-8 h-8 rounded-full border-2 ${
+                  className={`w-6 h-6 rounded-full border-2 ${
                     svgColor === color ? 'border-white scale-110' : 'border-white/30'
                   } transition-all`}
                   style={{ backgroundColor: color }}
@@ -239,35 +239,35 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
         )}
 
         {selectedDesign && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div>
-              <Label className="text-white text-sm">Taille ({Math.round(designTransform.scale * 100)}%)</Label>
+              <Label className="text-white text-xs">Taille ({Math.round(designTransform.scale * 100)}%)</Label>
               <Slider
                 value={[designTransform.scale * 100]}
                 min={10}
                 max={100}
                 step={5}
                 onValueChange={(value) => onDesignTransformChange('scale', value[0] / 100)}
-                className="mt-2"
+                className="mt-1"
               />
             </div>
             
             <div>
-              <Label className="text-white text-sm">Rotation ({designTransform.rotation}°)</Label>
+              <Label className="text-white text-xs">Rotation ({designTransform.rotation}°)</Label>
               <Slider
                 value={[designTransform.rotation + 180]}
                 min={0}
                 max={360}
                 step={15}
                 onValueChange={(value) => onDesignTransformChange('rotation', value[0] - 180)}
-                className="mt-2"
+                className="mt-1"
               />
             </div>
           </div>
         )}
 
         {!selectedDesign && !isSvgDesign && !mockupColors?.length && (
-          <div className="text-center py-4 text-white/50 text-sm">
+          <div className="text-center py-8 text-white/50 text-xs">
             Sélectionnez un design ou un produit pour voir les options de couleur
           </div>
         )}

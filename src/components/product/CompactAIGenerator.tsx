@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Sparkles, Wand2 } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import AIImageGallery from './AIImageGallery';
 
 interface CompactAIGeneratorProps {
@@ -34,62 +34,35 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div>
-        <Label className="text-white text-sm">Génération rapide</Label>
-        <div className="flex gap-2 mt-2">
+        <Label className="text-white text-xs">Génération rapide</Label>
+        <div className="flex gap-2 mt-1">
           <Input
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Décrivez votre image..."
-            className="bg-white/10 border-white/20 text-white placeholder:text-white/50 text-sm"
+            className="bg-white/10 border-white/20 text-white placeholder:text-white/50 text-xs h-8"
             disabled={isGenerating}
           />
           <Button
             onClick={handleGenerate}
             disabled={!prompt.trim() || isGenerating}
-            className="bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90 shrink-0"
+            className="bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90 shrink-0 h-8 px-3"
             size="sm"
           >
             {isGenerating ? (
-              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+              <div className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full" />
             ) : (
-              <Sparkles className="h-4 w-4" />
+              <Sparkles className="h-3 w-3" />
             )}
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-xs bg-white/5 border-white/20 text-white/70"
-          onClick={() => setPrompt('Logo moderne minimaliste')}
-        >
-          Logo moderne
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-xs bg-white/5 border-white/20 text-white/70"
-          onClick={() => setPrompt('Illustration abstraite colorée')}
-        >
-          Art abstrait
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-xs bg-white/5 border-white/20 text-white/70"
-          onClick={() => setPrompt('Motif géométrique élégant')}
-        >
-          Géométrique
-        </Button>
-      </div>
-
       <div>
-        <Label className="text-white text-sm">Images IA disponibles</Label>
-        <div className="mt-2 max-h-32 overflow-hidden">
+        <Label className="text-white text-xs">Images IA disponibles</Label>
+        <div className="mt-1 h-24 overflow-y-auto">
           <AIImageGallery onImageSelect={onImageGenerated} />
         </div>
       </div>
