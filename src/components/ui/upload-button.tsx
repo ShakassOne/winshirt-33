@@ -36,7 +36,6 @@ export function UploadButton({
 
     setIsUploading(true);
     try {
-      console.log('[UploadButton] Upload vers winshirt.fr/upload-visuel.php...');
       const url = await uploadToExternalScript(file);
       
       toast({
@@ -46,9 +45,6 @@ export function UploadButton({
       
       onUpload(url);
     } catch (error) {
-      console.error("Upload error:", error);
-      
-      // Amélioration de la gestion d'erreurs
       let errorMessage = "Une erreur est survenue lors du téléchargement";
       
       if (error instanceof Error) {
@@ -68,7 +64,6 @@ export function UploadButton({
       });
     } finally {
       setIsUploading(false);
-      // Reset the input to allow uploading the same file again
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }

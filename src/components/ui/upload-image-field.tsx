@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { UploadButton } from '@/components/ui/upload-button';
-import { AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 
 interface UploadImageFieldProps {
   label: string;
@@ -27,56 +27,19 @@ export function UploadImageField({
 }: UploadImageFieldProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(value || null);
   const [svgContent, setSvgContent] = useState<string>('');
-  const [isLoadingSvg, setIsLoadingSvg] = useState(false);
-  const [svgStatus, setSvgStatus] = useState<'clean' | 'needs-fix' | 'external' | 'unknown'>('unknown');
 
   const isSvg = value && value.toLowerCase().endsWith('.svg');
 
   useEffect(() => {
     setImagePreview(value || null);
     
-    // Si c'est un SVG, charger le contenu pour l'affichage inline et analyser
     if (isSvg && value) {
-      setIsLoadingSvg(true);
-      console.log('📁 [UploadImageField] Chargement du SVG pour aperçu:', value);
-      
       fetch(value)
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`Erreur HTTP: ${res.status}`);
-          }
-          return res.text();
-        })
-        .then((text) => {
-          console.log('✅ [UploadImageField] SVG chargé avec succès');
-          setSvgContent(text);
-          
-          // Analyser rapidement le SVG pour déterminer son statut
-          const hasStyle = text.includes('<style');
-          const hasFixedSize = /svg[^>]*\s(width|height)=/.test(text);
-          const missingFill = /<(path|g)[^>]*(?!.*fill=)/.test(text);
-          const hasCurrentColor = text.includes('currentColor');
-          
-          if (hasStyle || hasFixedSize || (missingFill && !hasCurrentColor)) {
-            setSvgStatus('needs-fix');
-          } else if (hasCurrentColor) {
-            setSvgStatus('clean');
-          } else {
-            setSvgStatus('clean');
-          }
-          
-          setIsLoadingSvg(false);
-        })
-        .catch((error) => {
-          console.warn('⚠️ [UploadImageField] SVG externe non accessible:', error);
-          setSvgContent('');
-          setSvgStatus('external'); // SVG externe, potentiellement recolorisable mais non analysable
-          setIsLoadingSvg(false);
-        });
+        .then((res) => res.ok ? res.text() : '')
+        .then((text) => setSvgContent(text))
+        .catch(() => setSvgContent(''));
     } else {
       setSvgContent('');
-      setSvgStatus('unknown');
-      setIsLoadingSvg(false);
     }
   }, [value, isSvg]);
 
@@ -87,48 +50,8 @@ export function UploadImageField({
   };
 
   const handleUpload = (url: string) => {
-    console.log('📁 [UploadImageField] Fichier uploadé:', url);
     onChange(url);
     setImagePreview(url);
-    
-    // Si c'est un SVG, indiquer à l'utilisateur
-    if (url.toLowerCase().endsWith('.svg')) {
-      console.log('🎨 [UploadImageField] SVG détecté après upload:', url);
-    }
-  };
-
-  const getSvgStatusBadge = () => {
-    if (!isSvg) return null;
-    
-    switch (svgStatus) {
-      case 'clean':
-        return (
-          <Badge variant="secondary" className="bg-green-500/20 text-green-300 border-green-500/30">
-            <CheckCircle className="h-3 w-3 mr-1" />
-            SVG Optimisé
-          </Badge>
-        );
-      case 'needs-fix':
-        return (
-          <Badge variant="secondary" className="bg-orange-500/20 text-orange-300 border-orange-500/30">
-            <AlertTriangle className="h-3 w-3 mr-1" />
-            SVG à corriger
-          </Badge>
-        );
-      case 'external':
-        return (
-          <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
-            <Info className="h-3 w-3 mr-1" />
-            SVG Externe
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-500/30">
-            SVG
-          </Badge>
-        );
-    }
   };
 
   return (
@@ -153,17 +76,17 @@ export function UploadImageField({
         <div className="mt-2 rounded-lg overflow-hidden border border-dashed p-2 flex flex-col items-center">
           <div className="flex items-center gap-2 mb-2">
             <p className="text-sm text-muted-foreground">Aperçu</p>
-            {getSvgStatusBadge()}
+            {isSvg && (
+              <Badge variant="secondary" className="bg-green-500/20 text-green-300 border-green-500/30">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                SVG
+              </Badge>
+            )}
           </div>
           
           {isSvg ? (
             <div className="w-full max-w-32 h-32 flex items-center justify-center">
-              {isLoadingSvg ? (
-                <div className="text-xs text-muted-foreground flex items-center">
-                  <div className="animate-spin h-3 w-3 mr-2 border border-gray-400 border-t-transparent rounded-full"></div>
-                  Analyse SVG...
-                </div>
-              ) : svgContent ? (
+              {svgContent ? (
                 <div 
                   className="max-w-full max-h-full"
                   dangerouslySetInnerHTML={{ __html: svgContent }}
@@ -171,11 +94,8 @@ export function UploadImageField({
                 />
               ) : (
                 <div className="text-xs text-muted-foreground text-center">
-                  <div className="text-center">
-                    <div className="text-2xl mb-2">🎨</div>
-                    <p>SVG Externe</p>
-                    <p className="mt-1 text-xs text-blue-400">Recolorisable côté client</p>
-                  </div>
+                  <div className="text-2xl mb-2">🎨</div>
+                  <p>SVG Externe</p>
                 </div>
               )}
             </div>
@@ -185,6 +105,7 @@ export function UploadImageField({
               alt="Aperçu"
               className="max-h-32 object-contain rounded"
               onError={() => setImagePreview(null)}
+              loading="lazy"
             />
           )}
         </div>

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,7 +16,7 @@ import { ProductColorSelector } from './ProductColorSelector';
 import { EnhancedProductPreview } from './EnhancedProductPreview';
 import { SimplifiedMobileToolbar } from './SimplifiedMobileToolbar';
 import { MobileQuickTools } from './MobileQuickTools';
-import { AIDesignGenerator } from './AIDesignGenerator';
+import { CompactAIGenerator } from './CompactAIGenerator';
 
 interface ModalPersonnalisationProps {
   open: boolean;
@@ -136,56 +135,27 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   const [activeTab, setActiveTab] = useState('designs');
   const [showFullModal, setShowFullModal] = useState(false);
 
-  const getCurrentDesign = () => {
-    return currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack;
-  };
+  // Memoized getters for better performance
+  const currentData = useMemo(() => ({
+    design: currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack,
+    svgColor: currentViewSide === 'front' ? svgColorFront : svgColorBack,
+    svgContent: currentViewSide === 'front' ? svgContentFront : svgContentBack,
+    textContent: currentViewSide === 'front' ? textContentFront : textContentBack,
+    textFont: currentViewSide === 'front' ? textFontFront : textFontBack,
+    textColor: currentViewSide === 'front' ? textColorFront : textColorBack,
+    textStyles: currentViewSide === 'front' ? textStylesFront : textStylesBack,
+    textTransform: currentViewSide === 'front' ? textTransformFront : textTransformBack,
+    designTransform: currentViewSide === 'front' ? designTransformFront : designTransformBack,
+    selectedSize: currentViewSide === 'front' ? selectedSizeFront : selectedSizeBack,
+  }), [
+    currentViewSide, selectedDesignFront, selectedDesignBack, svgColorFront, svgColorBack,
+    svgContentFront, svgContentBack, textContentFront, textContentBack, textFontFront,
+    textFontBack, textColorFront, textColorBack, textStylesFront, textStylesBack,
+    textTransformFront, textTransformBack, designTransformFront, designTransformBack,
+    selectedSizeFront, selectedSizeBack
+  ]);
 
-  const getCurrentSvgColor = () => {
-    return currentViewSide === 'front' ? svgColorFront : svgColorBack;
-  };
-
-  const getCurrentSvgContent = () => {
-    return currentViewSide === 'front' ? svgContentFront : svgContentBack;
-  };
-
-  const getCurrentTextContent = () => {
-    return currentViewSide === 'front' ? textContentFront : textContentBack;
-  };
-
-  const getCurrentTextFont = () => {
-    return currentViewSide === 'front' ? textFontFront : textFontBack;
-  };
-
-  const getCurrentTextColor = () => {
-    return currentViewSide === 'front' ? textColorFront : textColorBack;
-  };
-
-  const getCurrentTextStyles = () => {
-    return currentViewSide === 'front' ? textStylesFront : textStylesBack;
-  };
-
-  const getCurrentTextTransform = () => {
-    return currentViewSide === 'front' ? textTransformFront : textTransformBack;
-  };
-
-  const getCurrentDesignTransform = () => {
-    return currentViewSide === 'front' ? designTransformFront : designTransformBack;
-  };
-
-  const getCurrentSelectedSize = () => {
-    return currentViewSide === 'front' ? selectedSizeFront : selectedSizeBack;
-  };
-
-  const isSvgDesign = () => {
-    const currentDesign = getCurrentDesign();
-    if (!currentDesign?.image_url) return false;
-    
-    const url = currentDesign.image_url.toLowerCase();
-    return url.includes('.svg') || url.includes('svg') || currentDesign.image_url.includes('data:image/svg');
-  };
-
-  // Helper function to get filtered mockup colors based on product's available colors
-  const getFilteredMockupColors = () => {
+  const filteredMockupColors = useMemo(() => {
     if (!mockup?.colors) return [];
     
     if (!productAvailableColors || productAvailableColors.length === 0) {
@@ -198,21 +168,25 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         availableColor.toLowerCase().includes(mockupColor.name.toLowerCase())
       )
     );
+  }, [mockup?.colors, productAvailableColors]);
+
+  const hasTwoSides = mockup?.svg_back_url ? true : false;
+  const hasDesign = currentData.design !== null;
+
+  const isSvgDesign = () => {
+    const currentDesign = currentData.design;
+    if (!currentDesign?.image_url) return false;
+    
+    const url = currentDesign.image_url.toLowerCase();
+    return url.includes('.svg') || url.includes('svg') || currentDesign.image_url.includes('data:image/svg');
   };
 
-  const filteredMockupColors = getFilteredMockupColors();
-  const hasTwoSides = mockup?.svg_back_url ? true : false;
-  const hasDesign = getCurrentDesign() !== null;
-
   const handleDesignSelection = (design: Design) => {
-    console.log('🎨 [ModalPersonnalisation] Sélection du design:', design.name);
     onSelectDesign(design);
-    // Ne pas fermer la modal automatiquement
   };
 
   const handleRemoveDesign = () => {
     // This would need to be passed as a prop or implemented
-    console.log('Remove design');
   };
 
   const handleRemoveText = () => {
@@ -294,9 +268,9 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             <TabsContent value="designs" className="h-full overflow-y-auto">
               <GalleryDesigns
                 onSelectDesign={handleDesignSelection}
-                selectedDesign={getCurrentDesign()}
-                currentDesignTransform={getCurrentDesignTransform()}
-                selectedSize={getCurrentSelectedSize()}
+                selectedDesign={currentData.design}
+                currentDesignTransform={currentData.designTransform}
+                selectedSize={currentData.selectedSize}
                 onDesignTransformChange={onDesignTransformChange}
                 onSizeChange={onSizeChange}
               />
@@ -304,11 +278,11 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
             <TabsContent value="text" className="h-full overflow-y-auto">
               <TextCustomizer
-                textContent={getCurrentTextContent()}
-                textFont={getCurrentTextFont()}
-                textColor={getCurrentTextColor()}
-                textStyles={getCurrentTextStyles()}
-                textTransform={getCurrentTextTransform()}
+                textContent={currentData.textContent}
+                textFont={currentData.textFont}
+                textColor={currentData.textColor}
+                textStyles={currentData.textStyles}
+                textTransform={currentData.textTransform}
                 onTextContentChange={onTextContentChange}
                 onTextFontChange={onTextFontChange}
                 onTextColorChange={onTextColorChange}
@@ -322,12 +296,12 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                 onFileUpload={onFileUpload}
                 onRemoveBackground={onRemoveBackground}
                 isRemovingBackground={isRemovingBackground}
-                currentDesign={getCurrentDesign()}
+                currentDesign={currentData.design}
               />
             </TabsContent>
 
             <TabsContent value="ai" className="h-full overflow-y-auto">
-              <AIDesignGenerator
+              <CompactAIGenerator
                 onImageGenerated={onAIImageGenerated}
               />
             </TabsContent>
@@ -335,17 +309,15 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             <TabsContent value="svg" className="h-full overflow-y-auto">
               <SVGDesigns
                 onSelectDesign={handleDesignSelection}
-                selectedDesign={getCurrentDesign()}
+                selectedDesign={currentData.design}
                 onFileUpload={onFileUpload}
                 onSvgColorChange={onSvgColorChange}
                 onSvgContentChange={onSvgContentChange}
-                defaultSvgColor={getCurrentSvgColor()}
+                defaultSvgColor={currentData.svgColor}
               />
             </TabsContent>
           </div>
         </Tabs>
-
-        {/* Removed cancel/validate buttons as requested */}
       </div>
     </div>
   );
@@ -392,22 +364,22 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
       <div className="px-2 pb-2">
         <MobileQuickTools
           activeTab={activeTab}
-          selectedDesign={getCurrentDesign()}
-          designTransform={getCurrentDesignTransform()}
-          selectedSize={getCurrentSelectedSize()}
+          selectedDesign={currentData.design}
+          designTransform={currentData.designTransform}
+          selectedSize={currentData.selectedSize}
           onDesignTransformChange={onDesignTransformChange}
           onSizeChange={onSizeChange}
           onSelectDesign={handleDesignSelection}
-          textContent={getCurrentTextContent()}
-          textFont={getCurrentTextFont()}
-          textColor={getCurrentTextColor()}
-          textStyles={getCurrentTextStyles()}
+          textContent={currentData.textContent}
+          textFont={currentData.textFont}
+          textColor={currentData.textColor}
+          textStyles={currentData.textStyles}
           onTextContentChange={onTextContentChange}
           onTextFontChange={onTextFontChange}
           onTextColorChange={onTextColorChange}
           onTextStylesChange={onTextStylesChange}
           isSvgDesign={isSvgDesign()}
-          svgColor={getCurrentSvgColor()}
+          svgColor={currentData.svgColor}
           onSvgColorChange={onSvgColorChange}
           mockupColors={filteredMockupColors}
           selectedMockupColor={selectedMockupColor}
@@ -427,8 +399,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         isSvgDesign={isSvgDesign()}
         selectedMockupColor={selectedMockupColor}
       />
-
-      {/* Removed cancel/validate buttons as requested */}
     </div>
   );
 
@@ -463,9 +433,9 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             <TabsContent value="designs" className="h-full overflow-y-auto mt-0">
               <GalleryDesigns
                 onSelectDesign={handleDesignSelection}
-                selectedDesign={getCurrentDesign()}
-                currentDesignTransform={getCurrentDesignTransform()}
-                selectedSize={getCurrentSelectedSize()}
+                selectedDesign={currentData.design}
+                currentDesignTransform={currentData.designTransform}
+                selectedSize={currentData.selectedSize}
                 onDesignTransformChange={onDesignTransformChange}
                 onSizeChange={onSizeChange}
               />
@@ -473,11 +443,11 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
             <TabsContent value="text" className="h-full overflow-y-auto mt-0">
               <TextCustomizer
-                textContent={getCurrentTextContent()}
-                textFont={getCurrentTextFont()}
-                textColor={getCurrentTextColor()}
-                textStyles={getCurrentTextStyles()}
-                textTransform={getCurrentTextTransform()}
+                textContent={currentData.textContent}
+                textFont={currentData.textFont}
+                textColor={currentData.textColor}
+                textStyles={currentData.textStyles}
+                textTransform={currentData.textTransform}
                 onTextContentChange={onTextContentChange}
                 onTextFontChange={onTextFontChange}
                 onTextColorChange={onTextColorChange}
@@ -491,12 +461,12 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                 onFileUpload={onFileUpload}
                 onRemoveBackground={onRemoveBackground}
                 isRemovingBackground={isRemovingBackground}
-                currentDesign={getCurrentDesign()}
+                currentDesign={currentData.design}
               />
             </TabsContent>
 
             <TabsContent value="ai" className="h-full overflow-y-auto mt-0">
-              <AIDesignGenerator
+              <CompactAIGenerator
                 onImageGenerated={onAIImageGenerated}
               />
             </TabsContent>
@@ -504,11 +474,11 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             <TabsContent value="svg" className="h-full overflow-y-auto mt-0">
               <SVGDesigns
                 onSelectDesign={handleDesignSelection}
-                selectedDesign={getCurrentDesign()}
+                selectedDesign={currentData.design}
                 onFileUpload={onFileUpload}
                 onSvgColorChange={onSvgColorChange}
                 onSvgContentChange={onSvgContentChange}
-                defaultSvgColor={getCurrentSvgColor()}
+                defaultSvgColor={currentData.svgColor}
               />
             </TabsContent>
           </div>
@@ -520,7 +490,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           <Button variant="outline" onClick={() => setShowFullModal(false)} className="px-6">
             Retour
           </Button>
-          {/* Removed validate button as requested */}
         </div>
       </div>
     </div>
@@ -573,7 +542,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
       open={open} 
       onOpenChange={(isOpen) => {
         if (!isOpen) {
-          console.log("🛑 Tentative de fermeture, validation requise");
           onClose();
         }
       }}

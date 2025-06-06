@@ -29,7 +29,6 @@ export const TouchHandles: React.FC<TouchHandlesProps> = ({
     const startY = startTouches ? startTouches[0].clientY : (e as React.MouseEvent).clientY;
     const startScale = currentScale;
 
-    // Calculate center point for more stable scaling
     const element = (e.target as HTMLElement).closest('[style*="transform"]');
     const rect = element?.getBoundingClientRect();
     const centerX = rect ? rect.left + rect.width / 2 : startX;
@@ -39,17 +38,10 @@ export const TouchHandles: React.FC<TouchHandlesProps> = ({
       const currentX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
       const currentY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
       
-      // Calculate distance from center for more stable scaling
       const startDistance = Math.sqrt(Math.pow(startX - centerX, 2) + Math.pow(startY - centerY, 2));
       const currentDistance = Math.sqrt(Math.pow(currentX - centerX, 2) + Math.pow(currentY - centerY, 2));
       
-      let scaleFactor = currentDistance / startDistance;
-      
-      // Apply corner-specific scaling direction
-      if (corner === 'top-left' || corner === 'top-right') {
-        scaleFactor = scaleFactor;
-      }
-      
+      const scaleFactor = currentDistance / startDistance;
       const newScale = Math.max(0.2, Math.min(3, startScale * scaleFactor));
       onResize(newScale);
     };
@@ -97,7 +89,6 @@ export const TouchHandles: React.FC<TouchHandlesProps> = ({
 
   return (
     <>
-      {/* Corner resize handles - much larger and more stable */}
       <div 
         className="absolute -top-3 -left-3 w-8 h-8 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-nw-resize flex items-center justify-center"
         onTouchStart={(e) => handleCornerDrag(e, 'top-left')}
@@ -127,7 +118,6 @@ export const TouchHandles: React.FC<TouchHandlesProps> = ({
         <div className="w-2 h-2 bg-white rounded-full"></div>
       </div>
 
-      {/* Rotation handle - larger */}
       <div 
         className="absolute -top-12 right-0 w-10 h-10 bg-green-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing"
         onTouchStart={handleRotationDrag}
@@ -136,7 +126,6 @@ export const TouchHandles: React.FC<TouchHandlesProps> = ({
         <RotateCw className="h-5 w-5 text-white" />
       </div>
 
-      {/* Delete handle - larger */}
       <div className="absolute -top-12 left-0">
         <Button
           size="sm"
@@ -148,7 +137,6 @@ export const TouchHandles: React.FC<TouchHandlesProps> = ({
         </Button>
       </div>
 
-      {/* Move indicator */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
         <Move className="h-8 w-8 text-white/60" />
       </div>

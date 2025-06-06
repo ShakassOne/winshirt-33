@@ -1,9 +1,9 @@
-import React from 'react';
+
+import React, { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Bold, Italic, Underline } from 'lucide-react';
 import { Design } from '@/types/supabase.types';
@@ -11,7 +11,7 @@ import { MockupColor } from '@/types/mockup.types';
 import { CompactDesignGallery } from './CompactDesignGallery';
 import { CompactSVGGallery } from './CompactSVGGallery';
 import { UploadDesign } from './UploadDesign';
-import { AIDesignGenerator } from './AIDesignGenerator';
+import { CompactAIGenerator } from './CompactAIGenerator';
 
 interface MobileQuickToolsProps {
   activeTab: string;
@@ -78,13 +78,15 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
   onRemoveBackground,
   isRemovingBackground
 }) => {
-  const getActiveStylesValue = () => {
+  const activeStylesValue = useMemo(() => {
     const activeStyles = [];
     if (textStyles.bold) activeStyles.push('bold');
     if (textStyles.italic) activeStyles.push('italic');
     if (textStyles.underline) activeStyles.push('underline');
     return activeStyles;
-  };
+  }, [textStyles]);
+
+  const colorOptions = ['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff', '#ffff00'];
 
   const handleStyleChange = (values: string[]) => {
     onTextStylesChange({
@@ -93,6 +95,16 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
       underline: values.includes('underline')
     });
   };
+
+  const ColorButton = ({ color, isSelected, onClick }: { color: string; isSelected: boolean; onClick: () => void }) => (
+    <button
+      className={`w-8 h-8 rounded-full border-2 ${
+        isSelected ? 'border-white scale-110' : 'border-white/30'
+      } transition-all`}
+      style={{ backgroundColor: color }}
+      onClick={onClick}
+    />
+  );
 
   if (activeTab === 'designs') {
     return (
@@ -119,13 +131,11 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
             <div className="border-t border-white/20 pt-3">
               <Label className="text-white text-xs mb-2 block">Couleur SVG</Label>
               <div className="flex flex-wrap gap-2">
-                {['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff', '#ffff00'].map((color) => (
-                  <button
+                {colorOptions.map((color) => (
+                  <ColorButton
                     key={color}
-                    className={`w-8 h-8 rounded-full border-2 ${
-                      svgColor === color ? 'border-white scale-110' : 'border-white/30'
-                    } transition-all`}
-                    style={{ backgroundColor: color }}
+                    color={color}
+                    isSelected={svgColor === color}
                     onClick={() => onSvgColorChange(color)}
                   />
                 ))}
@@ -153,13 +163,11 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
         <div>
           <Label className="text-white text-xs">Couleur</Label>
           <div className="flex gap-2 mt-1">
-            {['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff', '#ffff00'].map((color) => (
-              <button
+            {colorOptions.map((color) => (
+              <ColorButton
                 key={color}
-                className={`w-8 h-8 rounded-full border-2 ${
-                  textColor === color ? 'border-white scale-110' : 'border-white/30'
-                } transition-all`}
-                style={{ backgroundColor: color }}
+                color={color}
+                isSelected={textColor === color}
                 onClick={() => onTextColorChange(color)}
               />
             ))}
@@ -171,7 +179,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
           <ToggleGroup 
             type="multiple" 
             className="mt-1 h-8"
-            value={getActiveStylesValue()}
+            value={activeStylesValue}
             onValueChange={handleStyleChange}
           >
             <ToggleGroupItem value="bold" className="h-8 w-8 p-0">
@@ -205,7 +213,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
   if (activeTab === 'ai') {
     return (
       <Card className="bg-black/80 border-white/20 p-3 h-[50vh] overflow-y-auto">
-        <AIDesignGenerator
+        <CompactAIGenerator
           onImageGenerated={onAIImageGenerated}
         />
       </Card>
@@ -231,6 +239,7 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
                     src={color.front_image_url}
                     alt={color.name}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 </button>
               ))}
@@ -242,13 +251,11 @@ export const MobileQuickTools: React.FC<MobileQuickToolsProps> = ({
           <div>
             <Label className="text-white text-xs">Couleur du design</Label>
             <div className="flex flex-wrap gap-2 mt-2">
-              {['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'].map((color) => (
-                <button
+              {[...colorOptions, '#ff00ff', '#00ffff'].map((color) => (
+                <ColorButton
                   key={color}
-                  className={`w-8 h-8 rounded-full border-2 ${
-                    svgColor === color ? 'border-white scale-110' : 'border-white/30'
-                  } transition-all`}
-                  style={{ backgroundColor: color }}
+                  color={color}
+                  isSelected={svgColor === color}
                   onClick={() => onSvgColorChange(color)}
                 />
               ))}

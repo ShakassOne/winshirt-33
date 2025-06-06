@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,32 +13,26 @@ interface AIImageGalleryProps {
 
 const AIImageGallery = ({ onImageSelect }: AIImageGalleryProps) => {
   const [images, setImages] = useState<AIImage[]>([]);
-  const [filteredImages, setFilteredImages] = useState<AIImage[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+
+  const filteredImages = useMemo(() => {
+    if (searchTerm.trim() === '') return images;
+    return images.filter(image =>
+      image.prompt.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm, images]);
 
   useEffect(() => {
     const fetchImages = async () => {
       setIsLoading(true);
       const availableImages = await getAvailableAIImages(50);
       setImages(availableImages);
-      setFilteredImages(availableImages);
       setIsLoading(false);
     };
 
     fetchImages();
   }, []);
-
-  useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredImages(images);
-    } else {
-      const filtered = images.filter(image =>
-        image.prompt.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredImages(filtered);
-    }
-  }, [searchTerm, images]);
 
   const handleImageSelect = (image: AIImage) => {
     onImageSelect(image.image_url, `IA: ${image.prompt.substring(0, 30)}...`);
@@ -96,6 +90,7 @@ const AIImageGallery = ({ onImageSelect }: AIImageGalleryProps) => {
                   src={image.image_url}
                   alt={image.prompt}
                   className="w-full h-16 object-cover group-hover:scale-105 transition-transform"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <Button size="sm" variant="secondary" className="text-xs h-6 px-2">

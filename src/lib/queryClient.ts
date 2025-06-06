@@ -5,13 +5,13 @@ export const createOptimizedQueryClient = () => {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 2 * 60 * 1000, // 2 minutes
-        gcTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        gcTime: 10 * 60 * 1000, // 10 minutes
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         refetchOnMount: false,
         retry: 1,
-        retryDelay: 1000,
+        retryDelay: 2000,
       },
       mutations: {
         retry: 0,
@@ -19,5 +19,3 @@ export const createOptimizedQueryClient = () => {
     },
   });
 };
-
-console.log('[QueryClient] Optimized configuration loaded');

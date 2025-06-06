@@ -21,14 +21,12 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
     
     setIsGenerating(true);
     try {
-      // Simulation de génération - à remplacer par l'appel réel à l'API
       setTimeout(() => {
         onImageGenerated('/placeholder.svg', `IA: ${prompt.substring(0, 30)}...`);
         setIsGenerating(false);
         setPrompt('');
       }, 2000);
     } catch (error) {
-      console.error('Erreur de génération:', error);
       setIsGenerating(false);
     }
   };
