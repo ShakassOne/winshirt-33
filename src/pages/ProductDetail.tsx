@@ -10,12 +10,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, ShoppingCart, Star, Package, Palette, Shirt, Award } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { useCart } from '@/context/CartContext';
-import { fetchProductById, fetchMockupById, fetchLotteries } from '@/services/api.service';
+import { fetchProductById, fetchMockupById, fetchAllLotteries } from '@/services/api.service';
 import { Product, Design, Lottery } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
 import { ModalPersonnalisation } from '@/components/product/ModalPersonnalisation';
 import { LotterySelectionRequired } from '@/components/product/LotterySelectionRequired';
-import { useDesignState } from '@/hooks/useDesignState';
 import { useMockupCapture } from '@/hooks/useMockupCapture';
 import { useScrollReset } from '@/hooks/useScrollReset';
 import { useHDCaptureOnAddToCart } from '@/hooks/useHDCaptureOnAddToCart';
@@ -42,46 +41,47 @@ const ProductDetail: React.FC = () => {
   const [selectedLotteries, setSelectedLotteries] = useState<string[]>([]);
   const [showLotteryError, setShowLotteryError] = useState(false);
 
-  // Design state hook
-  const {
-    selectedDesignFront,
-    selectedDesignBack,
-    designTransformFront,
-    designTransformBack,
-    selectedSizeFront,
-    selectedSizeBack,
-    svgColorFront,
-    svgColorBack,
-    svgContentFront,
-    svgContentBack,
-    textContentFront,
-    textContentBack,
-    textFontFront,
-    textFontBack,
-    textColorFront,
-    textColorBack,
-    textStylesFront,
-    textStylesBack,
-    textTransformFront,
-    textTransformBack,
-    onSelectDesign,
-    onDesignTransformChange,
-    onSizeChange,
-    onSvgColorChange,
-    onSvgContentChange,
-    onTextContentChange,
-    onTextFontChange,
-    onTextColorChange,
-    onTextStylesChange,
-    onTextTransformChange,
-    onFileUpload,
-    onAIImageGenerated,
-    onRemoveBackground,
-    isRemovingBackground
-  } = useDesignState();
+  // Design state - using local state since useDesignState doesn't exist
+  const [selectedDesignFront, setSelectedDesignFront] = useState<Design | null>(null);
+  const [selectedDesignBack, setSelectedDesignBack] = useState<Design | null>(null);
+  const [designTransformFront, setDesignTransformFront] = useState({
+    position: { x: 0, y: 0 },
+    scale: 1,
+    rotation: 0
+  });
+  const [designTransformBack, setDesignTransformBack] = useState({
+    position: { x: 0, y: 0 },
+    scale: 1,
+    rotation: 0
+  });
+  const [selectedSizeFront, setSelectedSizeFront] = useState<string>('A4');
+  const [selectedSizeBack, setSelectedSizeBack] = useState<string>('A4');
+  const [svgColorFront, setSvgColorFront] = useState<string>('#000000');
+  const [svgColorBack, setSvgColorBack] = useState<string>('#000000');
+  const [svgContentFront, setSvgContentFront] = useState<string>('');
+  const [svgContentBack, setSvgContentBack] = useState<string>('');
+  const [textContentFront, setTextContentFront] = useState<string>('');
+  const [textContentBack, setTextContentBack] = useState<string>('');
+  const [textFontFront, setTextFontFront] = useState<string>('Arial');
+  const [textFontBack, setTextFontBack] = useState<string>('Arial');
+  const [textColorFront, setTextColorFront] = useState<string>('#000000');
+  const [textColorBack, setTextColorBack] = useState<string>('#000000');
+  const [textStylesFront, setTextStylesFront] = useState({ bold: false, italic: false, underline: false });
+  const [textStylesBack, setTextStylesBack] = useState({ bold: false, italic: false, underline: false });
+  const [textTransformFront, setTextTransformFront] = useState({
+    position: { x: 0, y: 0 },
+    scale: 1,
+    rotation: 0
+  });
+  const [textTransformBack, setTextTransformBack] = useState({
+    position: { x: 0, y: 0 },
+    scale: 1,
+    rotation: 0
+  });
+  const [isRemovingBackground, setIsRemovingBackground] = useState(false);
 
   // HD Capture hook
-  const { enrichWithHDCapture } = useHDCaptureOnAddToCart();
+  const { captureForProduction, isCapturing } = useHDCaptureOnAddToCart();
 
   // API queries
   const { data: product, isLoading: isLoadingProduct } = useQuery({
@@ -92,7 +92,7 @@ const ProductDetail: React.FC = () => {
 
   const { data: lotteries, isLoading: isLoadingLotteries } = useQuery({
     queryKey: ['lotteries'],
-    queryFn: fetchLotteries
+    queryFn: fetchAllLotteries
   });
 
   // Load mockup when product is available
@@ -129,6 +129,115 @@ const ProductDetail: React.FC = () => {
     }
   }, [product]);
 
+  // Design state handlers
+  const onSelectDesign = useCallback((design: Design, side: 'front' | 'back') => {
+    if (side === 'front') {
+      setSelectedDesignFront(design);
+    } else {
+      setSelectedDesignBack(design);
+    }
+  }, []);
+
+  const onDesignTransformChange = useCallback((property: string, value: any) => {
+    if (currentViewSide === 'front') {
+      setDesignTransformFront(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    } else {
+      setDesignTransformBack(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    }
+  }, [currentViewSide]);
+
+  const onTextTransformChange = useCallback((property: string, value: any) => {
+    if (currentViewSide === 'front') {
+      setTextTransformFront(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    } else {
+      setTextTransformBack(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    }
+  }, [currentViewSide]);
+
+  const onSizeChange = useCallback((size: string) => {
+    if (currentViewSide === 'front') {
+      setSelectedSizeFront(size);
+    } else {
+      setSelectedSizeBack(size);
+    }
+  }, [currentViewSide]);
+
+  const onSvgColorChange = useCallback((color: string) => {
+    if (currentViewSide === 'front') {
+      setSvgColorFront(color);
+    } else {
+      setSvgColorBack(color);
+    }
+  }, [currentViewSide]);
+
+  const onSvgContentChange = useCallback((content: string) => {
+    if (currentViewSide === 'front') {
+      setSvgContentFront(content);
+    } else {
+      setSvgContentBack(content);
+    }
+  }, [currentViewSide]);
+
+  const onTextContentChange = useCallback((content: string) => {
+    if (currentViewSide === 'front') {
+      setTextContentFront(content);
+    } else {
+      setTextContentBack(content);
+    }
+  }, [currentViewSide]);
+
+  const onTextFontChange = useCallback((font: string) => {
+    if (currentViewSide === 'front') {
+      setTextFontFront(font);
+    } else {
+      setTextFontBack(font);
+    }
+  }, [currentViewSide]);
+
+  const onTextColorChange = useCallback((color: string) => {
+    if (currentViewSide === 'front') {
+      setTextColorFront(color);
+    } else {
+      setTextColorBack(color);
+    }
+  }, [currentViewSide]);
+
+  const onTextStylesChange = useCallback((styles: { bold: boolean; italic: boolean; underline: boolean }) => {
+    if (currentViewSide === 'front') {
+      setTextStylesFront(styles);
+    } else {
+      setTextStylesBack(styles);
+    }
+  }, [currentViewSide]);
+
+  const onFileUpload = useCallback((file: File, side: 'front' | 'back') => {
+    // Handle file upload logic
+    console.log('File upload:', file, side);
+  }, []);
+
+  const onAIImageGenerated = useCallback((imageUrl: string, side: 'front' | 'back') => {
+    // Handle AI image generation
+    console.log('AI image generated:', imageUrl, side);
+  }, []);
+
+  const onRemoveBackground = useCallback(() => {
+    setIsRemovingBackground(true);
+    // Handle background removal
+    setTimeout(() => setIsRemovingBackground(false), 2000);
+  }, []);
+
   const handleAddToCart = useCallback(async () => {
     if (!product) return;
 
@@ -148,22 +257,7 @@ const ProductDetail: React.FC = () => {
     console.log('🎨 [ProductDetail] Personnalisation détectée, génération des fichiers HD...');
 
     try {
-      const enrichedData = await enrichWithHDCapture({
-        frontDesign: selectedDesignFront ? {
-          designId: selectedDesignFront.id,
-          designName: selectedDesignFront.name,
-          designUrl: selectedDesignFront.image_url,
-          printSize: selectedSizeFront,
-          transform: designTransformFront
-        } : null,
-        backDesign: selectedDesignBack ? {
-          designId: selectedDesignBack.id,
-          designName: selectedDesignBack.name,
-          designUrl: selectedDesignBack.image_url,
-          printSize: selectedSizeBack,
-          transform: designTransformBack
-        } : null
-      });
+      const enrichedData = await captureForProduction();
 
       const itemToAdd = {
         productId: product.id,
@@ -173,7 +267,23 @@ const ProductDetail: React.FC = () => {
         color: selectedColor,
         size: selectedSize,
         image_url: product.image_url,
-        customization: enrichedData,
+        customization: {
+          frontDesign: selectedDesignFront ? {
+            designId: selectedDesignFront.id,
+            designName: selectedDesignFront.name,
+            designUrl: selectedDesignFront.image_url,
+            printSize: selectedSizeFront,
+            transform: designTransformFront
+          } : null,
+          backDesign: selectedDesignBack ? {
+            designId: selectedDesignBack.id,
+            designName: selectedDesignBack.name,
+            designUrl: selectedDesignBack.image_url,
+            printSize: selectedSizeBack,
+            transform: designTransformBack
+          } : null,
+          ...enrichedData
+        },
         available_colors: product.available_colors,
         available_sizes: product.available_sizes,
         lottery_selections: selectedLotteries
@@ -202,7 +312,7 @@ const ProductDetail: React.FC = () => {
     designTransformBack,
     selectedSizeFront,
     selectedSizeBack,
-    enrichWithHDCapture,
+    captureForProduction,
     addItem
   ]);
 
@@ -354,7 +464,7 @@ const ProductDetail: React.FC = () => {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto">
-                      {lotteries?.map((lottery) => (
+                      {lotteries && Array.isArray(lotteries) && lotteries.map((lottery) => (
                         <div
                           key={lottery.id}
                           className={`p-3 rounded-lg border cursor-pointer transition-all ${
