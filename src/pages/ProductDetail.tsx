@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -130,13 +129,13 @@ const ProductDetail: React.FC = () => {
   }, [product]);
 
   // Design state handlers
-  const onSelectDesign = useCallback((design: Design, side: 'front' | 'back') => {
-    if (side === 'front') {
+  const onSelectDesign = useCallback((design: Design) => {
+    if (currentViewSide === 'front') {
       setSelectedDesignFront(design);
     } else {
       setSelectedDesignBack(design);
     }
-  }, []);
+  }, [currentViewSide]);
 
   const onDesignTransformChange = useCallback((property: string, value: any) => {
     if (currentViewSide === 'front') {
@@ -222,10 +221,13 @@ const ProductDetail: React.FC = () => {
     }
   }, [currentViewSide]);
 
-  const onFileUpload = useCallback((file: File, side: 'front' | 'back') => {
-    // Handle file upload logic
-    console.log('File upload:', file, side);
-  }, []);
+  const onFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Handle file upload logic
+      console.log('File upload:', file, currentViewSide);
+    }
+  }, [currentViewSide]);
 
   const onAIImageGenerated = useCallback((imageUrl: string, side: 'front' | 'back') => {
     // Handle AI image generation
@@ -282,7 +284,9 @@ const ProductDetail: React.FC = () => {
             printSize: selectedSizeBack,
             transform: designTransformBack
           } : null,
-          ...enrichedData
+          hdRectoUrl: enrichedData.hdRectoUrl,
+          hdVersoUrl: enrichedData.hdVersoUrl,
+          hdCaptureTimestamp: new Date().toISOString()
         },
         available_colors: product.available_colors,
         available_sizes: product.available_sizes,
@@ -313,7 +317,8 @@ const ProductDetail: React.FC = () => {
     selectedSizeFront,
     selectedSizeBack,
     captureForProduction,
-    addItem
+    addItem,
+    calculateTotalPrice
   ]);
 
   const calculateTotalPrice = useCallback(() => {

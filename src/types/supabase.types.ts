@@ -10,7 +10,9 @@ export type CartItem = {
   lotteries?: any;
   available_colors?: string[] | null;
   available_sizes?: string[] | null;
+  lottery_selections?: string[];
   customization?: {
+    // Legacy fields for backward compatibility
     designId?: string;
     designUrl?: string;
     designName?: string;
@@ -22,6 +24,32 @@ export type CartItem = {
     selectedSize?: string;
     selectedColor?: string;
     lotteryName?: string;
+    // Enhanced customization fields
+    frontDesign?: {
+      designId: string;
+      designName: string;
+      designUrl: string;
+      printSize: string;
+      transform: {
+        position: { x: number; y: number };
+        scale: number;
+        rotation: number;
+      };
+    } | null;
+    backDesign?: {
+      designId: string;
+      designName: string;
+      designUrl: string;
+      printSize: string;
+      transform: {
+        position: { x: number; y: number };
+        scale: number;
+        rotation: number;
+      };
+    } | null;
+    hdRectoUrl?: string;
+    hdVersoUrl?: string;
+    hdCaptureTimestamp?: string;
   } | null;
 };
 
