@@ -91,7 +91,7 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
     textTransform: currentViewSide === 'front' ? textTransformFront : textTransformBack
   };
 
-  // Fixed touch event handlers with proper passive handling
+  // Touch event handlers with proper passive handling
   const handleTouchStart = useCallback((e: React.TouchEvent, type: 'design' | 'text') => {
     e.stopPropagation();
     const touch = e.touches[0];
@@ -102,7 +102,6 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!isDragging) return;
     
-    // Don't call preventDefault in passive listeners
     e.stopPropagation();
     
     const touch = e.touches[0];
@@ -130,33 +129,10 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
     setIsDragging(null);
   }, []);
 
-  // Set up passive event listeners properly
-  useEffect(() => {
-    const element = previewRef.current;
-    if (!element) return;
-
-    const handleMove = (e: TouchEvent) => {
-      if (isDragging) {
-        handleTouchMove(e as any);
-      }
-    };
-
-    // Add event listener with passive: false only when needed
-    if (isDragging) {
-      element.addEventListener('touchmove', handleMove, { passive: false });
-    }
-
-    return () => {
-      if (element) {
-        element.removeEventListener('touchmove', handleMove);
-      }
-    };
-  }, [isDragging, handleTouchMove]);
-
   const renderCurrentSide = () => {
     const sideUrl = currentViewSide === 'front' 
-      ? (selectedMockupColor?.svg_front_url || mockup?.svg_front_url)
-      : (selectedMockupColor?.svg_back_url || mockup?.svg_back_url);
+      ? (selectedMockupColor?.front_image_url || mockup?.svg_front_url)
+      : (selectedMockupColor?.back_image_url || mockup?.svg_back_url);
 
     return (
       <div className="relative w-full h-full flex items-center justify-center">
