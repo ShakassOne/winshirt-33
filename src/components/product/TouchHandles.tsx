@@ -1,145 +1,82 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { RotateCw, Trash2, Move } from 'lucide-react';
+import React, { useCallback } from 'react';
+import { RotateCcw, Move, RotateCw, ZoomIn, ZoomOut } from 'lucide-react';
 
 interface TouchHandlesProps {
-  onResize: (scale: number) => void;
-  onRotate: (rotation: number) => void;
-  onDelete: () => void;
-  currentScale: number;
-  currentRotation: number;
-  elementType: 'design' | 'text';
+  onScale: (delta: number) => void;
+  onRotate: (delta: number) => void;
+  onMove: (deltaX: number, deltaY: number) => void;
+  className?: string;
 }
 
 export const TouchHandles: React.FC<TouchHandlesProps> = ({
-  onResize,
+  onScale,
   onRotate,
-  onDelete,
-  currentScale,
-  currentRotation,
-  elementType
+  onMove,
+  className = ''
 }) => {
-  const handleCornerDrag = (e: React.TouchEvent | React.MouseEvent, corner: string) => {
+  // Use mouse events instead of touch events to avoid passive listener issues
+  const handleScaleUp = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    const startTouches = 'touches' in e ? e.touches : null;
-    const startX = startTouches ? startTouches[0].clientX : (e as React.MouseEvent).clientX;
-    const startY = startTouches ? startTouches[0].clientY : (e as React.MouseEvent).clientY;
-    const startScale = currentScale;
+    onScale(0.1);
+  }, [onScale]);
 
-    const element = (e.target as HTMLElement).closest('[style*="transform"]');
-    const rect = element?.getBoundingClientRect();
-    const centerX = rect ? rect.left + rect.width / 2 : startX;
-    const centerY = rect ? rect.top + rect.height / 2 : startY;
-
-    const handleMove = (moveEvent: TouchEvent | MouseEvent) => {
-      const currentX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
-      const currentY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
-      
-      const startDistance = Math.sqrt(Math.pow(startX - centerX, 2) + Math.pow(startY - centerY, 2));
-      const currentDistance = Math.sqrt(Math.pow(currentX - centerX, 2) + Math.pow(currentY - centerY, 2));
-      
-      const scaleFactor = currentDistance / startDistance;
-      const newScale = Math.max(0.2, Math.min(3, startScale * scaleFactor));
-      onResize(newScale);
-    };
-
-    const handleEnd = () => {
-      document.removeEventListener('touchmove', handleMove);
-      document.removeEventListener('touchend', handleEnd);
-      document.removeEventListener('mousemove', handleMove);
-      document.removeEventListener('mouseup', handleEnd);
-    };
-
-    document.addEventListener('touchmove', handleMove, { passive: false });
-    document.addEventListener('touchend', handleEnd);
-    document.addEventListener('mousemove', handleMove);
-    document.addEventListener('mouseup', handleEnd);
-  };
-
-  const handleRotationDrag = (e: React.TouchEvent | React.MouseEvent) => {
+  const handleScaleDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    const startTouches = 'touches' in e ? e.touches : null;
-    const startX = startTouches ? startTouches[0].clientX : (e as React.MouseEvent).clientX;
-    const startRotation = currentRotation;
+    onScale(-0.1);
+  }, [onScale]);
 
-    const handleMove = (moveEvent: TouchEvent | MouseEvent) => {
-      const currentX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
-      const deltaX = currentX - startX;
-      const newRotation = (startRotation + deltaX * 0.8) % 360;
-      onRotate(newRotation);
-    };
+  const handleRotateLeft = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onRotate(-15);
+  }, [onRotate]);
 
-    const handleEnd = () => {
-      document.removeEventListener('touchmove', handleMove);
-      document.removeEventListener('touchend', handleEnd);
-      document.removeEventListener('mousemove', handleMove);
-      document.removeEventListener('mouseup', handleEnd);
-    };
-
-    document.addEventListener('touchmove', handleMove, { passive: false });
-    document.addEventListener('touchend', handleEnd);
-    document.addEventListener('mousemove', handleMove);
-    document.addEventListener('mouseup', handleEnd);
-  };
+  const handleRotateRight = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onRotate(15);
+  }, [onRotate]);
 
   return (
-    <>
-      <div 
-        className="absolute -top-3 -left-3 w-8 h-8 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-nw-resize flex items-center justify-center"
-        onTouchStart={(e) => handleCornerDrag(e, 'top-left')}
-        onMouseDown={(e) => handleCornerDrag(e, 'top-left')}
+    <div className={`flex items-center gap-1 bg-black/80 rounded-lg p-1 ${className}`}>
+      <button
+        className="p-1 text-white hover:bg-white/20 rounded"
+        onMouseDown={handleScaleDown}
+        onTouchStart={handleScaleDown as any}
       >
-        <div className="w-2 h-2 bg-white rounded-full"></div>
-      </div>
-      <div 
-        className="absolute -top-3 -right-3 w-8 h-8 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-ne-resize flex items-center justify-center"
-        onTouchStart={(e) => handleCornerDrag(e, 'top-right')}
-        onMouseDown={(e) => handleCornerDrag(e, 'top-right')}
+        <ZoomOut className="h-3 w-3" />
+      </button>
+      
+      <button
+        className="p-1 text-white hover:bg-white/20 rounded"
+        onMouseDown={handleScaleUp}
+        onTouchStart={handleScaleUp as any}
       >
-        <div className="w-2 h-2 bg-white rounded-full"></div>
-      </div>
-      <div 
-        className="absolute -bottom-3 -left-3 w-8 h-8 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-sw-resize flex items-center justify-center"
-        onTouchStart={(e) => handleCornerDrag(e, 'bottom-left')}
-        onMouseDown={(e) => handleCornerDrag(e, 'bottom-left')}
+        <ZoomIn className="h-3 w-3" />
+      </button>
+      
+      <button
+        className="p-1 text-white hover:bg-white/20 rounded"
+        onMouseDown={handleRotateLeft}
+        onTouchStart={handleRotateLeft as any}
       >
-        <div className="w-2 h-2 bg-white rounded-full"></div>
-      </div>
-      <div 
-        className="absolute -bottom-3 -right-3 w-8 h-8 bg-blue-500 rounded-full border-2 border-white shadow-lg cursor-se-resize flex items-center justify-center"
-        onTouchStart={(e) => handleCornerDrag(e, 'bottom-right')}
-        onMouseDown={(e) => handleCornerDrag(e, 'bottom-right')}
+        <RotateCcw className="h-3 w-3" />
+      </button>
+      
+      <button
+        className="p-1 text-white hover:bg-white/20 rounded"
+        onMouseDown={handleRotateRight}
+        onTouchStart={handleRotateRight as any}
       >
-        <div className="w-2 h-2 bg-white rounded-full"></div>
+        <RotateCw className="h-3 w-3" />
+      </button>
+      
+      <div className="p-1 text-white">
+        <Move className="h-3 w-3" />
       </div>
-
-      <div 
-        className="absolute -top-12 right-0 w-10 h-10 bg-green-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing"
-        onTouchStart={handleRotationDrag}
-        onMouseDown={handleRotationDrag}
-      >
-        <RotateCw className="h-5 w-5 text-white" />
-      </div>
-
-      <div className="absolute -top-12 left-0">
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-10 w-10 p-0 bg-red-500 border-red-500 text-white rounded-full shadow-lg"
-          onClick={onDelete}
-        >
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      </div>
-
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-        <Move className="h-8 w-8 text-white/60" />
-      </div>
-    </>
+    </div>
   );
 };
