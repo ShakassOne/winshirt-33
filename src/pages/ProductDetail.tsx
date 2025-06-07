@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -14,6 +15,7 @@ import { Product, Design, Lottery } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
 import { ModalPersonnalisation } from '@/components/product/ModalPersonnalisation';
 import { LotterySelectionRequired } from '@/components/product/LotterySelectionRequired';
+import { ProductPreview } from '@/components/product/ProductPreview';
 import { useMockupCapture } from '@/hooks/useMockupCapture';
 import { useScrollReset } from '@/hooks/useScrollReset';
 import { useHDCaptureOnAddToCart } from '@/hooks/useHDCaptureOnAddToCart';
@@ -229,9 +231,9 @@ const ProductDetail: React.FC = () => {
     }
   }, [currentViewSide]);
 
-  const onAIImageGenerated = useCallback((imageUrl: string, side: 'front' | 'back') => {
+  const onAIImageGenerated = useCallback((imageUrl: string, imageName: string) => {
     // Handle AI image generation
-    console.log('AI image generated:', imageUrl, side);
+    console.log('AI image generated:', imageUrl, imageName);
   }, []);
 
   const onRemoveBackground = useCallback(() => {
@@ -420,14 +422,46 @@ const ProductDetail: React.FC = () => {
           </Button>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Product Image */}
+            {/* Product Preview */}
             <div className="space-y-6">
               <GlassCard className="p-6">
-                <img
-                  src={product.image_url}
-                  alt={product.name}
-                  className="w-full h-auto rounded-lg"
-                />
+                {product.is_customizable && mockup ? (
+                  <ProductPreview
+                    productName={product.name}
+                    productImageUrl={product.image_url}
+                    currentViewSide={currentViewSide}
+                    onViewSideChange={setCurrentViewSide}
+                    mockup={mockup}
+                    selectedMockupColor={selectedMockupColor}
+                    hasTwoSides={hasTwoSides}
+                    selectedDesignFront={selectedDesignFront}
+                    selectedDesignBack={selectedDesignBack}
+                    designTransformFront={designTransformFront}
+                    designTransformBack={designTransformBack}
+                    onDesignTransformChange={onDesignTransformChange}
+                    svgColorFront={svgColorFront}
+                    svgColorBack={svgColorBack}
+                    svgContentFront={svgContentFront}
+                    svgContentBack={svgContentBack}
+                    textContentFront={textContentFront}
+                    textContentBack={textContentBack}
+                    textFontFront={textFontFront}
+                    textFontBack={textFontBack}
+                    textColorFront={textColorFront}
+                    textColorBack={textColorBack}
+                    textStylesFront={textStylesFront}
+                    textStylesBack={textStylesBack}
+                    textTransformFront={textTransformFront}
+                    textTransformBack={textTransformBack}
+                    onTextTransformChange={onTextTransformChange}
+                  />
+                ) : (
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    className="w-full h-auto rounded-lg"
+                  />
+                )}
               </GlassCard>
             </div>
 
@@ -641,7 +675,7 @@ const ProductDetail: React.FC = () => {
           textTransformBack={textTransformBack}
           onTextContentChange={onTextContentChange}
           onTextFontChange={onTextFontChange}
-          onTextColorChange={onTextColorChange}
+          onTextColorChange={onTextColorColor}
           onTextStylesChange={onTextStylesChange}
           onTextTransformChange={onTextTransformChange}
           designTransformFront={designTransformFront}

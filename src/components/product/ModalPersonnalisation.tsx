@@ -115,11 +115,6 @@ interface ModalPersonnalisationProps {
   selectedSizeBack: string;
   onDesignTransformChange: (property: string, value: any) => void;
   onSizeChange: (size: string) => void;
-
-  // Interaction handlers
-  onDesignMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void;
-  onTextMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void;
-  onTouchMove?: (e: React.TouchEvent) => void;
 }
 
 export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
@@ -166,10 +161,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   selectedSizeFront,
   selectedSizeBack,
   onDesignTransformChange,
-  onSizeChange,
-  onDesignMouseDown,
-  onTextMouseDown,
-  onTouchMove
+  onSizeChange
 }) => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('designs');
@@ -230,6 +222,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           selectedDesignBack={selectedDesignBack}
           designTransformFront={designTransformFront}
           designTransformBack={designTransformBack}
+          onDesignTransformChange={onDesignTransformChange}
           svgColorFront={svgColorFront}
           svgColorBack={svgColorBack}
           svgContentFront={svgContentFront}
@@ -244,9 +237,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           textStylesBack={textStylesBack}
           textTransformFront={textTransformFront}
           textTransformBack={textTransformBack}
-          onDesignMouseDown={onDesignMouseDown}
-          onTextMouseDown={onTextMouseDown}
-          onTouchMove={onTouchMove}
+          onTextTransformChange={onTextTransformChange}
         />
       </div>
 
@@ -375,9 +366,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           textStylesBack={textStylesBack}
           textTransformFront={textTransformFront}
           textTransformBack={textTransformBack}
-          onDesignMouseDown={onDesignMouseDown}
-          onTextMouseDown={onTextMouseDown}
-          onTouchMove={onTouchMove}
           onDesignTransformChange={onDesignTransformChange}
           onTextTransformChange={onTextTransformChange}
           onRemoveDesign={handleRemoveDesign}
