@@ -1,5 +1,6 @@
+
 import React, { useState, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -450,6 +451,9 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           <DialogTitle className="text-2xl font-semibold">
             🎨 Personnalisation - {currentViewSide === 'front' ? 'Avant' : 'Arrière'}
           </DialogTitle>
+          <DialogDescription className="text-white/60">
+            Personnalisez votre produit avec des designs, du texte et des couleurs.
+          </DialogDescription>
         </DialogHeader>
         <div className="pt-4 h-full overflow-hidden">
           {desktopContent}
