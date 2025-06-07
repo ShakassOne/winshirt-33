@@ -35,22 +35,22 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
     <div className="space-y-2">
       <div>
         <Label className="text-white text-xs">Génération rapide</Label>
-        <div className="flex gap-2 mt-1">
+        <div className="flex gap-1 mt-1">
           <Input
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Décrivez votre image..."
-            className="bg-white/10 border-white/20 text-white placeholder:text-white/50 text-xs h-7"
+            className="bg-white/10 border-white/20 text-white placeholder:text-white/50 text-xs h-6"
             disabled={isGenerating}
           />
           <Button
             onClick={handleGenerate}
             disabled={!prompt.trim() || isGenerating}
-            className="bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90 shrink-0 h-7 px-2"
+            className="bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90 shrink-0 h-6 px-2"
             size="sm"
           >
             {isGenerating ? (
-              <div className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full" />
+              <div className="animate-spin h-3 w-3 border border-white border-t-transparent rounded-full" />
             ) : (
               <Sparkles className="h-3 w-3" />
             )}
@@ -60,7 +60,7 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
 
       <div>
         <Label className="text-white text-xs">Images IA disponibles</Label>
-        <div className="mt-1 h-32 overflow-y-auto">
+        <div className="mt-1 h-20 overflow-y-auto">
           <AIImageGallery onImageSelect={onImageGenerated} />
         </div>
       </div>

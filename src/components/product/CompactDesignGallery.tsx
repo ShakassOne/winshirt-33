@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -44,24 +43,24 @@ export const CompactDesignGallery: React.FC<CompactDesignGalleryProps> = ({
     });
 
     if (selectedCategory === 'all') {
-      return nonSvgDesigns.slice(0, 12); // Limite pour mobile
+      return nonSvgDesigns.slice(0, 18); // Plus de designs sur mobile
     } else {
-      return nonSvgDesigns.filter(design => design.category === selectedCategory).slice(0, 12);
+      return nonSvgDesigns.filter(design => design.category === selectedCategory).slice(0, 18);
     }
   }, [designs, selectedCategory]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div>
-        <Label className="text-white text-sm">Catégories</Label>
+        <Label className="text-white text-xs">Catégories</Label>
         <ScrollArea className="w-full whitespace-nowrap rounded-md">
-          <div className="flex gap-2 p-1">
+          <div className="flex gap-1 p-1">
             {categories.map(category => (
               <Button
                 key={category}
                 variant="outline"
                 size="sm"
-                className={`shrink-0 text-xs ${
+                className={`shrink-0 text-xs h-6 px-2 ${
                   selectedCategory === category 
                     ? 'bg-winshirt-purple text-white border-winshirt-purple' 
                     : 'border-white/20 text-white/70'
@@ -76,31 +75,29 @@ export const CompactDesignGallery: React.FC<CompactDesignGalleryProps> = ({
       </div>
 
       <div>
-        <Label className="text-white text-sm">Designs ({filteredDesigns.length})</Label>
+        <Label className="text-white text-xs">Designs ({filteredDesigns.length})</Label>
         {isLoading ? (
-          <div className="grid grid-cols-4 gap-2 mt-2">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="aspect-square bg-white/10 rounded-lg animate-pulse" />
+          <div className="grid grid-cols-6 gap-1 mt-1">
+            {Array.from({ length: 12 }).map((_, index) => (
+              <div key={index} className="aspect-square bg-white/10 rounded animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-4 gap-2 mt-2 max-h-48 overflow-y-auto">
+          <div className="grid grid-cols-6 gap-1 mt-1 max-h-24 overflow-y-auto">
             {filteredDesigns.map(design => (
-              <Card
+              <button
                 key={design.id}
-                className={`bg-black/40 overflow-hidden cursor-pointer transition-all hover:scale-105 border-white/10 ${
-                  selectedDesign?.id === design.id ? 'border-winshirt-purple ring-1 ring-winshirt-purple' : ''
+                className={`aspect-square bg-black/40 overflow-hidden cursor-pointer transition-all hover:scale-105 border rounded ${
+                  selectedDesign?.id === design.id ? 'border-winshirt-purple ring-1 ring-winshirt-purple' : 'border-white/10'
                 }`}
                 onClick={() => onSelectDesign(design)}
               >
-                <div className="aspect-square overflow-hidden">
-                  <img
-                    src={design.image_url}
-                    alt={design.name}
-                    className="object-contain w-full h-full p-1"
-                  />
-                </div>
-              </Card>
+                <img
+                  src={design.image_url}
+                  alt={design.name}
+                  className="object-contain w-full h-full p-0.5"
+                />
+              </button>
             ))}
           </div>
         )}

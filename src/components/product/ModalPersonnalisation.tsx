@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
@@ -14,9 +15,8 @@ import { SVGDesigns } from './SVGDesigns';
 import { ProductPreview } from './ProductPreview';
 import { ProductColorSelector } from './ProductColorSelector';
 import { EnhancedProductPreview } from './EnhancedProductPreview';
-import { SimplifiedMobileToolbar } from './SimplifiedMobileToolbar';
-import { MobileQuickTools } from './MobileQuickTools';
-import { CompactAIGenerator } from './CompactAIGenerator';
+import { CompactMobileTools } from './CompactMobileTools';
+
 interface ModalPersonnalisationProps {
   open: boolean;
   onClose: () => void;
@@ -120,6 +120,7 @@ interface ModalPersonnalisationProps {
   onTextMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void;
   onTouchMove?: (e: React.TouchEvent) => void;
 }
+
 export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   open,
   onClose,
@@ -171,7 +172,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('designs');
-  const [showFullModal, setShowFullModal] = useState(false);
 
   // Memoized getters for better performance
   const currentData = useMemo(() => ({
@@ -186,40 +186,80 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     designTransform: currentViewSide === 'front' ? designTransformFront : designTransformBack,
     selectedSize: currentViewSide === 'front' ? selectedSizeFront : selectedSizeBack
   }), [currentViewSide, selectedDesignFront, selectedDesignBack, svgColorFront, svgColorBack, svgContentFront, svgContentBack, textContentFront, textContentBack, textFontFront, textFontBack, textColorFront, textColorBack, textStylesFront, textStylesBack, textTransformFront, textTransformBack, designTransformFront, designTransformBack, selectedSizeFront, selectedSizeBack]);
+
   const filteredMockupColors = useMemo(() => {
     if (!mockup?.colors) return [];
     if (!productAvailableColors || productAvailableColors.length === 0) {
       return mockup.colors;
     }
-    return mockup.colors.filter((mockupColor: MockupColor) => productAvailableColors.some(availableColor => mockupColor.name.toLowerCase().includes(availableColor.toLowerCase()) || availableColor.toLowerCase().includes(mockupColor.name.toLowerCase())));
+    return mockup.colors.filter((mockupColor: MockupColor) => 
+      productAvailableColors.some(availableColor => 
+        mockupColor.name.toLowerCase().includes(availableColor.toLowerCase()) || 
+        availableColor.toLowerCase().includes(mockupColor.name.toLowerCase())
+      )
+    );
   }, [mockup?.colors, productAvailableColors]);
+
   const hasTwoSides = mockup?.svg_back_url ? true : false;
-  const hasDesign = currentData.design !== null;
-  const isSvgDesign = () => {
-    const currentDesign = currentData.design;
-    if (!currentDesign?.image_url) return false;
-    const url = currentDesign.image_url.toLowerCase();
-    return url.includes('.svg') || url.includes('svg') || currentDesign.image_url.includes('data:image/svg');
-  };
+
   const handleDesignSelection = (design: Design) => {
     onSelectDesign(design);
   };
+
   const handleRemoveDesign = () => {
     // This would need to be passed as a prop or implemented
   };
+
   const handleRemoveText = () => {
     onTextContentChange('');
   };
-  const desktopContent = <div className="flex h-full gap-6">
+
+  const desktopContent = (
+    <div className="flex h-full gap-6">
       <div className="w-1/2 flex flex-col">
-        <ProductPreview productName={productName} productImageUrl={productImageUrl} currentViewSide={currentViewSide} onViewSideChange={onViewSideChange} mockup={mockup} selectedMockupColor={selectedMockupColor} hasTwoSides={hasTwoSides} selectedDesignFront={selectedDesignFront} selectedDesignBack={selectedDesignBack} designTransformFront={designTransformFront} designTransformBack={designTransformBack} svgColorFront={svgColorFront} svgColorBack={svgColorBack} svgContentFront={svgContentFront} svgContentBack={svgContentBack} textContentFront={textContentFront} textContentBack={textContentBack} textFontFront={textFontFront} textFontBack={textFontBack} textColorFront={textColorFront} textColorBack={textColorBack} textStylesFront={textStylesFront} textStylesBack={textStylesBack} textTransformFront={textTransformFront} textTransformBack={textTransformBack} onDesignMouseDown={onDesignMouseDown} onTextMouseDown={onTextMouseDown} onTouchMove={onTouchMove} />
+        <ProductPreview
+          productName={productName}
+          productImageUrl={productImageUrl}
+          currentViewSide={currentViewSide}
+          onViewSideChange={onViewSideChange}
+          mockup={mockup}
+          selectedMockupColor={selectedMockupColor}
+          hasTwoSides={hasTwoSides}
+          selectedDesignFront={selectedDesignFront}
+          selectedDesignBack={selectedDesignBack}
+          designTransformFront={designTransformFront}
+          designTransformBack={designTransformBack}
+          svgColorFront={svgColorFront}
+          svgColorBack={svgColorBack}
+          svgContentFront={svgContentFront}
+          svgContentBack={svgContentBack}
+          textContentFront={textContentFront}
+          textContentBack={textContentBack}
+          textFontFront={textFontFront}
+          textFontBack={textFontBack}
+          textColorFront={textColorFront}
+          textColorBack={textColorBack}
+          textStylesFront={textStylesFront}
+          textStylesBack={textStylesBack}
+          textTransformFront={textTransformFront}
+          textTransformBack={textTransformBack}
+          onDesignMouseDown={onDesignMouseDown}
+          onTextMouseDown={onTextMouseDown}
+          onTouchMove={onTouchMove}
+        />
       </div>
 
       <div className="w-1/2 flex flex-col">
-        {filteredMockupColors.length > 0 && <div className="mb-6">
+        {filteredMockupColors.length > 0 && (
+          <div className="mb-6">
             <h3 className="text-lg font-medium mb-3">Couleur du produit</h3>
-            <ProductColorSelector colors={filteredMockupColors} selectedColor={selectedMockupColor} onColorSelect={onMockupColorChange} />
-          </div>}
+            <ProductColorSelector
+              colors={filteredMockupColors}
+              selectedColor={selectedMockupColor}
+              onColorSelect={onMockupColorChange}
+            />
+          </div>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           <TabsList className="grid w-full grid-cols-5 mb-4">
@@ -247,15 +287,38 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
           <div className="flex-1 overflow-hidden">
             <TabsContent value="designs" className="h-full overflow-y-auto">
-              <GalleryDesigns onSelectDesign={handleDesignSelection} selectedDesign={currentData.design} currentDesignTransform={currentData.designTransform} selectedSize={currentData.selectedSize} onDesignTransformChange={onDesignTransformChange} onSizeChange={onSizeChange} />
+              <GalleryDesigns
+                onSelectDesign={handleDesignSelection}
+                selectedDesign={currentData.design}
+                currentDesignTransform={currentData.designTransform}
+                selectedSize={currentData.selectedSize}
+                onDesignTransformChange={onDesignTransformChange}
+                onSizeChange={onSizeChange}
+              />
             </TabsContent>
 
             <TabsContent value="text" className="h-full overflow-y-auto">
-              <TextCustomizer textContent={currentData.textContent} textFont={currentData.textFont} textColor={currentData.textColor} textStyles={currentData.textStyles} textTransform={currentData.textTransform} onTextContentChange={onTextContentChange} onTextFontChange={onTextFontChange} onTextColorChange={onTextColorChange} onTextStylesChange={onTextStylesChange} onTextTransformChange={onTextTransformChange} />
+              <TextCustomizer
+                textContent={currentData.textContent}
+                textFont={currentData.textFont}
+                textColor={currentData.textColor}
+                textStyles={currentData.textStyles}
+                textTransform={currentData.textTransform}
+                onTextContentChange={onTextContentChange}
+                onTextFontChange={onTextFontChange}
+                onTextColorChange={onTextColorChange}
+                onTextStylesChange={onTextStylesChange}
+                onTextTransformChange={onTextTransformChange}
+              />
             </TabsContent>
 
             <TabsContent value="upload" className="h-full overflow-y-auto">
-              <UploadDesign onFileUpload={onFileUpload} onRemoveBackground={onRemoveBackground} isRemovingBackground={isRemovingBackground} currentDesign={currentData.design} />
+              <UploadDesign
+                onFileUpload={onFileUpload}
+                onRemoveBackground={onRemoveBackground}
+                isRemovingBackground={isRemovingBackground}
+                currentDesign={currentData.design}
+              />
             </TabsContent>
 
             <TabsContent value="ai" className="h-full overflow-y-auto">
@@ -263,135 +326,135 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             </TabsContent>
 
             <TabsContent value="svg" className="h-full overflow-y-auto">
-              <SVGDesigns onSelectDesign={handleDesignSelection} selectedDesign={currentData.design} onFileUpload={onFileUpload} onSvgColorChange={onSvgColorChange} onSvgContentChange={onSvgContentChange} defaultSvgColor={currentData.svgColor} />
+              <SVGDesigns
+                onSelectDesign={handleDesignSelection}
+                selectedDesign={currentData.design}
+                onFileUpload={onFileUpload}
+                onSvgColorChange={onSvgColorChange}
+                onSvgContentChange={onSvgContentChange}
+                defaultSvgColor={currentData.svgColor}
+              />
             </TabsContent>
           </div>
         </Tabs>
       </div>
-    </div>;
-  const simplifiedMobileContent = <div className="flex flex-col h-full">
-      <div className="flex-1 px-2 pt-2 pb-32 overflow-y-auto">
-        <EnhancedProductPreview productName={productName} productImageUrl={productImageUrl} currentViewSide={currentViewSide} onViewSideChange={onViewSideChange} mockup={mockup} selectedMockupColor={selectedMockupColor} hasTwoSides={hasTwoSides} selectedDesignFront={selectedDesignFront} selectedDesignBack={selectedDesignBack} designTransformFront={designTransformFront} designTransformBack={designTransformBack} svgColorFront={svgColorFront} svgColorBack={svgColorBack} svgContentFront={svgContentFront} svgContentBack={svgContentBack} textContentFront={textContentFront} textContentBack={textContentBack} textFontFront={textFontFront} textFontBack={textFontBack} textColorFront={textColorFront} textColorBack={textColorBack} textStylesFront={textStylesFront} textStylesBack={textStylesBack} textTransformFront={textTransformFront} textTransformBack={textTransformBack} onDesignMouseDown={onDesignMouseDown} onTextMouseDown={onTextMouseDown} onTouchMove={onTouchMove} onDesignTransformChange={onDesignTransformChange} onTextTransformChange={onTextTransformChange} onRemoveDesign={handleRemoveDesign} onRemoveText={handleRemoveText} />
+    </div>
+  );
+
+  const optimizedMobileContent = (
+    <div className="flex flex-col h-full">
+      {/* Maximized preview area - 80% of screen */}
+      <div 
+        className="flex-1 px-1 pt-1 overflow-hidden"
+        style={{ height: 'calc(100vh - 180px)' }}
+      >
+        <EnhancedProductPreview
+          productName={productName}
+          productImageUrl={productImageUrl}
+          currentViewSide={currentViewSide}
+          onViewSideChange={onViewSideChange}
+          mockup={mockup}
+          selectedMockupColor={selectedMockupColor}
+          hasTwoSides={hasTwoSides}
+          selectedDesignFront={selectedDesignFront}
+          selectedDesignBack={selectedDesignBack}
+          designTransformFront={designTransformFront}
+          designTransformBack={designTransformBack}
+          svgColorFront={svgColorFront}
+          svgColorBack={svgColorBack}
+          svgContentFront={svgContentFront}
+          svgContentBack={svgContentBack}
+          textContentFront={textContentFront}
+          textContentBack={textContentBack}
+          textFontFront={textFrontFont}
+          textFontBack={textFontBack}
+          textColorFront={textColorFront}
+          textColorBack={textColorBack}
+          textStylesFront={textStylesFront}
+          textStylesBack={textStylesBack}
+          textTransformFront={textTransformFront}
+          textTransformBack={textTransformBack}
+          onDesignMouseDown={onDesignMouseDown}
+          onTextMouseDown={onTextMouseDown}
+          onTouchMove={onTouchMove}
+          onDesignTransformChange={onDesignTransformChange}
+          onTextTransformChange={onTextTransformChange}
+          onRemoveDesign={handleRemoveDesign}
+          onRemoveText={handleRemoveText}
+        />
       </div>
 
-      <div className="px-2 pb-2">
-        <MobileQuickTools activeTab={activeTab} selectedDesign={currentData.design} designTransform={currentData.designTransform} selectedSize={currentData.selectedSize} onDesignTransformChange={onDesignTransformChange} onSizeChange={onSizeChange} onSelectDesign={handleDesignSelection} textContent={currentData.textContent} textFont={currentData.textFont} textColor={currentData.textColor} textStyles={currentData.textStyles} onTextContentChange={onTextContentChange} onTextFontChange={onTextFontChange} onTextColorChange={onTextColorChange} onTextStylesChange={onTextStylesChange} isSvgDesign={isSvgDesign()} svgColor={currentData.svgColor} onSvgColorChange={onSvgColorChange} mockupColors={filteredMockupColors} selectedMockupColor={selectedMockupColor} onMockupColorChange={onMockupColorChange} onFileUpload={onFileUpload} onAIImageGenerated={onAIImageGenerated} onRemoveBackground={onRemoveBackground} isRemovingBackground={isRemovingBackground} />
+      {/* Compacted options area - 20% of screen */}
+      <div className="h-44 px-1 pb-1">
+        <CompactMobileTools
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          selectedDesign={currentData.design}
+          designTransform={currentData.designTransform}
+          selectedSize={currentData.selectedSize}
+          onDesignTransformChange={onDesignTransformChange}
+          onSizeChange={onSizeChange}
+          onSelectDesign={handleDesignSelection}
+          textContent={currentData.textContent}
+          textFont={currentData.textFont}
+          textColor={currentData.textColor}
+          textStyles={currentData.textStyles}
+          onTextContentChange={onTextContentChange}
+          onTextFontChange={onTextFontChange}
+          onTextColorChange={onTextColorChange}
+          onTextStylesChange={onTextStylesChange}
+          svgColor={currentData.svgColor}
+          onSvgColorChange={onSvgColorChange}
+          mockupColors={filteredMockupColors}
+          selectedMockupColor={selectedMockupColor}
+          onMockupColorChange={onMockupColorChange}
+          onFileUpload={onFileUpload}
+          onAIImageGenerated={onAIImageGenerated}
+          onRemoveBackground={onRemoveBackground}
+          isRemovingBackground={isRemovingBackground}
+        />
       </div>
+    </div>
+  );
 
-      <SimplifiedMobileToolbar activeTab={activeTab} onTabChange={setActiveTab} onOpenFullModal={() => setShowFullModal(true)} hasDesign={hasDesign} isSvgDesign={isSvgDesign()} selectedMockupColor={selectedMockupColor} />
-    </div>;
-  const fullMobileModalContent = <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-hidden">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-5 mb-4 mx-4">
-            <TabsTrigger value="designs" className="flex flex-col items-center gap-1 h-auto py-2">
-              <ImageIcon className="h-4 w-4" />
-              <span className="text-xs">Images</span>
-            </TabsTrigger>
-            <TabsTrigger value="text" className="flex flex-col items-center gap-1 h-auto py-2">
-              <Type className="h-4 w-4" />
-              <span className="text-xs">Texte</span>
-            </TabsTrigger>
-            <TabsTrigger value="upload" className="flex flex-col items-center gap-1 h-auto py-2">
-              <Upload className="h-4 w-4" />
-              <span className="text-xs">Upload</span>
-            </TabsTrigger>
-            <TabsTrigger value="ai" className="flex flex-col items-center gap-1 h-auto py-2">
-              <Sparkles className="h-4 w-4" />
-              <span className="text-xs">IA</span>
-            </TabsTrigger>
-            <TabsTrigger value="svg" className="flex flex-col items-center gap-1 h-auto py-2">
-              <Paintbrush className="h-4 w-4" />
-              <span className="text-xs">SVG</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <div className="flex-1 overflow-hidden px-4">
-            <TabsContent value="designs" className="h-full overflow-y-auto mt-0">
-              <GalleryDesigns onSelectDesign={handleDesignSelection} selectedDesign={currentData.design} currentDesignTransform={currentData.designTransform} selectedSize={currentData.selectedSize} onDesignTransformChange={onDesignTransformChange} onSizeChange={onSizeChange} />
-            </TabsContent>
-
-            <TabsContent value="text" className="h-full overflow-y-auto mt-0">
-              <TextCustomizer textContent={currentData.textContent} textFont={currentData.textFont} textColor={currentData.textColor} textStyles={currentData.textStyles} textTransform={currentData.textTransform} onTextContentChange={onTextContentChange} onTextFontChange={onTextFontChange} onTextColorChange={onTextColorChange} onTextStylesChange={onTextStylesChange} onTextTransformChange={onTextTransformChange} />
-            </TabsContent>
-
-            <TabsContent value="upload" className="h-full overflow-y-auto mt-0">
-              <UploadDesign onFileUpload={onFileUpload} onRemoveBackground={onRemoveBackground} isRemovingBackground={isRemovingBackground} currentDesign={currentData.design} />
-            </TabsContent>
-
-            <TabsContent value="ai" className="h-full overflow-y-auto mt-0">
-              <CompactAIGenerator onImageGenerated={onAIImageGenerated} />
-            </TabsContent>
-
-            <TabsContent value="svg" className="h-full overflow-y-auto mt-0">
-              <SVGDesigns onSelectDesign={handleDesignSelection} selectedDesign={currentData.design} onFileUpload={onFileUpload} onSvgColorChange={onSvgColorChange} onSvgContentChange={onSvgContentChange} defaultSvgColor={currentData.svgColor} />
-            </TabsContent>
-          </div>
-        </Tabs>
-      </div>
-
-      <div className="p-4 border-t border-white/10 bg-black/80">
-        <div className="flex justify-center">
-          <Button variant="outline" onClick={() => setShowFullModal(false)} className="px-6">
-            Retour
-          </Button>
-        </div>
-      </div>
-    </div>;
   if (isMobile) {
-    return <>
-        <Drawer open={open && !showFullModal} onOpenChange={isOpen => !isOpen && onClose()}>
-          <DrawerContent className="bg-black/90 backdrop-blur-lg border-white/20 h-[100vh]">
-            <DrawerHeader className="border-b border-white/10 pb-2">
-              <div className="flex items-center justify-between">
-                <DrawerTitle className="text-lg font-semibold">
-                  🎨 Personnalisation
-                </DrawerTitle>
-                <Button variant="ghost" size="icon" onClick={onClose}>
-                  <X className="h-5 w-5" />
-                </Button>
-              </div>
-            </DrawerHeader>
-            <div className="flex-1 overflow-hidden">
-              {simplifiedMobileContent}
+    return (
+      <Drawer open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+        <DrawerContent className="bg-black/90 backdrop-blur-lg border-white/20 h-[100vh]">
+          <DrawerHeader className="border-b border-white/10 pb-1 px-2 py-1">
+            <div className="flex items-center justify-between">
+              <DrawerTitle className="text-sm font-semibold">
+                🎨 Personnalisation
+              </DrawerTitle>
+              <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6">
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-          </DrawerContent>
-        </Drawer>
-
-        <Drawer open={showFullModal} onOpenChange={setShowFullModal}>
-          <DrawerContent className="bg-black/90 backdrop-blur-lg border-white/20 h-[100vh]">
-            <DrawerHeader className="border-b border-white/10 pb-2">
-              <div className="flex items-center justify-between">
-                <DrawerTitle className="text-lg font-semibold">
-                  🎨 Options avancées
-                </DrawerTitle>
-                <Button variant="ghost" size="icon" onClick={() => setShowFullModal(false)}>
-                  <X className="h-5 w-5" />
-                </Button>
-              </div>
-            </DrawerHeader>
-            <div className="flex-1 overflow-hidden">
-              {fullMobileModalContent}
-            </div>
-          </DrawerContent>
-        </Drawer>
-      </>;
+          </DrawerHeader>
+          <div className="flex-1 overflow-hidden">
+            {optimizedMobileContent}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
   }
-  return <Dialog open={open} onOpenChange={isOpen => {
-    if (!isOpen) {
-      onClose();
-    }
-  }}>
+
+  return (
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) {
+        onClose();
+      }
+    }}>
       <DialogContent className="bg-black/90 backdrop-blur-lg border-white/20 max-w-[95vw] w-[95vw] h-[95vh] overflow-hidden">
         <DialogHeader className="border-b border-white/10 pb-4">
           <DialogTitle className="text-2xl font-semibold">
             🎨 Personnalisation - {currentViewSide === 'front' ? 'Avant' : 'Arrière'}
           </DialogTitle>
-          
         </DialogHeader>
         <div className="pt-4 h-full overflow-hidden">
           {desktopContent}
         </div>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };
