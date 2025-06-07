@@ -96,6 +96,42 @@ const ProductDetail: React.FC = () => {
     queryFn: fetchAllLotteries
   });
 
+  // Calculate total price function
+  const calculateTotalPrice = useCallback(() => {
+    if (!product || !mockup) return 0;
+    
+    let basePrice = product.price;
+    let designPrice = 0;
+    let textPrice = 0;
+
+    // Calculate design prices
+    if (selectedDesignFront) {
+      const frontSizePrice = selectedSizeFront === 'A3' ? mockup.price_a3 :
+                           selectedSizeFront === 'A4' ? mockup.price_a4 :
+                           selectedSizeFront === 'A5' ? mockup.price_a5 :
+                           mockup.price_a6;
+      designPrice += frontSizePrice;
+    }
+
+    if (selectedDesignBack) {
+      const backSizePrice = selectedSizeBack === 'A3' ? mockup.price_a3 :
+                          selectedSizeBack === 'A4' ? mockup.price_a4 :
+                          selectedSizeBack === 'A5' ? mockup.price_a5 :
+                          mockup.price_a6;
+      designPrice += backSizePrice;
+    }
+
+    // Calculate text prices
+    if (textContentFront) {
+      textPrice += mockup.text_price_front;
+    }
+    if (textContentBack) {
+      textPrice += mockup.text_price_back;
+    }
+
+    return basePrice + designPrice + textPrice;
+  }, [product, mockup, selectedDesignFront, selectedDesignBack, selectedSizeFront, selectedSizeBack, textContentFront, textContentBack]);
+
   // Load mockup when product is available
   useEffect(() => {
     const loadMockup = async () => {
@@ -241,42 +277,6 @@ const ProductDetail: React.FC = () => {
     // Handle background removal
     setTimeout(() => setIsRemovingBackground(false), 2000);
   }, []);
-
-  // Move calculateTotalPrice before handleAddToCart
-  const calculateTotalPrice = useCallback(() => {
-    if (!product || !mockup) return 0;
-    
-    let basePrice = product.price;
-    let designPrice = 0;
-    let textPrice = 0;
-
-    // Calculate design prices
-    if (selectedDesignFront) {
-      const frontSizePrice = selectedSizeFront === 'A3' ? mockup.price_a3 :
-                           selectedSizeFront === 'A4' ? mockup.price_a4 :
-                           selectedSizeFront === 'A5' ? mockup.price_a5 :
-                           mockup.price_a6;
-      designPrice += frontSizePrice;
-    }
-
-    if (selectedDesignBack) {
-      const backSizePrice = selectedSizeBack === 'A3' ? mockup.price_a3 :
-                          selectedSizeBack === 'A4' ? mockup.price_a4 :
-                          selectedSizeBack === 'A5' ? mockup.price_a5 :
-                          mockup.price_a6;
-      designPrice += backSizePrice;
-    }
-
-    // Calculate text prices
-    if (textContentFront) {
-      textPrice += mockup.text_price_front;
-    }
-    if (textContentBack) {
-      textPrice += mockup.text_price_back;
-    }
-
-    return basePrice + designPrice + textPrice;
-  }, [product, mockup, selectedDesignFront, selectedDesignBack, selectedSizeFront, selectedSizeBack, textContentFront, textContentBack]);
 
   const handleAddToCart = useCallback(async () => {
     if (!product) return;
@@ -675,7 +675,7 @@ const ProductDetail: React.FC = () => {
           textTransformBack={textTransformBack}
           onTextContentChange={onTextContentChange}
           onTextFontChange={onTextFontChange}
-          onTextColorChange={onTextColorColor}
+          onTextColorChange={onTextColorChange}
           onTextStylesChange={onTextStylesChange}
           onTextTransformChange={onTextTransformChange}
           designTransformFront={designTransformFront}
