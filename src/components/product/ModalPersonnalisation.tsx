@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
@@ -16,6 +15,7 @@ import { ProductPreview } from './ProductPreview';
 import { ProductColorSelector } from './ProductColorSelector';
 import { EnhancedProductPreview } from './EnhancedProductPreview';
 import { CompactMobileTools } from './CompactMobileTools';
+import { CompactAIGenerator } from './CompactAIGenerator';
 
 interface ModalPersonnalisationProps {
   open: boolean;
@@ -366,7 +366,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           svgContentBack={svgContentBack}
           textContentFront={textContentFront}
           textContentBack={textContentBack}
-          textFontFront={textFrontFont}
+          textFontFront={textFontFront}
           textFontBack={textFontBack}
           textColorFront={textColorFront}
           textColorBack={textColorBack}
