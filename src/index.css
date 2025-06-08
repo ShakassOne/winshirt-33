@@ -103,37 +103,38 @@
   }
 
   body {
-    @apply text-foreground antialiased;
+    @apply text-foreground antialiased bg-gradient-to-br from-red-600 via-red-800 to-black;
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
-    background-image: url('/lovable-uploads/9c8e8e6b-438b-4d5f-9391-c30feb0ebfca.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
+  }
+
+  body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.2), transparent 70%);
+    filter: blur(120px);
+    opacity: 0.4;
   }
 
   html {
-    background-image: url('/lovable-uploads/9c8e8e6b-438b-4d5f-9391-c30feb0ebfca.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
+    @apply bg-gradient-to-br from-red-600 via-red-800 to-black;
   }
 }
 
 @layer components {
   .glass {
-    @apply bg-white/5 backdrop-blur-lg border border-white/10 shadow-lg;
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-[0_0_40px_rgba(255,255,255,0.05)] shadow-inner;
   }
-  
+
   .glass-card {
-    @apply glass rounded-2xl transition-all duration-300;
+    @apply glass transition-all duration-500;
   }
-  
+
   .glass-card:hover {
-    @apply bg-white/10 border-white/20 shadow-xl;
+    @apply scale-[1.01];
   }
   
   .progress-bar {
