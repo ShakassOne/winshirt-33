@@ -38,6 +38,9 @@ const GlassCard = ({
     if (!hover3D) return;
     setTransform('');
   };
+
+  // Filter out props that conflict with framer-motion
+  const { onDrag, onDragStart, onDragEnd, ...motionProps } = props;
   
   return (
     <motion.div
@@ -55,7 +58,7 @@ const GlassCard = ({
       }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      {...props}
+      {...motionProps}
     >
       {children}
     </motion.div>
