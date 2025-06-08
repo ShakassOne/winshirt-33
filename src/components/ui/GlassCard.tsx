@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -39,13 +40,16 @@ const GlassCard = ({
   };
   
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6 }}
       className={cn(
         'glass-card',
         !hover3D && 'transition-all duration-300', // Only add transition when not in hover3D mode
         className
       )}
-      style={{ 
+      style={{
         transform,
         transition: hover3D ? 'none' : 'all 0.3s ease' // Remove transition for hover3D for immediate responsiveness
       }}
@@ -54,7 +58,7 @@ const GlassCard = ({
       {...props}
     >
       {children}
-    </div>
+    </motion.div>
   );
 };
 

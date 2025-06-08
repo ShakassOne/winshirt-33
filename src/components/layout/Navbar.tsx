@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { X, Menu, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,12 @@ const Navbar = () => {
   };
   return <header className="fixed top-0 left-0 w-full z-50">
       <div className="container mx-auto px-4 pt-4 py-[20px]">
-        <div className="max-w-4xl mx-auto rounded-full bg-black/60 backdrop-blur-lg border border-white/10 shadow-lg">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="max-w-4xl mx-auto rounded-full bg-white/5 backdrop-blur-md border border-white/20 shadow-[0_0_40px_rgba(255,255,255,0.05)]"
+        >
           <div className="flex items-center justify-between h-14 px-6">
             {/* Logo */}
             <Link to="/" className="flex-shrink-0">
@@ -96,7 +102,7 @@ const Navbar = () => {
               <CartIcon />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Mobile Navigation */}
         {isOpen && <div className="md:hidden py-4 mt-2 glass-card max-w-4xl mx-auto px-4">

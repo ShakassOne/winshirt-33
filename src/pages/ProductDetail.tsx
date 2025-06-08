@@ -611,7 +611,7 @@ const ProductDetail: React.FC = () => {
               <div className="space-y-4">
                 <Button
                   onClick={handleAddToCart}
-                  className="w-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue hover:opacity-90 text-white font-semibold py-3"
+                  className="w-full bg-gradient-to-r from-red-500 via-red-700 to-red-900 text-white font-semibold py-3 shadow-[0_0_20px_rgba(255,255,255,0.2)] border border-white/20 backdrop-blur-md hover:scale-[1.02] transition-all duration-500"
                   size="lg"
                 >
                   <ShoppingCart className="mr-2 h-5 w-5" />
