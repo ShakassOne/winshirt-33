@@ -10,12 +10,22 @@ const CodePenMobileMenu = () => {
   const { isAuthenticated } = useAuth();
   const { isAdmin } = useAdminCheck();
   
+  // Animation controls for each element
   const logoControls = useAnimation();
   const menuBgTopControls = useAnimation();
   const menuBgMiddleControls = useAnimation();
   const menuBgBottomControls = useAnimation();
   const menuControls = useAnimation();
+  
+  // Hamburger bars controls
+  const openTriggerTopControls = useAnimation();
+  const openTriggerMiddleControls = useAnimation();
+  const openTriggerBottomControls = useAnimation();
   const openTriggerControls = useAnimation();
+  
+  // Close trigger controls
+  const closeTriggerLeftControls = useAnimation();
+  const closeTriggerRightControls = useAnimation();
   const closeTriggerControls = useAnimation();
 
   const menuItems = [
@@ -31,22 +41,38 @@ const CodePenMobileMenu = () => {
   const openMenu = async () => {
     setIsOpen(true);
     
-    // Logo animation
-    logoControls.start({
+    // Phase 1: Logo shrink and hamburger bars move out (preOpen)
+    const logoAnimation = logoControls.start({
       scale: 0.8,
       opacity: 0,
       transition: { duration: 0.4, ease: "easeOut" }
     });
 
-    // Open trigger bars animation
-    setTimeout(() => {
-      openTriggerControls.start({
-        opacity: 0,
-        transition: { duration: 0.1 }
-      });
-    }, 400);
+    const topBarAnimation = openTriggerTopControls.start({
+      x: 80,
+      y: -80,
+      transition: { duration: 0.4, delay: 0.1, ease: [0.55, 0, 0.1, 1] }
+    });
 
-    // Menu backgrounds animation
+    const middleBarAnimation = openTriggerMiddleControls.start({
+      x: 80,
+      y: -80,
+      transition: { duration: 0.4, ease: [0.55, 0, 0.1, 1] }
+    });
+
+    const bottomBarAnimation = openTriggerBottomControls.start({
+      x: 80,
+      y: -80,
+      transition: { duration: 0.4, delay: 0.2, ease: [0.55, 0, 0.1, 1] }
+    });
+
+    // After bars animation, hide the open trigger
+    setTimeout(() => {
+      openTriggerControls.start({ opacity: 0, visibility: "hidden" });
+      closeTriggerControls.start({ zIndex: 25 });
+    }, 500);
+
+    // Phase 2: Menu backgrounds animation (open) - starts 0.4s before bars finish
     setTimeout(() => {
       menuBgTopControls.start({
         y: "13%",
@@ -64,7 +90,7 @@ const CodePenMobileMenu = () => {
       });
     }, 0);
 
-    // Menu content animation
+    // Phase 3: Menu content appears
     setTimeout(() => {
       menuControls.start({
         y: 0,
@@ -74,51 +100,55 @@ const CodePenMobileMenu = () => {
       });
     }, 600);
 
-    // Close trigger animation
+    // Phase 4: Close trigger bars animate in (preClose)
     setTimeout(() => {
-      closeTriggerControls.start({
-        opacity: 1,
+      closeTriggerLeftControls.start({
+        x: -100,
+        y: 100,
         transition: { duration: 0.8, ease: "easeOut" }
+      });
+      
+      closeTriggerRightControls.start({
+        x: 100,
+        y: 100,
+        transition: { duration: 0.8, delay: 0.2, ease: "easeOut" }
       });
     }, 0);
   };
 
   const closeMenu = async () => {
-    // Menu content fade out
+    // Phase 1: Change background colors and setup
+    menuBgTopControls.start({
+      backgroundColor: "rgba(98, 149, 202, 0.9)",
+      transition: { duration: 0.2, ease: [0.55, 0, 0.1, 1] }
+    });
+    
+    menuBgMiddleControls.start({
+      backgroundColor: "rgba(98, 149, 202, 0.9)",
+      transition: { duration: 0.2, ease: [0.55, 0, 0.1, 1] }
+    });
+    
+    menuBgBottomControls.start({
+      backgroundColor: "rgba(98, 149, 202, 0.9)",
+      transition: { duration: 0.2, ease: [0.55, 0, 0.1, 1] }
+    });
+
+    setTimeout(() => {
+      logoControls.start({ zIndex: 26 });
+      closeTriggerControls.start({ zIndex: 5 });
+      openTriggerControls.start({ opacity: 1, visibility: "visible" });
+    }, 200);
+
+    // Phase 2: Menu content fade out
     menuControls.start({
       y: 20,
       opacity: 0,
-      transition: { duration: 0.6, ease: "easeOut" }
+      transition: { duration: 0.6, ease: "easeOut" },
+    }).then(() => {
+      menuControls.set({ visibility: "hidden" });
     });
 
-    // Close trigger fade out
-    closeTriggerControls.start({
-      opacity: 0,
-      transition: { duration: 0.2, ease: "easeIn" }
-    });
-
-    // Menu backgrounds animation with color change
-    setTimeout(() => {
-      menuBgTopControls.start({
-        y: "-113%",
-        backgroundColor: "#6295ca",
-        transition: { duration: 0.8, ease: [0.55, 0, 0.1, 1] }
-      });
-      
-      menuBgMiddleControls.start({
-        scaleY: 0,
-        backgroundColor: "#6295ca",
-        transition: { duration: 0.8, ease: [0.55, 0, 0.1, 1] }
-      });
-      
-      menuBgBottomControls.start({
-        y: "23%",
-        backgroundColor: "#6295ca",
-        transition: { duration: 0.8, ease: [0.55, 0, 0.1, 1] }
-      });
-    }, 200);
-
-    // Logo animation
+    // Phase 3: Logo scale back up
     setTimeout(() => {
       logoControls.start({
         scale: 1,
@@ -127,28 +157,75 @@ const CodePenMobileMenu = () => {
       });
     }, 200);
 
-    // Open trigger animation
+    // Phase 4: Menu backgrounds move out
     setTimeout(() => {
-      openTriggerControls.start({
-        opacity: 1,
-        transition: { duration: 1, ease: "easeOut" }
+      menuBgTopControls.start({
+        y: "-113%",
+        transition: { duration: 0.8, ease: [0.55, 0, 0.1, 1] }
+      });
+      
+      menuBgMiddleControls.start({
+        scaleY: 0,
+        transition: { duration: 0.8, ease: [0.55, 0, 0.1, 1] }
+      });
+      
+      menuBgBottomControls.start({
+        y: "23%",
+        transition: { 
+          duration: 0.8, 
+          ease: [0.55, 0, 0.1, 1],
+          onComplete: () => {
+            // Reset background colors after animation
+            menuBgTopControls.set({ backgroundColor: "rgba(255, 255, 255, 0.9)" });
+            menuBgMiddleControls.set({ backgroundColor: "rgba(255, 255, 255, 0.9)" });
+            menuBgBottomControls.set({ backgroundColor: "rgba(255, 255, 255, 0.9)" });
+          }
+        }
       });
     }, 400);
 
-    // Reset background colors
-    setTimeout(() => {
-      menuBgTopControls.start({ backgroundColor: "#ffffff" });
-      menuBgMiddleControls.start({ backgroundColor: "#ffffff" });
-      menuBgBottomControls.start({ backgroundColor: "#ffffff" });
-    }, 1000);
+    // Phase 5: Close trigger bars move out
+    closeTriggerLeftControls.start({
+      x: 100,
+      y: -100,
+      transition: { duration: 0.2, ease: "easeIn" }
+    });
+    
+    closeTriggerRightControls.start({
+      x: -100,
+      y: -100,
+      transition: { duration: 0.2, delay: 0.1, ease: "easeIn" }
+    });
 
+    // Phase 6: Open trigger bars move back in
+    setTimeout(() => {
+      openTriggerTopControls.start({
+        x: 0,
+        y: 0,
+        transition: { duration: 1, delay: 0.2, ease: "easeOut" }
+      });
+      
+      openTriggerMiddleControls.start({
+        x: 0,
+        y: 0,
+        transition: { duration: 1, ease: "easeOut" }
+      });
+      
+      openTriggerBottomControls.start({
+        x: 0,
+        y: 0,
+        transition: { duration: 1, delay: 0.1, ease: "easeOut" }
+      });
+    }, 200);
+
+    // Final cleanup
     setTimeout(() => {
       setIsOpen(false);
     }, 1200);
   };
 
   useEffect(() => {
-    // Initialize menu as hidden
+    // Initialize all animations to starting positions
     menuControls.set({
       y: 30,
       opacity: 0,
@@ -156,7 +233,30 @@ const CodePenMobileMenu = () => {
     });
     
     closeTriggerControls.set({
-      opacity: 0
+      zIndex: 5
+    });
+    
+    closeTriggerLeftControls.set({
+      x: 100,
+      y: -100
+    });
+    
+    closeTriggerRightControls.set({
+      x: -100,
+      y: -100
+    });
+
+    // Initialize menu backgrounds
+    menuBgTopControls.set({
+      y: "-113%"
+    });
+    
+    menuBgMiddleControls.set({
+      scaleY: 0
+    });
+    
+    menuBgBottomControls.set({
+      y: "23%"
     });
   }, []);
 
@@ -169,9 +269,18 @@ const CodePenMobileMenu = () => {
           onClick={openMenu}
           animate={openTriggerControls}
         >
-          <i className="menu-trigger-bar top"></i>
-          <i className="menu-trigger-bar middle"></i>
-          <i className="menu-trigger-bar bottom"></i>
+          <motion.i 
+            className="menu-trigger-bar top"
+            animate={openTriggerTopControls}
+          ></motion.i>
+          <motion.i 
+            className="menu-trigger-bar middle"
+            animate={openTriggerMiddleControls}
+          ></motion.i>
+          <motion.i 
+            className="menu-trigger-bar bottom"
+            animate={openTriggerBottomControls}
+          ></motion.i>
         </motion.span>
 
         {/* Close Trigger */}
@@ -180,8 +289,14 @@ const CodePenMobileMenu = () => {
           onClick={closeMenu}
           animate={closeTriggerControls}
         >
-          <i className="close-trigger-bar left"></i>
-          <i className="close-trigger-bar right"></i>
+          <motion.i 
+            className="close-trigger-bar left"
+            animate={closeTriggerLeftControls}
+          ></motion.i>
+          <motion.i 
+            className="close-trigger-bar right"
+            animate={closeTriggerRightControls}
+          ></motion.i>
         </motion.span>
 
         {/* Logo */}
@@ -200,17 +315,14 @@ const CodePenMobileMenu = () => {
             <motion.i 
               className="menu-bg top"
               animate={menuBgTopControls}
-              initial={{ y: "-113%" }}
             ></motion.i>
             <motion.i 
               className="menu-bg middle"
               animate={menuBgMiddleControls}
-              initial={{ scaleY: 0 }}
             ></motion.i>
             <motion.i 
               className="menu-bg bottom"
               animate={menuBgBottomControls}
-              initial={{ y: "23%" }}
             ></motion.i>
             
             <div className="menu-container">
