@@ -40,7 +40,16 @@ const GlassCard = ({
   };
 
   // Filter out props that conflict with framer-motion
-  const { onDrag, onDragStart, onDragEnd, ...motionProps } = props;
+  const { 
+    onDrag, 
+    onDragStart, 
+    onDragEnd,
+    onAnimationStart,
+    onAnimationEnd,
+    onAnimationIteration,
+    onTransitionEnd,
+    ...motionProps 
+  } = props;
   
   return (
     <motion.div
