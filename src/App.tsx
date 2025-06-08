@@ -25,6 +25,7 @@ import Winners from "./pages/Winners";
 import PolitiqueConfidentialite from "./pages/PolitiqueConfidentialite";
 import ConditionsGenerales from "./pages/ConditionsGenerales";
 import ReglementDuJeu from "./pages/ReglementDuJeu";
+import MenuDemo from "./pages/MenuDemo";
 import Dashboard from "./pages/admin/Dashboard";
 import ProductsAdmin from "./pages/admin/ProductsAdmin";
 import LotteriesAdmin from "./pages/admin/LotteriesAdmin";
@@ -67,6 +68,7 @@ function AppContent() {
       <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
       <Route path="/conditions-generales" element={<ConditionsGenerales />} />
       <Route path="/reglement-du-jeu" element={<ReglementDuJeu />} />
+      <Route path="/menu-demo" element={<MenuDemo />} />
       
       {/* User account route - unified */}
       <Route 
