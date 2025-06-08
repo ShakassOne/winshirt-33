@@ -39,7 +39,7 @@ const ProductDetail: React.FC = () => {
   const [selectedMockupColor, setSelectedMockupColor] = useState<MockupColor | null>(null);
   const [currentViewSide, setCurrentViewSide] = useState<'front' | 'back'>('front');
   const [showCustomization, setShowCustomization] = useState(false);
-  const [selectedLotteries, setSelectedLotteries] = useState<string[]>([]);
+  const [selectedLottery, setSelectedLottery] = useState<string>('');
   const [showLotteryError, setShowLotteryError] = useState(false);
 
   // Design state - using local state since useDesignState doesn't exist
@@ -95,6 +95,8 @@ const ProductDetail: React.FC = () => {
     queryKey: ['lotteries'],
     queryFn: fetchAllLotteries
   });
+
+  const selectedLotteryDetails = lotteries?.find((lottery: Lottery) => lottery.id === selectedLottery);
 
   // Calculate total price function
   const calculateTotalPrice = useCallback(() => {
@@ -282,7 +284,7 @@ const ProductDetail: React.FC = () => {
     if (!product) return;
 
     // Validation obligatoire des loteries
-    if (product.tickets_offered > 0 && selectedLotteries.length === 0) {
+    if (product.tickets_offered > 0 && !selectedLottery) {
       setShowLotteryError(true);
       toast({
         title: "Loterie requise",
@@ -328,7 +330,7 @@ const ProductDetail: React.FC = () => {
         },
         available_colors: product.available_colors,
         available_sizes: product.available_sizes,
-        lottery_selections: selectedLotteries
+        lottery_selections: selectedLottery ? [selectedLottery] : []
       };
 
       console.log('Starting addItem function with item:', JSON.stringify(itemToAdd, null, 2));
@@ -344,7 +346,7 @@ const ProductDetail: React.FC = () => {
     }
   }, [
     product, 
-    selectedLotteries,
+    selectedLottery,
     selectedColor, 
     selectedSize, 
     quantity, 
@@ -359,14 +361,8 @@ const ProductDetail: React.FC = () => {
     calculateTotalPrice
   ]);
 
-  const handleLotteryToggle = (lotteryId: string) => {
-    setSelectedLotteries(prev => {
-      if (prev.includes(lotteryId)) {
-        return prev.filter(id => id !== lotteryId);
-      } else {
-        return [...prev, lotteryId];
-      }
-    });
+  const handleLotterySelect = (lotteryId: string) => {
+    setSelectedLottery(lotteryId);
     setShowLotteryError(false);
   };
 
@@ -503,36 +499,26 @@ const ProductDetail: React.FC = () => {
                       <LoadingSpinner />
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto">
-                      {lotteries && Array.isArray(lotteries) && lotteries.map((lottery) => (
-                        <div
-                          key={lottery.id}
-                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                            selectedLotteries.includes(lottery.id)
-                              ? 'border-winshirt-purple bg-winshirt-purple/10'
-                              : 'border-white/20 hover:border-white/40'
-                          }`}
-                          onClick={() => handleLotteryToggle(lottery.id)}
-                        >
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h4 className="font-medium">{lottery.title}</h4>
-                              <p className="text-sm text-white/60">Valeur: {lottery.value}€</p>
-                            </div>
-                            <div className={`w-4 h-4 rounded border ${
-                              selectedLotteries.includes(lottery.id)
-                                ? 'bg-winshirt-purple border-winshirt-purple'
-                                : 'border-white/40'
-                            }`}>
-                              {selectedLotteries.includes(lottery.id) && (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <div className="w-2 h-2 bg-white rounded-full"></div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                    <div>
+                      <Select value={selectedLottery} onValueChange={handleLotterySelect}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionnez une loterie" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {lotteries && Array.isArray(lotteries) && lotteries.map((lottery) => (
+                            <SelectItem key={lottery.id} value={lottery.id}>
+                              {lottery.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {selectedLotteryDetails && (
+                        <div className="mt-4 space-y-1 text-sm">
+                          <p>Date du tirage : {new Date(selectedLotteryDetails.draw_date).toLocaleDateString('fr-FR')}</p>
+                          <p>Participants : {selectedLotteryDetails.participants ?? 0}</p>
+                          <p>Valeur : {selectedLotteryDetails.value}€</p>
                         </div>
-                      ))}
+                      )}
                     </div>
                   )}
                 </GlassCard>
