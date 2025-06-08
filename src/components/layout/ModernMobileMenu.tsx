@@ -45,6 +45,135 @@ const ModernMobileMenu = () => {
     menuItems.push({ to: "/admin", label: "Admin" });
   }
 
+  const styles = {
+    hamburgerBtn: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      justifyContent: 'space-around',
+      width: '24px',
+      height: '24px',
+      background: 'transparent',
+      border: 'none',
+      cursor: 'pointer',
+      padding: '0',
+      zIndex: 1001,
+    },
+    hamburgerSpan: {
+      width: '24px',
+      height: '2px',
+      background: 'rgba(255, 255, 255, 0.8)',
+      borderRadius: '2px',
+      transition: 'all 0.3s linear',
+      position: 'relative' as const,
+      transformOrigin: '1px',
+    },
+    hamburgerSpanActive1: {
+      transform: 'rotate(45deg)',
+    },
+    hamburgerSpanActive2: {
+      opacity: 0,
+      transform: 'translateX(20px)',
+    },
+    hamburgerSpanActive3: {
+      transform: 'rotate(-45deg)',
+    },
+    overlay: {
+      position: 'fixed' as const,
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100vh',
+      background: 'rgba(0, 0, 0, 0.95)',
+      backdropFilter: 'blur(10px)',
+      zIndex: 1000,
+      opacity: isOpen ? 1 : 0,
+      visibility: isOpen ? 'visible' as const : 'hidden' as const,
+      transition: 'all 0.3s ease',
+    },
+    closeBtn: {
+      position: 'absolute' as const,
+      top: '20px',
+      right: '20px',
+      background: 'none',
+      border: 'none',
+      color: 'white',
+      fontSize: '2rem',
+      cursor: 'pointer',
+      zIndex: 1001,
+      width: '40px',
+      height: '40px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: '50%',
+      transition: 'background 0.3s ease',
+    },
+    menuContent: {
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column' as const,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '2rem',
+      transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+      transition: 'transform 0.3s ease',
+    },
+    menuList: {
+      listStyle: 'none',
+      padding: 0,
+      margin: 0,
+      textAlign: 'center' as const,
+    },
+    menuItem: (index: number) => ({
+      margin: '1rem 0',
+      opacity: isOpen ? 1 : 0,
+      transform: isOpen ? 'translateY(0)' : 'translateY(30px)',
+      transition: `all 0.5s ease ${index * 0.1}s`,
+    }),
+    menuLink: {
+      color: 'white',
+      textDecoration: 'none',
+      fontSize: '1.5rem',
+      fontWeight: 300,
+      letterSpacing: '2px',
+      textTransform: 'uppercase' as const,
+      transition: 'all 0.3s ease',
+      display: 'block',
+      padding: '0.5rem 1rem',
+      borderRadius: '8px',
+    },
+    menuFooter: {
+      marginTop: '3rem',
+      textAlign: 'center' as const,
+      width: '100%',
+      maxWidth: '300px',
+    },
+    authSection: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: '1rem',
+    },
+    profileLink: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.5rem',
+      color: 'white',
+      textDecoration: 'none',
+      padding: '0.75rem',
+      borderRadius: '8px',
+      transition: 'background 0.3s ease',
+    },
+    ordersLink: {
+      color: 'white',
+      textDecoration: 'none',
+      padding: '0.75rem',
+      borderRadius: '8px',
+      transition: 'background 0.3s ease',
+      display: 'block',
+    },
+  };
+
   return (
     <>
       {/* Hamburger Button */}
@@ -53,45 +182,69 @@ const ModernMobileMenu = () => {
         <CartIcon />
         <button
           onClick={toggleMenu}
-          className={`hamburger-btn ${isOpen ? 'active' : ''}`}
+          style={styles.hamburgerBtn}
           aria-label="Toggle menu"
         >
-          <span></span>
-          <span></span>
-          <span></span>
+          <span style={{
+            ...styles.hamburgerSpan,
+            ...(isOpen ? styles.hamburgerSpanActive1 : {})
+          }}></span>
+          <span style={{
+            ...styles.hamburgerSpan,
+            ...(isOpen ? styles.hamburgerSpanActive2 : {})
+          }}></span>
+          <span style={{
+            ...styles.hamburgerSpan,
+            ...(isOpen ? styles.hamburgerSpanActive3 : {})
+          }}></span>
         </button>
       </div>
 
       {/* Mobile Menu Overlay */}
-      <div className={`mobile-menu-overlay ${isOpen ? 'active' : ''}`}>
+      <div style={styles.overlay}>
         {/* Close Button */}
         <button
           onClick={closeMenu}
-          className="close-btn"
+          style={styles.closeBtn}
           aria-label="Close menu"
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'none';
+          }}
         >
           ×
         </button>
 
         {/* Menu Content */}
-        <nav className="mobile-menu-content">
-          <div className="menu-header">
+        <nav style={styles.menuContent}>
+          <div style={{ marginBottom: '3rem' }}>
             <Link to="/" onClick={closeMenu} className="logo">
               <span className="text-gradient text-2xl font-bold">WinShirt</span>
             </Link>
           </div>
 
-          <ul className="menu-list">
+          <ul style={styles.menuList}>
             {menuItems.map((item, index) => (
               <li 
                 key={item.to} 
-                className="menu-item"
-                style={{ animationDelay: `${index * 0.1}s` }}
+                style={styles.menuItem(index)}
               >
                 <Link 
                   to={item.to} 
                   onClick={closeMenu}
-                  className="menu-link"
+                  style={styles.menuLink}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = '#9b87f5';
+                    e.currentTarget.style.background = 'rgba(155, 135, 245, 0.1)';
+                    e.currentTarget.style.transform = 'translateX(10px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = 'white';
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.transform = 'translateX(0)';
+                  }}
                 >
                   {item.label}
                 </Link>
@@ -99,18 +252,48 @@ const ModernMobileMenu = () => {
             ))}
           </ul>
 
-          <div className="menu-footer">
+          <div style={styles.menuFooter}>
             {isAuthenticated ? (
-              <div className="auth-section">
-                <Link to="/profile" onClick={closeMenu} className="profile-link">
+              <div style={styles.authSection}>
+                <Link 
+                  to="/profile" 
+                  onClick={closeMenu} 
+                  style={styles.profileLink}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                >
                   <User className="w-5 h-5" />
                   <span>Mon Profil</span>
                 </Link>
-                <Link to="/orders" onClick={closeMenu} className="orders-link">
+                <Link 
+                  to="/orders" 
+                  onClick={closeMenu} 
+                  style={styles.ordersLink}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                >
                   Mes Commandes
                 </Link>
                 {isAdmin && (
-                  <Link to="/admin/users" onClick={closeMenu} className="admin-link">
+                  <Link 
+                    to="/admin/users" 
+                    onClick={closeMenu} 
+                    style={styles.ordersLink}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                    }}
+                  >
                     Utilisateurs
                   </Link>
                 )}
@@ -129,196 +312,6 @@ const ModernMobileMenu = () => {
           </div>
         </nav>
       </div>
-
-      <style jsx>{`
-        .hamburger-btn {
-          display: flex;
-          flex-direction: column;
-          justify-content: space-around;
-          width: 24px;
-          height: 24px;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          padding: 0;
-          z-index: 1001;
-        }
-
-        .hamburger-btn span {
-          width: 24px;
-          height: 2px;
-          background: rgba(255, 255, 255, 0.8);
-          border-radius: 2px;
-          transition: all 0.3s linear;
-          position: relative;
-          transform-origin: 1px;
-        }
-
-        .hamburger-btn.active span:first-child {
-          transform: rotate(45deg);
-        }
-
-        .hamburger-btn.active span:nth-child(2) {
-          opacity: 0;
-          transform: translateX(20px);
-        }
-
-        .hamburger-btn.active span:nth-child(3) {
-          transform: rotate(-45deg);
-        }
-
-        .mobile-menu-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100vh;
-          background: rgba(0, 0, 0, 0.95);
-          backdrop-filter: blur(10px);
-          z-index: 1000;
-          opacity: 0;
-          visibility: hidden;
-          transition: all 0.3s ease;
-        }
-
-        .mobile-menu-overlay.active {
-          opacity: 1;
-          visibility: visible;
-        }
-
-        .close-btn {
-          position: absolute;
-          top: 20px;
-          right: 20px;
-          background: none;
-          border: none;
-          color: white;
-          font-size: 2rem;
-          cursor: pointer;
-          z-index: 1001;
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-          transition: background 0.3s ease;
-        }
-
-        .close-btn:hover {
-          background: rgba(255, 255, 255, 0.1);
-        }
-
-        .mobile-menu-content {
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          padding: 2rem;
-          transform: translateX(100%);
-          transition: transform 0.3s ease;
-        }
-
-        .mobile-menu-overlay.active .mobile-menu-content {
-          transform: translateX(0);
-        }
-
-        .menu-header {
-          margin-bottom: 3rem;
-        }
-
-        .menu-list {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-          text-align: center;
-        }
-
-        .menu-item {
-          margin: 1rem 0;
-          opacity: 0;
-          transform: translateY(30px);
-          animation: none;
-        }
-
-        .mobile-menu-overlay.active .menu-item {
-          animation: slideInUp 0.5s ease forwards;
-        }
-
-        .menu-link {
-          color: white;
-          text-decoration: none;
-          font-size: 1.5rem;
-          font-weight: 300;
-          letter-spacing: 2px;
-          text-transform: uppercase;
-          transition: all 0.3s ease;
-          display: block;
-          padding: 0.5rem 1rem;
-          border-radius: 8px;
-        }
-
-        .menu-link:hover {
-          color: #9b87f5;
-          background: rgba(155, 135, 245, 0.1);
-          transform: translateX(10px);
-        }
-
-        .menu-footer {
-          margin-top: 3rem;
-          text-align: center;
-          width: 100%;
-          max-width: 300px;
-        }
-
-        .auth-section {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-
-        .profile-link {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          color: white;
-          text-decoration: none;
-          padding: 0.75rem;
-          border-radius: 8px;
-          transition: background 0.3s ease;
-        }
-
-        .profile-link:hover,
-        .orders-link:hover,
-        .admin-link:hover {
-          background: rgba(255, 255, 255, 0.1);
-        }
-
-        .orders-link,
-        .admin-link {
-          color: white;
-          text-decoration: none;
-          padding: 0.75rem;
-          border-radius: 8px;
-          transition: background 0.3s ease;
-          display: block;
-        }
-
-        @keyframes slideInUp {
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @media (min-width: 768px) {
-          .mobile-menu-overlay {
-            display: none;
-          }
-        }
-      `}</style>
     </>
   );
 };
