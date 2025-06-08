@@ -103,10 +103,23 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
+    background-image: url('/lovable-uploads/9c8e8e6b-438b-4d5f-9391-c30feb0ebfca.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+
+  html {
+    background-image: url('/lovable-uploads/9c8e8e6b-438b-4d5f-9391-c30feb0ebfca.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
   }
 }
 
