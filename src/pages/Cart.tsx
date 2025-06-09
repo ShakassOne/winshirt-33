@@ -11,10 +11,8 @@ import { useCart } from '@/context/CartContext';
 import CartItem from '@/components/cart/CartItem';
 
 const Cart = () => {
-  const { items, removeFromCart, updateQuantity, getTotalPrice } = useCart();
+  const { items, removeItem, updateItemQuantity, total } = useCart();
   const navigate = useNavigate();
-
-  const totalPrice = useMemo(() => getTotalPrice(), [getTotalPrice]);
 
   const handleCheckout = () => {
     navigate('/checkout');
@@ -45,10 +43,10 @@ const Cart = () => {
               <div className="lg:col-span-2 space-y-4">
                 {items.map((item) => (
                   <CartItem
-                    key={`${item.id}-${item.size}-${item.color}`}
+                    key={`${item.productId}-${item.size}-${item.color}`}
                     item={item}
-                    onUpdateQuantity={(newQuantity) => updateQuantity(item.id, newQuantity, item.size, item.color)}
-                    onRemove={() => removeFromCart(item.id, item.size, item.color)}
+                    onUpdateQuantity={(newQuantity) => updateItemQuantity(item.productId, newQuantity)}
+                    onRemove={() => removeItem(item.productId)}
                   />
                 ))}
               </div>
@@ -61,7 +59,7 @@ const Cart = () => {
                   <div className="space-y-3 mb-6">
                     <div className="flex justify-between">
                       <span>Sous-total</span>
-                      <span>{totalPrice.toFixed(2)}€</span>
+                      <span>{total.toFixed(2)}€</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Livraison</span>
@@ -70,7 +68,7 @@ const Cart = () => {
                     <div className="border-t border-white/20 pt-3">
                       <div className="flex justify-between font-semibold text-lg">
                         <span>Total</span>
-                        <span>{totalPrice.toFixed(2)}€</span>
+                        <span>{total.toFixed(2)}€</span>
                       </div>
                     </div>
                   </div>

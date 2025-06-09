@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { AnimatedButton } from '@/components/ui/AnimatedButton';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { fetchProductById, fetchMockupByProductId } from '@/services/api.service';
+import { fetchProductById, fetchMockupById } from '@/services/api.service';
 import { Product, Design } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
 import { useCart } from '@/context/CartContext';
@@ -21,7 +21,7 @@ const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { addToCart } = useCart();
+  const { addItem } = useCart();
 
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -199,13 +199,15 @@ const ProductDetail = () => {
     }
 
     const cartItem = {
-      id: product.id,
+      productId: product.id,
       name: product.name,
       price: product.price,
-      image: product.image_url,
+      image_url: product.image_url,
       quantity,
       size: selectedSize,
       color: selectedMockupColor?.name || selectedColor,
+      available_sizes: product.available_sizes,
+      available_colors: product.available_colors,
       customization: {
         frontDesign: selectedDesignFront,
         backDesign: selectedDesignBack,
@@ -232,7 +234,7 @@ const ProductDetail = () => {
       tickets: product.tickets_offered
     };
 
-    addToCart(cartItem);
+    addItem(cartItem);
     toast({
       title: "Produit ajouté",
       description: `${product.name} a été ajouté au panier`,
@@ -255,8 +257,8 @@ const ProductDetail = () => {
 
   const { data: mockup } = useQuery({
     queryKey: ['mockup', product?.mockup_id],
-    queryFn: () => fetchMockupByProductId(product?.id as string),
-    enabled: !!product?.id
+    queryFn: () => fetchMockupById(product?.mockup_id as string),
+    enabled: !!product?.mockup_id
   });
 
   return (
@@ -447,7 +449,7 @@ const ProductDetail = () => {
 
       {/* Lottery Selection Modal */}
       <LotterySelectionRequired
-        isOpen={showLotteryModal}
+        open={showLotteryModal}
         onClose={handleCloseLotteryModal}
         onLotterySelect={handleLotterySelect}
       />

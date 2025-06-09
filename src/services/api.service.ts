@@ -611,4 +611,23 @@ export const uploadToExternalScript = async (file: File): Promise<string> => {
   }
 };
 
+export const fetchMockupByProductId = async (productId: string): Promise<Mockup | null> => {
+  console.log(`Fetching mockup for product with id ${productId}...`);
+  try {
+    // First get the product to find its mockup_id
+    const product = await fetchProductById(productId);
+    if (!product || !product.mockup_id) {
+      console.log(`No mockup found for product ${productId}`);
+      return null;
+    }
+
+    // Then fetch the mockup by its id
+    const mockup = await fetchMockupById(product.mockup_id);
+    console.log(`Mockup for product ${productId} fetched successfully:`, mockup);
+    return mockup;
+  } catch (error) {
+    console.error(`Failed to fetch mockup for product ${productId}:`, error);
+    return null;
+  }
+};
 // Suppression de uploadFileToStorage - plus utilisé
