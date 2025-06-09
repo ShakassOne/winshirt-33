@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { TrashIcon, Minus, Plus } from 'lucide-react';
+import { TrashIcon, Minus, Plus, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CartItem as CartItemType } from '@/types/supabase.types';
 import { Link } from 'react-router-dom';
@@ -66,11 +66,30 @@ const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity })
           {item.customization && (
             <div className="mt-2">
               <Badge variant="outline" className="mb-1">Personnalisé</Badge>
-              {item.customization.designId && (
-                <div className="text-xs text-gray-400">Design appliqué</div>
+              {item.customization.frontDesign && (
+                <div className="text-xs text-gray-400">Design recto appliqué</div>
               )}
-              {item.customization.customText && (
+              {item.customization.backDesign && (
+                <div className="text-xs text-gray-400">Design verso appliqué</div>
+              )}
+              {(item.customization.frontText || item.customization.backText) && (
                 <div className="text-xs text-gray-400">Texte personnalisé</div>
+              )}
+            </div>
+          )}
+
+          {item.lottery_selections && item.lottery_selections.length > 0 && (
+            <div className="mt-2">
+              <div className="flex items-center gap-1 mb-1">
+                <Trophy className="h-3 w-3 text-yellow-400" />
+                <span className="text-sm font-medium">
+                  {item.lottery_selections.length} loterie{item.lottery_selections.length > 1 ? 's' : ''}
+                </span>
+              </div>
+              {item.tickets && (
+                <div className="text-xs text-gray-400">
+                  {item.tickets} ticket{item.tickets > 1 ? 's' : ''} inclus
+                </div>
               )}
             </div>
           )}

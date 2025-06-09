@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Minus, ShoppingCart, Palette } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, Palette, Trophy } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import GlassCard from '@/components/ui/GlassCard';
@@ -9,13 +9,15 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { AnimatedButton } from '@/components/ui/AnimatedButton';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { fetchProductById, fetchMockupById } from '@/services/api.service';
-import { Product, Design } from '@/types/supabase.types';
+import { Product, Design, Lottery } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
 import { useCart } from '@/context/CartContext';
 import { ModalPersonnalisation } from '@/components/product/ModalPersonnalisation';
 import { LotterySelectionRequired } from '@/components/product/LotterySelectionRequired';
+import { useLotteriesQuery } from '@/hooks/useLotteriesQuery';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,8 +52,11 @@ const ProductDetail = () => {
   const [selectedMockupColor, setSelectedMockupColor] = useState<MockupColor | null>(null);
   const [currentViewSide, setCurrentViewSide] = useState<'front' | 'back'>('front');
   const [showLotteryModal, setShowLotteryModal] = useState(false);
-  const [selectedLottery, setSelectedLottery] = useState<string | null>(null);
+  const [selectedLotteries, setSelectedLotteries] = useState<string[]>([]);
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
+
+  // Récupération des loteries disponibles
+  const { data: lotteries = [], isLoading: isLoadingLotteries } = useLotteriesQuery();
 
   const decreaseQuantity = () => {
     if (quantity > 1) {
@@ -190,10 +195,32 @@ const ProductDetail = () => {
     }
   };
 
+  const handleLotterySelection = (index: number, lotteryId: string) => {
+    const newSelectedLotteries = [...selectedLotteries];
+    newSelectedLotteries[index] = lotteryId;
+    setSelectedLotteries(newSelectedLotteries);
+  };
+
+  const getAvailableLotteries = (currentIndex: number) => {
+    return lotteries.filter(lottery => {
+      // Exclure les loteries déjà sélectionnées dans d'autres dropdowns
+      const isAlreadySelected = selectedLotteries.some((selected, index) => 
+        selected === lottery.id && index !== currentIndex
+      );
+      return !isAlreadySelected && lottery.is_active;
+    });
+  };
+
+  const isLotterySelectionComplete = () => {
+    if (!product?.tickets_offered) return true;
+    return selectedLotteries.length === product.tickets_offered && 
+           selectedLotteries.every(lottery => lottery !== '');
+  };
+
   const handleAddToCart = () => {
     if (!product) return;
 
-    if (product.tickets_offered > 0 && !selectedLottery) {
+    if (product.tickets_offered > 0 && !isLotterySelectionComplete()) {
       setShowLotteryModal(true);
       return;
     }
@@ -240,7 +267,7 @@ const ProductDetail = () => {
         mockupColor: selectedMockupColor,
         mockup: mockup
       },
-      lottery: selectedLottery,
+      lottery_selections: selectedLotteries,
       tickets: product.tickets_offered
     };
 
@@ -252,7 +279,8 @@ const ProductDetail = () => {
   };
 
   const handleLotterySelect = (lottery: string) => {
-    setSelectedLottery(lottery);
+    // Cette fonction est appelée par la modal d'erreur
+    setSelectedLotteries([lottery]);
     setShowLotteryModal(false);
   };
 
@@ -270,6 +298,13 @@ const ProductDetail = () => {
     queryFn: () => fetchMockupById(product?.mockup_id as string),
     enabled: !!product?.mockup_id
   });
+
+  // Initialiser les loteries sélectionnées quand le produit se charge
+  useEffect(() => {
+    if (product?.tickets_offered) {
+      setSelectedLotteries(new Array(product.tickets_offered).fill(''));
+    }
+  }, [product?.tickets_offered]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -349,6 +384,61 @@ const ProductDetail = () => {
                           ))}
                         </div>
                       </div>
+                    )}
+
+                    {/* Lottery Selection */}
+                    {product.tickets_offered > 0 && (
+                      <GlassCard className="p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Trophy className="h-5 w-5 text-yellow-400" />
+                          <h4 className="text-lg font-medium">
+                            Participez à {product.tickets_offered} loterie{product.tickets_offered > 1 ? 's' : ''}
+                          </h4>
+                        </div>
+                        
+                        {isLoadingLotteries ? (
+                          <div className="text-center py-4">
+                            <LoadingSpinner />
+                            <p className="text-sm text-muted-foreground mt-2">Chargement des loteries...</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {Array.from({ length: product.tickets_offered }).map((_, index) => (
+                              <div key={index} className="space-y-2">
+                                <label className="text-sm font-medium">
+                                  Loterie {index + 1}
+                                </label>
+                                <Select
+                                  value={selectedLotteries[index] || ''}
+                                  onValueChange={(value) => handleLotterySelection(index, value)}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Sélectionnez une loterie" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {getAvailableLotteries(index).map((lottery) => (
+                                      <SelectItem key={lottery.id} value={lottery.id}>
+                                        <div className="flex justify-between items-center w-full">
+                                          <span>{lottery.title}</span>
+                                          <span className="text-green-400 font-medium ml-2">
+                                            {lottery.value}€
+                                          </span>
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            ))}
+                            
+                            {!isLotterySelectionComplete() && (
+                              <div className="text-sm text-yellow-400 bg-yellow-400/10 p-2 rounded">
+                                Veuillez sélectionner toutes les loteries pour continuer
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </GlassCard>
                     )}
 
                     {/* Quantity and Add to Cart */}
@@ -459,7 +549,9 @@ const ProductDetail = () => {
 
       {/* Lottery Selection Modal */}
       <LotterySelectionRequired
-        show={showLotteryModal}
+        open={showLotteryModal}
+        onClose={handleCloseLotteryModal}
+        onLotterySelect={handleLotterySelect}
       />
     </div>
   );

@@ -1,4 +1,3 @@
-
 export type CartItem = {
   productId: string;
   name: string;
@@ -47,10 +46,35 @@ export type CartItem = {
         rotation: number;
       };
     } | null;
+    frontText?: string;
+    backText?: string;
+    frontTextFont?: string;
+    backTextFont?: string;
+    frontTextColor?: string;
+    backTextColor?: string;
+    frontTextStyles?: { bold: boolean; italic: boolean; underline: boolean };
+    backTextStyles?: { bold: boolean; italic: boolean; underline: boolean };
+    frontTextTransform?: {
+      position: { x: number; y: number };
+      scale: number;
+      rotation: number;
+    };
+    backTextTransform?: {
+      position: { x: number; y: number };
+      scale: number;
+      rotation: number;
+    };
+    frontSvgColor?: string;
+    backSvgColor?: string;
+    frontSvgContent?: string;
+    backSvgContent?: string;
+    mockupColor?: any;
+    mockup?: any;
     hdRectoUrl?: string;
     hdVersoUrl?: string;
     hdCaptureTimestamp?: string;
   } | null;
+  tickets?: number;
 };
 
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
