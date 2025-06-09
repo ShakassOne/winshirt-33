@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface LotterySelectionRequiredProps {
-  show: boolean;
+  show?: boolean;
   open?: boolean;
   onClose?: () => void;
   onLotterySelect?: (lottery: string) => void;
@@ -30,7 +30,7 @@ export const LotterySelectionRequired: React.FC<LotterySelectionRequiredProps> =
             <Alert className="bg-red-500/10 border-red-500/20">
               <AlertCircle className="h-4 w-4 text-red-400" />
               <AlertDescription className="text-red-400">
-                Veuillez sélectionner au moins une loterie avant d'ajouter ce produit au panier.
+                Veuillez sélectionner toutes les loteries avant d'ajouter ce produit au panier.
               </AlertDescription>
             </Alert>
             <div className="flex gap-2">
@@ -38,7 +38,7 @@ export const LotterySelectionRequired: React.FC<LotterySelectionRequiredProps> =
                 Annuler
               </Button>
               <Button onClick={() => onLotterySelect?.('default')}>
-                Sélectionner une loterie
+                OK
               </Button>
             </div>
           </div>
