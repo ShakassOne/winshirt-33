@@ -241,7 +241,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         />
       </div>
 
-      <div className="w-1/2 flex flex-col">
+      <div className="w-1/2 flex flex-col h-full">
         {filteredMockupColors.length > 0 && (
           <div className="mb-6">
             <h3 className="text-lg font-medium mb-3">Couleur du produit</h3>
@@ -253,7 +253,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           </div>
         )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
           <TabsList className="grid w-full grid-cols-5 mb-4">
             <TabsTrigger value="designs" className="flex items-center gap-2">
               <ImageIcon className="h-4 w-4" />
@@ -277,8 +277,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             </TabsTrigger>
           </TabsList>
 
-          <div className="flex-1 overflow-hidden">
-            <TabsContent value="designs" className="h-full overflow-y-auto">
+          <div className="flex-1 min-h-0">
+            <TabsContent value="designs" className="h-full overflow-y-auto mt-0 data-[state=active]:h-full">
               <GalleryDesigns
                 onSelectDesign={handleDesignSelection}
                 selectedDesign={currentData.design}
@@ -289,7 +289,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               />
             </TabsContent>
 
-            <TabsContent value="text" className="h-full overflow-y-auto">
+            <TabsContent value="text" className="h-full overflow-y-auto mt-0 data-[state=active]:h-full">
               <TextCustomizer
                 textContent={currentData.textContent}
                 textFont={currentData.textFont}
@@ -304,7 +304,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               />
             </TabsContent>
 
-            <TabsContent value="upload" className="h-full overflow-y-auto">
+            <TabsContent value="upload" className="h-full overflow-y-auto mt-0 data-[state=active]:h-full">
               <UploadDesign
                 onFileUpload={onFileUpload}
                 onRemoveBackground={onRemoveBackground}
@@ -313,11 +313,13 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               />
             </TabsContent>
 
-            <TabsContent value="ai" className="h-full overflow-y-auto">
-              <CompactAIGenerator onImageGenerated={onAIImageGenerated} />
+            <TabsContent value="ai" className="h-full overflow-y-auto mt-0 data-[state=active]:h-full">
+              <div className="h-full">
+                <CompactAIGenerator onImageGenerated={onAIImageGenerated} />
+              </div>
             </TabsContent>
 
-            <TabsContent value="svg" className="h-full overflow-y-auto">
+            <TabsContent value="svg" className="h-full overflow-y-auto mt-0 data-[state=active]:h-full">
               <SVGDesigns
                 onSelectDesign={handleDesignSelection}
                 selectedDesign={currentData.design}
@@ -434,7 +436,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         onClose();
       }
     }}>
-      <DialogContent className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl max-w-[95vw] w-[95vw] h-[95vh] overflow-hidden">
+      <DialogContent className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl max-w-[95vw] w-[95vw] h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader className="border-b border-white/10 pb-4">
           <DialogTitle className="text-2xl font-semibold">
             🎨 Personnalisation - {currentViewSide === 'front' ? 'Avant' : 'Arrière'}
@@ -443,7 +445,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             Personnalisez votre produit avec des designs, du texte et des couleurs.
           </DialogDescription>
         </DialogHeader>
-        <div className="pt-4 h-full overflow-hidden">
+        <div className="flex-1 pt-4 min-h-0">
           {desktopContent}
         </div>
       </DialogContent>

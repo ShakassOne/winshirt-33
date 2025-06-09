@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -33,7 +34,7 @@ interface ProductFormProps {
   onClose: () => void;
   onSuccess?: () => void;
   initialData?: Product | null;
-  mockups?: Mockup[]; // ✅ Reçu en props maintenant
+  mockups?: Mockup[];
 }
 
 const ProductForm = ({ isOpen, onClose, onSuccess, initialData, mockups = [] }: ProductFormProps) => {
@@ -45,6 +46,7 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData, mockups = [] }: 
   const [sizes, setSizes] = useState<string[]>([]);
   const [newColor, setNewColor] = useState('');
   const [newSize, setNewSize] = useState('');
+  const [selectedLotteries, setSelectedLotteries] = useState<string[]>([]);
 
   const defaultValues: Partial<ProductFormValues> = {
     name: '',
@@ -81,12 +83,27 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData, mockups = [] }: 
       reset(defaultValues);
       setColors([]);
       setSizes([]);
+      setSelectedLotteries([]);
     }
   }, [initialData, setValue, reset]);
 
   const isCustomizable = watch('is_customizable');
   const selectedCategory = watch('category');
   const imageUrl = watch('image_url');
+  const ticketsOffered = watch('tickets_offered');
+
+  // Mise à jour des sélecteurs de loterie quand le nombre de tickets change
+  useEffect(() => {
+    const currentTickets = ticketsOffered || 0;
+    if (currentTickets !== selectedLotteries.length) {
+      const newLotteries = Array(currentTickets).fill('');
+      // Conserver les sélections existantes
+      for (let i = 0; i < Math.min(selectedLotteries.length, currentTickets); i++) {
+        newLotteries[i] = selectedLotteries[i];
+      }
+      setSelectedLotteries(newLotteries);
+    }
+  }, [ticketsOffered]);
 
   useEffect(() => {
     if (selectedCategory && mockups && mockups.length > 0) {
@@ -117,6 +134,12 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData, mockups = [] }: 
 
   const removeSize = (size: string) => {
     setSizes(sizes.filter(s => s !== size));
+  };
+
+  const handleLotteryChange = (index: number, value: string) => {
+    const newLotteries = [...selectedLotteries];
+    newLotteries[index] = value;
+    setSelectedLotteries(newLotteries);
   };
 
   const onSubmit = async (data: ProductFormValues) => {
@@ -157,6 +180,7 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData, mockups = [] }: 
       reset(defaultValues);
       setColors([]);
       setSizes([]);
+      setSelectedLotteries([]);
       if (onSuccess) onSuccess();
       onClose();
     } catch (error) {
@@ -276,6 +300,33 @@ const ProductForm = ({ isOpen, onClose, onSuccess, initialData, mockups = [] }: 
                   {...register('tickets_offered', { valueAsNumber: true })} 
                 />
               </div>
+
+              {ticketsOffered > 0 && (
+                <div className="space-y-2">
+                  <Label>Loteries associées ({ticketsOffered} ticket{ticketsOffered > 1 ? 's' : ''})</Label>
+                  <div className="space-y-2">
+                    {selectedLotteries.map((lottery, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <span className="text-sm text-white/70 min-w-[80px]">Ticket {index + 1}:</span>
+                        <select 
+                          value={lottery}
+                          onChange={(e) => handleLotteryChange(index, e.target.value)}
+                          className="flex-1 rounded-md bg-background/10 border border-white/20 px-3 py-2 text-sm"
+                        >
+                          <option value="">Sélectionnez une loterie</option>
+                          <option value="auto">Attribution automatique</option>
+                          <option value="christmas">Loterie de Noël</option>
+                          <option value="summer">Loterie d'été</option>
+                          <option value="special">Loterie spéciale</option>
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-white/60">
+                    Configurez quelle loterie recevra chaque ticket offert par ce produit.
+                  </p>
+                </div>
+              )}
             </div>
             
             <div className="space-y-4">
