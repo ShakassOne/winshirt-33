@@ -209,8 +209,20 @@ const ProductDetail = () => {
       available_sizes: product.available_sizes,
       available_colors: product.available_colors,
       customization: {
-        frontDesign: selectedDesignFront,
-        backDesign: selectedDesignBack,
+        frontDesign: selectedDesignFront ? {
+          designId: selectedDesignFront.id,
+          designName: selectedDesignFront.name,
+          designUrl: selectedDesignFront.image_url,
+          printSize: selectedSizeFront,
+          transform: designTransformFront
+        } : null,
+        backDesign: selectedDesignBack ? {
+          designId: selectedDesignBack.id,
+          designName: selectedDesignBack.name,
+          designUrl: selectedDesignBack.image_url,
+          printSize: selectedSizeBack,
+          transform: designTransformBack
+        } : null,
         frontText: textContentFront,
         backText: textContentBack,
         frontTextFont: textFontFront,
@@ -221,8 +233,6 @@ const ProductDetail = () => {
         backTextStyles: textStylesBack,
         frontTextTransform: textTransformFront,
         backTextTransform: textTransformBack,
-        frontDesignTransform: designTransformFront,
-        backDesignTransform: designTransformBack,
         frontSvgColor: svgColorFront,
         backSvgColor: svgColorBack,
         frontSvgContent: svgContentFront,
@@ -449,9 +459,7 @@ const ProductDetail = () => {
 
       {/* Lottery Selection Modal */}
       <LotterySelectionRequired
-        open={showLotteryModal}
-        onClose={handleCloseLotteryModal}
-        onLotterySelect={handleLotterySelect}
+        show={showLotteryModal}
       />
     </div>
   );
