@@ -10,8 +10,7 @@ import CartIcon from "@/components/cart/CartIcon";
 import SignOutButton from "@/components/auth/SignOutButton";
 import { useAuth } from "@/context/AuthContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
-import CodePenMobileMenu from "./CodePenMobileMenu";
-import '@/styles/codepen-menu.css';
+import ModernMobileMenu from "./ModernMobileMenu";
 
 const Navbar = () => {
   const { isAuthenticated } = useAuth();
@@ -32,8 +31,8 @@ const Navbar = () => {
               <span className="text-xl font-bold text-gradient">WinShirt</span>
             </Link>
 
-            {/* CodePen Mobile Menu */}
-            <CodePenMobileMenu />
+            {/* Modern Mobile Menu */}
+            <ModernMobileMenu />
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-4">

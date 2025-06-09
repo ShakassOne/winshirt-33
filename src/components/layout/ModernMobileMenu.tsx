@@ -45,174 +45,272 @@ const ModernMobileMenu = () => {
     menuItems.push({ to: "/admin", label: "Admin" });
   }
 
+  const styles = {
+    hamburgerBtn: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      justifyContent: 'space-around',
+      width: '24px',
+      height: '24px',
+      background: 'transparent',
+      border: 'none',
+      cursor: 'pointer',
+      padding: '0',
+      zIndex: 1001,
+    },
+    hamburgerSpan: {
+      width: '24px',
+      height: '2px',
+      background: 'rgba(255, 255, 255, 0.8)',
+      borderRadius: '2px',
+      transition: 'all 0.3s linear',
+      position: 'relative' as const,
+      transformOrigin: '1px',
+    },
+    hamburgerSpanActive1: {
+      transform: 'rotate(45deg)',
+    },
+    hamburgerSpanActive2: {
+      opacity: 0,
+      transform: 'translateX(20px)',
+    },
+    hamburgerSpanActive3: {
+      transform: 'rotate(-45deg)',
+    },
+    overlay: {
+      position: 'fixed' as const,
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100vh',
+      background: 'rgba(0, 0, 0, 0.95)',
+      backdropFilter: 'blur(10px)',
+      zIndex: 1000,
+      opacity: isOpen ? 1 : 0,
+      visibility: isOpen ? 'visible' as const : 'hidden' as const,
+      transition: 'all 0.3s ease',
+    },
+    closeBtn: {
+      position: 'absolute' as const,
+      top: '20px',
+      right: '20px',
+      background: 'none',
+      border: 'none',
+      color: 'white',
+      fontSize: '2rem',
+      cursor: 'pointer',
+      zIndex: 1001,
+      width: '40px',
+      height: '40px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: '50%',
+      transition: 'background 0.3s ease',
+    },
+    menuContent: {
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column' as const,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '2rem',
+      transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+      transition: 'transform 0.3s ease',
+    },
+    menuList: {
+      listStyle: 'none',
+      padding: 0,
+      margin: 0,
+      textAlign: 'center' as const,
+    },
+    menuItem: (index: number) => ({
+      margin: '1rem 0',
+      opacity: isOpen ? 1 : 0,
+      transform: isOpen ? 'translateY(0)' : 'translateY(30px)',
+      transition: `all 0.5s ease ${index * 0.1}s`,
+    }),
+    menuLink: {
+      color: 'white',
+      textDecoration: 'none',
+      fontSize: '1.5rem',
+      fontWeight: 300,
+      letterSpacing: '2px',
+      textTransform: 'uppercase' as const,
+      transition: 'all 0.3s ease',
+      display: 'block',
+      padding: '0.5rem 1rem',
+      borderRadius: '8px',
+    },
+    menuFooter: {
+      marginTop: '3rem',
+      textAlign: 'center' as const,
+      width: '100%',
+      maxWidth: '300px',
+    },
+    authSection: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: '1rem',
+    },
+    profileLink: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.5rem',
+      color: 'white',
+      textDecoration: 'none',
+      padding: '0.75rem',
+      borderRadius: '8px',
+      transition: 'background 0.3s ease',
+    },
+    ordersLink: {
+      color: 'white',
+      textDecoration: 'none',
+      padding: '0.75rem',
+      borderRadius: '8px',
+      transition: 'background 0.3s ease',
+      display: 'block',
+    },
+  };
+
   return (
     <>
-      {/* Mobile controls bar */}
+      {/* Hamburger Button */}
       <div className="md:hidden flex items-center space-x-2">
         <ThemeToggle />
         <CartIcon />
-        
-        {/* Hamburger Menu Button - CodePen Style */}
-        <div className="relative">
-          <input
-            type="checkbox"
-            id="menu-toggle"
-            className="hidden"
-            checked={isOpen}
-            onChange={toggleMenu}
-          />
-          <label
-            htmlFor="menu-toggle"
-            className="relative z-[1001] block w-8 h-8 cursor-pointer"
-          >
-            <span className={`
-              block absolute h-0.5 w-6 bg-white rounded-sm transition-all duration-300 ease-in-out
-              ${isOpen ? 'top-3.5 rotate-45' : 'top-2'}
-            `} />
-            <span className={`
-              block absolute h-0.5 w-6 bg-white rounded-sm transition-all duration-300 ease-in-out top-3.5
-              ${isOpen ? 'opacity-0' : 'opacity-100'}
-            `} />
-            <span className={`
-              block absolute h-0.5 w-6 bg-white rounded-sm transition-all duration-300 ease-in-out
-              ${isOpen ? 'top-3.5 -rotate-45' : 'top-5'}
-            `} />
-          </label>
-        </div>
+        <button
+          onClick={toggleMenu}
+          style={styles.hamburgerBtn}
+          aria-label="Toggle menu"
+        >
+          <span style={{
+            ...styles.hamburgerSpan,
+            ...(isOpen ? styles.hamburgerSpanActive1 : {})
+          }}></span>
+          <span style={{
+            ...styles.hamburgerSpan,
+            ...(isOpen ? styles.hamburgerSpanActive2 : {})
+          }}></span>
+          <span style={{
+            ...styles.hamburgerSpan,
+            ...(isOpen ? styles.hamburgerSpanActive3 : {})
+          }}></span>
+        </button>
       </div>
 
-      {/* Mobile Menu Overlay - CodePen Style */}
-      <div className={`
-        fixed top-0 left-0 w-full h-full z-[1000] transition-all duration-500 ease-in-out
-        ${isOpen ? 'visible opacity-100' : 'invisible opacity-0'}
-      `}>
-        {/* Glassmorphic Background */}
-        <div className="absolute inset-0 backdrop-blur-xl bg-gradient-to-br from-black/40 via-black/60 to-black/80" />
-        
+      {/* Mobile Menu Overlay */}
+      <div style={styles.overlay}>
+        {/* Close Button */}
+        <button
+          onClick={closeMenu}
+          style={styles.closeBtn}
+          aria-label="Close menu"
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'none';
+          }}
+        >
+          ×
+        </button>
+
         {/* Menu Content */}
-        <div className="relative h-full flex flex-col justify-center items-center text-center">
-          {/* Logo */}
-          <div className={`
-            mb-12 transition-all duration-800 ease-out
-            ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}
-          `} style={{ transitionDelay: isOpen ? '100ms' : '0ms' }}>
-            <Link to="/" onClick={closeMenu}>
-              <span className="text-gradient text-4xl font-bold tracking-wide">WinShirt</span>
+        <nav style={styles.menuContent}>
+          <div style={{ marginBottom: '3rem' }}>
+            <Link to="/" onClick={closeMenu} className="logo">
+              <span className="text-gradient text-2xl font-bold">WinShirt</span>
             </Link>
           </div>
 
-          {/* Navigation Items */}
-          <nav className="flex flex-col items-center space-y-6 mb-12">
+          <ul style={styles.menuList}>
             {menuItems.map((item, index) => (
-              <div
-                key={item.to}
-                className={`
-                  transition-all duration-700 ease-out
-                  ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}
-                `}
-                style={{ 
-                  transitionDelay: isOpen ? `${200 + index * 150}ms` : '0ms' 
-                }}
+              <li 
+                key={item.to} 
+                style={styles.menuItem(index)}
               >
                 <Link 
                   to={item.to} 
                   onClick={closeMenu}
-                  className="
-                    block text-white text-3xl font-light tracking-widest uppercase
-                    hover:text-primary transition-all duration-300 ease-out
-                    relative overflow-hidden group py-2 px-4
-                  "
+                  style={styles.menuLink}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = '#9b87f5';
+                    e.currentTarget.style.background = 'rgba(155, 135, 245, 0.1)';
+                    e.currentTarget.style.transform = 'translateX(10px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = 'white';
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.transform = 'translateX(0)';
+                  }}
                 >
-                  <span className="relative z-10">{item.label}</span>
-                  <div className="
-                    absolute inset-0 bg-white/5 backdrop-blur-sm rounded-lg
-                    scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-out
-                    origin-left
-                  " />
-                  <div className="
-                    absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r from-primary to-accent
-                    group-hover:w-full group-hover:left-0 transition-all duration-500 ease-out
-                  " />
+                  {item.label}
                 </Link>
-              </div>
+              </li>
             ))}
-          </nav>
+          </ul>
 
-          {/* User Section */}
-          <div className={`
-            flex flex-col items-center space-y-4 w-full max-w-xs px-8
-            transition-all duration-700 ease-out
-            ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}
-          `} style={{ 
-            transitionDelay: isOpen ? `${200 + menuItems.length * 150 + 100}ms` : '0ms' 
-          }}>
+          <div style={styles.menuFooter}>
             {isAuthenticated ? (
-              <>
+              <div style={styles.authSection}>
                 <Link 
                   to="/profile" 
                   onClick={closeMenu} 
-                  className="
-                    flex items-center justify-center gap-3 text-white/90 text-lg
-                    hover:text-white transition-all duration-300 ease-out
-                    p-4 rounded-xl hover:bg-white/10 w-full backdrop-blur-sm
-                    border border-white/10 hover:border-white/20
-                  "
+                  style={styles.profileLink}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
                 >
                   <User className="w-5 h-5" />
                   <span>Mon Profil</span>
                 </Link>
-                
                 <Link 
                   to="/orders" 
                   onClick={closeMenu} 
-                  className="
-                    text-white/90 hover:text-white transition-all duration-300 ease-out
-                    p-4 rounded-xl hover:bg-white/10 w-full text-lg backdrop-blur-sm
-                    border border-white/10 hover:border-white/20
-                  "
+                  style={styles.ordersLink}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
                 >
                   Mes Commandes
                 </Link>
-                
                 {isAdmin && (
                   <Link 
                     to="/admin/users" 
                     onClick={closeMenu} 
-                    className="
-                      text-white/90 hover:text-white transition-all duration-300 ease-out
-                      p-4 rounded-xl hover:bg-white/10 w-full text-lg backdrop-blur-sm
-                      border border-white/10 hover:border-white/20
-                    "
+                    style={styles.ordersLink}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                    }}
                   >
                     Utilisateurs
                   </Link>
                 )}
-                
-                <div className="w-full mt-2">
-                  <SignOutButton 
-                    variant="outline" 
-                    className="
-                      w-full border-white/20 text-white hover:bg-white/10 hover:border-white/30
-                      backdrop-blur-sm rounded-xl py-4 text-lg transition-all duration-300
-                    " 
-                  />
-                </div>
-              </>
-            ) : (
-              <Link to="/auth" onClick={closeMenu} className="w-full">
-                <Button 
+                <SignOutButton 
                   variant="outline" 
-                  className="
-                    w-full border-white/20 text-white hover:bg-white/10 hover:border-white/30
-                    backdrop-blur-sm rounded-xl py-6 text-lg transition-all duration-300
-                  "
-                >
+                  className="w-full mt-4 border-white/20 text-white hover:bg-white/10" 
+                />
+              </div>
+            ) : (
+              <Link to="/auth" onClick={closeMenu}>
+                <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10">
                   Se connecter
                 </Button>
               </Link>
             )}
           </div>
-        </div>
+        </nav>
       </div>
     </>
   );
