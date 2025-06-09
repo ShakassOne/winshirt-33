@@ -9,14 +9,14 @@ import { Badge } from '@/components/ui/badge';
 interface CartItemProps {
   item: CartItemType;
   onRemove: (productId: string) => void;
-  onUpdateQuantity: (productId: string, quantity: number) => void;
+  onUpdateQuantity: (newQuantity: number) => void;
 }
 
 const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity }) => {
   const handleQuantityChange = (change: number) => {
     const newQuantity = item.quantity + change;
     if (newQuantity >= 1) {
-      onUpdateQuantity(item.productId, newQuantity);
+      onUpdateQuantity(newQuantity);
     }
   };
 
