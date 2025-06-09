@@ -83,46 +83,42 @@ const ModernMobileMenu = () => {
       left: 0,
       width: '100%',
       height: '100vh',
-      background: 'rgba(0, 0, 0, 0.95)',
-      backdropFilter: 'blur(10px)',
+      background: 'rgba(0, 0, 0, 0.6)',
+      backdropFilter: 'blur(15px)',
       zIndex: 1000,
       opacity: isOpen ? 1 : 0,
       visibility: isOpen ? 'visible' as const : 'hidden' as const,
       transition: 'all 0.3s ease',
-    },
-    closeBtn: {
-      position: 'absolute' as const,
-      top: '20px',
-      right: '20px',
-      background: 'none',
-      border: 'none',
-      color: 'white',
-      fontSize: '2rem',
-      cursor: 'pointer',
-      zIndex: 1001,
-      width: '40px',
-      height: '40px',
+      padding: '20px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      borderRadius: '50%',
-      transition: 'background 0.3s ease',
     },
     menuContent: {
-      height: '100%',
+      width: '100%',
+      maxWidth: '400px',
+      height: 'auto',
+      maxHeight: '80vh',
+      background: 'rgba(255, 255, 255, 0.1)',
+      backdropFilter: 'blur(20px)',
+      border: '1px solid rgba(255, 255, 255, 0.2)',
+      borderRadius: '16px',
+      padding: '2rem',
       display: 'flex',
       flexDirection: 'column' as const,
       justifyContent: 'center',
       alignItems: 'center',
-      padding: '2rem',
-      transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-      transition: 'transform 0.3s ease',
+      transform: isOpen ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.95)',
+      opacity: isOpen ? 1 : 0,
+      transition: 'all 0.3s ease',
+      boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
     },
     menuList: {
       listStyle: 'none',
       padding: 0,
       margin: 0,
       textAlign: 'center' as const,
+      width: '100%',
     },
     menuItem: (index: number) => ({
       margin: '1rem 0',
@@ -152,6 +148,7 @@ const ModernMobileMenu = () => {
       display: 'flex',
       flexDirection: 'column' as const,
       gap: '1rem',
+      width: '100%',
     },
     profileLink: {
       display: 'flex',
@@ -171,6 +168,7 @@ const ModernMobileMenu = () => {
       borderRadius: '8px',
       transition: 'background 0.3s ease',
       display: 'block',
+      textAlign: 'center' as const,
     },
   };
 
@@ -201,24 +199,9 @@ const ModernMobileMenu = () => {
       </div>
 
       {/* Mobile Menu Overlay */}
-      <div style={styles.overlay}>
-        {/* Close Button */}
-        <button
-          onClick={closeMenu}
-          style={styles.closeBtn}
-          aria-label="Close menu"
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'none';
-          }}
-        >
-          ×
-        </button>
-
+      <div style={styles.overlay} onClick={closeMenu}>
         {/* Menu Content */}
-        <nav style={styles.menuContent}>
+        <nav style={styles.menuContent} onClick={(e) => e.stopPropagation()}>
           <div style={{ marginBottom: '3rem' }}>
             <Link to="/" onClick={closeMenu} className="logo">
               <span className="text-gradient text-2xl font-bold">WinShirt</span>
