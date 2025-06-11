@@ -4,6 +4,7 @@ import { Download, Image, FileImage, FileText, Palette, Zap } from 'lucide-react
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { extractHDUrlsFromCustomization } from '@/services/hdCapture.service';
 
 interface ProductionFilesProps {
   item: {
@@ -43,7 +44,12 @@ export const ProductionFiles: React.FC<ProductionFilesProps> = ({ item }) => {
       selectedSize: item.customization.selectedSize || '',
       selectedColor: item.customization.selectedColor || '',
       hdRectoUrl: item.customization.hdRectoUrl || '',
-      hdVersoUrl: item.customization.hdVersoUrl || ''
+      hdVersoUrl: item.customization.hdVersoUrl || '',
+      // Nouvelles structures
+      frontDesign: item.customization.frontDesign || null,
+      backDesign: item.customization.backDesign || null,
+      frontText: item.customization.frontText || null,
+      backText: item.customization.backText || null
     };
     
     const dataStr = JSON.stringify(customizationData, null, 2);
@@ -53,9 +59,10 @@ export const ProductionFiles: React.FC<ProductionFilesProps> = ({ item }) => {
     URL.revokeObjectURL(url);
   };
 
-  // URLs des fichiers HD prioritaires pour la production
-  const hdRectoUrl = item.customization?.hdRectoUrl;
-  const hdVersoUrl = item.customization?.hdVersoUrl;
+  // Extraire les URLs HD depuis la customization
+  const hdUrls = extractHDUrlsFromCustomization(item.customization);
+  const hdRectoUrl = hdUrls.hdRectoUrl;
+  const hdVersoUrl = hdUrls.hdVersoUrl;
   
   // Fallback vers les mockups classiques
   const rectoUrl = hdRectoUrl || item.mockup_recto_url || item.visual_front_url;
@@ -114,9 +121,30 @@ export const ProductionFiles: React.FC<ProductionFilesProps> = ({ item }) => {
     item.customization.customText || 
     item.customization.designUrl || 
     item.customization.designName ||
+    item.customization.frontDesign ||
+    item.customization.backDesign ||
+    item.customization.frontText ||
+    item.customization.backText ||
     hdRectoUrl ||
     hdVersoUrl
   );
+
+  // Analyser les types de personnalisation
+  const customizationTypes = [];
+  if (item.customization) {
+    if (item.customization.customText || item.customization.frontText || item.customization.backText) {
+      customizationTypes.push({ icon: <FileText className="h-3 w-3 mr-1" />, label: 'Texte' });
+    }
+    if (item.customization.textColor || item.customization.frontText?.color || item.customization.backText?.color) {
+      customizationTypes.push({ icon: <Palette className="h-3 w-3 mr-1" />, label: 'Couleur' });
+    }
+    if (item.customization.designName || item.customization.frontDesign || item.customization.backDesign) {
+      customizationTypes.push({ icon: <Image className="h-3 w-3 mr-1" />, label: 'Design' });
+    }
+    if (hdRectoUrl || hdVersoUrl) {
+      customizationTypes.push({ icon: <Zap className="h-3 w-3 mr-1" />, label: 'HD URLs' });
+    }
+  }
 
   return (
     <Card className="glass-card mt-4">
@@ -149,7 +177,7 @@ export const ProductionFiles: React.FC<ProductionFilesProps> = ({ item }) => {
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="outline" className="text-xs bg-green-500/20 text-green-400 border-green-500/30">
                         <Zap className="h-3 w-3 mr-1" />
-                        HD 3000x4000px
+                        HD 2400x3200px
                       </Badge>
                       <Badge variant="outline" className="text-xs bg-purple-500/20 text-purple-400 border-purple-500/30">
                         DTF Ready
@@ -233,33 +261,15 @@ export const ProductionFiles: React.FC<ProductionFilesProps> = ({ item }) => {
                   <div className="flex flex-col">
                     <span className="text-sm font-medium">Fichier de personnalisation</span>
                     <span className="text-xs text-gray-400">
-                      Contient : textes, couleurs, polices, designs, URLs HD
+                      Contient toutes les données de personnalisation du client
                     </span>
                     <div className="flex flex-wrap gap-1 mt-2">
-                      {item.customization.customText && (
-                        <Badge variant="outline" className="text-xs">
-                          <FileText className="h-3 w-3 mr-1" />
-                          Texte
+                      {customizationTypes.map((type, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {type.icon}
+                          {type.label}
                         </Badge>
-                      )}
-                      {item.customization.textColor && (
-                        <Badge variant="outline" className="text-xs">
-                          <Palette className="h-3 w-3 mr-1" />
-                          Couleur
-                        </Badge>
-                      )}
-                      {item.customization.designName && (
-                        <Badge variant="outline" className="text-xs">
-                          <Image className="h-3 w-3 mr-1" />
-                          Design
-                        </Badge>
-                      )}
-                      {(hdRectoUrl || hdVersoUrl) && (
-                        <Badge variant="outline" className="text-xs bg-green-500/20 text-green-400">
-                          <Zap className="h-3 w-3 mr-1" />
-                          HD URLs
-                        </Badge>
-                      )}
+                      ))}
                     </div>
                   </div>
                 </div>

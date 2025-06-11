@@ -20,6 +20,9 @@ export const useHDCaptureOnAddToCart = () => {
         description: "Création des visuels haute résolution",
       });
 
+      // Attendre que les éléments soient bien rendus
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const hdResult = await captureAllHDVisuals();
       
       if (hdResult.hdRectoUrl || hdResult.hdVersoUrl) {
@@ -27,7 +30,7 @@ export const useHDCaptureOnAddToCart = () => {
         
         toast({
           title: "Fichiers de production créés",
-          description: "Les visuels haute résolution sont prêts",
+          description: `${hdResult.hdRectoUrl ? 'Recto' : ''}${hdResult.hdRectoUrl && hdResult.hdVersoUrl ? ' et ' : ''}${hdResult.hdVersoUrl ? 'Verso' : ''} capturé(s)`,
         });
         
         return hdResult;
@@ -35,9 +38,9 @@ export const useHDCaptureOnAddToCart = () => {
         console.warn('⚠️ [HDCaptureOnAddToCart] Aucun fichier HD généré');
         
         toast({
-          variant: "destructive",
-          title: "Erreur de génération",
-          description: "Impossible de créer les fichiers de production",
+          variant: "default",
+          title: "Aucune personnalisation détectée",
+          description: "Le produit sera ajouté sans fichiers HD",
         });
         
         return {};
@@ -48,7 +51,7 @@ export const useHDCaptureOnAddToCart = () => {
       toast({
         variant: "destructive",
         title: "Erreur de capture",
-        description: "Impossible de générer les fichiers HD",
+        description: "Le produit sera ajouté sans fichiers HD",
       });
       
       return {};

@@ -1,6 +1,4 @@
 
-import { useMockupCapture } from '@/hooks/useMockupCapture';
-
 interface CustomizationData {
   customText?: string;
   textColor?: string;
@@ -12,6 +10,11 @@ interface CustomizationData {
   hdRectoUrl?: string;
   hdVersoUrl?: string;
   hdCaptureTimestamp?: string;
+  // Support pour les nouvelles structures
+  frontDesign?: any;
+  backDesign?: any;
+  frontText?: any;
+  backText?: any;
 }
 
 export const enrichCustomizationWithHD = async (
@@ -40,4 +43,29 @@ export const validateHDUrls = (hdData: { hdRectoUrl?: string; hdVersoUrl?: strin
   
   console.log('✅ [HDCapture Service] URLs HD validées:', hdData);
   return true;
+};
+
+export const extractHDUrlsFromCustomization = (customization: any): { hdRectoUrl?: string; hdVersoUrl?: string } => {
+  if (!customization) return {};
+  
+  // Extraire directement si présent
+  if (customization.hdRectoUrl || customization.hdVersoUrl) {
+    return {
+      hdRectoUrl: customization.hdRectoUrl,
+      hdVersoUrl: customization.hdVersoUrl
+    };
+  }
+  
+  // Extraire depuis les designs si structure nouvelle
+  const result: { hdRectoUrl?: string; hdVersoUrl?: string } = {};
+  
+  if (customization.frontDesign?.hdUrl) {
+    result.hdRectoUrl = customization.frontDesign.hdUrl;
+  }
+  
+  if (customization.backDesign?.hdUrl) {
+    result.hdVersoUrl = customization.backDesign.hdUrl;
+  }
+  
+  return result;
 };

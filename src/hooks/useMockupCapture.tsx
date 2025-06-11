@@ -68,25 +68,34 @@ export const useMockupCapture = () => {
     try {
       console.log(`🎯 [HDCapture] Début capture HD ${side} de l'élément:`, elementId);
       
-      // Attendre un moment pour que l'élément soit bien rendu
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Vérifier que l'élément a du contenu
+      const hasContent = element.children.length > 0 || element.textContent?.trim() || element.innerHTML.includes('svg') || element.innerHTML.includes('img');
+      if (!hasContent) {
+        console.warn(`⚠️ [HDCapture] Élément ${elementId} semble vide, pas de capture`);
+        return null;
+      }
       
-      // Capture en très haute résolution pour l'impression DTF
+      // Attendre un moment pour que l'élément soit bien rendu
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Configuration optimisée pour éviter document.write
       const canvas = await html2canvas(element, {
         useCORS: true,
-        backgroundColor: null, // Fond transparent
+        backgroundColor: 'transparent',
         scale: 1,
-        width: 3000, // Résolution HD adaptée DTF
-        height: 4000,
-        allowTaint: true,
-        foreignObjectRendering: true,
-        logging: false
+        width: 2400, // Résolution HD adaptée DTF
+        height: 3200,
+        allowTaint: false,
+        foreignObjectRendering: false,
+        logging: false,
+        imageTimeout: 5000,
+        removeContainer: true
       });
       
       console.log(`✅ [HDCapture] Canvas créé - Taille: ${canvas.width}x${canvas.height}`);
       
       const blob = await new Promise<Blob>((resolve) => 
-        canvas.toBlob((blob) => resolve(blob!), 'image/png', 1.0) // Qualité maximale
+        canvas.toBlob((blob) => resolve(blob!), 'image/png', 0.95)
       );
       
       const file = new File([blob], `hd-${side}-${Date.now()}.png`, { type: 'image/png' });
@@ -95,35 +104,17 @@ export const useMockupCapture = () => {
 
       console.log(`📤 [HDCapture] Upload fichier HD ${side} - Taille: ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
 
-      // Gestion d'erreur avec retry - timeout réduit et moins de tentatives
-      let uploadAttempts = 0;
-      const maxAttempts = 2;
+      // Upload avec timeout réduit et gestion d'erreur simplifiée
+      const response = await axios.post('https://media.winshirt.fr/upload-visuel.php', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 15000,
+      });
       
-      while (uploadAttempts < maxAttempts) {
-        try {
-          const response = await axios.post('https://media.winshirt.fr/upload-visuel.php', formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-            timeout: 10000, // 10 secondes de timeout
-          });
-          
-          if (response.data?.url) {
-            console.log(`🎉 [HDCapture] Capture HD ${side} réussie:`, response.data.url);
-            return response.data.url;
-          }
-          break;
-        } catch (uploadError) {
-          uploadAttempts++;
-          console.warn(`⚠️ [HDCapture] Tentative ${uploadAttempts}/${maxAttempts} échouée pour ${side}:`, uploadError);
-          
-          if (uploadAttempts < maxAttempts) {
-            // Attendre avant de retenter
-            await new Promise(resolve => setTimeout(resolve, 1000 * uploadAttempts));
-          } else {
-            throw uploadError;
-          }
-        }
+      if (response.data?.url) {
+        console.log(`🎉 [HDCapture] Capture HD ${side} réussie:`, response.data.url);
+        return response.data.url;
       }
       
       return null;
@@ -164,19 +155,23 @@ export const useMockupCapture = () => {
     try {
       console.log('🚀 [HDCapture] Début capture HD de tous les visuels');
       
-      // Vérifier que les éléments existent avant de capturer
-      const rectoElement = document.getElementById('customization-recto');
-      const versoElement = document.getElementById('customization-verso');
+      // Rechercher dynamiquement les éléments de personnalisation
+      const rectoElement = document.getElementById('customization-recto') || 
+                          document.querySelector('[data-side="front"]') ||
+                          document.querySelector('.customization-front');
+      
+      const versoElement = document.getElementById('customization-verso') || 
+                          document.querySelector('[data-side="back"]') ||
+                          document.querySelector('.customization-back');
       
       if (!rectoElement && !versoElement) {
         console.warn('⚠️ [HDCapture] Aucun élément de personnalisation trouvé');
         return {};
       }
       
-      // Capturer les éléments de personnalisation sans le produit
       const captures = await Promise.allSettled([
-        rectoElement ? captureHDVisual('customization-recto', 'recto') : Promise.resolve(null),
-        versoElement ? captureHDVisual('customization-verso', 'verso') : Promise.resolve(null)
+        rectoElement ? captureHDVisual(rectoElement.id || 'customization-recto', 'recto') : Promise.resolve(null),
+        versoElement ? captureHDVisual(versoElement.id || 'customization-verso', 'verso') : Promise.resolve(null)
       ]);
 
       const result: HDCaptureResult = {};
