@@ -1,10 +1,9 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "next-themes";
+import { WinShirtThemeProvider } from "@/components/theme/theme-provider-wrapper";
 import { useScrollReset } from "./hooks/useScrollReset";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
@@ -202,7 +201,7 @@ function AppContent() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <WinShirtThemeProvider attribute="class" defaultTheme="dark" enableSystem>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -214,7 +213,7 @@ function App() {
             </OptimizedAuthProvider>
           </BrowserRouter>
         </TooltipProvider>
-      </ThemeProvider>
+      </WinShirtThemeProvider>
     </QueryClientProvider>
   );
 }
