@@ -188,20 +188,12 @@
     box-shadow: 0 0 15px #df2fff, 0 0 30px #df2fff, 0 0 45px #df2fff, 0 0 60px #df2fff;
   }
   
-  /* Mobile Navigation */
-  .mobile-glow-nav {
-    @apply fixed bottom-4 left-4 right-4 z-50;
-  }
-  
-  .mobile-glow-nav .glow-nav {
-    @apply mx-auto max-w-sm rounded-2xl;
-  }
-  
-  .mobile-glow-nav .glow-nav-link {
+  /* Mobile Navigation - en haut maintenant */
+  .mobile-glow-nav-link {
     @apply px-4 py-4 flex flex-col items-center;
   }
   
-  .mobile-glow-nav .glow-nav-icon {
+  .mobile-glow-nav-icon {
     @apply text-2xl;
   }
   
@@ -209,29 +201,8 @@
     @apply text-xs mt-1 opacity-60;
   }
   
-  .mobile-glow-nav .glow-nav-item.active .mobile-glow-nav-label {
+  .glow-nav-item.active .mobile-glow-nav-label {
     @apply opacity-100;
-  }
-  
-  /* Desktop Header */
-  .desktop-header {
-    @apply fixed top-0 left-0 w-full z-50;
-  }
-  
-  .desktop-header-content {
-    @apply container mx-auto px-4 pt-4;
-  }
-  
-  .desktop-header-nav {
-    @apply max-w-4xl mx-auto bg-black/60 backdrop-blur-lg border border-white/10 shadow-lg rounded-full;
-  }
-  
-  .desktop-header-inner {
-    @apply flex items-center justify-between h-16 px-8;
-  }
-  
-  .desktop-nav-center {
-    @apply flex items-center justify-center flex-1;
   }
   
   /* 3D Tilt Card Effect */
