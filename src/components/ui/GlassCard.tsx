@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -38,39 +37,24 @@ const GlassCard = ({
     if (!hover3D) return;
     setTransform('');
   };
-
-  // Filter out props that conflict with framer-motion
-  const { 
-    onDrag, 
-    onDragStart, 
-    onDragEnd,
-    onAnimationStart,
-    onAnimationEnd,
-    onAnimationIteration,
-    onTransitionEnd,
-    ...motionProps 
-  } = props;
   
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.6 }}
+    <div
       className={cn(
         'glass-card',
         !hover3D && 'transition-all duration-300', // Only add transition when not in hover3D mode
         className
       )}
-      style={{
+      style={{ 
         transform,
         transition: hover3D ? 'none' : 'all 0.3s ease' // Remove transition for hover3D for immediate responsiveness
       }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      {...motionProps}
+      {...props}
     >
       {children}
-    </motion.div>
+    </div>
   );
 };
 

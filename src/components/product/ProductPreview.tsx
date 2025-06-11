@@ -1,10 +1,9 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Design } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
-import { useDragAndDrop } from '@/hooks/useDragAndDrop';
 
 interface ProductPreviewProps {
   // Product data
@@ -25,7 +24,6 @@ interface ProductPreviewProps {
   selectedDesignBack: Design | null;
   designTransformFront: { position: { x: number; y: number }; scale: number; rotation: number };
   designTransformBack: { position: { x: number; y: number }; scale: number; rotation: number };
-  onDesignTransformChange: (property: string, value: any) => void;
   
   // SVG states
   svgColorFront: string;
@@ -44,7 +42,11 @@ interface ProductPreviewProps {
   textStylesBack: { bold: boolean; italic: boolean; underline: boolean };
   textTransformFront: { position: { x: number; y: number }; scale: number; rotation: number };
   textTransformBack: { position: { x: number; y: number }; scale: number; rotation: number };
-  onTextTransformChange: (property: string, value: any) => void;
+  
+  // Interaction handlers
+  onDesignMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void;
+  onTextMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void;
+  onTouchMove?: (e: React.TouchEvent) => void;
 }
 
 export const ProductPreview: React.FC<ProductPreviewProps> = ({
@@ -59,7 +61,6 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
   selectedDesignBack,
   designTransformFront,
   designTransformBack,
-  onDesignTransformChange,
   svgColorFront,
   svgColorBack,
   svgContentFront,
@@ -74,7 +75,9 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
   textStylesBack,
   textTransformFront,
   textTransformBack,
-  onTextTransformChange
+  onDesignMouseDown,
+  onTextMouseDown,
+  onTouchMove
 }) => {
   const getCurrentDesign = () => {
     return currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack;
@@ -82,10 +85,6 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
 
   const getCurrentDesignTransform = () => {
     return currentViewSide === 'front' ? designTransformFront : designTransformBack;
-  };
-
-  const getCurrentTextTransform = () => {
-    return currentViewSide === 'front' ? textTransformFront : textTransformBack;
   };
 
   const getCurrentSvgColor = () => {
@@ -100,6 +99,10 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
     return currentViewSide === 'front' ? textContentFront : textContentBack;
   };
 
+  const getCurrentTextTransform = () => {
+    return currentViewSide === 'front' ? textTransformFront : textTransformBack;
+  };
+
   const getCurrentTextFont = () => {
     return currentViewSide === 'front' ? textFontFront : textFontBack;
   };
@@ -111,34 +114,6 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
   const getCurrentTextStyles = () => {
     return currentViewSide === 'front' ? textStylesFront : textStylesBack;
   };
-
-  const {
-    handleDesignMouseDown,
-    handleTextMouseDown,
-    handleMouseMove,
-    handleMouseUp,
-    containerRef
-  } = useDragAndDrop(
-    onDesignTransformChange,
-    onTextTransformChange,
-    getCurrentDesignTransform(),
-    getCurrentTextTransform()
-  );
-
-  // Add global event listeners for mouse move and up
-  useEffect(() => {
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('touchmove', handleMouseMove);
-    document.addEventListener('touchend', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('touchmove', handleMouseMove);
-      document.removeEventListener('touchend', handleMouseUp);
-    };
-  }, [handleMouseMove, handleMouseUp]);
 
   const isSvgDesign = () => {
     const currentDesign = getCurrentDesign();
@@ -168,14 +143,14 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
 
       <div className="flex-1 flex flex-col min-h-0">
         <div 
-          ref={containerRef}
           className="relative bg-black/30 rounded-lg overflow-hidden shadow-xl flex justify-center items-center mb-6" 
           style={{ 
             touchAction: 'none',
             minHeight: '400px',
             maxHeight: 'calc(100vh - 250px)',
             aspectRatio: '1/1'
-          }}
+          }} 
+          onTouchMove={onTouchMove}
         >
           <img
             src={getProductImage()}
@@ -193,8 +168,8 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
                 transformOrigin: 'center',
                 zIndex: 10
               }}
-              onMouseDown={handleDesignMouseDown}
-              onTouchStart={handleDesignMouseDown}
+              onMouseDown={onDesignMouseDown}
+              onTouchStart={onDesignMouseDown}
             >
               {isSvgDesign() && getCurrentSvgContent() ? (
                 <div
@@ -239,8 +214,8 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
                 textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
                 zIndex: 20
               }} 
-              onMouseDown={handleTextMouseDown} 
-              onTouchStart={handleTextMouseDown}
+              onMouseDown={onTextMouseDown} 
+              onTouchStart={onTextMouseDown}
             >
               {getCurrentTextContent()}
             </div>

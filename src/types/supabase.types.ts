@@ -1,3 +1,4 @@
+
 export type CartItem = {
   productId: string;
   name: string;
@@ -9,9 +10,7 @@ export type CartItem = {
   lotteries?: any;
   available_colors?: string[] | null;
   available_sizes?: string[] | null;
-  lottery_selections?: string[];
   customization?: {
-    // Legacy fields for backward compatibility
     designId?: string;
     designUrl?: string;
     designName?: string;
@@ -23,58 +22,7 @@ export type CartItem = {
     selectedSize?: string;
     selectedColor?: string;
     lotteryName?: string;
-    // Enhanced customization fields
-    frontDesign?: {
-      designId: string;
-      designName: string;
-      designUrl: string;
-      printSize: string;
-      transform: {
-        position: { x: number; y: number };
-        scale: number;
-        rotation: number;
-      };
-    } | null;
-    backDesign?: {
-      designId: string;
-      designName: string;
-      designUrl: string;
-      printSize: string;
-      transform: {
-        position: { x: number; y: number };
-        scale: number;
-        rotation: number;
-      };
-    } | null;
-    frontText?: string;
-    backText?: string;
-    frontTextFont?: string;
-    backTextFont?: string;
-    frontTextColor?: string;
-    backTextColor?: string;
-    frontTextStyles?: { bold: boolean; italic: boolean; underline: boolean };
-    backTextStyles?: { bold: boolean; italic: boolean; underline: boolean };
-    frontTextTransform?: {
-      position: { x: number; y: number };
-      scale: number;
-      rotation: number;
-    };
-    backTextTransform?: {
-      position: { x: number; y: number };
-      scale: number;
-      rotation: number;
-    };
-    frontSvgColor?: string;
-    backSvgColor?: string;
-    frontSvgContent?: string;
-    backSvgContent?: string;
-    mockupColor?: any;
-    mockup?: any;
-    hdRectoUrl?: string;
-    hdVersoUrl?: string;
-    hdCaptureTimestamp?: string;
   } | null;
-  tickets?: number;
 };
 
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';

@@ -15,23 +15,27 @@ export const TouchHandles: React.FC<TouchHandlesProps> = ({
   onMove,
   className = ''
 }) => {
-  // Use mouse events and touch events without preventDefault to avoid passive listener issues
-  const handleScaleUp = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+  // Use mouse events instead of touch events to avoid passive listener issues
+  const handleScaleUp = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     onScale(0.1);
   }, [onScale]);
 
-  const handleScaleDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+  const handleScaleDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     onScale(-0.1);
   }, [onScale]);
 
-  const handleRotateLeft = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+  const handleRotateLeft = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     onRotate(-15);
   }, [onRotate]);
 
-  const handleRotateRight = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+  const handleRotateRight = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     onRotate(15);
   }, [onRotate]);
@@ -41,7 +45,7 @@ export const TouchHandles: React.FC<TouchHandlesProps> = ({
       <button
         className="p-1 text-white hover:bg-white/20 rounded"
         onMouseDown={handleScaleDown}
-        onTouchStart={handleScaleDown}
+        onTouchStart={handleScaleDown as any}
       >
         <ZoomOut className="h-3 w-3" />
       </button>
@@ -49,7 +53,7 @@ export const TouchHandles: React.FC<TouchHandlesProps> = ({
       <button
         className="p-1 text-white hover:bg-white/20 rounded"
         onMouseDown={handleScaleUp}
-        onTouchStart={handleScaleUp}
+        onTouchStart={handleScaleUp as any}
       >
         <ZoomIn className="h-3 w-3" />
       </button>
@@ -57,7 +61,7 @@ export const TouchHandles: React.FC<TouchHandlesProps> = ({
       <button
         className="p-1 text-white hover:bg-white/20 rounded"
         onMouseDown={handleRotateLeft}
-        onTouchStart={handleRotateLeft}
+        onTouchStart={handleRotateLeft as any}
       >
         <RotateCcw className="h-3 w-3" />
       </button>
@@ -65,7 +69,7 @@ export const TouchHandles: React.FC<TouchHandlesProps> = ({
       <button
         className="p-1 text-white hover:bg-white/20 rounded"
         onMouseDown={handleRotateRight}
-        onTouchStart={handleRotateRight}
+        onTouchStart={handleRotateRight as any}
       >
         <RotateCw className="h-3 w-3" />
       </button>

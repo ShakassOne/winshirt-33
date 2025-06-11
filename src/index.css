@@ -103,38 +103,24 @@
   }
 
   body {
-    @apply text-foreground antialiased bg-gradient-to-br from-red-600 via-red-800 to-black;
+    @apply bg-background text-foreground antialiased;
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
-  }
-
-  body::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: radial-gradient(circle at center, rgba(255,255,255,0.2), transparent 70%);
-    filter: blur(120px);
-    opacity: 0.4;
-  }
-
-  html {
-    @apply bg-gradient-to-br from-red-600 via-red-800 to-black;
   }
 }
 
 @layer components {
   .glass {
-    @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-[0_0_40px_rgba(255,255,255,0.05)] shadow-inner;
+    @apply bg-white/5 backdrop-blur-lg border border-white/10 shadow-lg;
   }
-
+  
   .glass-card {
-    @apply glass transition-all duration-500;
+    @apply glass rounded-2xl transition-all duration-300;
   }
-
+  
   .glass-card:hover {
-    @apply scale-[1.01];
+    @apply bg-white/10 border-white/20 shadow-xl;
   }
   
   .progress-bar {
@@ -191,39 +177,6 @@
     opacity: 1;
     transform: translateY(100%) scale(1.05);
     transition: opacity 0.08s, transform 1s cubic-bezier(.24,.97,.56,1.03);
-  }
-
-  /* Animated Button Styles */
-  .animated-button-wrapper {
-    @apply relative inline-block;
-  }
-
-  .animated-button {
-    @apply block text-lg font-bold uppercase tracking-wider px-8 py-4 bg-black text-white rounded-full border-0 cursor-pointer relative z-10;
-    font-family: 'Inter', Arial;
-    line-height: 1.4;
-  }
-
-  .animated-button-bg {
-    @apply absolute top-0 left-0 rounded-full -z-10;
-    width: calc(100% + 4px);
-    height: calc(100% + 4px);
-    background: linear-gradient(90deg, #FF8038 0%, #FF0099 30.43%, #00EBEB 68.23%, #DB00FF 100%);
-    background-size: 600% 600%;
-    animation: AnimateBorder 4s ease infinite;
-    transform: translate(-2px, -2px);
-    transition: filter 1s ease-in;
-  }
-
-  .animated-button-wrapper:hover .animated-button-bg {
-    filter: blur(10px);
-    transition: filter 0.4s ease-in;
-  }
-
-  @keyframes AnimateBorder {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
   }
 }
 

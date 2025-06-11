@@ -1,6 +1,5 @@
-
 import React, { useState, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -115,6 +114,11 @@ interface ModalPersonnalisationProps {
   selectedSizeBack: string;
   onDesignTransformChange: (property: string, value: any) => void;
   onSizeChange: (size: string) => void;
+
+  // Interaction handlers
+  onDesignMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void;
+  onTextMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void;
+  onTouchMove?: (e: React.TouchEvent) => void;
 }
 
 export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
@@ -161,7 +165,10 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   selectedSizeFront,
   selectedSizeBack,
   onDesignTransformChange,
-  onSizeChange
+  onSizeChange,
+  onDesignMouseDown,
+  onTextMouseDown,
+  onTouchMove
 }) => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('designs');
@@ -222,7 +229,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           selectedDesignBack={selectedDesignBack}
           designTransformFront={designTransformFront}
           designTransformBack={designTransformBack}
-          onDesignTransformChange={onDesignTransformChange}
           svgColorFront={svgColorFront}
           svgColorBack={svgColorBack}
           svgContentFront={svgContentFront}
@@ -237,11 +243,13 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           textStylesBack={textStylesBack}
           textTransformFront={textTransformFront}
           textTransformBack={textTransformBack}
-          onTextTransformChange={onTextTransformChange}
+          onDesignMouseDown={onDesignMouseDown}
+          onTextMouseDown={onTextMouseDown}
+          onTouchMove={onTouchMove}
         />
       </div>
 
-      <div className="w-1/2 flex flex-col h-full">
+      <div className="w-1/2 flex flex-col">
         {filteredMockupColors.length > 0 && (
           <div className="mb-6">
             <h3 className="text-lg font-medium mb-3">Couleur du produit</h3>
@@ -253,7 +261,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           </div>
         )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           <TabsList className="grid w-full grid-cols-5 mb-4">
             <TabsTrigger value="designs" className="flex items-center gap-2">
               <ImageIcon className="h-4 w-4" />
@@ -277,8 +285,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             </TabsTrigger>
           </TabsList>
 
-          <div className="flex-1 min-h-0">
-            <TabsContent value="designs" className="h-full overflow-y-auto mt-0 data-[state=active]:h-full">
+          <div className="flex-1 overflow-hidden">
+            <TabsContent value="designs" className="h-full overflow-y-auto">
               <GalleryDesigns
                 onSelectDesign={handleDesignSelection}
                 selectedDesign={currentData.design}
@@ -289,7 +297,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               />
             </TabsContent>
 
-            <TabsContent value="text" className="h-full overflow-y-auto mt-0 data-[state=active]:h-full">
+            <TabsContent value="text" className="h-full overflow-y-auto">
               <TextCustomizer
                 textContent={currentData.textContent}
                 textFont={currentData.textFont}
@@ -304,7 +312,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               />
             </TabsContent>
 
-            <TabsContent value="upload" className="h-full overflow-y-auto mt-0 data-[state=active]:h-full">
+            <TabsContent value="upload" className="h-full overflow-y-auto">
               <UploadDesign
                 onFileUpload={onFileUpload}
                 onRemoveBackground={onRemoveBackground}
@@ -313,13 +321,11 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               />
             </TabsContent>
 
-            <TabsContent value="ai" className="h-full overflow-y-auto mt-0 data-[state=active]:h-full">
-              <div className="h-full">
-                <CompactAIGenerator onImageGenerated={onAIImageGenerated} />
-              </div>
+            <TabsContent value="ai" className="h-full overflow-y-auto">
+              <CompactAIGenerator onImageGenerated={onAIImageGenerated} />
             </TabsContent>
 
-            <TabsContent value="svg" className="h-full overflow-y-auto mt-0 data-[state=active]:h-full">
+            <TabsContent value="svg" className="h-full overflow-y-auto">
               <SVGDesigns
                 onSelectDesign={handleDesignSelection}
                 selectedDesign={currentData.design}
@@ -368,6 +374,9 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           textStylesBack={textStylesBack}
           textTransformFront={textTransformFront}
           textTransformBack={textTransformBack}
+          onDesignMouseDown={onDesignMouseDown}
+          onTextMouseDown={onTextMouseDown}
+          onTouchMove={onTouchMove}
           onDesignTransformChange={onDesignTransformChange}
           onTextTransformChange={onTextTransformChange}
           onRemoveDesign={handleRemoveDesign}
@@ -436,16 +445,13 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         onClose();
       }
     }}>
-      <DialogContent className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl max-w-[95vw] w-[95vw] h-[95vh] overflow-hidden flex flex-col">
+      <DialogContent className="bg-black/90 backdrop-blur-lg border-white/20 max-w-[95vw] w-[95vw] h-[95vh] overflow-hidden">
         <DialogHeader className="border-b border-white/10 pb-4">
           <DialogTitle className="text-2xl font-semibold">
             🎨 Personnalisation - {currentViewSide === 'front' ? 'Avant' : 'Arrière'}
           </DialogTitle>
-          <DialogDescription className="text-white/60">
-            Personnalisez votre produit avec des designs, du texte et des couleurs.
-          </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 pt-4 min-h-0">
+        <div className="pt-4 h-full overflow-hidden">
           {desktopContent}
         </div>
       </DialogContent>

@@ -720,45 +720,6 @@ export type Database = {
         }
         Relationships: []
       }
-      theme_settings: {
-        Row: {
-          accent_color: string
-          background_image: string | null
-          border_radius: number
-          button_style: string
-          created_at: string
-          glassmorphism_intensity: number
-          id: string
-          primary_color: string
-          star_density: number
-          updated_at: string
-        }
-        Insert: {
-          accent_color?: string
-          background_image?: string | null
-          border_radius?: number
-          button_style?: string
-          created_at?: string
-          glassmorphism_intensity?: number
-          id?: string
-          primary_color?: string
-          star_density?: number
-          updated_at?: string
-        }
-        Update: {
-          accent_color?: string
-          background_image?: string | null
-          border_radius?: number
-          button_style?: string
-          created_at?: string
-          glassmorphism_intensity?: number
-          id?: string
-          primary_color?: string
-          star_density?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           created_at: string

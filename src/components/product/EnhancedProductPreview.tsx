@@ -1,5 +1,5 @@
 
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { RotateCcw, Move, RotateCw, ZoomIn, ZoomOut, Trash2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Design } from '@/types/supabase.types';
@@ -91,7 +91,7 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
     textTransform: currentViewSide === 'front' ? textTransformFront : textTransformBack
   };
 
-  // Touch event handlers without preventDefault to avoid passive listener issues
+  // Touch event handlers with proper passive handling
   const handleTouchStart = useCallback((e: React.TouchEvent, type: 'design' | 'text') => {
     e.stopPropagation();
     const touch = e.touches[0];

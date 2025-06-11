@@ -1,109 +1,39 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { HexColorPicker } from 'react-colorful';
-import { ChevronLeft, Save } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart, Moon, Paintbrush, Save, Sun, Upload } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useTheme } from '@/components/theme-provider';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { UploadButton } from '@/components/ui/upload-button';
-import { fetchThemeSettings, saveThemeSettings, applyThemeSettings, ThemeSettings } from '@/services/themeSettings.service';
 
-const ThemeSettingsPage = () => {
+const ThemeSettings = () => {
   const { toast } = useToast();
   const { theme } = useTheme();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [primaryColor, setPrimaryColor] = useState('#9b87f5');
+  const [accentColor, setAccentColor] = useState('#33C3F0');
+  const [backgroundImage, setBackgroundImage] = useState('');
+  const [starDensity, setStarDensity] = useState([50]);
+  const [borderRadius, setBorderRadius] = useState([12]);
+  const [glassMorphismIntensity, setGlassMorphismIntensity] = useState([5]);
   const [selectedTab, setSelectedTab] = useState('colors');
-  
-  // Theme settings state
-  const [settings, setSettings] = useState<ThemeSettings>({
-    primary_color: '#9b87f5',
-    accent_color: '#33C3F0',
-    background_image: '',
-    star_density: 50,
-    border_radius: 12,
-    glassmorphism_intensity: 5,
-    button_style: 'gradient'
-  });
 
-  // Load existing settings on mount
-  useEffect(() => {
-    const loadSettings = async () => {
-      setIsLoading(true);
-      try {
-        const existingSettings = await fetchThemeSettings();
-        if (existingSettings) {
-          setSettings(existingSettings);
-          console.log('Loaded existing theme settings:', existingSettings);
-        }
-      } catch (error) {
-        console.error('Failed to load theme settings:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les paramètres de thème",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadSettings();
-  }, [toast]);
-
-  const handleBackgroundUpload = (url: string) => {
-    console.log('Background image uploaded:', url);
-    setSettings(prev => ({ ...prev, background_image: url }));
+  const handleSaveTheme = () => {
     toast({
-      title: "Image téléchargée",
-      description: "L'image d'arrière-plan a été téléchargée avec succès",
+      title: "Thème sauvegardé",
+      description: "Les modifications ont été appliquées avec succès.",
     });
   };
 
-  const handleSaveTheme = async () => {
-    setIsSaving(true);
-    try {
-      console.log('Saving theme settings:', settings);
-      const savedSettings = await saveThemeSettings(settings);
-      applyThemeSettings(savedSettings);
-      
-      toast({
-        title: "Thème sauvegardé",
-        description: "Les modifications ont été appliquées avec succès.",
-      });
-    } catch (error) {
-      console.error('Failed to save theme settings:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de sauvegarder les paramètres de thème",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
+  // Helper function to convert slider value to number
+  const getNumericValue = (value: number[]): number => {
+    return value[0] || 0;
   };
-
-  const updateSetting = (key: keyof ThemeSettings, value: any) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-muted-foreground">Chargement des paramètres...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -127,9 +57,18 @@ const ThemeSettingsPage = () => {
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
           <div className="flex justify-center mb-6">
             <TabsList className="grid w-full max-w-md grid-cols-3">
-              <TabsTrigger value="colors">Couleurs</TabsTrigger>
-              <TabsTrigger value="background">Arrière-plan</TabsTrigger>
-              <TabsTrigger value="ui">Interface</TabsTrigger>
+              <TabsTrigger value="colors" className="flex items-center gap-2">
+                <Paintbrush className="h-4 w-4" />
+                <span className="hidden sm:inline">Couleurs</span>
+              </TabsTrigger>
+              <TabsTrigger value="background" className="flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                <span className="hidden sm:inline">Arrière-plan</span>
+              </TabsTrigger>
+              <TabsTrigger value="ui" className="flex items-center gap-2">
+                <Heart className="h-4 w-4" />
+                <span className="hidden sm:inline">Interface</span>
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -143,18 +82,12 @@ const ThemeSettingsPage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <HexColorPicker 
-                    color={settings.primary_color} 
-                    onChange={(color) => updateSetting('primary_color', color)}
-                  />
+                  <HexColorPicker color={primaryColor} onChange={setPrimaryColor} />
                   <div className="flex items-center gap-2 mt-4">
-                    <Input 
-                      value={settings.primary_color} 
-                      onChange={(e) => updateSetting('primary_color', e.target.value)}
-                    />
+                    <Input value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} />
                     <div 
                       className="h-9 w-9 rounded-md border" 
-                      style={{ backgroundColor: settings.primary_color }} 
+                      style={{ backgroundColor: primaryColor }} 
                     />
                   </div>
                 </CardContent>
@@ -168,19 +101,51 @@ const ThemeSettingsPage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <HexColorPicker 
-                    color={settings.accent_color} 
-                    onChange={(color) => updateSetting('accent_color', color)}
-                  />
+                  <HexColorPicker color={accentColor} onChange={setAccentColor} />
                   <div className="flex items-center gap-2 mt-4">
-                    <Input 
-                      value={settings.accent_color} 
-                      onChange={(e) => updateSetting('accent_color', e.target.value)}
-                    />
+                    <Input value={accentColor} onChange={(e) => setAccentColor(e.target.value)} />
                     <div 
                       className="h-9 w-9 rounded-md border" 
-                      style={{ backgroundColor: settings.accent_color }} 
+                      style={{ backgroundColor: accentColor }} 
                     />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle>Mode d'affichage</CardTitle>
+                  <CardDescription>Choisissez entre un thème clair et sombre</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-4">
+                    <div className={`relative p-4 rounded-lg border ${theme === 'dark' ? 'border-primary' : 'border-border'} bg-card w-40 h-40`}>
+                      <div className="absolute right-2 top-2">
+                        {theme === 'dark' && <Moon className="h-5 w-5 text-primary" />}
+                      </div>
+                      <div className="w-full h-2 bg-primary/20 rounded-full mb-2">
+                        <div className="h-full w-3/4 bg-primary rounded-full" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-2 bg-muted rounded-full" />
+                        <div className="h-2 w-3/4 bg-muted rounded-full" />
+                      </div>
+                      <p className="text-xs mt-4 text-muted-foreground">Mode sombre</p>
+                    </div>
+
+                    <div className={`relative p-4 rounded-lg border ${theme === 'light' ? 'border-primary' : 'border-border'} bg-card w-40 h-40`}>
+                      <div className="absolute right-2 top-2">
+                        {theme === 'light' && <Sun className="h-5 w-5 text-primary" />}
+                      </div>
+                      <div className="w-full h-2 bg-primary/20 rounded-full mb-2">
+                        <div className="h-full w-3/4 bg-primary rounded-full" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-2 bg-muted rounded-full" />
+                        <div className="h-2 w-3/4 bg-muted rounded-full" />
+                      </div>
+                      <p className="text-xs mt-4 text-muted-foreground">Mode clair</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -202,15 +167,14 @@ const ThemeSettingsPage = () => {
                     <div className="flex mt-1.5 gap-2">
                       <Input 
                         id="bg-url"
-                        value={settings.background_image || ''}
-                        onChange={(e) => updateSetting('background_image', e.target.value)}
+                        value={backgroundImage}
+                        onChange={(e) => setBackgroundImage(e.target.value)}
                         placeholder="https://example.com/background.jpg"
                       />
-                      <UploadButton
-                        onUpload={handleBackgroundUpload}
-                        variant="outline"
-                        acceptTypes="image/*"
-                      />
+                      <Button variant="outline">
+                        <Upload className="h-4 w-4 mr-2" />
+                        Parcourir
+                      </Button>
                     </div>
                   </div>
                   
@@ -218,34 +182,57 @@ const ThemeSettingsPage = () => {
                     <Label>Densité des étoiles</Label>
                     <div className="mt-6">
                       <Slider
-                        value={[settings.star_density]}
+                        value={starDensity}
                         max={100}
                         step={1}
-                        onValueChange={(value) => updateSetting('star_density', value[0])}
+                        onValueChange={setStarDensity}
                       />
                       <div className="flex justify-between mt-1.5">
                         <span className="text-xs text-muted-foreground">Faible</span>
-                        <span className="text-xs text-muted-foreground">{settings.star_density}%</span>
+                        <span className="text-xs text-muted-foreground">{starDensity}%</span>
                         <span className="text-xs text-muted-foreground">Élevée</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6">
-                  <Label>Prévisualisation</Label>
-                  <div 
-                    className="h-48 rounded-lg relative overflow-hidden border mt-2"
-                    style={{ 
-                      backgroundImage: settings.background_image ? `url(${settings.background_image})` : undefined,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                    }}
-                  >
-                    {!settings.background_image && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                        <p className="text-muted-foreground">Aucune image sélectionnée</p>
-                      </div>
+                <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {['bg-1.jpg', 'bg-2.jpg', 'bg-3.jpg', 'bg-4.jpg'].map((bg, i) => (
+                    <div 
+                      key={i} 
+                      className="h-24 rounded-lg bg-cover bg-center cursor-pointer border-2 border-transparent hover:border-primary transition-all"
+                      style={{ 
+                        backgroundImage: `url(https://source.unsplash.com/random/300x200?space,${i})`,
+                      }}
+                      onClick={() => setBackgroundImage(`https://source.unsplash.com/random/1920x1080?space,${i}`)}
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Prévisualisation</CardTitle>
+                <CardDescription>
+                  Aperçu de l'arrière-plan avec vos paramètres actuels
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div 
+                  className="h-48 rounded-lg relative overflow-hidden border"
+                  style={{ 
+                    backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                >
+                  {!backgroundImage && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    {!backgroundImage && (
+                      <p className="text-muted-foreground">Aucune image sélectionnée</p>
                     )}
                   </div>
                 </div>
@@ -266,14 +253,14 @@ const ThemeSettingsPage = () => {
                   <div className="space-y-6">
                     <div>
                       <Slider 
-                        value={[settings.border_radius]}
+                        value={borderRadius}
                         max={20}
                         step={1}
-                        onValueChange={(value) => updateSetting('border_radius', value[0])}
+                        onValueChange={setBorderRadius}
                       />
                       <div className="flex justify-between mt-1.5">
                         <span className="text-xs text-muted-foreground">Anguleux</span>
-                        <span className="text-xs text-muted-foreground">{settings.border_radius}px</span>
+                        <span className="text-xs text-muted-foreground">{getNumericValue(borderRadius)}px</span>
                         <span className="text-xs text-muted-foreground">Arrondi</span>
                       </div>
                     </div>
@@ -281,7 +268,7 @@ const ThemeSettingsPage = () => {
                     <div className="h-24 flex items-center justify-center">
                       <div 
                         className="w-24 h-24 bg-card border" 
-                        style={{ borderRadius: `${settings.border_radius}px` }}
+                        style={{ borderRadius: `${getNumericValue(borderRadius)}px` }}
                       ></div>
                     </div>
                   </div>
@@ -299,14 +286,14 @@ const ThemeSettingsPage = () => {
                   <div className="space-y-6">
                     <div>
                       <Slider 
-                        value={[settings.glassmorphism_intensity]}
+                        value={glassMorphismIntensity}
                         max={10}
                         step={1}
-                        onValueChange={(value) => updateSetting('glassmorphism_intensity', value[0])}
+                        onValueChange={setGlassMorphismIntensity}
                       />
                       <div className="flex justify-between mt-1.5">
                         <span className="text-xs text-muted-foreground">Discret</span>
-                        <span className="text-xs text-muted-foreground">{settings.glassmorphism_intensity}</span>
+                        <span className="text-xs text-muted-foreground">{getNumericValue(glassMorphismIntensity)}</span>
                         <span className="text-xs text-muted-foreground">Intense</span>
                       </div>
                     </div>
@@ -315,8 +302,8 @@ const ThemeSettingsPage = () => {
                       <div 
                         className="w-24 h-24 border" 
                         style={{ 
-                          backdropFilter: `blur(${settings.glassmorphism_intensity * 2}px)`,
-                          backgroundColor: `rgba(255, 255, 255, ${settings.glassmorphism_intensity * 0.01})`,
+                          backdropFilter: `blur(${getNumericValue(glassMorphismIntensity) * 2}px)`,
+                          backgroundColor: `rgba(255, 255, 255, ${getNumericValue(glassMorphismIntensity) * 0.01})`,
                         }}
                       ></div>
                     </div>
@@ -332,12 +319,39 @@ const ThemeSettingsPage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="border p-4 rounded-lg text-center space-y-4">
+                      <Button className="w-full">
+                        Bouton
+                      </Button>
+                      <p className="text-xs text-muted-foreground">Standard</p>
+                    </div>
+                    
+                    <div className="border p-4 rounded-lg text-center space-y-4">
+                      <Button variant="outline" className="w-full">
+                        Bouton
+                      </Button>
+                      <p className="text-xs text-muted-foreground">Contour</p>
+                    </div>
+                    
+                    <div className="border p-4 rounded-lg text-center space-y-4">
+                      <Button className="w-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue">
+                        Bouton
+                      </Button>
+                      <p className="text-xs text-muted-foreground">Dégradé</p>
+                    </div>
+                    
+                    <div className="border p-4 rounded-lg text-center space-y-4">
+                      <Button variant="ghost" className="w-full">
+                        Bouton
+                      </Button>
+                      <p className="text-xs text-muted-foreground">Transparent</p>
+                    </div>
+                  </div>
+
                   <div className="mt-6">
                     <Label htmlFor="button-style">Style par défaut</Label>
-                    <Select 
-                      value={settings.button_style} 
-                      onValueChange={(value) => updateSetting('button_style', value)}
-                    >
+                    <Select defaultValue="gradient">
                       <SelectTrigger id="button-style" className="mt-1.5">
                         <SelectValue placeholder="Sélectionnez un style" />
                       </SelectTrigger>
@@ -356,13 +370,9 @@ const ThemeSettingsPage = () => {
         </Tabs>
 
         <div className="mt-8 flex justify-end">
-          <Button 
-            onClick={handleSaveTheme} 
-            disabled={isSaving}
-            className="bg-gradient-to-r from-winshirt-purple to-winshirt-blue"
-          >
+          <Button onClick={handleSaveTheme} className="bg-gradient-to-r from-winshirt-purple to-winshirt-blue">
             <Save className="mr-2 h-4 w-4" />
-            {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+            Sauvegarder
           </Button>
         </div>
       </div>
@@ -370,4 +380,4 @@ const ThemeSettingsPage = () => {
   );
 };
 
-export default ThemeSettingsPage;
+export default ThemeSettings;
