@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Heart, User, ShoppingCart, Moon, Sun, LogIn, LogOut, Settings } from 'lucide-react';
+import { Home, Heart, User, ShoppingCart, Moon, Sun, LogIn, LogOut, Settings, Shirt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UnifiedThemeToggle } from '@/components/theme/theme-toggle-unified';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -55,7 +55,7 @@ export const GlowNavigation: React.FC = () => {
     { id: 'home', icon: Home, path: '/', label: 'Accueil' },
     { 
       id: 'products', 
-      icon: ShoppingCart, 
+      icon: Shirt, 
       path: '/products', 
       label: 'Shop'
     },
