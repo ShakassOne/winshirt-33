@@ -111,7 +111,7 @@ const googleFonts = [
   { value: 'Nosifer', label: 'Nosifer', category: 'Display' },
   { value: 'Special Elite', label: 'Special Elite', category: 'Display' },
   { value: 'Rock Salt', label: 'Rock Salt', category: 'Display' },
-  { value: 'Orbitron', label: 'Orbitron', category: 'Display' },
+  { value: 'Six Caps', label: 'Six Caps', category: 'Display' },
 
   // === POLICES SCRIPT ET MANUSCRITES ===
   { value: 'Dancing Script', label: 'Dancing Script', category: 'Script' },
