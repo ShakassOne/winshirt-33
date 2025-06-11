@@ -72,19 +72,7 @@ export const GlowNavigation: React.FC = () => {
         </span>
       ) : null
     },
-    { 
-      id: 'theme', 
-      icon: theme === "light" ? Moon : Sun, 
-      label: 'Thème',
-      onClick: handleThemeToggle
-    },
-    {
-      id: 'auth',
-      icon: isAuthenticated ? LogOut : LogIn,
-      label: isAuthenticated ? 'Déconnexion' : 'Connexion',
-      onClick: isAuthenticated ? handleSignOut : () => navigate('/auth'),
-    },
-    {
+       {
       id: 'admin',
       icon: Settings,
       label: 'Admin',
@@ -92,6 +80,18 @@ export const GlowNavigation: React.FC = () => {
       isConditional: true,
       showWhen: () => isAuthenticated && isAdmin
     }
+    {
+      id: 'auth',
+      icon: isAuthenticated ? LogOut : LogIn,
+      label: isAuthenticated ? 'Déconnexion' : 'Connexion',
+      onClick: isAuthenticated ? handleSignOut : () => navigate('/auth'),
+    },
+     { 
+      id: 'theme', 
+      icon: theme === "light" ? Moon : Sun, 
+      label: 'Thème',
+      onClick: handleThemeToggle
+    },
   ];
 
   // Filtrer les items selon les conditions
