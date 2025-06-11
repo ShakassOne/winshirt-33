@@ -563,15 +563,10 @@ const ProductDetail = () => {
       }
     }
   }, [product]);
-
   useEffect(() => {
     // Filter mockup colors based on product's available colors
     if (mockup?.colors && product?.available_colors) {
-      const filteredColors = mockup.colors.filter(mockupColor => 
-        product.available_colors!.some(availableColor => 
-          mockupColor.name.toLowerCase() === availableColor.toLowerCase()
-        )
-      );
+      const filteredColors = mockup.colors.filter(mockupColor => product.available_colors!.some(availableColor => mockupColor.name.toLowerCase() === availableColor.toLowerCase()));
       if (filteredColors.length > 0) {
         setSelectedMockupColor(filteredColors[0]);
       }
@@ -580,7 +575,6 @@ const ProductDetail = () => {
       setSelectedMockupColor(mockup.colors[0]);
     }
   }, [mockup, product]);
-
   useEffect(() => {
     if (isDragging || isDraggingText || pageScrollLocked && customizationMode) {
       document.body.style.overflow = 'hidden';
@@ -855,18 +849,11 @@ const ProductDetail = () => {
   // Helper function to get filtered mockup colors
   const getFilteredMockupColors = () => {
     if (!mockup?.colors) return [];
-    
     if (!product?.available_colors || product.available_colors.length === 0) {
       return mockup.colors;
     }
-    
-    return mockup.colors.filter(mockupColor => 
-      product.available_colors!.some(availableColor => 
-        mockupColor.name.toLowerCase() === availableColor.toLowerCase()
-      )
-    );
+    return mockup.colors.filter(mockupColor => product.available_colors!.some(availableColor => mockupColor.name.toLowerCase() === availableColor.toLowerCase()));
   };
-
   const handleAddToCart = async () => {
     if (!product) return;
 
@@ -967,7 +954,6 @@ const ProductDetail = () => {
   }
   const activeLotteries = lotteries.filter(lottery => lottery.is_active);
   const filteredMockupColors = getFilteredMockupColors();
-
   const handleTouchMove = (e: React.TouchEvent) => {
     if (isDragging || isDraggingText) {
       e.preventDefault();
@@ -1040,7 +1026,7 @@ const ProductDetail = () => {
   return <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="flex-grow container mx-auto px-4 py-[85px]">
+      <main className="flex-grow container mx-auto px-[10px] py-[105px]">
         <div className="mb-6">
           <Link to="/products" className="flex items-center text-sm text-winshirt-purple hover:text-winshirt-blue transition-colors">
             <ArrowLeft className="h-4 w-4 mr-1" />
