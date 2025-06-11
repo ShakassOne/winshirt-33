@@ -131,48 +131,107 @@
     @apply h-full rounded-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue transition-all duration-300;
   }
   
-  /* Glass Navigation Styles */
-  .glass-nav {
-    @apply relative bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl rounded-full;
+  /* Glow Navigation Styles */
+  .glow-nav {
+    @apply relative flex justify-center items-center rounded-xl;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.25);
   }
   
-  .glass-nav-item {
-    @apply relative flex items-center justify-center p-3 rounded-full transition-all duration-300 ease-out cursor-pointer;
+  .glow-nav-item {
+    @apply relative list-none;
   }
   
-  .glass-nav-item:hover {
-    @apply scale-105 bg-white/10;
+  .glow-nav-link {
+    @apply relative text-white no-underline inline-block z-[1000] px-7 py-5;
+    backdrop-filter: blur(15px);
   }
   
-  .glass-nav-item.active {
-    @apply text-white scale-110;
+  .glow-nav-icon {
+    @apply text-4xl pointer-events-none opacity-25 transition-opacity duration-300;
   }
   
-  .glass-nav-indicator {
-    @apply absolute bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-white/20 rounded-full transition-all duration-500 ease-out;
-    box-shadow: 0 0 20px rgba(147, 51, 234, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  .glow-nav-item.active .glow-nav-icon {
+    @apply opacity-100;
   }
   
-  /* Mobile Glass Navigation */
-  .glass-nav-mobile {
-    @apply fixed bottom-4 left-4 right-4 bg-black/60 backdrop-blur-xl border border-white/10 shadow-2xl rounded-3xl p-3 z-50;
+  .glow-nav-item:hover .glow-nav-icon {
+    @apply opacity-75;
   }
   
-  .glass-nav-mobile-item {
-    @apply flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300 ease-out cursor-pointer relative;
+  #nav-marker {
+    @apply absolute top-0 z-[1] transition-all duration-500;
   }
   
-  .glass-nav-mobile-item:hover {
-    @apply scale-105 bg-white/10;
+  #nav-marker::before {
+    content: "";
+    @apply absolute -top-2 left-1/2 transform -translate-x-1/2 w-12 h-10 rounded-lg;
   }
   
-  .glass-nav-mobile-item.active {
-    @apply text-white scale-110;
+  /* Couleurs de glow pour chaque onglet */
+  .glow-nav-item:nth-child(1).active ~ #nav-marker::before {
+    background: #5da6ff;
+    box-shadow: 0 0 15px #5da6ff, 0 0 30px #5da6ff, 0 0 45px #5da6ff, 0 0 60px #5da6ff;
   }
   
-  .glass-nav-mobile-indicator {
-    @apply absolute inset-0 bg-gradient-to-b from-purple-500/20 via-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-white/20 rounded-2xl transition-all duration-500 ease-out;
-    box-shadow: 0 0 15px rgba(147, 51, 234, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  .glow-nav-item:nth-child(2).active ~ #nav-marker::before {
+    background: #ff6b35;
+    box-shadow: 0 0 15px #ff6b35, 0 0 30px #ff6b35, 0 0 45px #ff6b35, 0 0 60px #ff6b35;
+  }
+  
+  .glow-nav-item:nth-child(3).active ~ #nav-marker::before {
+    background: #ff5ff5;
+    box-shadow: 0 0 15px #ff5ff5, 0 0 30px #ff5ff5, 0 0 45px #ff5ff5, 0 0 60px #ff5ff5;
+  }
+  
+  .glow-nav-item:nth-child(4).active ~ #nav-marker::before {
+    background: #df2fff;
+    box-shadow: 0 0 15px #df2fff, 0 0 30px #df2fff, 0 0 45px #df2fff, 0 0 60px #df2fff;
+  }
+  
+  /* Mobile Navigation */
+  .mobile-glow-nav {
+    @apply fixed bottom-4 left-4 right-4 z-50;
+  }
+  
+  .mobile-glow-nav .glow-nav {
+    @apply mx-auto max-w-sm rounded-2xl;
+  }
+  
+  .mobile-glow-nav .glow-nav-link {
+    @apply px-4 py-4 flex flex-col items-center;
+  }
+  
+  .mobile-glow-nav .glow-nav-icon {
+    @apply text-2xl;
+  }
+  
+  .mobile-glow-nav-label {
+    @apply text-xs mt-1 opacity-60;
+  }
+  
+  .mobile-glow-nav .glow-nav-item.active .mobile-glow-nav-label {
+    @apply opacity-100;
+  }
+  
+  /* Desktop Header */
+  .desktop-header {
+    @apply fixed top-0 left-0 w-full z-50;
+  }
+  
+  .desktop-header-content {
+    @apply container mx-auto px-4 pt-4;
+  }
+  
+  .desktop-header-nav {
+    @apply max-w-4xl mx-auto bg-black/60 backdrop-blur-lg border border-white/10 shadow-lg rounded-full;
+  }
+  
+  .desktop-header-inner {
+    @apply flex items-center justify-between h-16 px-8;
+  }
+  
+  .desktop-nav-center {
+    @apply flex items-center justify-center flex-1;
   }
   
   /* 3D Tilt Card Effect */

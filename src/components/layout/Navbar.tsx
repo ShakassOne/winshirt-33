@@ -1,9 +1,9 @@
 
 import React from "react";
-import { GlassNavigation } from "./GlassNavigation";
+import { GlowNavigation } from "./GlowNavigation";
 
 const Navbar = () => {
-  return <GlassNavigation />;
+  return <GlowNavigation />;
 };
 
 export default Navbar;
