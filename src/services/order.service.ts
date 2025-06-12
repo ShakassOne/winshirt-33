@@ -54,17 +54,18 @@ export const createOrder = async (
       
     if (orderError) throw orderError;
     
-    // Create order items avec transmission correcte de toutes les données
+    // Create order items avec gestion unifiée des captures
     const orderItems = items.map(item => {
       console.log('Processing item for order:', item);
       console.log('Item customization:', item.customization);
       
-      // Extraire les informations de personnalisation
       const customization = item.customization;
       
-      // Prioriser les URLs de capture finales depuis customization
+      // Extraire les URLs de capture avec support nouvelle structure
       const mockupRectoUrl = customization?.mockupRectoUrl || null;
       const mockupVersoUrl = customization?.mockupVersoUrl || null;
+      const hdRectoUrl = customization?.hdRectoUrl || null;
+      const hdVersoUrl = customization?.hdVersoUrl || null;
       
       const selectedSize = item.size || customization?.selectedSize || null;
       const selectedColor = item.color || customization?.selectedColor || null;
@@ -78,13 +79,16 @@ export const createOrder = async (
         customization: customization || null,
         mockup_recto_url: mockupRectoUrl,
         mockup_verso_url: mockupVersoUrl,
+        visual_front_url: hdRectoUrl, // Nouveau: URL HD pour DTF
+        visual_back_url: hdVersoUrl,  // Nouveau: URL HD pour DTF
         selected_size: selectedSize,
         selected_color: selectedColor,
         lottery_name: lotteryName
       };
       
       console.log('Order item to insert:', orderItem);
-      console.log('Captured Mockup URLs - Recto:', mockupRectoUrl, 'Verso:', mockupVersoUrl);
+      console.log('Captured URLs - Mockup Recto:', mockupRectoUrl, 'Verso:', mockupVersoUrl);
+      console.log('HD URLs - Recto:', hdRectoUrl, 'Verso:', hdVersoUrl);
       console.log('Lottery name being saved:', lotteryName);
       
       return orderItem;
@@ -99,7 +103,7 @@ export const createOrder = async (
       throw itemsError;
     }
     
-    console.log('Order items successfully created with captured mockup URLs and lottery data');
+    console.log('Order items successfully created with unified capture system');
     
     return order;
   } catch (error) {

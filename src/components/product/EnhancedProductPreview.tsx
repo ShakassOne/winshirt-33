@@ -1,9 +1,11 @@
 
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { RotateCcw, Move, RotateCw, ZoomIn, ZoomOut, Trash2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Design } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
+import { UnifiedCustomizationRenderer } from './UnifiedCustomizationRenderer';
+import { ProductionFileRenderer } from './ProductionFileRenderer';
 
 interface EnhancedProductPreviewProps {
   productName: string;
@@ -14,30 +16,10 @@ interface EnhancedProductPreviewProps {
   selectedMockupColor: MockupColor | null;
   hasTwoSides: boolean;
   
-  selectedDesignFront: Design | null;
-  selectedDesignBack: Design | null;
-  designTransformFront: { position: { x: number; y: number }; scale: number; rotation: number };
-  designTransformBack: { position: { x: number; y: number }; scale: number; rotation: number };
+  // Données de personnalisation unifiées
+  customization: any;
   
-  svgColorFront: string;
-  svgColorBack: string;
-  svgContentFront: string;
-  svgContentBack: string;
-  
-  textContentFront: string;
-  textContentBack: string;
-  textFontFront: string;
-  textFontBack: string;
-  textColorFront: string;
-  textColorBack: string;
-  textStylesFront: { bold: boolean; italic: boolean; underline: boolean };
-  textStylesBack: { bold: boolean; italic: boolean; underline: boolean };
-  textTransformFront: { position: { x: number; y: number }; scale: number; rotation: number };
-  textTransformBack: { position: { x: number; y: number }; scale: number; rotation: number };
-  
-  onDesignMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void;
-  onTextMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void;
-  onTouchMove?: (e: React.TouchEvent) => void;
+  // Handlers pour les interactions
   onDesignTransformChange: (property: string, value: any) => void;
   onTextTransformChange: (property: string, value: any) => void;
   onRemoveDesign: () => void;
@@ -51,159 +33,57 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
   mockup,
   selectedMockupColor,
   hasTwoSides,
-  selectedDesignFront,
-  selectedDesignBack,
-  designTransformFront,
-  designTransformBack,
-  svgColorFront,
-  svgColorBack,
-  svgContentFront,
-  svgContentBack,
-  textContentFront,
-  textContentBack,
-  textFontFront,
-  textFontBack,
-  textColorFront,
-  textColorBack,
-  textStylesFront,
-  textStylesBack,
-  textTransformFront,
-  textTransformBack,
+  customization,
   onDesignTransformChange,
   onTextTransformChange,
   onRemoveDesign,
   onRemoveText
 }) => {
   const previewRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState<'design' | 'text' | null>(null);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [showControls, setShowControls] = useState(true);
 
   const currentData = {
-    design: currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack,
-    designTransform: currentViewSide === 'front' ? designTransformFront : designTransformBack,
-    svgColor: currentViewSide === 'front' ? svgColorFront : svgColorBack,
-    svgContent: currentViewSide === 'front' ? svgContentFront : svgContentBack,
-    textContent: currentViewSide === 'front' ? textContentFront : textContentBack,
-    textFont: currentViewSide === 'front' ? textFontFront : textFontBack,
-    textColor: currentViewSide === 'front' ? textColorFront : textColorBack,
-    textStyles: currentViewSide === 'front' ? textStylesFront : textStylesBack,
-    textTransform: currentViewSide === 'front' ? textTransformFront : textTransformBack
+    design: currentViewSide === 'front' ? customization?.frontDesign : customization?.backDesign,
+    text: currentViewSide === 'front' ? customization?.frontText : customization?.backText
   };
 
-  // Touch event handlers with proper passive handling
-  const handleTouchStart = useCallback((e: React.TouchEvent, type: 'design' | 'text') => {
-    e.stopPropagation();
-    const touch = e.touches[0];
-    setIsDragging(type);
-    setDragStart({ x: touch.clientX, y: touch.clientY });
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isDragging) return;
-    
-    e.stopPropagation();
-    
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - dragStart.x;
-    const deltaY = touch.clientY - dragStart.y;
-
-    if (isDragging === 'design') {
-      const currentPos = currentData.designTransform.position;
-      onDesignTransformChange('position', {
-        x: currentPos.x + deltaX * 0.5,
-        y: currentPos.y + deltaY * 0.5
-      });
-    } else if (isDragging === 'text') {
-      const currentPos = currentData.textTransform.position;
-      onTextTransformChange('position', {
-        x: currentPos.x + deltaX * 0.5,
-        y: currentPos.y + deltaY * 0.5
-      });
+  const getProductImage = () => {
+    if (selectedMockupColor) {
+      return currentViewSide === 'front' ? selectedMockupColor.front_image_url : selectedMockupColor.back_image_url;
+    } else if (mockup) {
+      return currentViewSide === 'front' ? mockup.svg_front_url : mockup.svg_back_url;
     }
-
-    setDragStart({ x: touch.clientX, y: touch.clientY });
-  }, [isDragging, dragStart, currentData, onDesignTransformChange, onTextTransformChange]);
-
-  const handleTouchEnd = useCallback(() => {
-    setIsDragging(null);
-  }, []);
-
-  const renderCurrentSide = () => {
-    const sideUrl = currentViewSide === 'front' 
-      ? (selectedMockupColor?.front_image_url || mockup?.svg_front_url)
-      : (selectedMockupColor?.back_image_url || mockup?.svg_back_url);
-
-    return (
-      <div className="relative w-full h-full flex items-center justify-center">
-        {sideUrl && (
-          <img 
-            src={sideUrl} 
-            alt={`${productName} ${currentViewSide}`}
-            className="max-w-full max-h-full object-contain"
-            style={{ maxHeight: '90%' }}
-          />
-        )}
-        
-        {/* Design Layer */}
-        {currentData.design && (
-          <div
-            className="absolute cursor-move"
-            style={{
-              left: '50%',
-              top: '50%',
-              transform: `translate(-50%, -50%) translate(${currentData.designTransform.position.x}px, ${currentData.designTransform.position.y}px) scale(${currentData.designTransform.scale}) rotate(${currentData.designTransform.rotation}deg)`,
-              zIndex: 2
-            }}
-            onTouchStart={(e) => handleTouchStart(e, 'design')}
-            onTouchEnd={handleTouchEnd}
-          >
-            <img 
-              src={currentData.design.image_url} 
-              alt={currentData.design.name}
-              className="max-w-[120px] max-h-[120px] object-contain pointer-events-none"
-            />
-          </div>
-        )}
-
-        {/* Text Layer */}
-        {currentData.textContent && (
-          <div
-            className="absolute cursor-move"
-            style={{
-              left: '50%',
-              top: '50%',
-              transform: `translate(-50%, -50%) translate(${currentData.textTransform.position.x}px, ${currentData.textTransform.position.y}px) scale(${currentData.textTransform.scale}) rotate(${currentData.textTransform.rotation}deg)`,
-              fontFamily: currentData.textFont,
-              color: currentData.textColor,
-              fontSize: '16px',
-              fontWeight: currentData.textStyles.bold ? 'bold' : 'normal',
-              fontStyle: currentData.textStyles.italic ? 'italic' : 'normal',
-              textDecoration: currentData.textStyles.underline ? 'underline' : 'none',
-              zIndex: 3,
-              pointerEvents: 'auto'
-            }}
-            onTouchStart={(e) => handleTouchStart(e, 'text')}
-            onTouchEnd={handleTouchEnd}
-          >
-            {currentData.textContent}
-          </div>
-        )}
-      </div>
-    );
+    return undefined;
   };
 
   return (
     <div className="relative w-full h-full bg-gray-900/50 rounded-lg overflow-hidden">
-      {/* Preview Area */}
+      {/* Preview Area avec rendu unifié */}
       <div 
         ref={previewRef}
         className="relative w-full h-full"
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        id={`mockup-${currentViewSide}`}
       >
-        {renderCurrentSide()}
+        <UnifiedCustomizationRenderer
+          customization={customization}
+          side={currentViewSide}
+          withBackground={true}
+          backgroundUrl={getProductImage()}
+          className="w-full h-full"
+        />
       </div>
+
+      {/* Renderers de production cachés pour capture HD */}
+      <ProductionFileRenderer
+        customization={customization}
+        side="front"
+        elementId="production-front"
+      />
+      <ProductionFileRenderer
+        customization={customization}
+        side="back"
+        elementId="production-back"
+      />
 
       {/* Side Toggle */}
       {hasTwoSides && (
@@ -238,7 +118,7 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
       </Button>
 
       {/* Quick Controls */}
-      {showControls && (currentData.design || currentData.textContent) && (
+      {showControls && (currentData.design || currentData.text) && (
         <div className="absolute bottom-2 left-2 right-2">
           <div className="flex justify-center gap-1 bg-black/70 rounded-md p-1">
             {currentData.design && (
@@ -247,7 +127,7 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
                   variant="ghost"
                   size="sm"
                   className="h-6 w-6 p-0"
-                  onClick={() => onDesignTransformChange('scale', Math.max(0.5, currentData.designTransform.scale - 0.1))}
+                  onClick={() => onDesignTransformChange('scale', Math.max(0.5, currentData.design.transform.scale - 0.1))}
                 >
                   <ZoomOut className="h-3 w-3" />
                 </Button>
@@ -255,7 +135,7 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
                   variant="ghost"
                   size="sm"
                   className="h-6 w-6 p-0"
-                  onClick={() => onDesignTransformChange('scale', Math.min(2, currentData.designTransform.scale + 0.1))}
+                  onClick={() => onDesignTransformChange('scale', Math.min(2, currentData.design.transform.scale + 0.1))}
                 >
                   <ZoomIn className="h-3 w-3" />
                 </Button>
@@ -263,7 +143,7 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
                   variant="ghost"
                   size="sm"
                   className="h-6 w-6 p-0"
-                  onClick={() => onDesignTransformChange('rotation', currentData.designTransform.rotation - 15)}
+                  onClick={() => onDesignTransformChange('rotation', currentData.design.transform.rotation - 15)}
                 >
                   <RotateCcw className="h-3 w-3" />
                 </Button>
@@ -271,7 +151,7 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
                   variant="ghost"
                   size="sm"
                   className="h-6 w-6 p-0"
-                  onClick={() => onDesignTransformChange('rotation', currentData.designTransform.rotation + 15)}
+                  onClick={() => onDesignTransformChange('rotation', currentData.design.transform.rotation + 15)}
                 >
                   <RotateCw className="h-3 w-3" />
                 </Button>
@@ -286,7 +166,7 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
               </>
             )}
             
-            {currentData.textContent && (
+            {currentData.text && (
               <Button
                 variant="ghost"
                 size="sm"
