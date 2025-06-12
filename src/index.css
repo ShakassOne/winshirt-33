@@ -107,6 +107,10 @@
     position: relative;
     overflow-x: hidden;
   }
+
+  p {
+    @apply text-black dark:text-white;
+  }
 }
 
 @layer components {
