@@ -69,10 +69,11 @@ export const createOrder = async (
       let hdRectoUrl = null;
       let hdVersoUrl = null;
       
-      // Vérifier si les propriétés HD existent dans la customization
+      // Vérifier si les propriétés HD existent dans la customization avec une approche type-safe
       if (customization && typeof customization === 'object') {
-        hdRectoUrl = (customization as any).hdRectoUrl || null;
-        hdVersoUrl = (customization as any).hdVersoUrl || null;
+        const customObj = customization as Record<string, any>;
+        hdRectoUrl = customObj.hdRectoUrl || customObj.visual_front_url || null;
+        hdVersoUrl = customObj.hdVersoUrl || customObj.visual_back_url || null;
       }
       
       const selectedSize = item.size || customization?.selectedSize || null;
