@@ -29,18 +29,22 @@ interface UnifiedCustomizationData {
 export const enrichCustomizationWithCaptures = (
   baseCustomization: any,
   captures: {
-    front: { mockupUrl?: string; hdUrl?: string };
-    back: { mockupUrl?: string; hdUrl?: string };
+    front?: { mockupUrl?: string; hdUrl?: string };
+    back?: { mockupUrl?: string; hdUrl?: string };
   }
 ): UnifiedCustomizationData => {
+  // Vérifier que captures existe et a la bonne structure
+  const frontCapture = captures?.front || {};
+  const backCapture = captures?.back || {};
+  
   const enriched: UnifiedCustomizationData = {
     ...baseCustomization,
-    mockupRectoUrl: captures.front.mockupUrl,
-    mockupVersoUrl: captures.back.mockupUrl,
-    hdRectoUrl: captures.front.hdUrl,
-    hdVersoUrl: captures.back.hdUrl,
-    visual_front_url: captures.front.hdUrl,
-    visual_back_url: captures.back.hdUrl,
+    mockupRectoUrl: frontCapture.mockupUrl,
+    mockupVersoUrl: backCapture.mockupUrl,
+    hdRectoUrl: frontCapture.hdUrl,
+    hdVersoUrl: backCapture.hdUrl,
+    visual_front_url: frontCapture.hdUrl,
+    visual_back_url: backCapture.hdUrl,
   };
 
   console.log('🔄 [UnifiedCapture Service] Données enrichies:', enriched);

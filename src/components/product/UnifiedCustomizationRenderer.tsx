@@ -136,7 +136,8 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
           fontWeight: styles.bold ? 'bold' : 'normal',
           fontStyle: styles.italic ? 'italic' : 'normal',
           textDecoration: styles.underline ? 'underline' : 'none',
-          textShadow: withBackground ? '2px 2px 4px rgba(0,0,0,0.3)' : 'none',
+          // Supprimer l'ombre par défaut
+          textShadow: 'none',
           zIndex: 20,
           lineHeight: 1.2
         }}
