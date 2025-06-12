@@ -92,7 +92,8 @@ export const useUnifiedCapture = () => {
       const canvas = await html2canvas(element, {
         useCORS: true,
         backgroundColor: isHD ? 'transparent' : '#ffffff',
-        scale: isHD ? 2 : 1,
+        // Générer une image haute résolution (≥3500px)
+        scale: isHD ? 5 : 1,
         width: isHD ? 800 : 400,
         height: isHD ? 1000 : 500,
         allowTaint: false,
@@ -112,6 +113,7 @@ export const useUnifiedCapture = () => {
       
       if (uploadUrl) {
         console.log(`✅ [UnifiedCapture] Upload réussi: ${filename} -> ${uploadUrl}`);
+        console.log(`🎯 [UnifiedCapture] Capture terminée pour ${elementId}`);
       } else {
         console.error(`❌ [UnifiedCapture] Échec upload pour ${filename}`);
       }
