@@ -92,9 +92,10 @@ export const useUnifiedCapture = () => {
       const canvas = await html2canvas(element, {
         useCORS: true,
         backgroundColor: isHD ? 'transparent' : '#ffffff',
-        scale: isHD ? 2 : 1,
-        width: isHD ? 800 : 400,
-        height: isHD ? 1000 : 500,
+        // For HD captures we want a much higher base resolution
+        scale: isHD ? 1 : 1,
+        width: isHD ? 3500 : 400,
+        height: isHD ? 3500 : 500,
         allowTaint: false,
         foreignObjectRendering: false,
         logging: false,
