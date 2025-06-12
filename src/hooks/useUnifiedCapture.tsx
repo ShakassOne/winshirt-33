@@ -24,7 +24,7 @@ export const useUnifiedCapture = () => {
 
       const response = await axios.post('https://media.winshirt.fr/upload-visuel.php', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 15000,
+        timeout: 30000,
       });
       
       return response.data?.url || null;
@@ -34,37 +34,67 @@ export const useUnifiedCapture = () => {
     }
   };
 
+  const waitForElement = async (elementId: string, maxAttempts: number = 10): Promise<HTMLElement | null> => {
+    for (let i = 0; i < maxAttempts; i++) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        console.log(`✅ [UnifiedCapture] Élément ${elementId} trouvé à la tentative ${i + 1}`);
+        return element;
+      }
+      console.log(`⏳ [UnifiedCapture] Tentative ${i + 1}/${maxAttempts} pour ${elementId}`);
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    console.warn(`❌ [UnifiedCapture] Élément ${elementId} non trouvé après ${maxAttempts} tentatives`);
+    return null;
+  };
+
   const captureElement = async (elementId: string, isHD: boolean = false): Promise<string | null> => {
-    const element = document.getElementById(elementId);
+    console.log(`🔍 [UnifiedCapture] Recherche de l'élément ${elementId}...`);
+    
+    const element = await waitForElement(elementId);
     if (!element) {
-      console.warn(`🔍 [UnifiedCapture] Élément ${elementId} introuvable`);
+      return null;
+    }
+
+    // Vérifier que l'élément a du contenu
+    const hasContent = element.children.length > 0 || element.textContent?.trim();
+    if (!hasContent) {
+      console.log(`⚠️ [UnifiedCapture] Élément ${elementId} vide, pas de capture`);
       return null;
     }
 
     try {
       console.log(`📸 [UnifiedCapture] Capture de ${elementId} (HD: ${isHD})`);
       
+      // Attendre un peu pour s'assurer que le rendu est complet
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const canvas = await html2canvas(element, {
         useCORS: true,
-        backgroundColor: isHD ? 'transparent' : null,
-        scale: isHD ? 1 : 2,
-        width: isHD ? 2400 : 600,
-        height: isHD ? 3200 : 600,
+        backgroundColor: isHD ? 'transparent' : '#ffffff',
+        scale: isHD ? 2 : 1,
+        width: isHD ? 800 : 400,
+        height: isHD ? 1000 : 500,
         allowTaint: false,
         foreignObjectRendering: false,
         logging: false,
-        imageTimeout: 5000,
+        imageTimeout: 10000,
+        removeContainer: false,
+        async: true,
       });
       
       const blob = await new Promise<Blob>((resolve) => 
-        canvas.toBlob((blob) => resolve(blob!), 'image/png', 0.9)
+        canvas.toBlob((blob) => resolve(blob!), 'image/png', 0.95)
       );
       
-      const filename = `${isHD ? 'hd' : 'mockup'}-${elementId}-${Date.now()}.png`;
+      const timestamp = Date.now();
+      const filename = `${isHD ? 'hd' : 'mockup'}-${elementId}-${timestamp}.png`;
       const uploadUrl = await uploadImage(blob, filename);
       
       if (uploadUrl) {
         console.log(`✅ [UnifiedCapture] Upload réussi: ${filename} -> ${uploadUrl}`);
+      } else {
+        console.error(`❌ [UnifiedCapture] Échec upload pour ${filename}`);
       }
       
       return uploadUrl;
@@ -79,47 +109,54 @@ export const useUnifiedCapture = () => {
 
     try {
       console.log('🎬 [UnifiedCapture] Début capture unifiée');
+      console.log('📋 [UnifiedCapture] Customization:', customization);
 
       const results: UnifiedCaptureAllResult = {
         front: {},
         back: {}
       };
 
-      // Capturer le front
+      // Analyser le contenu disponible
       const hasFrontContent = customization?.frontDesign || customization?.frontText;
+      const hasBackContent = customization?.backDesign || customization?.backText;
+
+      console.log(`📊 [UnifiedCapture] Contenu - Front: ${!!hasFrontContent}, Back: ${!!hasBackContent}`);
+
+      // Capturer le front si du contenu existe
       if (hasFrontContent) {
-        console.log('📸 [UnifiedCapture] Capture front...');
+        console.log('📸 [UnifiedCapture] Capture front en cours...');
+        
         const [mockupFront, hdFront] = await Promise.allSettled([
-          captureElement('mockup-front', false),
-          captureElement('production-front', true)
+          captureElement('preview-front-complete', false),
+          captureElement('production-front-only', true)
         ]);
 
         if (mockupFront.status === 'fulfilled' && mockupFront.value) {
           results.front.mockupUrl = mockupFront.value;
-          console.log('✅ [UnifiedCapture] Mockup front capturé');
+          console.log('✅ [UnifiedCapture] Mockup front capturé:', mockupFront.value);
         }
         if (hdFront.status === 'fulfilled' && hdFront.value) {
           results.front.hdUrl = hdFront.value;
-          console.log('✅ [UnifiedCapture] HD front capturé');
+          console.log('✅ [UnifiedCapture] HD front capturé:', hdFront.value);
         }
       }
 
-      // Capturer le back
-      const hasBackContent = customization?.backDesign || customization?.backText;
+      // Capturer le back si du contenu existe
       if (hasBackContent) {
-        console.log('📸 [UnifiedCapture] Capture back...');
+        console.log('📸 [UnifiedCapture] Capture back en cours...');
+        
         const [mockupBack, hdBack] = await Promise.allSettled([
-          captureElement('mockup-back', false),
-          captureElement('production-back', true)
+          captureElement('preview-back-complete', false),
+          captureElement('production-back-only', true)
         ]);
 
         if (mockupBack.status === 'fulfilled' && mockupBack.value) {
           results.back.mockupUrl = mockupBack.value;
-          console.log('✅ [UnifiedCapture] Mockup back capturé');
+          console.log('✅ [UnifiedCapture] Mockup back capturé:', mockupBack.value);
         }
         if (hdBack.status === 'fulfilled' && hdBack.value) {
           results.back.hdUrl = hdBack.value;
-          console.log('✅ [UnifiedCapture] HD back capturé');
+          console.log('✅ [UnifiedCapture] HD back capturé:', hdBack.value);
         }
       }
 

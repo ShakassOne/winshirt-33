@@ -54,26 +54,35 @@ export const createOrder = async (
       
     if (orderError) throw orderError;
     
-    // Create order items avec gestion unifiée des captures
+    // Create order items avec gestion améliorée des captures
     const orderItems = items.map(item => {
-      console.log('Processing item for order:', item);
-      console.log('Item customization:', item.customization);
+      console.log('🔍 [Order Service] Processing item for order:', item.id);
+      console.log('📋 [Order Service] Item customization:', item.customization);
       
       const customization = item.customization;
       
-      // Extraire les URLs de capture avec support nouvelle et ancienne structure
-      const mockupRectoUrl = customization?.mockupRectoUrl || null;
-      const mockupVersoUrl = customization?.mockupVersoUrl || null;
-      
-      // Gérer les URLs HD depuis la nouvelle structure ou l'ancienne - utilisation d'une approche plus sûre
+      // Extraire toutes les URLs de capture disponibles
+      let mockupRectoUrl = null;
+      let mockupVersoUrl = null;
       let hdRectoUrl = null;
       let hdVersoUrl = null;
       
-      // Vérifier si les propriétés HD existent dans la customization avec une approche type-safe
       if (customization && typeof customization === 'object') {
         const customObj = customization as Record<string, any>;
-        hdRectoUrl = customObj.hdRectoUrl || customObj.visual_front_url || null;
-        hdVersoUrl = customObj.hdVersoUrl || customObj.visual_back_url || null;
+        
+        // URLs de mockup (preview)
+        mockupRectoUrl = customObj.mockupRectoUrl || null;
+        mockupVersoUrl = customObj.mockupVersoUrl || null;
+        
+        // URLs HD (production) - priorité à la nouvelle structure
+        hdRectoUrl = customObj.visual_front_url || customObj.hdRectoUrl || null;
+        hdVersoUrl = customObj.visual_back_url || customObj.hdVersoUrl || null;
+        
+        console.log('📸 [Order Service] URLs extraites:');
+        console.log('   - Mockup Recto:', mockupRectoUrl);
+        console.log('   - Mockup Verso:', mockupVersoUrl);
+        console.log('   - HD Recto:', hdRectoUrl);
+        console.log('   - HD Verso:', hdVersoUrl);
       }
       
       const selectedSize = item.size || customization?.selectedSize || null;
@@ -88,17 +97,14 @@ export const createOrder = async (
         customization: customization || null,
         mockup_recto_url: mockupRectoUrl,
         mockup_verso_url: mockupVersoUrl,
-        visual_front_url: hdRectoUrl, // Nouveau: URL HD pour DTF
-        visual_back_url: hdVersoUrl,  // Nouveau: URL HD pour DTF
+        visual_front_url: hdRectoUrl, // URL HD pour DTF
+        visual_back_url: hdVersoUrl,  // URL HD pour DTF
         selected_size: selectedSize,
         selected_color: selectedColor,
         lottery_name: lotteryName
       };
       
-      console.log('Order item to insert:', orderItem);
-      console.log('Captured URLs - Mockup Recto:', mockupRectoUrl, 'Verso:', mockupVersoUrl);
-      console.log('HD URLs - Recto:', hdRectoUrl, 'Verso:', hdVersoUrl);
-      console.log('Lottery name being saved:', lotteryName);
+      console.log('💾 [Order Service] Order item à insérer:', orderItem);
       
       return orderItem;
     });
@@ -108,15 +114,15 @@ export const createOrder = async (
       .insert(orderItems);
       
     if (itemsError) {
-      console.error('Error inserting order items:', itemsError);
+      console.error('❌ [Order Service] Error inserting order items:', itemsError);
       throw itemsError;
     }
     
-    console.log('Order items successfully created with unified capture system');
+    console.log('✅ [Order Service] Order items créés avec succès avec système de capture unifié');
     
     return order;
   } catch (error) {
-    console.error("Error in createOrder:", error);
+    console.error("❌ [Order Service] Error in createOrder:", error);
     throw error;
   }
 };
