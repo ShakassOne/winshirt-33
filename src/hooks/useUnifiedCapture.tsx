@@ -67,7 +67,28 @@ export const useUnifiedCapture = () => {
       
       // Attendre un peu pour s'assurer que le rendu est complet
       await new Promise(resolve => setTimeout(resolve, 200));
-      
+
+      // DEBUG CAPTURE
+      console.log("[UnifiedCapture DEBUG] ID demandé :", elementId);
+      console.log("[UnifiedCapture DEBUG] Elément trouvé :", element);
+      if (element) {
+        console.log(
+          "[UnifiedCapture DEBUG] Taille élément :",
+          (element as HTMLElement).offsetWidth,
+          "x",
+          (element as HTMLElement).offsetHeight
+        );
+        // Ajoute un contour rouge temporaire pendant 2s pour voir la div
+        const oldOutline = (element as HTMLElement).style.outline;
+        (element as HTMLElement).style.outline = "4px solid red";
+        setTimeout(() => {
+          (element as HTMLElement).style.outline = oldOutline || "";
+        }, 2000);
+      } else {
+        console.warn("[UnifiedCapture DEBUG] Élément DOM NON TROUVÉ pour l’ID demandé !");
+      }
+      console.log("[UnifiedCapture DEBUG] html2canvas va être appelé avec isHD =", isHD);
+
       const canvas = await html2canvas(element, {
         useCORS: true,
         backgroundColor: isHD ? 'transparent' : '#ffffff',
