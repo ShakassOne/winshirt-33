@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import GlassCard from '@/components/ui/GlassCard';
-import { ShoppingBag, Ticket, Award, ShoppingCart, Users, Image, Palette, Settings, BarChart, Truck, Share2, Wrench } from 'lucide-react';
+import { ShoppingBag, Ticket, Award, ShoppingCart, Users, Image, Palette, Settings, BarChart, Truck, Share2, Wrench, BookOpen } from 'lucide-react';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -93,6 +93,13 @@ const AdminDashboard = () => {
       icon: <Settings className="h-8 w-8 text-purple-500" />,
       route: '/admin/theme',
       color: 'from-purple-500/20 to-purple-500/5'
+    },
+    {
+      title: 'Lexique',
+      description: 'Glossaire des termes de l\'application',
+      icon: <BookOpen className="h-8 w-8 text-teal-400" />,
+      route: '/lexique',
+      color: 'from-teal-400/20 to-teal-400/5'
     }
   ];
   
