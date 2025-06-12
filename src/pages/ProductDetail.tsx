@@ -600,7 +600,8 @@ const ProductDetail = () => {
       setSelectedDesignBack(design);
       setActiveDesignSide('back');
     }
-    setCustomizationModalOpen(false);
+    // Ne pas fermer le modal immédiatement après la sélection d'un design
+    // afin de permettre à l'utilisateur de continuer sa personnalisation.
   };
   const handleDesignTransformChange = (property: string, value: any) => {
     if (activeDesignSide === 'front') {
