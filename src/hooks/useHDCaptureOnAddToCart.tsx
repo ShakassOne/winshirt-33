@@ -1,15 +1,7 @@
 
 import { useCallback } from 'react';
 import { useUnifiedCapture } from './useUnifiedCapture';
-import { toast } from '@/components/ui/use-toast';
 import { enrichCustomizationWithCaptures, validateUnifiedCustomization } from '@/services/unifiedCapture.service';
-
-interface HDCaptureData {
-  mockupRectoUrl?: string;
-  mockupVersoUrl?: string;
-  hdRectoUrl?: string;
-  hdVersoUrl?: string;
-}
 
 export const useHDCaptureOnAddToCart = () => {
   const { captureUnified, isCapturing } = useUnifiedCapture();
@@ -37,14 +29,10 @@ export const useHDCaptureOnAddToCart = () => {
         return enrichCustomizationWithCaptures(customization, captureResult);
       } else {
         console.warn('⚠️ [HDCaptureOnAddToCart] Aucun fichier généré - éléments DOM manquants');
-        
-        // Pas d'alerte utilisateur pour les problèmes techniques de production
         return customization;
       }
     } catch (error) {
       console.error('❌ [HDCaptureOnAddToCart] Erreur:', error);
-      
-      // Pas d'alerte utilisateur pour les erreurs techniques
       return customization;
     }
   }, [captureUnified]);

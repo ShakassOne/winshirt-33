@@ -406,6 +406,8 @@ export type Database = {
           quantity: number
           selected_color: string | null
           selected_size: string | null
+          visual_back_url: string | null
+          visual_front_url: string | null
         }
         Insert: {
           created_at?: string | null
@@ -420,6 +422,8 @@ export type Database = {
           quantity: number
           selected_color?: string | null
           selected_size?: string | null
+          visual_back_url?: string | null
+          visual_front_url?: string | null
         }
         Update: {
           created_at?: string | null
@@ -434,6 +438,8 @@ export type Database = {
           quantity?: number
           selected_color?: string | null
           selected_size?: string | null
+          visual_back_url?: string | null
+          visual_front_url?: string | null
         }
         Relationships: [
           {

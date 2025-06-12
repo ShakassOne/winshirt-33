@@ -63,53 +63,40 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
         ref={previewRef}
         className="relative w-full h-full"
       >
-        {/* Mockup Front pour capture */}
-        <div 
-          id="mockup-front" 
-          className={`${currentViewSide !== 'front' ? 'absolute -left-[9999px] -top-[9999px]' : ''} w-full h-full`}
-        >
+        {/* Vue principale visible */}
+        <div className="w-full h-full">
           <UnifiedCustomizationRenderer
             customization={customization}
-            side="front"
-            withBackground={true}
-            backgroundUrl={selectedMockupColor ? selectedMockupColor.front_image_url : mockup?.svg_front_url}
-            className="w-full h-full"
-          />
-        </div>
-
-        {/* Mockup Back pour capture */}
-        <div 
-          id="mockup-back" 
-          className={`${currentViewSide !== 'back' ? 'absolute -left-[9999px] -top-[9999px]' : ''} w-full h-full`}
-        >
-          <UnifiedCustomizationRenderer
-            customization={customization}
-            side="back"
-            withBackground={true}
-            backgroundUrl={selectedMockupColor ? selectedMockupColor.back_image_url : mockup?.svg_back_url}
-            className="w-full h-full"
-          />
-        </div>
-
-        {/* Affichage visible selon le côté sélectionné */}
-        <div className={`${currentViewSide === 'front' ? '' : 'absolute -left-[9999px] -top-[9999px]'} w-full h-full`}>
-          <UnifiedCustomizationRenderer
-            customization={customization}
-            side="front"
+            side={currentViewSide}
             withBackground={true}
             backgroundUrl={getProductImage()}
             className="w-full h-full"
           />
         </div>
 
-        <div className={`${currentViewSide === 'back' ? '' : 'absolute -left-[9999px] -top-[9999px]'} w-full h-full`}>
-          <UnifiedCustomizationRenderer
-            customization={customization}
-            side="back"
-            withBackground={true}
-            backgroundUrl={getProductImage()}
-            className="w-full h-full"
-          />
+        {/* Éléments cachés pour capture - Mockups */}
+        <div className="absolute -left-[9999px] -top-[9999px] w-[600px] h-[600px]">
+          <div id="mockup-front" className="w-full h-full">
+            <UnifiedCustomizationRenderer
+              customization={customization}
+              side="front"
+              withBackground={true}
+              backgroundUrl={selectedMockupColor ? selectedMockupColor.front_image_url : mockup?.svg_front_url}
+              className="w-full h-full"
+            />
+          </div>
+        </div>
+
+        <div className="absolute -left-[9999px] -top-[9999px] w-[600px] h-[600px]">
+          <div id="mockup-back" className="w-full h-full">
+            <UnifiedCustomizationRenderer
+              customization={customization}
+              side="back"
+              withBackground={true}
+              backgroundUrl={selectedMockupColor ? selectedMockupColor.back_image_url : mockup?.svg_back_url}
+              className="w-full h-full"
+            />
+          </div>
         </div>
       </div>
 

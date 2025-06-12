@@ -26,6 +26,13 @@ interface CustomizationData {
     font: string;
     color: string;
     styles: { bold: boolean; italic: boolean; underline: boolean };
+    shadow?: {
+      enabled: boolean;
+      color: string;
+      blur: number;
+      offsetX: number;
+      offsetY: number;
+    };
     transform: {
       scale: number;
       position: { x: number; y: number };
@@ -37,6 +44,13 @@ interface CustomizationData {
     font: string;
     color: string;
     styles: { bold: boolean; italic: boolean; underline: boolean };
+    shadow?: {
+      enabled: boolean;
+      color: string;
+      blur: number;
+      offsetX: number;
+      offsetY: number;
+    };
     transform: {
       scale: number;
       position: { x: number; y: number };
@@ -120,7 +134,13 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
   const renderText = () => {
     if (!text || !text.content) return null;
 
-    const { content, font, color, styles, transform } = text;
+    const { content, font, color, styles, shadow, transform } = text;
+
+    // Calculer l'ombre du texte
+    let textShadow = 'none';
+    if (shadow?.enabled) {
+      textShadow = `${shadow.offsetX}px ${shadow.offsetY}px ${shadow.blur}px ${shadow.color}`;
+    }
 
     return (
       <div
@@ -136,8 +156,7 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
           fontWeight: styles.bold ? 'bold' : 'normal',
           fontStyle: styles.italic ? 'italic' : 'normal',
           textDecoration: styles.underline ? 'underline' : 'none',
-          // Supprimer l'ombre par défaut
-          textShadow: 'none',
+          textShadow: textShadow,
           zIndex: 20,
           lineHeight: 1.2
         }}

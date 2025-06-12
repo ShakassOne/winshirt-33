@@ -37,11 +37,13 @@ export const useUnifiedCapture = () => {
   const captureElement = async (elementId: string, isHD: boolean = false): Promise<string | null> => {
     const element = document.getElementById(elementId);
     if (!element) {
-      console.warn(`Élément ${elementId} introuvable`);
+      console.warn(`🔍 [UnifiedCapture] Élément ${elementId} introuvable`);
       return null;
     }
 
     try {
+      console.log(`📸 [UnifiedCapture] Capture de ${elementId} (HD: ${isHD})`);
+      
       const canvas = await html2canvas(element, {
         useCORS: true,
         backgroundColor: isHD ? 'transparent' : null,
@@ -59,9 +61,15 @@ export const useUnifiedCapture = () => {
       );
       
       const filename = `${isHD ? 'hd' : 'mockup'}-${elementId}-${Date.now()}.png`;
-      return await uploadImage(blob, filename);
+      const uploadUrl = await uploadImage(blob, filename);
+      
+      if (uploadUrl) {
+        console.log(`✅ [UnifiedCapture] Upload réussi: ${filename} -> ${uploadUrl}`);
+      }
+      
+      return uploadUrl;
     } catch (error) {
-      console.error(`Erreur capture ${elementId}:`, error);
+      console.error(`❌ [UnifiedCapture] Erreur capture ${elementId}:`, error);
       return null;
     }
   };
@@ -78,8 +86,9 @@ export const useUnifiedCapture = () => {
       };
 
       // Capturer le front
-      const hasFrontContent = customization.frontDesign || customization.frontText;
+      const hasFrontContent = customization?.frontDesign || customization?.frontText;
       if (hasFrontContent) {
+        console.log('📸 [UnifiedCapture] Capture front...');
         const [mockupFront, hdFront] = await Promise.allSettled([
           captureElement('mockup-front', false),
           captureElement('production-front', true)
@@ -87,15 +96,18 @@ export const useUnifiedCapture = () => {
 
         if (mockupFront.status === 'fulfilled' && mockupFront.value) {
           results.front.mockupUrl = mockupFront.value;
+          console.log('✅ [UnifiedCapture] Mockup front capturé');
         }
         if (hdFront.status === 'fulfilled' && hdFront.value) {
           results.front.hdUrl = hdFront.value;
+          console.log('✅ [UnifiedCapture] HD front capturé');
         }
       }
 
       // Capturer le back
-      const hasBackContent = customization.backDesign || customization.backText;
+      const hasBackContent = customization?.backDesign || customization?.backText;
       if (hasBackContent) {
+        console.log('📸 [UnifiedCapture] Capture back...');
         const [mockupBack, hdBack] = await Promise.allSettled([
           captureElement('mockup-back', false),
           captureElement('production-back', true)
@@ -103,13 +115,15 @@ export const useUnifiedCapture = () => {
 
         if (mockupBack.status === 'fulfilled' && mockupBack.value) {
           results.back.mockupUrl = mockupBack.value;
+          console.log('✅ [UnifiedCapture] Mockup back capturé');
         }
         if (hdBack.status === 'fulfilled' && hdBack.value) {
           results.back.hdUrl = hdBack.value;
+          console.log('✅ [UnifiedCapture] HD back capturé');
         }
       }
 
-      console.log('✅ [UnifiedCapture] Capture terminée:', results);
+      console.log('🎉 [UnifiedCapture] Capture terminée:', results);
       return results;
     } finally {
       setIsCapturing(false);

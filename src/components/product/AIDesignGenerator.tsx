@@ -10,7 +10,7 @@ export const AIDesignGenerator: React.FC<AIDesignGeneratorProps> = ({
   onImageGenerated
 }) => {
   return (
-    <div className="h-full flex flex-col space-y-6">
+    <div className="flex flex-col h-full space-y-6">
       <div className="text-center">
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
           ✨ Génération IA
@@ -20,11 +20,11 @@ export const AIDesignGenerator: React.FC<AIDesignGeneratorProps> = ({
         </p>
       </div>
 
-      <div className="flex-grow">
+      <div className="flex-1">
         <CompactAIGenerator onImageGenerated={onImageGenerated} />
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-auto">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h4 className="font-medium text-blue-800 mb-2">🎨 Conseils IA</h4>
         <ul className="text-sm text-blue-700 space-y-1">
           <li>• Soyez précis dans vos descriptions</li>
