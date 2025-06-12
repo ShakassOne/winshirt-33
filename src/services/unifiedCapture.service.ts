@@ -20,6 +20,10 @@ interface UnifiedCustomizationData {
   mockupVersoUrl?: string;
   hdRectoUrl?: string;
   hdVersoUrl?: string;
+  
+  // Support pour les nouvelles URLs HD
+  visual_front_url?: string;
+  visual_back_url?: string;
 }
 
 export const enrichCustomizationWithCaptures = (
@@ -35,6 +39,8 @@ export const enrichCustomizationWithCaptures = (
     mockupVersoUrl: captures.back.mockupUrl,
     hdRectoUrl: captures.front.hdUrl,
     hdVersoUrl: captures.back.hdUrl,
+    visual_front_url: captures.front.hdUrl,
+    visual_back_url: captures.back.hdUrl,
   };
 
   console.log('🔄 [UnifiedCapture Service] Données enrichies:', enriched);
@@ -62,7 +68,7 @@ export const extractCaptureUrls = (customization: any) => {
   return {
     mockupRectoUrl: customization?.mockupRectoUrl,
     mockupVersoUrl: customization?.mockupVersoUrl,
-    hdRectoUrl: customization?.hdRectoUrl,
-    hdVersoUrl: customization?.hdVersoUrl,
+    hdRectoUrl: customization?.hdRectoUrl || customization?.visual_front_url,
+    hdVersoUrl: customization?.hdVersoUrl || customization?.visual_back_url,
   };
 };

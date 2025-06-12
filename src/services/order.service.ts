@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
 import { CartItem, Order, OrderStatus, PaymentStatus } from "@/types/supabase.types";
@@ -66,15 +65,14 @@ export const createOrder = async (
       const mockupRectoUrl = customization?.mockupRectoUrl || null;
       const mockupVersoUrl = customization?.mockupVersoUrl || null;
       
-      // Gérer les URLs HD depuis la nouvelle structure ou l'ancienne
+      // Gérer les URLs HD depuis la nouvelle structure ou l'ancienne - utilisation d'une approche plus sûre
       let hdRectoUrl = null;
       let hdVersoUrl = null;
       
-      if (customization?.hdRectoUrl) {
-        hdRectoUrl = customization.hdRectoUrl;
-      }
-      if (customization?.hdVersoUrl) {
-        hdVersoUrl = customization.hdVersoUrl;
+      // Vérifier si les propriétés HD existent dans la customization
+      if (customization && typeof customization === 'object') {
+        hdRectoUrl = (customization as any).hdRectoUrl || null;
+        hdVersoUrl = (customization as any).hdVersoUrl || null;
       }
       
       const selectedSize = item.size || customization?.selectedSize || null;

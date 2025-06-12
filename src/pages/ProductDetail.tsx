@@ -920,8 +920,8 @@ const ProductDetail = () => {
       if (Object.keys(customization).length > 0) {
         console.log('🎨 [ProductDetail] Personnalisation détectée, génération des fichiers HD...');
 
-        // Capturer les visuels HD pour la production
-        const hdData = await captureForProduction();
+        // Capturer les visuels HD pour la production avec les bons paramètres
+        const hdData = await captureForProduction(customization);
 
         // Enrichir la personnalisation avec les données HD
         const enrichedCustomization = await enrichCustomizationWithHD(customization, hdData);
