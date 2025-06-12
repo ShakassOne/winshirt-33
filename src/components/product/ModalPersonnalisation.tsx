@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
@@ -202,12 +203,64 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
   const hasTwoSides = mockup?.svg_back_url ? true : false;
 
+  // Créer la structure de données unifiée pour le nouveau composant
+  const unifiedCustomization = useMemo(() => {
+    const frontDesign = selectedDesignFront ? {
+      designId: selectedDesignFront.id,
+      designUrl: selectedDesignFront.image_url,
+      designName: selectedDesignFront.name,
+      printSize: selectedSizeFront || 'A4',
+      transform: designTransformFront
+    } : null;
+
+    const backDesign = selectedDesignBack ? {
+      designId: selectedDesignBack.id,
+      designUrl: selectedDesignBack.image_url,
+      designName: selectedDesignBack.name,
+      printSize: selectedSizeBack || 'A4',
+      transform: designTransformBack
+    } : null;
+
+    const frontText = textContentFront ? {
+      content: textContentFront,
+      font: textFontFront,
+      color: textColorFront,
+      styles: textStylesFront,
+      transform: textTransformFront
+    } : null;
+
+    const backText = textContentBack ? {
+      content: textContentBack,
+      font: textFontBack,
+      color: textColorBack,
+      styles: textStylesBack,
+      transform: textTransformBack
+    } : null;
+
+    return {
+      frontDesign,
+      backDesign,
+      frontText,
+      backText
+    };
+  }, [
+    selectedDesignFront, selectedDesignBack,
+    selectedSizeFront, selectedSizeBack,
+    designTransformFront, designTransformBack,
+    textContentFront, textContentBack,
+    textFontFront, textFontBack,
+    textColorFront, textColorBack,
+    textStylesFront, textStylesBack,
+    textTransformFront, textTransformBack
+  ]);
+
   const handleDesignSelection = (design: Design) => {
     onSelectDesign(design);
   };
 
   const handleRemoveDesign = () => {
-    // This would need to be passed as a prop or implemented
+    // Cette fonction devrait être passée en props ou implémentée
+    console.log('Remove design not implemented');
   };
 
   const handleRemoveText = () => {
@@ -356,27 +409,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           mockup={mockup}
           selectedMockupColor={selectedMockupColor}
           hasTwoSides={hasTwoSides}
-          selectedDesignFront={selectedDesignFront}
-          selectedDesignBack={selectedDesignBack}
-          designTransformFront={designTransformFront}
-          designTransformBack={designTransformBack}
-          svgColorFront={svgColorFront}
-          svgColorBack={svgColorBack}
-          svgContentFront={svgContentFront}
-          svgContentBack={svgContentBack}
-          textContentFront={textContentFront}
-          textContentBack={textContentBack}
-          textFontFront={textFontFront}
-          textFontBack={textFontBack}
-          textColorFront={textColorFront}
-          textColorBack={textColorBack}
-          textStylesFront={textStylesFront}
-          textStylesBack={textStylesBack}
-          textTransformFront={textTransformFront}
-          textTransformBack={textTransformBack}
-          onDesignMouseDown={onDesignMouseDown}
-          onTextMouseDown={onTextMouseDown}
-          onTouchMove={onTouchMove}
+          customization={unifiedCustomization}
           onDesignTransformChange={onDesignTransformChange}
           onTextTransformChange={onTextTransformChange}
           onRemoveDesign={handleRemoveDesign}
