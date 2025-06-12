@@ -34,15 +34,21 @@ export const useUnifiedCapture = () => {
     }
   };
 
-  const waitForElement = async (elementId: string, maxAttempts: number = 10): Promise<HTMLElement | null> => {
+  const waitForElement = async (elementId: string, maxAttempts: number = 15): Promise<HTMLElement | null> => {
     for (let i = 0; i < maxAttempts; i++) {
       const element = document.getElementById(elementId);
       if (element) {
-        console.log(`✅ [UnifiedCapture] Élément ${elementId} trouvé à la tentative ${i + 1}`);
-        return element;
+        // Vérifier que l'élément a du contenu et est visible
+        const hasContent = element.children.length > 0 || element.textContent?.trim();
+        const isVisible = element.offsetWidth > 0 && element.offsetHeight > 0;
+        
+        if (hasContent && isVisible) {
+          console.log(`✅ [UnifiedCapture] Élément ${elementId} trouvé et prêt à la tentative ${i + 1}`);
+          return element;
+        }
       }
       console.log(`⏳ [UnifiedCapture] Tentative ${i + 1}/${maxAttempts} pour ${elementId}`);
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
     console.warn(`❌ [UnifiedCapture] Élément ${elementId} non trouvé après ${maxAttempts} tentatives`);
     return null;
@@ -56,18 +62,11 @@ export const useUnifiedCapture = () => {
       return null;
     }
 
-    // Vérifier que l'élément a du contenu
-    const hasContent = element.children.length > 0 || element.textContent?.trim();
-    if (!hasContent) {
-      console.log(`⚠️ [UnifiedCapture] Élément ${elementId} vide, pas de capture`);
-      return null;
-    }
-
     try {
       console.log(`📸 [UnifiedCapture] Capture de ${elementId} (HD: ${isHD})`);
       
       // Attendre un peu pour s'assurer que le rendu est complet
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       const canvas = await html2canvas(element, {
         useCORS: true,
@@ -79,8 +78,7 @@ export const useUnifiedCapture = () => {
         foreignObjectRendering: false,
         logging: false,
         imageTimeout: 10000,
-        removeContainer: false,
-        async: true,
+        removeContainer: false
       });
       
       const blob = await new Promise<Blob>((resolve) => 

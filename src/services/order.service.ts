@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
 import { CartItem, Order, OrderStatus, PaymentStatus } from "@/types/supabase.types";
@@ -56,7 +57,7 @@ export const createOrder = async (
     
     // Create order items avec gestion améliorée des captures
     const orderItems = items.map(item => {
-      console.log('🔍 [Order Service] Processing item for order:', item.id);
+      console.log('🔍 [Order Service] Processing item for order:', item.productId);
       console.log('📋 [Order Service] Item customization:', item.customization);
       
       const customization = item.customization;
