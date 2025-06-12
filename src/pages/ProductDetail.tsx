@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -24,6 +24,7 @@ import { ModalPersonnalisation } from '@/components/product/ModalPersonnalisatio
 import { HDVisualCapture } from '@/components/product/HDVisualCapture';
 import { useHDCaptureOnAddToCart } from '@/hooks/useHDCaptureOnAddToCart';
 import { enrichCustomizationWithCaptures } from '@/services/unifiedCapture.service';
+import { CaptureElements } from '@/components/product/CaptureElements';
 
 // Définition des polices Google Fonts
 const googleFonts = [{
@@ -452,6 +453,73 @@ const ProductDetail = () => {
   const [svgColorBack, setSvgColorBack] = useState('#000000');
   const [svgContentFront, setSvgContentFront] = useState('');
   const [svgContentBack, setSvgContentBack] = useState('');
+
+  // Unified customization data for capture elements
+  const unifiedCustomization = useMemo(() => {
+    const frontDesign = selectedDesignFront
+      ? {
+          designId: selectedDesignFront.id,
+          designUrl: selectedDesignFront.image_url,
+          designName: selectedDesignFront.name,
+          printSize: selectedSizeFront || 'A4',
+          transform: designTransformFront,
+        }
+      : null;
+
+    const backDesign = selectedDesignBack
+      ? {
+          designId: selectedDesignBack.id,
+          designUrl: selectedDesignBack.image_url,
+          designName: selectedDesignBack.name,
+          printSize: selectedSizeBack || 'A4',
+          transform: designTransformBack,
+        }
+      : null;
+
+    const frontText = textContentFront
+      ? {
+          content: textContentFront,
+          font: textFontFront,
+          color: textColorFront,
+          styles: textStylesFront,
+          transform: textTransformFront,
+        }
+      : null;
+
+    const backText = textContentBack
+      ? {
+          content: textContentBack,
+          font: textFontBack,
+          color: textColorBack,
+          styles: textStylesBack,
+          transform: textTransformBack,
+        }
+      : null;
+
+    return {
+      frontDesign,
+      backDesign,
+      frontText,
+      backText,
+    };
+  }, [
+    selectedDesignFront,
+    selectedDesignBack,
+    selectedSizeFront,
+    selectedSizeBack,
+    designTransformFront,
+    designTransformBack,
+    textContentFront,
+    textContentBack,
+    textFontFront,
+    textFontBack,
+    textColorFront,
+    textColorBack,
+    textStylesFront,
+    textStylesBack,
+    textTransformFront,
+    textTransformBack,
+  ]);
 
   // Fonctions utilitaires pour la synchronisation
   const getSizeLabel = (scale: number): string => {
@@ -1321,6 +1389,13 @@ const ProductDetail = () => {
 
       // Interaction handlers
       onDesignMouseDown={handleMouseDown} onTextMouseDown={e => handleMouseDown(e, true)} onTouchMove={handleTouchMove} />
+
+        {/* Hidden capture elements for unified capture */}
+        <CaptureElements
+          customization={unifiedCustomization}
+          selectedMockupColor={selectedMockupColor}
+          mockup={mockup}
+        />
       </main>
       
       <Footer />

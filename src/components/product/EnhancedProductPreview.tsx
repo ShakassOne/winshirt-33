@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Design } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
 import { UnifiedCustomizationRenderer } from './UnifiedCustomizationRenderer';
-import { CaptureElements } from './CaptureElements';
 
 interface EnhancedProductPreviewProps {
   productName: string;
@@ -170,13 +169,6 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
           </div>
         )}
       </div>
-
-      {/* Éléments de capture cachés */}
-      <CaptureElements
-        customization={customization}
-        selectedMockupColor={selectedMockupColor}
-        mockup={mockup}
-      />
     </>
   );
 };
