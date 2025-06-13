@@ -34,39 +34,67 @@ export const useUnifiedCapture = () => {
     }
   };
 
-  const waitForElement = async (elementId: string, maxAttempts: number = 15): Promise<HTMLElement | null> => {
+  const waitForElement = async (
+    elementId: string,
+    maxAttempts: number = 15
+  ): Promise<HTMLElement | null> => {
     for (let i = 0; i < maxAttempts; i++) {
       const element = document.getElementById(elementId);
       if (element) {
-        // Vérifier que l'élément a du contenu et est visible
-        const hasContent = element.children.length > 0 || element.textContent?.trim();
+        const hasContent =
+          element.children.length > 0 || element.textContent?.trim();
         const isVisible = element.offsetWidth > 0 && element.offsetHeight > 0;
-        
+
         if (hasContent && isVisible) {
-          console.log(`✅ [UnifiedCapture] Élément ${elementId} trouvé et prêt à la tentative ${i + 1}`);
+          console.log(
+            `✅ [UnifiedCapture] Élément ${elementId} trouvé et prêt à la tentative ${i + 1}`
+          );
           return element;
         }
+
+        console.log(
+          `🚧 [UnifiedCapture] ${elementId} trouvé mais pas prêt (tentative ${i +
+            1})`
+        );
+      } else {
+        console.log(
+          `⏳ [UnifiedCapture] Tentative ${i + 1}/${maxAttempts} pour ${elementId} - non trouvé`
+        );
       }
-      console.log(`⏳ [UnifiedCapture] Tentative ${i + 1}/${maxAttempts} pour ${elementId}`);
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300));
     }
-    console.warn(`❌ [UnifiedCapture] Élément ${elementId} non trouvé après ${maxAttempts} tentatives`);
+    console.warn(
+      `❌ [UnifiedCapture] Élément ${elementId} non trouvé après ${maxAttempts} tentatives`
+    );
     return null;
   };
 
   const captureElement = async (elementId: string, isHD: boolean = false): Promise<string | null> => {
     console.log(`🔍 [UnifiedCapture] Recherche de l'élément ${elementId}...`);
-    
+
     const element = await waitForElement(elementId);
     if (!element) {
+      console.error(`❌ [UnifiedCapture] Élément manquant: ${elementId}`);
       return null;
     }
 
     try {
       console.log(`📸 [UnifiedCapture] Capture de ${elementId} (HD: ${isHD})`);
-      
+
       // Attendre un peu pour s'assurer que le rendu est complet
       await new Promise(resolve => setTimeout(resolve, 200));
+
+      if (!document.contains(element)) {
+        console.error(`❌ [UnifiedCapture] Élément ${elementId} a disparu avant la capture`);
+        return null;
+      }
+
+      const childCount = element.children.length;
+      const width = (element as HTMLElement).offsetWidth;
+      const height = (element as HTMLElement).offsetHeight;
+      console.log(
+        `[UnifiedCapture DEBUG] DOM final pour ${elementId} - enfants: ${childCount}, taille: ${width}x${height}`
+      );
 
       // DEBUG CAPTURE
       console.log("[UnifiedCapture DEBUG] ID demandé :", elementId);
