@@ -89,14 +89,14 @@ export const useUnifiedCapture = () => {
       }
       console.log("[UnifiedCapture DEBUG] html2canvas va être appelé avec isHD =", isHD);
 
-      const canvas = await html2canvas(element, {
-        useCORS: true,
-        backgroundColor: isHD ? 'transparent' : '#ffffff',
-        // Générer une image haute résolution (≥3500px)
-        scale: isHD ? 5 : 1,
-        width: isHD ? 800 : 400,
-        height: isHD ? 1000 : 500,
-        allowTaint: false,
+        const canvas = await html2canvas(element, {
+          useCORS: true,
+          backgroundColor: isHD ? 'transparent' : '#ffffff',
+          // Générer une image haute résolution (≥3500px)
+          width: isHD ? 3500 : 400,
+          height: isHD ? 3500 : 500,
+          scale: 1,
+          allowTaint: false,
         foreignObjectRendering: false,
         logging: false,
         imageTimeout: 10000,
