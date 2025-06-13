@@ -123,16 +123,14 @@ export const generateImage = async (prompt: string): Promise<{
   try {
     const sessionToken = getSessionToken();
     
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({ prompt, sessionToken })
-      });
+    const response = await fetch('https://gyprtpqgeukcoxbfxtfg.supabase.co/functions/v1/generate-image', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5cHJ0cHFnZXVrY294YmZ4dGZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NzY1MDQsImV4cCI6MjA2MjM1MjUwNH0.sm-yWpvwGPvEFHdKomFsE-YKF0BHzry2W4Gma2hpY_4`
+      },
+      body: JSON.stringify({ prompt, sessionToken })
+    });
 
     const data = await response.json();
     
