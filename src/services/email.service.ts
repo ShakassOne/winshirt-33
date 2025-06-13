@@ -192,29 +192,64 @@ export class EmailService {
     }
   }
 
-  // Tester l'envoi d'un email
+  // Tester l'envoi d'un email avec debug amélioré
   static async testEmail(
     recipientEmail: string,
     templateType: string
-  ): Promise<{ success: boolean; message?: string }> {
+  ): Promise<{ success: boolean; message?: string; debug?: any }> {
     try {
+      console.log(`🔍 [EmailService] Test email ${templateType} vers ${recipientEmail}`);
+      
       const { data, error } = await supabase.functions.invoke('test-email', {
         body: { recipientEmail, templateType }
       });
 
+      console.log(`🔍 [EmailService] Réponse fonction:`, { data, error });
+
       if (error) {
-        console.error('Erreur test email:', error);
-        return { success: false, message: error.message };
+        console.error('❌ [EmailService] Erreur fonction:', error);
+        return { 
+          success: false, 
+          message: error.message || 'Erreur lors de l\'appel de la fonction',
+          debug: { functionError: error }
+        };
       }
 
-      if (data && typeof data === 'object' && 'error' in data) {
-        return { success: false, message: (data as any).error };
+      if (data && typeof data === 'object') {
+        if ('error' in data && data.error) {
+          console.error('❌ [EmailService] Erreur dans la réponse:', data);
+          return { 
+            success: false, 
+            message: data.error,
+            debug: data.debug || {}
+          };
+        }
+
+        if ('success' in data && data.success) {
+          console.log('✅ [EmailService] Email envoyé avec succès');
+          return { 
+            success: true, 
+            message: data.message,
+            debug: data.debug || {}
+          };
+        }
       }
 
-      return { success: true };
+      // Si on arrive ici, la réponse est inattendue
+      console.warn('⚠️ [EmailService] Réponse inattendue:', data);
+      return { 
+        success: false, 
+        message: 'Réponse inattendue de la fonction',
+        debug: { unexpectedResponse: data }
+      };
+
     } catch (error: any) {
-      console.error('Erreur lors du test:', error);
-      return { success: false, message: error.message };
+      console.error('❌ [EmailService] Exception:', error);
+      return { 
+        success: false, 
+        message: error.message || 'Erreur inconnue',
+        debug: { exception: error.name }
+      };
     }
   }
 }

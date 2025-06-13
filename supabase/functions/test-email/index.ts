@@ -20,7 +20,7 @@ serve(async (req) => {
       throw new Error("Email destinataire et type de template requis");
     }
 
-    console.log(`Test email ${templateType} vers ${recipientEmail}`);
+    console.log(`🔍 [DEBUG] Test email ${templateType} vers ${recipientEmail}`);
 
     // Initialize Supabase admin client
     const supabaseAdmin = createClient(
@@ -33,6 +33,8 @@ serve(async (req) => {
       }
     );
 
+    console.log(`🔍 [DEBUG] Supabase client initialisé`);
+
     // Récupérer le template
     const { data: template, error: templateError } = await supabaseAdmin
       .from("email_templates")
@@ -42,13 +44,20 @@ serve(async (req) => {
       .single();
 
     if (templateError) {
-      console.error("Erreur template:", templateError);
+      console.error("❌ [DEBUG] Erreur template:", templateError);
       throw new Error(`Template non trouvé: ${templateError.message}`);
     }
 
     if (!template) {
+      console.error("❌ [DEBUG] Template null pour type:", templateType);
       throw new Error(`Template "${templateType}" non trouvé ou inactif`);
     }
+
+    console.log(`✅ [DEBUG] Template trouvé:`, {
+      id: template.id,
+      name: template.name,
+      type: template.type
+    });
 
     // Récupérer les paramètres SMTP
     const { data: settings, error: settingsError } = await supabaseAdmin
@@ -58,18 +67,22 @@ serve(async (req) => {
       .single();
 
     if (settingsError) {
-      console.error("Erreur settings:", settingsError);
+      console.error("❌ [DEBUG] Erreur settings:", settingsError);
       throw new Error(`Paramètres SMTP non configurés: ${settingsError.message}`);
     }
 
     if (!settings) {
+      console.error("❌ [DEBUG] Aucun paramètre SMTP actif trouvé");
       throw new Error("Aucun paramètre SMTP actif trouvé");
     }
 
-    console.log("Paramètres SMTP trouvés:", {
+    console.log(`✅ [DEBUG] Paramètres SMTP trouvés:`, {
       host: settings.smtp_host,
       port: settings.smtp_port,
-      user: settings.smtp_user
+      secure: settings.smtp_secure,
+      user: settings.smtp_user,
+      from_email: settings.from_email,
+      from_name: settings.from_name
     });
 
     // Variables de test selon le type de template
@@ -107,6 +120,8 @@ serve(async (req) => {
         variables = { customer_name: 'Test User' };
     }
 
+    console.log(`🔍 [DEBUG] Variables préparées pour template ${templateType}`);
+
     // Remplacer les variables dans le template
     let htmlContent = template.html_content;
     let subject = `[TEST] ${template.subject}`;
@@ -120,10 +135,10 @@ serve(async (req) => {
     // Gérer les conditions dans le template
     htmlContent = htmlContent.replace(/{{#if tracking_number}}(.*?){{\/if}}/gs, '$1');
 
-    console.log("Création du transporteur email...");
+    console.log(`✅ [DEBUG] Template traité, sujet: ${subject}`);
 
-    // Configurer nodemailer
-    const transporter = nodemailer.createTransport({
+    // Configuration du transporteur avec debug avancé
+    const transportConfig = {
       host: settings.smtp_host,
       port: settings.smtp_port,
       secure: settings.smtp_secure,
@@ -132,21 +147,72 @@ serve(async (req) => {
         pass: settings.smtp_password,
       },
       debug: true,
-      logger: true
+      logger: true,
+      connectionTimeout: 10000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
+    };
+
+    console.log(`🔍 [DEBUG] Configuration transporteur:`, {
+      ...transportConfig,
+      auth: { user: transportConfig.auth.user, pass: '[HIDDEN]' }
     });
 
-    console.log("Vérification de la connexion SMTP...");
+    const transporter = nodemailer.createTransporter(transportConfig);
 
-    // Vérifier la connexion SMTP
+    console.log(`🔍 [DEBUG] Vérification de la connexion SMTP...`);
+
+    // Test de connexion avec timeout et gestion d'erreur détaillée
     try {
-      await transporter.verify();
-      console.log("Connexion SMTP vérifiée avec succès");
-    } catch (verifyError) {
-      console.error("Erreur de vérification SMTP:", verifyError);
-      throw new Error(`Erreur de connexion SMTP: ${verifyError.message}`);
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Timeout de connexion SMTP (10s)'));
+        }, 10000);
+
+        transporter.verify((error, success) => {
+          clearTimeout(timeout);
+          if (error) {
+            console.error("❌ [DEBUG] Erreur de vérification SMTP:", {
+              code: error.code,
+              command: error.command,
+              response: error.response,
+              responseCode: error.responseCode,
+              message: error.message
+            });
+            reject(error);
+          } else {
+            console.log("✅ [DEBUG] Connexion SMTP vérifiée avec succès");
+            resolve(success);
+          }
+        });
+      });
+    } catch (verifyError: any) {
+      console.error("❌ [DEBUG] Échec vérification SMTP:", {
+        name: verifyError.name,
+        message: verifyError.message,
+        code: verifyError.code,
+        errno: verifyError.errno,
+        syscall: verifyError.syscall,
+        address: verifyError.address,
+        port: verifyError.port
+      });
+      
+      // Suggestions basées sur le type d'erreur
+      let suggestion = "";
+      if (verifyError.code === 'ECONNREFUSED') {
+        suggestion = "Connexion refusée - Vérifiez l'adresse du serveur et le port";
+      } else if (verifyError.code === 'ETIMEDOUT' || verifyError.message?.includes('timeout')) {
+        suggestion = "Timeout - Le serveur SMTP ne répond pas";
+      } else if (verifyError.code === 'ENOTFOUND') {
+        suggestion = "Serveur non trouvé - Vérifiez l'adresse SMTP";
+      } else if (verifyError.responseCode === 535) {
+        suggestion = "Authentification échouée - Vérifiez le nom d'utilisateur et mot de passe";
+      }
+
+      throw new Error(`Erreur de connexion SMTP: ${verifyError.message}${suggestion ? ` - ${suggestion}` : ''}`);
     }
 
-    // Envoyer l'email de test
+    // Préparation et envoi de l'email
     const mailOptions = {
       from: `${settings.from_name} <${settings.from_email}>`,
       to: recipientEmail,
@@ -154,14 +220,18 @@ serve(async (req) => {
       html: htmlContent,
     };
 
-    console.log("Envoi de l'email...", {
+    console.log(`🔍 [DEBUG] Envoi de l'email...`, {
       from: mailOptions.from,
       to: mailOptions.to,
-      subject: mailOptions.subject
+      subject: mailOptions.subject,
+      htmlLength: htmlContent.length
     });
 
     const sendResult = await transporter.sendMail(mailOptions);
-    console.log("Email envoyé:", sendResult);
+    console.log("✅ [DEBUG] Email envoyé avec succès:", {
+      messageId: sendResult.messageId,
+      response: sendResult.response
+    });
 
     // Logger l'envoi
     await supabaseAdmin
@@ -175,27 +245,41 @@ serve(async (req) => {
         sent_at: new Date().toISOString(),
       });
 
-    console.log(`Email de test envoyé avec succès à ${recipientEmail}`);
+    console.log(`✅ [DEBUG] Log d'envoi créé`);
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Email de test envoyé avec succès",
-        messageId: sendResult.messageId
+        messageId: sendResult.messageId,
+        debug: {
+          smtpHost: settings.smtp_host,
+          smtpPort: settings.smtp_port,
+          templateType: templateType
+        }
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       }
     );
-  } catch (error) {
-    console.error("Erreur envoi email de test:", error);
+  } catch (error: any) {
+    console.error("❌ [DEBUG] Erreur complète:", {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
 
     return new Response(
       JSON.stringify({
         success: false,
         error: error.message,
-        details: error.stack
+        debug: {
+          errorType: error.name,
+          errorCode: error.code,
+          timestamp: new Date().toISOString()
+        }
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
