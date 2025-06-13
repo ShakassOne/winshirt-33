@@ -1,4 +1,19 @@
 
+/**
+ * Example of the URLs saved for a customized order.
+ *
+ * ```json
+ * {
+ *   "mockupRectoUrl": "https://media.winshirt.fr/mockups/recto_123.png",
+ *   "mockupVersoUrl": "https://media.winshirt.fr/mockups/verso_123.png",
+ *   "hdRectoUrl": "https://media.winshirt.fr/hd/recto_123.png",
+ *   "hdVersoUrl": "https://media.winshirt.fr/hd/verso_123.png"
+ * }
+ * ```
+ *
+ * Each order stores these URLs for both sides when customization is present.
+ */
+
 interface UnifiedCustomizationData {
   // Structure ancienne (rétrocompatibilité)
   customText?: string;
