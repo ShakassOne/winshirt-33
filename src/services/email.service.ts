@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 export interface EmailTemplate {
   id: string;
@@ -7,7 +8,7 @@ export interface EmailTemplate {
   name: string;
   subject: string;
   html_content: string;
-  variables: string[];
+  variables: Json;
   is_active: boolean;
 }
 
@@ -25,15 +26,15 @@ export interface EmailSettings {
 
 export interface EmailLog {
   id: string;
-  template_id: string;
+  template_id: string | null;
   recipient_email: string;
-  recipient_name?: string;
+  recipient_name?: string | null;
   subject: string;
   status: 'pending' | 'sent' | 'failed';
-  error_message?: string;
-  sent_at?: string;
-  order_id?: string;
-  lottery_id?: string;
+  error_message?: string | null;
+  sent_at?: string | null;
+  order_id?: string | null;
+  lottery_id?: string | null;
   created_at: string;
 }
 
@@ -48,7 +49,7 @@ export class EmailService {
       .order('type');
     
     if (error) throw error;
-    return data || [];
+    return (data || []) as EmailTemplate[];
   }
 
   // Récupérer un template par type
@@ -64,19 +65,22 @@ export class EmailService {
       console.error('Erreur récupération template:', error);
       return null;
     }
-    return data;
+    return data as EmailTemplate;
   }
 
   // Créer ou mettre à jour un template
-  static async upsertTemplate(template: Partial<EmailTemplate>): Promise<EmailTemplate> {
+  static async upsertTemplate(template: Omit<EmailTemplate, 'id'> & { id?: string }): Promise<EmailTemplate> {
     const { data, error } = await supabase
       .from('email_templates')
-      .upsert(template)
+      .upsert({
+        ...template,
+        variables: template.variables || []
+      })
       .select()
       .single();
     
     if (error) throw error;
-    return data;
+    return data as EmailTemplate;
   }
 
   // Récupérer les paramètres SMTP
@@ -91,19 +95,22 @@ export class EmailService {
       console.error('Erreur récupération settings:', error);
       return null;
     }
-    return data;
+    return data as EmailSettings | null;
   }
 
   // Créer ou mettre à jour les paramètres
-  static async upsertEmailSettings(settings: Partial<EmailSettings>): Promise<EmailSettings> {
+  static async upsertEmailSettings(settings: Omit<EmailSettings, 'id'> & { id?: string }): Promise<EmailSettings> {
     const { data, error } = await supabase
       .from('email_settings')
-      .upsert(settings)
+      .upsert({
+        ...settings,
+        is_active: true
+      })
       .select()
       .single();
     
     if (error) throw error;
-    return data;
+    return data as EmailSettings;
   }
 
   // Récupérer les logs d'envoi
@@ -115,7 +122,7 @@ export class EmailService {
       .limit(limit);
     
     if (error) throw error;
-    return data || [];
+    return (data || []) as EmailLog[];
   }
 
   // Remplacer les variables dans le template

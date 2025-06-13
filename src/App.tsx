@@ -48,7 +48,7 @@ import AnalyticsAdmin from '@/pages/admin/AnalyticsAdmin';
 import EmailAdmin from '@/pages/admin/EmailAdmin';
 
 // Components
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const queryClient = new QueryClient({
   defaultOptions: {
