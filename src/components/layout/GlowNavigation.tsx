@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Heart, User, ShoppingCart, Moon, Sun, LogIn, LogOut, Settings, Shirt, Clover } from 'lucide-react';
+import { Home, Heart, User, ShoppingCart, Moon, Sun, Settings, Shirt, Clover } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UnifiedThemeToggle } from '@/components/theme/theme-toggle-unified';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -49,8 +50,37 @@ export const GlowNavigation: React.FC = () => {
     setTheme(theme === "light" ? "dark" : "light");
   };
 
-  // Navigation items avec toutes les fonctionnalités intégrées
-  const navItems: NavItem[] = [
+  // Navigation items optimisés pour mobile - suppression des doublons connexion/déconnexion
+  const navItems: NavItem[] = isMobile ? [
+    { id: 'home', icon: Home, path: '/', label: 'Accueil' },
+    { 
+      id: 'products', 
+      icon: Shirt, 
+      path: '/products', 
+      label: 'Shop'
+    },
+    { id: 'lotteries', icon: Clover, path: '/lotteries', label: 'Loteries' },
+    { 
+      id: 'cart', 
+      icon: ShoppingCart, 
+      path: '/cart', 
+      label: 'Panier',
+      component: itemCount > 0 ? (
+        <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-winshirt-purple text-[10px]">
+          {itemCount > 99 ? '99+' : itemCount}
+        </span>
+      ) : null
+    },
+    { id: 'account', icon: User, path: '/account', label: 'Compte' },
+    {
+      id: 'admin',
+      icon: Settings,
+      label: 'Admin',
+      path: '/admin',
+      isConditional: true,
+      showWhen: () => isAuthenticated && isAdmin
+    },
+  ] : [
     { id: 'home', icon: Home, path: '/', label: 'Accueil' },
     { 
       id: 'products', 
@@ -78,12 +108,6 @@ export const GlowNavigation: React.FC = () => {
       path: '/admin',
       isConditional: true,
       showWhen: () => isAuthenticated && isAdmin
-    },
-    {
-      id: 'auth',
-      icon: isAuthenticated ? LogOut : LogIn,
-      label: isAuthenticated ? 'Déconnexion' : 'Connexion',
-      onClick: isAuthenticated ? handleSignOut : () => navigate('/auth'),
     },
     { 
       id: 'theme', 
@@ -163,10 +187,10 @@ export const GlowNavigation: React.FC = () => {
               <span className="text-xl font-bold text-gradient">WinShirt</span>
             </Link>
 
-            {/* Navigation Glow Mobile */}
+            {/* Navigation Glow Mobile - Optimisée sur une ligne */}
             <ul 
               ref={navRef}
-              className="glow-nav flex flex-wrap justify-center max-w-full"
+              className="glow-nav flex justify-center items-center max-w-full overflow-x-auto"
               onMouseLeave={handleMouseLeave}
             >
               {visibleItems.map((item, index) => {
@@ -176,15 +200,15 @@ export const GlowNavigation: React.FC = () => {
                 return (
                   <li
                     key={item.id}
-                    className={`glow-nav-item ${isActive ? 'active' : ''} relative`}
+                    className={`glow-nav-item ${isActive ? 'active' : ''} relative flex-shrink-0`}
                     onMouseMove={handleMouseMove}
                   >
                     <button 
                       onClick={() => handleItemClick(item)}
-                      className="glow-nav-link mobile-glow-nav-link"
+                      className="glow-nav-link mobile-glow-nav-link px-2 py-2"
                     >
-                      <Icon className="glow-nav-icon mobile-glow-nav-icon" />
-                      <span className="mobile-glow-nav-label">{item.label}</span>
+                      <Icon className="glow-nav-icon mobile-glow-nav-icon w-4 h-4" />
+                      <span className="mobile-glow-nav-label text-xs whitespace-nowrap">{item.label}</span>
                       {item.component}
                     </button>
                   </li>
