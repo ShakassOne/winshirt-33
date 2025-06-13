@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import GlassCard from './GlassCard';
@@ -97,7 +96,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   }, []);
   
   return (
-    <Link to={`/products/${id}`} className="block">
+    <Link to={`/product/${id}`} className="block">
       <div 
         ref={cardRef} 
         className="tilt-card relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-lg border border-white/10 shadow-lg"
@@ -127,13 +126,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
           
           <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-between items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
             <Button size="sm" variant="secondary" className="flex items-center gap-1" asChild>
-              <Link to={`/products/${id}`} onClick={(e) => e.stopPropagation()}>
+              <Link to={`/product/${id}`} onClick={(e) => e.stopPropagation()}>
                 <ShoppingCart className="h-4 w-4" />
                 <span className="hidden sm:inline-block">Ajouter</span>
               </Link>
             </Button>
             <Button size="sm" variant="outline" className="flex items-center gap-1" asChild>
-              <Link to={`/products/${id}`} onClick={(e) => e.stopPropagation()}>
+              <Link to={`/product/${id}`} onClick={(e) => e.stopPropagation()}>
                 <Eye className="h-4 w-4" />
                 <span className="hidden sm:inline-block">Détails</span>
               </Link>

@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, Clock, Users } from 'lucide-react';
@@ -124,7 +123,7 @@ const LotteryCard: React.FC<LotteryCardProps> = ({
   }, []);
 
   return (
-    <Link to={`/lotteries/${id}`}>
+    <Link to={`/lottery/${id}`}>
       <div 
         ref={cardRef} 
         className={cn(
