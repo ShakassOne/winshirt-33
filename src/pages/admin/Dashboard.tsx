@@ -103,7 +103,7 @@ const Dashboard = () => {
       title: "Lexique",
       description: "Gestion du lexique et glossaire",
       icon: BookOpen,
-      path: "/admin/lexique",
+      path: "/Lexique",
       color: "bg-gradient-to-br from-teal-500 to-teal-600"
     },
     {
