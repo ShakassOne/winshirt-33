@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useIsMobile } from '@/hooks/use-mobile';
 import CartIcon from '@/components/cart/CartIcon';
 import SignOutButton from '@/components/auth/SignOutButton';
-import { useAuth } from '@/context/AuthContext';
+import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 
 interface NavItem {
@@ -28,7 +28,7 @@ const navItems: NavItem[] = [
 export const GlassNavigation: React.FC = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useOptimizedAuth();
   const { isAdmin } = useAdminCheck();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { UnifiedThemeToggle } from '@/components/theme/theme-toggle-unified';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useAuth } from '@/context/AuthContext';
+import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { useCart } from '@/context/CartContext';
 import { useWinShirtTheme } from '@/components/theme/theme-provider-wrapper';
@@ -27,7 +27,7 @@ export const GlowNavigation: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { isAuthenticated, signOut } = useAuth();
+  const { isAuthenticated, signOut } = useOptimizedAuth();
   const { isAdmin } = useAdminCheck();
   const { itemCount } = useCart();
   const { theme, setTheme } = useWinShirtTheme();

@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
-import { OptimizedAuthProvider } from '@/context/OptimizedAuthContext';
 import { CartProvider } from '@/context/CartContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -64,11 +63,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark" storageKey="winshirt-theme">
-        <OptimizedAuthProvider>
-          <CartProvider>
-            <Router>
-              <div className="min-h-screen bg-background flex flex-col">
-                <Navbar />
+        <CartProvider>
+          <Router>
+            <div className="min-h-screen bg-background flex flex-col">
+              <Navbar />
                 <main className="flex-1">
                   <Routes>
                     {/* Public Routes */}
@@ -189,7 +187,6 @@ function App() {
               <Toaster />
             </Router>
           </CartProvider>
-        </OptimizedAuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

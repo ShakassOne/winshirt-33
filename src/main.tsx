@@ -2,10 +2,10 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import AuthProvider from './context/AuthContext.tsx'
+import { OptimizedAuthProvider } from './context/OptimizedAuthContext.tsx'
 
 createRoot(document.getElementById("root")!).render(
-  <AuthProvider>
+  <OptimizedAuthProvider>
     <App />
-  </AuthProvider>
+  </OptimizedAuthProvider>
 );
