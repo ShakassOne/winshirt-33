@@ -45,23 +45,21 @@ export const CaptureElements: React.FC<CaptureElementsProps> = ({
       </div>
 
       {/* Éléments de capture pour production HD sans produit */}
-      <div id="production-front-only" className="w-[800px] h-[1000px] bg-transparent">
+      <div id="production-front-only" className="w-[3500px] h-[3500px] bg-transparent">
         <UnifiedCustomizationRenderer
           customization={customization}
           side="front"
           withBackground={false}
           className="w-full h-full"
-          scale={2}
         />
       </div>
 
-      <div id="production-back-only" className="w-[800px] h-[1000px] bg-transparent">
+      <div id="production-back-only" className="w-[3500px] h-[3500px] bg-transparent">
         <UnifiedCustomizationRenderer
           customization={customization}
           side="back"
           withBackground={false}
           className="w-full h-full"
-          scale={2}
         />
       </div>
     </div>
