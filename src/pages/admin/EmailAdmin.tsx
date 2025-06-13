@@ -132,22 +132,25 @@ const EmailAdmin = () => {
 
     try {
       setLoading(true);
-      const success = await EmailService.testEmail(testEmail, templateType);
-      
-      if (success) {
+      const result = await EmailService.testEmail(testEmail, templateType);
+
+      if (result.success) {
         toast({
           title: "Succès",
           description: `Email de test envoyé à ${testEmail}`
         });
         await loadData(); // Recharger les logs
       } else {
-        throw new Error('Échec envoi test');
+        throw new Error(result.message || 'Échec envoi test');
       }
     } catch (error) {
       console.error('Erreur test email:', error);
       toast({
         title: "Erreur",
-        description: "Impossible d'envoyer l'email de test",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Impossible d'envoyer l'email de test",
         variant: "destructive"
       });
     } finally {

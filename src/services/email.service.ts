@@ -193,21 +193,28 @@ export class EmailService {
   }
 
   // Tester l'envoi d'un email
-  static async testEmail(recipientEmail: string, templateType: string): Promise<boolean> {
+  static async testEmail(
+    recipientEmail: string,
+    templateType: string
+  ): Promise<{ success: boolean; message?: string }> {
     try {
-      const { error } = await supabase.functions.invoke('test-email', {
+      const { data, error } = await supabase.functions.invoke('test-email', {
         body: { recipientEmail, templateType }
       });
 
       if (error) {
         console.error('Erreur test email:', error);
-        return false;
+        return { success: false, message: error.message };
       }
 
-      return true;
-    } catch (error) {
+      if (data && typeof data === 'object' && 'error' in data) {
+        return { success: false, message: (data as any).error };
+      }
+
+      return { success: true };
+    } catch (error: any) {
       console.error('Erreur lors du test:', error);
-      return false;
+      return { success: false, message: error.message };
     }
   }
 }

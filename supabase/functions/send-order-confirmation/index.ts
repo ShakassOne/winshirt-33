@@ -103,7 +103,7 @@ serve(async (req) => {
     });
 
     // Configurer nodemailer
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: settings.smtp_host,
       port: settings.smtp_port,
       secure: settings.smtp_secure,
