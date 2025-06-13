@@ -188,7 +188,7 @@ serve(async (req) => {
 
     console.log(`✅ [DEBUG] Template traité, sujet: ${subject}`);
 
-    // Configuration du transporteur avec debug avancé
+    // Configuration du transporteur CORRIGÉE
     const transportConfig = {
       host: settings.smtp_host,
       port: settings.smtp_port,
@@ -210,8 +210,9 @@ serve(async (req) => {
     });
 
     try {
-      const transporter = nodemailer.createTransporter(transportConfig);
-      console.log(`🔍 [DEBUG] Transporteur créé, test de connexion...`);
+      // CORRECTION: createTransport au lieu de createTransporter
+      const transporter = nodemailer.createTransport(transportConfig);
+      console.log(`🔍 [DEBUG] Transporteur créé avec createTransport, test de connexion...`);
 
       // Test de connexion avec gestion d'erreur détaillée
       await new Promise((resolve, reject) => {
