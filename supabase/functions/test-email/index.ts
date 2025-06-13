@@ -41,8 +41,13 @@ serve(async (req) => {
       .eq("is_active", true)
       .single();
 
-    if (templateError || !template) {
-      throw new Error(`Template non trouvé: ${templateError?.message}`);
+    if (templateError) {
+      console.error("Erreur template:", templateError);
+      throw new Error(`Template non trouvé: ${templateError.message}`);
+    }
+
+    if (!template) {
+      throw new Error(`Template "${templateType}" non trouvé ou inactif`);
     }
 
     // Récupérer les paramètres SMTP
@@ -52,9 +57,20 @@ serve(async (req) => {
       .eq("is_active", true)
       .single();
 
-    if (settingsError || !settings) {
-      throw new Error(`Paramètres SMTP non configurés: ${settingsError?.message}`);
+    if (settingsError) {
+      console.error("Erreur settings:", settingsError);
+      throw new Error(`Paramètres SMTP non configurés: ${settingsError.message}`);
     }
+
+    if (!settings) {
+      throw new Error("Aucun paramètre SMTP actif trouvé");
+    }
+
+    console.log("Paramètres SMTP trouvés:", {
+      host: settings.smtp_host,
+      port: settings.smtp_port,
+      user: settings.smtp_user
+    });
 
     // Variables de test selon le type de template
     let variables: Record<string, any> = {};
@@ -104,7 +120,9 @@ serve(async (req) => {
     // Gérer les conditions dans le template
     htmlContent = htmlContent.replace(/{{#if tracking_number}}(.*?){{\/if}}/gs, '$1');
 
-    // Configurer nodemailer - CORRECTION ICI : createTransport au lieu de createTransporter
+    console.log("Création du transporteur email...");
+
+    // Configurer nodemailer
     const transporter = nodemailer.createTransport({
       host: settings.smtp_host,
       port: settings.smtp_port,
@@ -113,7 +131,20 @@ serve(async (req) => {
         user: settings.smtp_user,
         pass: settings.smtp_password,
       },
+      debug: true,
+      logger: true
     });
+
+    console.log("Vérification de la connexion SMTP...");
+
+    // Vérifier la connexion SMTP
+    try {
+      await transporter.verify();
+      console.log("Connexion SMTP vérifiée avec succès");
+    } catch (verifyError) {
+      console.error("Erreur de vérification SMTP:", verifyError);
+      throw new Error(`Erreur de connexion SMTP: ${verifyError.message}`);
+    }
 
     // Envoyer l'email de test
     const mailOptions = {
@@ -123,7 +154,14 @@ serve(async (req) => {
       html: htmlContent,
     };
 
-    await transporter.sendMail(mailOptions);
+    console.log("Envoi de l'email...", {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject
+    });
+
+    const sendResult = await transporter.sendMail(mailOptions);
+    console.log("Email envoyé:", sendResult);
 
     // Logger l'envoi
     await supabaseAdmin
@@ -143,6 +181,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: "Email de test envoyé avec succès",
+        messageId: sendResult.messageId
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -156,6 +195,7 @@ serve(async (req) => {
       JSON.stringify({
         success: false,
         error: error.message,
+        details: error.stack
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
