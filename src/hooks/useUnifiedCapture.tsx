@@ -137,48 +137,49 @@ export const useUnifiedCapture = () => {
         back: {}
       };
 
-      // Analyser le contenu disponible
+      // Vérifier s'il existe du contenu sur chaque côté
       const hasFrontContent = customization?.frontDesign || customization?.frontText;
       const hasBackContent = customization?.backDesign || customization?.backText;
 
       console.log(`📊 [UnifiedCapture] Contenu - Front: ${!!hasFrontContent}, Back: ${!!hasBackContent}`);
 
-      // Capturer le front si du contenu existe
-      if (hasFrontContent) {
-        console.log('📸 [UnifiedCapture] Capture front en cours...');
-        
-        const [mockupFront, hdFront] = await Promise.allSettled([
-          captureElement('preview-front-complete', false),
-          captureElement('production-front-only', true)
-        ]);
+      // Toujours capturer les deux côtés pour garantir les fichiers de production
+      console.log('📸 [UnifiedCapture] Capture front en cours...');
+      const [mockupFront, hdFront] = await Promise.allSettled([
+        captureElement('preview-front-complete', false),
+        captureElement('production-front-only', true)
+      ]);
 
-        if (mockupFront.status === 'fulfilled' && mockupFront.value) {
-          results.front.mockupUrl = mockupFront.value;
-          console.log('✅ [UnifiedCapture] Mockup front capturé:', mockupFront.value);
-        }
-        if (hdFront.status === 'fulfilled' && hdFront.value) {
-          results.front.hdUrl = hdFront.value;
-          console.log('✅ [UnifiedCapture] HD front capturé:', hdFront.value);
-        }
+      if (mockupFront.status === 'fulfilled' && mockupFront.value) {
+        results.front.mockupUrl = mockupFront.value;
+        console.log('✅ [UnifiedCapture] Mockup front capturé:', mockupFront.value);
+      } else {
+        console.warn('⚠️ [UnifiedCapture] Échec capture mockup front');
+      }
+      if (hdFront.status === 'fulfilled' && hdFront.value) {
+        results.front.hdUrl = hdFront.value;
+        console.log('✅ [UnifiedCapture] HD front capturé:', hdFront.value);
+      } else {
+        console.warn('⚠️ [UnifiedCapture] Échec capture HD front');
       }
 
-      // Capturer le back si du contenu existe
-      if (hasBackContent) {
-        console.log('📸 [UnifiedCapture] Capture back en cours...');
-        
-        const [mockupBack, hdBack] = await Promise.allSettled([
-          captureElement('preview-back-complete', false),
-          captureElement('production-back-only', true)
-        ]);
+      console.log('📸 [UnifiedCapture] Capture back en cours...');
+      const [mockupBack, hdBack] = await Promise.allSettled([
+        captureElement('preview-back-complete', false),
+        captureElement('production-back-only', true)
+      ]);
 
-        if (mockupBack.status === 'fulfilled' && mockupBack.value) {
-          results.back.mockupUrl = mockupBack.value;
-          console.log('✅ [UnifiedCapture] Mockup back capturé:', mockupBack.value);
-        }
-        if (hdBack.status === 'fulfilled' && hdBack.value) {
-          results.back.hdUrl = hdBack.value;
-          console.log('✅ [UnifiedCapture] HD back capturé:', hdBack.value);
-        }
+      if (mockupBack.status === 'fulfilled' && mockupBack.value) {
+        results.back.mockupUrl = mockupBack.value;
+        console.log('✅ [UnifiedCapture] Mockup back capturé:', mockupBack.value);
+      } else {
+        console.warn('⚠️ [UnifiedCapture] Échec capture mockup back');
+      }
+      if (hdBack.status === 'fulfilled' && hdBack.value) {
+        results.back.hdUrl = hdBack.value;
+        console.log('✅ [UnifiedCapture] HD back capturé:', hdBack.value);
+      } else {
+        console.warn('⚠️ [UnifiedCapture] Échec capture HD back');
       }
 
       console.log('🎉 [UnifiedCapture] Capture terminée:', results);
