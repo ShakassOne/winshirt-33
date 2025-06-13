@@ -62,7 +62,7 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="system" storageKey="winshirt-theme">
+      <ThemeProvider defaultTheme="dark" storageKey="winshirt-theme">
         <OptimizedAuthProvider>
           <CartProvider>
             <Router>

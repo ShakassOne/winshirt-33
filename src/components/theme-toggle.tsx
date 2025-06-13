@@ -6,11 +6,15 @@ import { useTheme } from "@/components/theme-provider";
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
 
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+  };
+
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+      onClick={toggleTheme}
       className="rounded-full w-9 h-9"
       title={theme === "light" ? "Passer en mode sombre" : "Passer en mode clair"}
     >

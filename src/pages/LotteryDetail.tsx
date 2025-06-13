@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -101,7 +100,7 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
                       </p>
                     </div>
                     <SocialShareButton
-                      url={`/lotteries/${lottery.id}`}
+                      url={`/lottery/${lottery.id}`}
                       title={lottery.title}
                       description={`Participez à cette loterie d'une valeur de ${lottery.value}€`}
                       className="ml-4"
