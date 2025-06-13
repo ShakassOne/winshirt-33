@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -59,7 +60,7 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
   };
 
   const handleViewProduct = (productId: string) => {
-    navigate(`/products/${productId}`);
+    navigate(`/product/${productId}`);
   };
 
   return (
@@ -70,12 +71,12 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
         {isLoading ? (
           <div className="container mx-auto px-4 py-20 text-center">
             <LoadingSpinner />
-            <p className="mt-4 text-white/60">Chargement de la loterie...</p>
+            <p className="mt-4 text-foreground/60">Chargement de la loterie...</p>
           </div>
         ) : !lottery ? (
           <div className="container mx-auto px-4 py-20 text-center">
-            <h1 className="text-2xl font-bold text-white mb-4">Loterie non trouvée</h1>
-            <p className="text-white/60">La loterie que vous recherchez n'existe pas.</p>
+            <h1 className="text-2xl font-bold text-foreground mb-4">Loterie non trouvée</h1>
+            <p className="text-foreground/60">La loterie que vous recherchez n'existe pas.</p>
           </div>
         ) : (
           <div className="container mx-auto px-4 py-10">
@@ -94,7 +95,7 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
                 <GlassCard className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h1 className="text-3xl font-bold mb-2">{lottery.title}</h1>
+                      <h1 className="text-3xl font-bold mb-2 text-foreground">{lottery.title}</h1>
                       <p className="text-2xl font-bold text-green-400 mb-4">
                         Valeur: {lottery.value}€
                       </p>
@@ -107,14 +108,14 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
                     />
                   </div>
 
-                  <p className="text-white/80 mb-6">{lottery.description}</p>
+                  <p className="text-foreground/80 mb-6">{lottery.description}</p>
 
                   {/* Participation Section */}
                   <div className="mb-6">
-                    <h4 className="text-lg font-semibold mb-2">Participation</h4>
+                    <h4 className="text-lg font-semibold mb-2 text-foreground">Participation</h4>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-white/70">Progression</span>
-                      <span className="text-white/70">{participationCount}%</span>
+                      <span className="text-foreground/70">Progression</span>
+                      <span className="text-foreground/70">{participationCount}%</span>
                     </div>
                     <Progress value={participationCount} />
                     <div className="flex justify-between mt-4">
@@ -130,13 +131,13 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
 
                 {/* Products Section */}
                 <div>
-                  <h3 className="text-xl font-semibold mb-4">
+                  <h3 className="text-xl font-semibold mb-4 text-foreground">
                     Produits inclus dans cette loterie
                   </h3>
                   {isLoadingProducts ? (
                     <div className="text-center py-4">
                       <LoadingSpinner />
-                      <p className="mt-2 text-white/60">Chargement des produits...</p>
+                      <p className="mt-2 text-foreground/60">Chargement des produits...</p>
                     </div>
                   ) : products.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -156,7 +157,7 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
                     </div>
                   ) : (
                     <GlassCard className="p-4 text-center">
-                      <p className="text-white/70">
+                      <p className="text-foreground/70">
                         Aucun produit n'est inclus dans cette loterie pour le moment.
                       </p>
                     </GlassCard>
