@@ -1,7 +1,5 @@
 
 import React, { useState } from 'react';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 import { BookOpen, Code, Database, Settings, Wrench, Bug, Folder, Cpu } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -10,39 +8,39 @@ const Lexique = () => {
 
   const termesUtilisateur = [
     {
-      term: 'WinShirt',
+      term: "WinShirt",
       definition: "Plateforme de personnalisation de t-shirts combinée à un système de loteries.",
     },
     {
-      term: 'Loterie',
+      term: "Loterie",
       definition: "Tirage au sort associé à certains achats permettant de remporter des lots.",
     },
     {
-      term: 'Produit',
+      term: "Produit",
       definition: "Article vendu sur le site, souvent personnalisable selon vos envies.",
     },
     {
-      term: 'Design',
+      term: "Design",
       definition: "Visuel pouvant être appliqué sur un t-shirt personnalisé.",
     },
     {
-      term: 'Mockup',
+      term: "Mockup",
       definition: "Aperçu numérique d'un produit permettant de prévisualiser la personnalisation.",
     },
     {
-      term: 'DTF',
+      term: "DTF",
       definition: "Technique d'impression Direct To Film utilisée pour réaliser les motifs.",
     },
     {
-      term: 'Panier',
+      term: "Panier",
       definition: "Espace où sont regroupés vos articles avant le paiement.",
     },
     {
-      term: 'Commande',
+      term: "Commande",
       definition: "Ensemble des articles achetés et des informations de livraison.",
     },
     {
-      term: 'Compte',
+      term: "Compte",
       definition: "Section personnelle permettant de suivre vos commandes et loteries.",
     },
   ];
@@ -354,8 +352,7 @@ const Lexique = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar />
-      <main className="flex-grow pt-24 pb-20">
+      <main className="flex-grow pt-32 pb-20">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
@@ -470,7 +467,6 @@ const Lexique = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

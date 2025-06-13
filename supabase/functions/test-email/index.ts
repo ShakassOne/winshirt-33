@@ -104,8 +104,8 @@ serve(async (req) => {
     // Gérer les conditions dans le template
     htmlContent = htmlContent.replace(/{{#if tracking_number}}(.*?){{\/if}}/gs, '$1');
 
-    // Configurer nodemailer
-    const transporter = nodemailer.createTransporter({
+    // Configurer nodemailer - CORRECTION ICI : createTransport au lieu de createTransporter
+    const transporter = nodemailer.createTransport({
       host: settings.smtp_host,
       port: settings.smtp_port,
       secure: settings.smtp_secure,
