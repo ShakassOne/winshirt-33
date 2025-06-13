@@ -46,6 +46,7 @@ import SocialNetworksAdmin from '@/pages/admin/SocialNetworksAdmin';
 import ThemeSettings from '@/pages/admin/ThemeSettings';
 import AnalyticsAdmin from '@/pages/admin/AnalyticsAdmin';
 import EmailAdmin from '@/pages/admin/EmailAdmin';
+import LexiqueAdmin from '@/pages/admin/LexiqueAdmin';
 
 // Components
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
@@ -161,6 +162,11 @@ function App() {
                     <Route path="/admin/emails" element={
                       <ProtectedRoute requireAdmin>
                         <EmailAdmin />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/lexique" element={
+                      <ProtectedRoute requireAdmin>
+                        <LexiqueAdmin />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/theme" element={

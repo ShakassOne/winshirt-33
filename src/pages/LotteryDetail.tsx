@@ -67,7 +67,7 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       
-      <main className="flex-grow mt-16 pb-20">
+      <main className="flex-grow pt-32 pb-20">
         {isLoading ? (
           <div className="container mx-auto px-4 py-20 text-center">
             <LoadingSpinner />

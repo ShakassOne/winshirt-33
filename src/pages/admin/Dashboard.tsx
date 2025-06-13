@@ -15,122 +15,133 @@ import {
   Settings,
   Smartphone,
   Mail,
-  Globe
+  Globe,
+  BookOpen,
+  ShoppingBag
 } from 'lucide-react';
 
 const Dashboard = () => {
   const adminSections = [
     {
-      title: "Produits",
-      description: "Gérer le catalogue de produits",
-      icon: Package,
-      path: "/admin/products",
-      color: "bg-blue-500"
-    },
-    {
-      title: "Commandes",
-      description: "Suivi et gestion des commandes",
-      icon: Truck,
-      path: "/admin/orders",
-      color: "bg-green-500"
+      title: "Analytics",
+      description: "Statistiques et analyses détaillées",
+      icon: BarChart3,
+      path: "/admin/analytics",
+      color: "bg-gradient-to-br from-blue-500 to-blue-600"
     },
     {
       title: "Production DTF",
       description: "Gestion de la production DTF",
       icon: Shirt,
       path: "/admin/dtf-production",
-      color: "bg-purple-500"
+      color: "bg-gradient-to-br from-purple-500 to-purple-600"
+    },
+    {
+      title: "Produits",
+      description: "Gérer le catalogue de produits",
+      icon: Package,
+      path: "/admin/products",
+      color: "bg-gradient-to-br from-green-500 to-green-600"
+    },
+    {
+      title: "Commandes",
+      description: "Suivi et gestion des commandes",
+      icon: ShoppingBag,
+      path: "/admin/orders",
+      color: "bg-gradient-to-br from-orange-500 to-orange-600"
     },
     {
       title: "Loteries",
       description: "Configuration des loteries",
       icon: Gift,
       path: "/admin/lotteries",
-      color: "bg-yellow-500"
+      color: "bg-gradient-to-br from-yellow-500 to-yellow-600"
     },
     {
       title: "Utilisateurs",
       description: "Gestion des comptes utilisateurs",
       icon: Users,
       path: "/admin/users",
-      color: "bg-indigo-500"
+      color: "bg-gradient-to-br from-indigo-500 to-indigo-600"
     },
     {
       title: "Designs",
       description: "Bibliothèque de designs",
       icon: Palette,
       path: "/admin/designs",
-      color: "bg-pink-500"
+      color: "bg-gradient-to-br from-pink-500 to-pink-600"
     },
     {
       title: "Mockups",
       description: "Templates de produits 3D",
       icon: Image,
       path: "/admin/mockups",
-      color: "bg-cyan-500"
+      color: "bg-gradient-to-br from-cyan-500 to-cyan-600"
     },
     {
       title: "Livraison",
       description: "Options de livraison",
       icon: Truck,
       path: "/admin/shipping-options",
-      color: "bg-orange-500"
+      color: "bg-gradient-to-br from-red-500 to-red-600"
     },
     {
       title: "Emails",
       description: "Notifications automatiques",
       icon: Mail,
       path: "/admin/emails",
-      color: "bg-red-500"
+      color: "bg-gradient-to-br from-emerald-500 to-emerald-600"
     },
     {
       title: "Réseaux Sociaux",
       description: "Configuration des liens sociaux",
       icon: Globe,
       path: "/admin/social-networks",
-      color: "bg-emerald-500"
+      color: "bg-gradient-to-br from-violet-500 to-violet-600"
+    },
+    {
+      title: "Lexique",
+      description: "Gestion du lexique et glossaire",
+      icon: BookOpen,
+      path: "/admin/lexique",
+      color: "bg-gradient-to-br from-teal-500 to-teal-600"
     },
     {
       title: "Thème",
       description: "Personnalisation de l'interface",
       icon: Settings,
       path: "/admin/theme",
-      color: "bg-violet-500"
-    },
-    {
-      title: "Analytics",
-      description: "Statistiques et analyses",
-      icon: BarChart3,
-      path: "/admin/analytics",
-      color: "bg-teal-500"
+      color: "bg-gradient-to-br from-slate-500 to-slate-600"
     }
   ];
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Tableau de bord Admin</h1>
-        <p className="text-muted-foreground">
-          Gérez tous les aspects de votre plateforme WinShirt
+    <div className="container mx-auto py-8 pt-32">
+      <div className="mb-12 text-center">
+        <h1 className="text-4xl font-bold mb-4 text-gradient">Tableau de bord Admin</h1>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Gérez tous les aspects de votre plateforme WinShirt depuis ce tableau de bord centralisé
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         {adminSections.map((section) => {
           const Icon = section.icon;
           return (
-            <Link key={section.path} to={section.path}>
-              <Card className="hover:shadow-lg transition-shadow duration-200 cursor-pointer">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${section.color} text-white`}>
-                      <Icon className="h-5 w-5" />
+            <Link key={section.path} to={section.path} className="group">
+              <Card className="h-full hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 hover:border-primary/20">
+                <CardHeader className="pb-4">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <div className={`p-6 rounded-2xl ${section.color} text-white shadow-lg group-hover:shadow-xl transition-shadow`}>
+                      <Icon className="h-8 w-8" />
                     </div>
-                    <CardTitle className="text-lg">{section.title}</CardTitle>
+                    <CardTitle className="text-xl font-bold">{section.title}</CardTitle>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <CardDescription>{section.description}</CardDescription>
+                <CardContent className="text-center">
+                  <CardDescription className="text-base leading-relaxed">
+                    {section.description}
+                  </CardDescription>
                 </CardContent>
               </Card>
             </Link>
@@ -138,30 +149,30 @@ const Dashboard = () => {
         })}
       </div>
 
-      <div className="mt-12">
-        <Card>
+      <div className="mt-16">
+        <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Aperçu rapide
+            <CardTitle className="flex items-center gap-3 text-2xl">
+              <BarChart3 className="h-6 w-6 text-primary" />
+              Aperçu rapide des statistiques
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">-</div>
-              <div className="text-sm text-muted-foreground">Commandes</div>
+          <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="text-center p-6 bg-white/50 rounded-xl">
+              <div className="text-3xl font-bold text-primary mb-2">-</div>
+              <div className="text-sm font-medium text-muted-foreground">Commandes totales</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">-</div>
-              <div className="text-sm text-muted-foreground">Produits</div>
+            <div className="text-center p-6 bg-white/50 rounded-xl">
+              <div className="text-3xl font-bold text-primary mb-2">-</div>
+              <div className="text-sm font-medium text-muted-foreground">Produits actifs</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">-</div>
-              <div className="text-sm text-muted-foreground">Utilisateurs</div>
+            <div className="text-center p-6 bg-white/50 rounded-xl">
+              <div className="text-3xl font-bold text-primary mb-2">-</div>
+              <div className="text-sm font-medium text-muted-foreground">Utilisateurs inscrits</div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">-</div>
-              <div className="text-sm text-muted-foreground">Loteries actives</div>
+            <div className="text-center p-6 bg-white/50 rounded-xl">
+              <div className="text-3xl font-bold text-primary mb-2">-</div>
+              <div className="text-sm font-medium text-muted-foreground">Loteries actives</div>
             </div>
           </CardContent>
         </Card>
