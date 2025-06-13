@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -98,6 +97,7 @@ const EmailAdmin = () => {
         name: formData.get('name') as string,
         subject: formData.get('subject') as string,
         html_content: formData.get('html_content') as string,
+        variables: selectedTemplate?.variables || [],
         is_active: formData.get('is_active') === 'on'
       };
 
