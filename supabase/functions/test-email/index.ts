@@ -14,13 +14,13 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId } = await req.json();
+    const { recipientEmail, templateType } = await req.json();
 
-    if (!orderId) {
-      throw new Error("Order ID is required");
+    if (!recipientEmail || !templateType) {
+      throw new Error("Email destinataire et type de template requis");
     }
 
-    console.log(`Envoi email confirmation pour commande ${orderId}`);
+    console.log(`Test email ${templateType} vers ${recipientEmail}`);
 
     // Initialize Supabase admin client
     const supabaseAdmin = createClient(
@@ -33,28 +33,11 @@ serve(async (req) => {
       }
     );
 
-    // Récupérer la commande avec ses items
-    const { data: order, error: orderError } = await supabaseAdmin
-      .from("orders")
-      .select(`
-        *,
-        order_items (
-          *,
-          products (name, price)
-        )
-      `)
-      .eq("id", orderId)
-      .single();
-
-    if (orderError || !order) {
-      throw new Error(`Commande non trouvée: ${orderError?.message}`);
-    }
-
     // Récupérer le template
     const { data: template, error: templateError } = await supabaseAdmin
       .from("email_templates")
       .select("*")
-      .eq("type", "order_confirmation")
+      .eq("type", templateType)
       .eq("is_active", true)
       .single();
 
@@ -73,34 +56,53 @@ serve(async (req) => {
       throw new Error(`Paramètres SMTP non configurés: ${settingsError?.message}`);
     }
 
-    // Préparer les variables pour le template
-    const orderItems = order.order_items.map((item: any) => 
-      `<div style="border-bottom: 1px solid #eee; padding: 10px 0;">
-        <strong>${item.products.name}</strong><br>
-        Quantité: ${item.quantity} - Prix: ${item.price}€
-        ${item.selected_size ? `<br>Taille: ${item.selected_size}` : ''}
-        ${item.selected_color ? `<br>Couleur: ${item.selected_color}` : ''}
-      </div>`
-    ).join('');
+    // Variables de test selon le type de template
+    let variables: Record<string, any> = {};
 
-    const variables = {
-      customer_name: `${order.shipping_first_name || ''} ${order.shipping_last_name || ''}`.trim() || 'Client',
-      order_number: order.id.substring(0, 8).toUpperCase(),
-      order_date: new Date(order.created_at).toLocaleDateString('fr-FR'),
-      total_amount: order.total_amount,
-      order_items: orderItems,
-      shipping_address: `${order.shipping_address}<br>${order.shipping_postal_code} ${order.shipping_city}<br>${order.shipping_country}`
-    };
+    switch (templateType) {
+      case 'order_confirmation':
+        variables = {
+          customer_name: 'Jean Dupont',
+          order_number: 'TEST123',
+          order_date: new Date().toLocaleDateString('fr-FR'),
+          total_amount: '29.99',
+          order_items: '<div style="border-bottom: 1px solid #eee; padding: 10px 0;"><strong>T-shirt Test</strong><br>Quantité: 1 - Prix: 29.99€<br>Taille: L<br>Couleur: Noir</div>',
+          shipping_address: '123 Rue de Test<br>75001 Paris<br>France'
+        };
+        break;
+      case 'shipping_notification':
+        variables = {
+          customer_name: 'Jean Dupont',
+          order_number: 'TEST123',
+          shipping_date: new Date().toLocaleDateString('fr-FR'),
+          tracking_number: 'TEST123456789',
+          carrier_name: 'Colissimo',
+          shipping_address: '123 Rue de Test<br>75001 Paris<br>France'
+        };
+        break;
+      case 'lottery_reminder':
+        variables = {
+          customer_name: 'Jean Dupont',
+          lottery_list: '<div style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px;"><h4 style="margin: 0 0 10px 0; color: #333;">Loterie Test</h4><p style="margin: 5px 0;"><strong>Valeur:</strong> 100€</p><p style="margin: 5px 0;"><strong>Participants:</strong> 25/50</p><p style="margin: 5px 0;"><strong>Tirage le:</strong> 31/12/2024</p></div>',
+          site_url: 'https://winshirt.fr'
+        };
+        break;
+      default:
+        variables = { customer_name: 'Test User' };
+    }
 
     // Remplacer les variables dans le template
     let htmlContent = template.html_content;
-    let subject = template.subject;
+    let subject = `[TEST] ${template.subject}`;
 
     Object.entries(variables).forEach(([key, value]) => {
       const regex = new RegExp(`{{${key}}}`, 'g');
       htmlContent = htmlContent.replace(regex, String(value));
       subject = subject.replace(regex, String(value));
     });
+
+    // Gérer les conditions dans le template
+    htmlContent = htmlContent.replace(/{{#if tracking_number}}(.*?){{\/if}}/gs, '$1');
 
     // Configurer nodemailer
     const transporter = nodemailer.createTransporter({
@@ -113,10 +115,10 @@ serve(async (req) => {
       },
     });
 
-    // Envoyer l'email
+    // Envoyer l'email de test
     const mailOptions = {
       from: `${settings.from_name} <${settings.from_email}>`,
-      to: order.shipping_email,
+      to: recipientEmail,
       subject: subject,
       html: htmlContent,
     };
@@ -128,20 +130,19 @@ serve(async (req) => {
       .from("email_logs")
       .insert({
         template_id: template.id,
-        recipient_email: order.shipping_email,
-        recipient_name: variables.customer_name,
+        recipient_email: recipientEmail,
+        recipient_name: 'Test User',
         subject: subject,
         status: 'sent',
         sent_at: new Date().toISOString(),
-        order_id: orderId,
       });
 
-    console.log(`Email confirmation envoyé avec succès à ${order.shipping_email}`);
+    console.log(`Email de test envoyé avec succès à ${recipientEmail}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Email de confirmation envoyé",
+        message: "Email de test envoyé avec succès",
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -149,7 +150,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Erreur envoi email confirmation:", error);
+    console.error("Erreur envoi email de test:", error);
 
     return new Response(
       JSON.stringify({

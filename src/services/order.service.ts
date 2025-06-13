@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
 import { CartItem, Order, OrderStatus, PaymentStatus } from "@/types/supabase.types";
 import { getShippingOptionById } from "./shipping.service";
+import { EmailService } from "./email.service";
 
 export const createOrder = async (
   checkoutData: CheckoutFormData,
@@ -215,6 +216,17 @@ export const updateOrderPaymentStatus = async (
       
     if (error) throw error;
 
+    // Si le paiement est confirmé, envoyer l'email de confirmation
+    if (status === 'paid') {
+      console.log(`📧 [Order Service] Commande payée, envoi email confirmation ${orderId}`);
+      try {
+        await EmailService.sendOrderConfirmation(orderId);
+      } catch (emailError) {
+        console.error('❌ [Order Service] Erreur envoi email confirmation:', emailError);
+        // Ne pas faire échouer la mise à jour de commande pour un problème d'email
+      }
+    }
+
     // If order is now paid, generate lottery entries with the corrected function
     if (status === 'paid') {
       try {
@@ -235,6 +247,43 @@ export const updateOrderPaymentStatus = async (
     }
   } catch (error) {
     console.error("Error in updateOrderPaymentStatus:", error);
+    throw error;
+  }
+};
+
+// Nouvelle fonction pour mettre à jour le statut d'expédition
+export const updateOrderShippingStatus = async (
+  orderId: string,
+  status: OrderStatus,
+  trackingNumber?: string
+) => {
+  try {
+    const updateData: any = { status };
+    if (trackingNumber) {
+      updateData.tracking_number = trackingNumber;
+    }
+
+    const { error } = await supabase
+      .from('orders')
+      .update(updateData)
+      .eq('id', orderId);
+      
+    if (error) throw error;
+
+    // Si le statut passe à "shipped", envoyer la notification d'expédition
+    if (status === 'shipped') {
+      console.log(`📧 [Order Service] Commande expédiée, envoi notification ${orderId}`);
+      try {
+        await EmailService.sendShippingNotification(orderId, trackingNumber);
+      } catch (emailError) {
+        console.error('❌ [Order Service] Erreur envoi notification expédition:', emailError);
+        // Ne pas faire échouer la mise à jour pour un problème d'email
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error in updateOrderShippingStatus:", error);
     throw error;
   }
 };

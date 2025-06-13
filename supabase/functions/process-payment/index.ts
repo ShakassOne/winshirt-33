@@ -63,6 +63,24 @@ serve(async (req) => {
       throw new Error(`Error updating order: ${updateError.message}`);
     }
 
+    // Envoyer l'email de confirmation de commande
+    try {
+      const { error: emailError } = await supabaseAdmin.functions.invoke(
+        'send-order-confirmation',
+        { body: { orderId: orderId } }
+      );
+
+      if (emailError) {
+        console.error("Error sending order confirmation email:", emailError);
+        // Ne pas faire échouer le paiement pour un problème d'email
+      } else {
+        console.log(`Order confirmation email sent for order ${orderId}`);
+      }
+    } catch (emailErr) {
+      console.error("Exception sending order confirmation email:", emailErr);
+      // Continue - payment processing should not fail due to email issues
+    }
+
     // Generate lottery entries for this order using the corrected function
     try {
       const { error: lotteryError } = await supabaseAdmin.rpc(

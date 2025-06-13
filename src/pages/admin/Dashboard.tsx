@@ -1,154 +1,173 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import GlassCard from '@/components/ui/GlassCard';
-import { ShoppingBag, Ticket, Award, ShoppingCart, Users, Image, Palette, Settings, BarChart, Truck, Share2, Wrench, BookOpen } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Package, 
+  Users, 
+  Gift, 
+  Palette, 
+  Image,
+  Shirt,
+  Truck,
+  BarChart3,
+  Settings,
+  Smartphone,
+  Mail,
+  Globe
+} from 'lucide-react';
 
-const AdminDashboard = () => {
-  const navigate = useNavigate();
-  
-  const adminModules = [
+const Dashboard = () => {
+  const adminSections = [
     {
-      title: 'Analytics',
-      description: 'Statistiques et performances de vente',
-      icon: <BarChart className="h-8 w-8 text-emerald-500" />,
-      route: '/admin/analytics',
-      color: 'from-emerald-500/20 to-emerald-500/5'
+      title: "Produits",
+      description: "Gérer le catalogue de produits",
+      icon: Package,
+      path: "/admin/products",
+      color: "bg-blue-500"
     },
     {
-      title: 'Production DTF',
-      description: 'Gestion de la production fournisseur',
-      icon: <Wrench className="h-8 w-8 text-orange-500" />,
-      route: '/admin/dtf-production',
-      color: 'from-orange-500/20 to-orange-500/5'
+      title: "Commandes",
+      description: "Suivi et gestion des commandes",
+      icon: Truck,
+      path: "/admin/orders",
+      color: "bg-green-500"
     },
     {
-      title: 'Produits',
-      description: 'Gérez les produits de votre boutique',
-      icon: <ShoppingBag className="h-8 w-8 text-winshirt-blue" />,
-      route: '/admin/products',
-      color: 'from-winshirt-blue/20 to-winshirt-blue/5'
+      title: "Production DTF",
+      description: "Gestion de la production DTF",
+      icon: Shirt,
+      path: "/admin/dtf-production",
+      color: "bg-purple-500"
     },
     {
-      title: 'Loteries',
-      description: 'Gérez les loteries et leurs participants',
-      icon: <Ticket className="h-8 w-8 text-winshirt-purple" />,
-      route: '/admin/lotteries',
-      color: 'from-winshirt-purple/20 to-winshirt-purple/5'
+      title: "Loteries",
+      description: "Configuration des loteries",
+      icon: Gift,
+      path: "/admin/lotteries",
+      color: "bg-yellow-500"
     },
     {
-      title: 'Mockups',
-      description: 'Gérez les mockups et zones d\'impression',
-      icon: <Image className="h-8 w-8 text-green-500" />,
-      route: '/admin/mockups',
-      color: 'from-green-500/20 to-green-500/5'
+      title: "Utilisateurs",
+      description: "Gestion des comptes utilisateurs",
+      icon: Users,
+      path: "/admin/users",
+      color: "bg-indigo-500"
     },
     {
-      title: 'Designs',
-      description: 'Gérez les visuels pour la personnalisation',
-      icon: <Palette className="h-8 w-8 text-indigo-500" />,
-      route: '/admin/designs',
-      color: 'from-indigo-500/20 to-indigo-500/5'
+      title: "Designs",
+      description: "Bibliothèque de designs",
+      icon: Palette,
+      path: "/admin/designs",
+      color: "bg-pink-500"
     },
     {
-      title: 'Gagnants',
-      description: 'Gérez les gagnants des loteries',
-      icon: <Award className="h-8 w-8 text-yellow-500" />,
-      route: '/admin/winners',
-      color: 'from-yellow-500/20 to-yellow-500/5'
+      title: "Mockups",
+      description: "Templates de produits 3D",
+      icon: Image,
+      path: "/admin/mockups",
+      color: "bg-cyan-500"
     },
     {
-      title: 'Commandes',
-      description: 'Gérez les commandes et expéditions',
-      icon: <ShoppingCart className="h-8 w-8 text-rose-500" />,
-      route: '/admin/orders',
-      color: 'from-rose-500/20 to-rose-500/5'
+      title: "Livraison",
+      description: "Options de livraison",
+      icon: Truck,
+      path: "/admin/shipping-options",
+      color: "bg-orange-500"
     },
     {
-      title: 'Utilisateurs',
-      description: 'Gérez les utilisateurs et les droits',
-      icon: <Users className="h-8 w-8 text-amber-500" />,
-      route: '/admin/users',
-      color: 'from-amber-500/20 to-amber-500/5'
+      title: "Emails",
+      description: "Notifications automatiques",
+      icon: Mail,
+      path: "/admin/emails",
+      color: "bg-red-500"
     },
     {
-      title: 'Options de livraison',
-      description: 'Gérez les options de livraison',
-      icon: <Truck className="h-8 w-8 text-blue-500" />,
-      route: '/admin/shipping',
-      color: 'from-blue-500/20 to-blue-500/5'
+      title: "Réseaux Sociaux",
+      description: "Configuration des liens sociaux",
+      icon: Globe,
+      path: "/admin/social-networks",
+      color: "bg-emerald-500"
     },
     {
-      title: 'Réseaux sociaux',
-      description: 'Gérez les liens de partage social',
-      icon: <Share2 className="h-8 w-8 text-pink-500" />,
-      route: '/admin/social',
-      color: 'from-pink-500/20 to-pink-500/5'
+      title: "Thème",
+      description: "Personnalisation de l'interface",
+      icon: Settings,
+      path: "/admin/theme",
+      color: "bg-violet-500"
     },
     {
-      title: 'Thème',
-      description: 'Personnalisez l\'apparence du site',
-      icon: <Settings className="h-8 w-8 text-purple-500" />,
-      route: '/admin/theme',
-      color: 'from-purple-500/20 to-purple-500/5'
-    },
-    {
-      title: 'Lexique',
-      description: 'Glossaire des termes de l\'application',
-      icon: <BookOpen className="h-8 w-8 text-teal-400" />,
-      route: '/lexique',
-      color: 'from-teal-400/20 to-teal-400/5'
+      title: "Analytics",
+      description: "Statistiques et analyses",
+      icon: BarChart3,
+      path: "/admin/analytics",
+      color: "bg-teal-500"
     }
   ];
-  
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-      
-      <main className="flex-grow mt-16 pb-20">
-        {/* Header Section */}
-        <section className="relative py-16 bg-gradient-to-b from-winshirt-blue/20 to-transparent">
-          <div className="container mx-auto px-4">
-            <h1 className="text-3xl md:text-4xl font-bold">
-              Tableau de bord <span className="text-gradient">Administration</span>
-            </h1>
-            <p className="text-white/70 mt-2">
-              Gérez tous les aspects de votre boutique en ligne
-            </p>
-          </div>
-        </section>
-        
-        {/* Admin Modules Grid */}
-        <section className="py-10">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {adminModules.map((module, index) => (
-                <GlassCard 
-                  key={index}
-                  className={`p-6 cursor-pointer hover:scale-[1.02] transition-transform bg-gradient-to-br ${module.color}`}
-                  onClick={() => navigate(module.route)}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="bg-black/30 p-3 rounded-xl">
-                      {module.icon}
+    <div className="container mx-auto py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Tableau de bord Admin</h1>
+        <p className="text-muted-foreground">
+          Gérez tous les aspects de votre plateforme WinShirt
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {adminSections.map((section) => {
+          const Icon = section.icon;
+          return (
+            <Link key={section.path} to={section.path}>
+              <Card className="hover:shadow-lg transition-shadow duration-200 cursor-pointer">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${section.color} text-white`}>
+                      <Icon className="h-5 w-5" />
                     </div>
-                    <div>
-                      <h2 className="text-xl font-semibold mb-1">{module.title}</h2>
-                      <p className="text-white/70">{module.description}</p>
-                    </div>
+                    <CardTitle className="text-lg">{section.title}</CardTitle>
                   </div>
-                </GlassCard>
-              ))}
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>{section.description}</CardDescription>
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="mt-12">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Aperçu rapide
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">-</div>
+              <div className="text-sm text-muted-foreground">Commandes</div>
             </div>
-          </div>
-        </section>
-      </main>
-      
-      <Footer />
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">-</div>
+              <div className="text-sm text-muted-foreground">Produits</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">-</div>
+              <div className="text-sm text-muted-foreground">Utilisateurs</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">-</div>
+              <div className="text-sm text-muted-foreground">Loteries actives</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
 
-export default AdminDashboard;
+export default Dashboard;

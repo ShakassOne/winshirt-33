@@ -14,13 +14,13 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId } = await req.json();
+    const { orderId, trackingNumber, carrierName = "Colissimo" } = await req.json();
 
     if (!orderId) {
       throw new Error("Order ID is required");
     }
 
-    console.log(`Envoi email confirmation pour commande ${orderId}`);
+    console.log(`Envoi notification expédition pour commande ${orderId}`);
 
     // Initialize Supabase admin client
     const supabaseAdmin = createClient(
@@ -33,16 +33,10 @@ serve(async (req) => {
       }
     );
 
-    // Récupérer la commande avec ses items
+    // Récupérer la commande
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
-      .select(`
-        *,
-        order_items (
-          *,
-          products (name, price)
-        )
-      `)
+      .select("*")
       .eq("id", orderId)
       .single();
 
@@ -54,7 +48,7 @@ serve(async (req) => {
     const { data: template, error: templateError } = await supabaseAdmin
       .from("email_templates")
       .select("*")
-      .eq("type", "order_confirmation")
+      .eq("type", "shipping_notification")
       .eq("is_active", true)
       .single();
 
@@ -74,21 +68,12 @@ serve(async (req) => {
     }
 
     // Préparer les variables pour le template
-    const orderItems = order.order_items.map((item: any) => 
-      `<div style="border-bottom: 1px solid #eee; padding: 10px 0;">
-        <strong>${item.products.name}</strong><br>
-        Quantité: ${item.quantity} - Prix: ${item.price}€
-        ${item.selected_size ? `<br>Taille: ${item.selected_size}` : ''}
-        ${item.selected_color ? `<br>Couleur: ${item.selected_color}` : ''}
-      </div>`
-    ).join('');
-
     const variables = {
       customer_name: `${order.shipping_first_name || ''} ${order.shipping_last_name || ''}`.trim() || 'Client',
       order_number: order.id.substring(0, 8).toUpperCase(),
-      order_date: new Date(order.created_at).toLocaleDateString('fr-FR'),
-      total_amount: order.total_amount,
-      order_items: orderItems,
+      shipping_date: new Date().toLocaleDateString('fr-FR'),
+      tracking_number: trackingNumber || '',
+      carrier_name: carrierName,
       shipping_address: `${order.shipping_address}<br>${order.shipping_postal_code} ${order.shipping_city}<br>${order.shipping_country}`
     };
 
@@ -101,6 +86,13 @@ serve(async (req) => {
       htmlContent = htmlContent.replace(regex, String(value));
       subject = subject.replace(regex, String(value));
     });
+
+    // Gérer les conditions dans le template (ex: {{#if tracking_number}})
+    if (trackingNumber) {
+      htmlContent = htmlContent.replace(/{{#if tracking_number}}(.*?){{\/if}}/gs, '$1');
+    } else {
+      htmlContent = htmlContent.replace(/{{#if tracking_number}}(.*?){{\/if}}/gs, '');
+    }
 
     // Configurer nodemailer
     const transporter = nodemailer.createTransporter({
@@ -136,12 +128,12 @@ serve(async (req) => {
         order_id: orderId,
       });
 
-    console.log(`Email confirmation envoyé avec succès à ${order.shipping_email}`);
+    console.log(`Notification expédition envoyée avec succès à ${order.shipping_email}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Email de confirmation envoyé",
+        message: "Notification d'expédition envoyée",
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -149,7 +141,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Erreur envoi email confirmation:", error);
+    console.error("Erreur envoi notification expédition:", error);
 
     return new Response(
       JSON.stringify({
