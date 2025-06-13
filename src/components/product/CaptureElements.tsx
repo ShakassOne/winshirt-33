@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { UnifiedCustomizationRenderer } from './UnifiedCustomizationRenderer';
 
 interface CaptureElementsProps {
@@ -21,7 +22,12 @@ export const CaptureElements: React.FC<CaptureElementsProps> = ({
     return selectedMockupColor ? selectedMockupColor.back_image_url : mockup?.svg_back_url;
   };
 
-  return (
+  const portalRoot = document.getElementById('capture-root');
+  if (!portalRoot) {
+    return null;
+  }
+
+  const content = (
     <div className="fixed -left-[9999px] -top-[9999px] pointer-events-none">
       {/* Éléments de capture pour mockup avec produit (preview basse def) */}
       <div id="preview-front-complete" className="w-[400px] h-[500px] bg-white">
@@ -64,4 +70,6 @@ export const CaptureElements: React.FC<CaptureElementsProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(content, portalRoot);
 };
