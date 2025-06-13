@@ -23,7 +23,6 @@ import { SVGColorEditor } from '@/components/product/SVGColorEditor';
 import { ModalPersonnalisation } from '@/components/product/ModalPersonnalisation';
 import { HDVisualCapture } from '@/components/product/HDVisualCapture';
 import { useHDCaptureOnAddToCart } from '@/hooks/useHDCaptureOnAddToCart';
-import { enrichCustomizationWithCaptures } from '@/services/unifiedCapture.service';
 import { CaptureElements } from '@/components/product/CaptureElements';
 
 // Définition des polices Google Fonts
@@ -989,11 +988,8 @@ const ProductDetail = () => {
       if (Object.keys(customization).length > 0) {
         console.log('🎨 [ProductDetail] Personnalisation détectée, génération des fichiers HD...');
 
-        // Capturer les visuels HD pour la production avec les bons paramètres
-        const hdData = await captureForProduction(customization);
-
-        // Enrichir la personnalisation avec les données HD
-        const enrichedCustomization = enrichCustomizationWithCaptures(customization, hdData);
+        // Capturer les visuels HD et récupérer la personnalisation enrichie
+        const enrichedCustomization = await captureForProduction(customization);
         cartItem.customization = enrichedCustomization;
       }
     }
