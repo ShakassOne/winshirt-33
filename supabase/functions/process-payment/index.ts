@@ -81,6 +81,53 @@ serve(async (req) => {
       // Continue - order processing should not fail due to lottery issues
     }
 
+    // Update lottery participant counters
+    try {
+      const { data: orderItems, error: itemsError } = await supabaseAdmin
+        .from('order_items')
+        .select('id')
+        .eq('order_id', orderId);
+
+      if (!itemsError && orderItems && orderItems.length > 0) {
+        const itemIds = orderItems.map((it: any) => it.id);
+        const { data: entries, error: entriesError } = await supabaseAdmin
+          .from('lottery_entries')
+          .select('lottery_id')
+          .in('order_item_id', itemIds);
+
+        if (!entriesError && entries) {
+          const counts: Record<string, number> = {};
+          entries.forEach((e: any) => {
+            counts[e.lottery_id] = (counts[e.lottery_id] || 0) + 1;
+          });
+
+          for (const [lotteryId, increment] of Object.entries(counts)) {
+            const { data: lotData, error: lotError } = await supabaseAdmin
+              .from('lotteries')
+              .select('participants')
+              .eq('id', lotteryId)
+              .single();
+            if (lotError) {
+              console.error(`Error fetching lottery ${lotteryId}:`, lotError);
+              continue;
+            }
+            const newCount = (lotData?.participants || 0) + increment;
+            const { error: updError } = await supabaseAdmin
+              .from('lotteries')
+              .update({ participants: newCount })
+              .eq('id', lotteryId);
+            if (updError) {
+              console.error(`Error updating lottery ${lotteryId}:`, updError);
+            } else {
+              console.log(`Lottery ${lotteryId} participants -> ${newCount}`);
+            }
+          }
+        }
+      }
+    } catch (partErr) {
+      console.error('Error updating lottery participants:', partErr);
+    }
+
     // In a real implementation, we would send email confirmations here
     console.log(`Payment processed successfully for order ${orderId}`);
     console.log(`Email notification would be sent to: ${order.shipping_email}`);

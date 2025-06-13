@@ -928,6 +928,7 @@ const ProductDetail = () => {
 
     // Créer la liste des IDs de loteries en filtrant les null
     const selectedLotteryIds = selectedLotteries.filter(lottery => lottery !== null).map(lottery => lottery!.id);
+
     let cartItem: CartItem = {
       productId: product.id,
       name: product.name,
@@ -938,8 +939,18 @@ const ProductDetail = () => {
       image_url: product.image_url,
       lotteries: selectedLotteryIds.length > 0 ? selectedLotteryIds : undefined
     };
+
+    const customization: any = {};
+    // Stocker toujours les loteries sélectionnées dans la personnalisation
+    if (selectedLotteryIds.length > 0) {
+      customization.lotteries = selectedLotteryIds;
+      if (selectedLotteryIds.length === 1) {
+        const lot = lotteries.find(l => l.id === selectedLotteryIds[0]);
+        if (lot) customization.lotteryName = lot.title;
+      }
+    }
+
     if (customizationMode) {
-      const customization: any = {};
       if (selectedDesignFront) {
         customization.frontDesign = {
           designId: selectedDesignFront.id,
@@ -996,6 +1007,11 @@ const ProductDetail = () => {
         const enrichedCustomization = enrichCustomizationWithCaptures(customization, hdData);
         cartItem.customization = enrichedCustomization;
       }
+    }
+
+    // Si aucune personnalisation visuelle mais qu'on a des loteries sélectionnées
+    if (!customizationMode && Object.keys(customization).length > 0) {
+      cartItem.customization = customization;
     }
     addItem(cartItem);
     toast.success('Produit ajouté au panier !');
