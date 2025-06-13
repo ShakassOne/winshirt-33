@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
 
@@ -98,14 +97,30 @@ export class EmailService {
     return data as EmailSettings | null;
   }
 
-  // Créer ou mettre à jour les paramètres
+  // Créer ou mettre à jour les paramètres avec les valeurs IONOS correctes
   static async upsertEmailSettings(settings: Omit<EmailSettings, 'id'> & { id?: string }): Promise<EmailSettings> {
+    // Forcer les paramètres IONOS corrects selon la documentation
+    const ionosSettings = {
+      ...settings,
+      smtp_host: 'smtp.ionos.fr',
+      smtp_port: 465, // Port SSL selon IONOS
+      smtp_secure: true, // SSL activé
+      smtp_user: 'admin@winshirt.fr',
+      from_email: 'admin@winshirt.fr',
+      from_name: 'WinShirt',
+      is_active: true
+    };
+
+    console.log('🔍 [EmailService] Mise à jour paramètres SMTP avec:', {
+      host: ionosSettings.smtp_host,
+      port: ionosSettings.smtp_port,
+      secure: ionosSettings.smtp_secure,
+      user: ionosSettings.smtp_user
+    });
+
     const { data, error } = await supabase
       .from('email_settings')
-      .upsert({
-        ...settings,
-        is_active: true
-      })
+      .upsert(ionosSettings)
       .select()
       .single();
     
@@ -210,8 +225,11 @@ export class EmailService {
         console.error('❌ [EmailService] Erreur fonction:', error);
         return { 
           success: false, 
-          message: error.message || 'Erreur lors de l\'appel de la fonction',
-          debug: { functionError: error }
+          message: `Erreur de la fonction: ${error.message}`,
+          debug: { 
+            functionError: error,
+            errorContext: error.context || 'Aucun contexte disponible'
+          }
         };
       }
 
@@ -248,7 +266,7 @@ export class EmailService {
       return { 
         success: false, 
         message: error.message || 'Erreur inconnue',
-        debug: { exception: error.name }
+        debug: { exception: error.name, stack: error.stack }
       };
     }
   }
