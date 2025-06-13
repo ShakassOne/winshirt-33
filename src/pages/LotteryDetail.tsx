@@ -100,7 +100,7 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
                       </p>
                     </div>
                     <SocialShareButton
-                      url={`/lottery/${lottery.id}`}
+                      url={window.location.href}
                       title={lottery.title}
                       description={`Participez à cette loterie d'une valeur de ${lottery.value}€`}
                       className="ml-4"
