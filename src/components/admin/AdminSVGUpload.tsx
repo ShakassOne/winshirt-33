@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { SVGAnalysisResult, SVGCleanupResult, SVGAnalyzerService } from '@/services/svgAnalyzer.service';
 import { useToast } from '@/hooks/use-toast';
 import { uploadToExternalScript } from '@/services/api.service';
+import { sanitizeSvg } from '@/utils/sanitizeSvg';
 
 interface AdminSVGUploadProps {
   label: string;
@@ -364,9 +365,9 @@ export const AdminSVGUpload: React.FC<AdminSVGUploadProps> = ({
             
             <div className="flex justify-center">
               {svgPreview ? (
-                <div 
+                <div
                   className="max-w-32 max-h-32"
-                  dangerouslySetInnerHTML={{ __html: svgPreview }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeSvg(svgPreview) }}
                 />
               ) : isSvg ? (
                 <div className="w-32 h-32 flex items-center justify-center border border-white/20 rounded">

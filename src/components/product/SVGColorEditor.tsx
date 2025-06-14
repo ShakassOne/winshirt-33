@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Palette } from 'lucide-react';
+import { sanitizeSvg } from '@/utils/sanitizeSvg';
 
 interface SVGColorEditorProps {
   imageUrl: string;
@@ -254,15 +255,15 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
                   style={{ filter: `hue-rotate(${getHueRotationForColor(color)}deg)` }}
                 />
                 <div className="text-xs text-white/60">→</div>
-                <div 
+                <div
                   className="w-12 h-12"
-                  dangerouslySetInnerHTML={{ __html: svgContent }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeSvg(svgContent) }}
                 />
               </div>
             ) : (
-              <div 
+              <div
                 className="w-12 h-12"
-                dangerouslySetInnerHTML={{ __html: svgContent }}
+                dangerouslySetInnerHTML={{ __html: sanitizeSvg(svgContent) }}
               />
             )}
           </div>
