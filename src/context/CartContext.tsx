@@ -5,13 +5,14 @@ import { CartContextType } from '@/types/cart.types';
 import { CartItem } from '@/types/supabase.types';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  addToCart, 
-  getCartItems, 
-  removeFromCart, 
-  updateCartItemQuantity, 
+import {
+  addToCart,
+  getCartItems,
+  removeFromCart,
+  updateCartItemQuantity,
   clearCart as clearCartService,
-  migrateCartToUser
+  migrateCartToUser,
+  getOrCreateCartToken
 } from '@/services/cart.service';
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -26,17 +27,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   
   // Generate a cart token if not exists
   useEffect(() => {
-    const storedCartToken = localStorage.getItem('cart_token');
-    if (!storedCartToken) {
-      const newCartToken = uuidv4();
-      localStorage.setItem('cart_token', newCartToken);
-      setCartToken(newCartToken);
-      console.log("Created new cart token:", newCartToken);
-    } else {
-      setCartToken(storedCartToken);
-      console.log("Using existing cart token:", storedCartToken);
-    }
-  }, []);
+    const initToken = async () => {
+      if (!cartToken) {
+        const newCartToken = uuidv4();
+        try {
+          await getOrCreateCartToken(newCartToken);
+        } catch (err) {
+          console.error('Error creating cart token:', err);
+        }
+        setCartToken(newCartToken);
+        console.log('Created new cart token:', newCartToken);
+      }
+    };
+    initToken();
+  }, [cartToken]);
   
   // Check for auth state changes
   useEffect(() => {

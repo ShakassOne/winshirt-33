@@ -115,15 +115,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setSession(null);
       
-      // Only clear auth-related localStorage items to avoid breaking other features
-      const authKeys = ['sb-gyprtpqgeukcoxbfxtfg-auth-token'];
-      authKeys.forEach(key => {
-        try {
-          localStorage.removeItem(key);
-        } catch (e) {
-          console.warn('[Auth] Could not clear localStorage key:', key);
-        }
-      });
       
     } catch (error) {
       console.error("[Auth] Sign out error:", error);
