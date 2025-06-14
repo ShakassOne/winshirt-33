@@ -1,15 +1,12 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Heart, User, ShoppingCart, Moon, Sun, Settings, Shirt, Clover } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { UnifiedThemeToggle } from '@/components/theme/theme-toggle-unified';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { useCart } from '@/context/CartContext';
-import { useWinShirtTheme } from '@/components/theme/theme-provider-wrapper';
+import { useTheme } from '@/components/theme-provider';
 import { toast } from 'sonner';
 
 interface NavItem {
@@ -30,7 +27,7 @@ export const GlowNavigation: React.FC = () => {
   const { isAuthenticated, signOut } = useOptimizedAuth();
   const { isAdmin } = useAdminCheck();
   const { itemCount } = useCart();
-  const { theme, setTheme } = useWinShirtTheme();
+  const { theme, setTheme } = useTheme();
   const [activeIndex, setActiveIndex] = useState(0);
   const markerRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLUListElement>(null);
@@ -118,6 +115,7 @@ export const GlowNavigation: React.FC = () => {
   ];
 
   // Filtrer les items selon les conditions
+  
   const visibleItems = navItems.filter(item => {
     if (item.isConditional && item.showWhen) {
       return item.showWhen();
