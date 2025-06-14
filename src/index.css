@@ -108,6 +108,14 @@
     position: relative;
     overflow-x: hidden;
   }
+
+  p {
+    @apply text-black bg-white;
+  }
+
+  .dark p {
+    @apply text-white bg-black;
+  }
 }
 
 @layer components {
