@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { decodeSVGBase64, isBase64SVG, processSVGContent } from '@/utils/svgDecoder';
+import { sanitizeSvg } from '@/utils/sanitizeSvg';
 
 interface CustomizationData {
   frontDesign?: {
@@ -100,7 +101,7 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
               transformOrigin: 'center',
               zIndex: 10
             }}
-            dangerouslySetInnerHTML={{ __html: processedSVG }}
+            dangerouslySetInnerHTML={{ __html: sanitizeSvg(processedSVG) }}
           />
         );
       }

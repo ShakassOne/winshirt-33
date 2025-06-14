@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Design } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
+import { sanitizeSvg } from '@/utils/sanitizeSvg';
 
 interface ProductPreviewProps {
   // Product data
@@ -174,10 +175,12 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
               {isSvgDesign() && getCurrentSvgContent() ? (
                 <div
                   className="w-[200px] h-[200px] flex items-center justify-center"
-                  dangerouslySetInnerHTML={{ 
-                    __html: getCurrentSvgContent().replace(
-                      /<svg([^>]*)>/i, 
-                      '<svg$1 width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">'
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizeSvg(
+                      getCurrentSvgContent().replace(
+                        /<svg([^>]*)>/i,
+                        '<svg$1 width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">'
+                      )
                     )
                   }}
                   style={{ 

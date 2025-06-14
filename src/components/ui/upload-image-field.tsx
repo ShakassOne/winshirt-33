@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { UploadButton } from '@/components/ui/upload-button';
 import { CheckCircle } from 'lucide-react';
+import { sanitizeSvg } from '@/utils/sanitizeSvg';
 
 interface UploadImageFieldProps {
   label: string;
@@ -87,9 +88,9 @@ export function UploadImageField({
           {isSvg ? (
             <div className="w-full max-w-32 h-32 flex items-center justify-center">
               {svgContent ? (
-                <div 
+                <div
                   className="max-w-full max-h-full"
-                  dangerouslySetInnerHTML={{ __html: svgContent }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeSvg(svgContent) }}
                   style={{ maxHeight: '100px', maxWidth: '100px' }}
                 />
               ) : (
