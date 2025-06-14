@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { enhancedErrorUtils, enhancedRateLimiter, passwordValidator, inputSanitizer } from '@/utils/enhancedSecurityHeaders';
 
-interface AuthContextType {
+interface SecureAuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
@@ -16,9 +16,9 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const SecureAuthContext = createContext<SecureAuthContextType | undefined>(undefined);
 
-export const OptimizedAuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const SecureAuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -217,13 +217,13 @@ export const OptimizedAuthProvider: React.FC<{ children: ReactNode }> = ({ child
     resetPassword,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <SecureAuthContext.Provider value={value}>{children}</SecureAuthContext.Provider>;
 };
 
-export const useOptimizedAuth = () => {
-  const context = useContext(AuthContext);
+export const useSecureAuth = () => {
+  const context = useContext(SecureAuthContext);
   if (context === undefined) {
-    throw new Error('useOptimizedAuth must be used within an OptimizedAuthProvider');
+    throw new Error('useSecureAuth must be used within a SecureAuthProvider');
   }
   return context;
 };
