@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 import React, { useState, useMemo } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -16,7 +17,7 @@ import { useStableAdminQuery } from '@/hooks/useStableAdminQuery';
 import { useStableAdminMutations } from '@/hooks/useStableAdminMutations';
 
 const ProductsAdmin = React.memo(() => {
-  console.log('🏪 [ProductsAdmin] Rendering page...');
+  logger.log('🏪 [ProductsAdmin] Rendering page...');
   
   const { toast: toastHook } = useToast();
   const { invalidateProducts } = useStableAdminMutations();
@@ -39,7 +40,7 @@ const ProductsAdmin = React.memo(() => {
   });
 
   const handleCreateSuccess = React.useCallback(() => {
-    console.log('✅ [ProductsAdmin] Product operation success - invalidating only');
+    logger.log('✅ [ProductsAdmin] Product operation success - invalidating only');
     invalidateProducts(); // ✅ Une seule invalidation, pas de refetch
     toastHook({
       title: "Produit créé",

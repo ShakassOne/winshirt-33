@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import { useCallback } from 'react';
 import { EmailService } from '@/services/email.service';
@@ -8,11 +9,11 @@ export const useEmailNotifications = () => {
 
   const sendOrderConfirmation = useCallback(async (orderId: string) => {
     try {
-      console.log(`📧 [EmailNotifications] Envoi confirmation commande ${orderId}`);
+      logger.log(`📧 [EmailNotifications] Envoi confirmation commande ${orderId}`);
       const success = await EmailService.sendOrderConfirmation(orderId);
       
       if (success) {
-        console.log(`✅ [EmailNotifications] Confirmation envoyée pour ${orderId}`);
+        logger.log(`✅ [EmailNotifications] Confirmation envoyée pour ${orderId}`);
         toast({
           title: "Email envoyé",
           description: "Confirmation de commande envoyée au client"
@@ -30,11 +31,11 @@ export const useEmailNotifications = () => {
 
   const sendShippingNotification = useCallback(async (orderId: string, trackingNumber?: string) => {
     try {
-      console.log(`📧 [EmailNotifications] Envoi notification expédition ${orderId}`);
+      logger.log(`📧 [EmailNotifications] Envoi notification expédition ${orderId}`);
       const success = await EmailService.sendShippingNotification(orderId, trackingNumber);
       
       if (success) {
-        console.log(`✅ [EmailNotifications] Notification expédition envoyée pour ${orderId}`);
+        logger.log(`✅ [EmailNotifications] Notification expédition envoyée pour ${orderId}`);
         toast({
           title: "Email envoyé",
           description: "Notification d'expédition envoyée au client"
@@ -52,11 +53,11 @@ export const useEmailNotifications = () => {
 
   const sendLotteryReminders = useCallback(async () => {
     try {
-      console.log(`📧 [EmailNotifications] Envoi rappels loteries`);
+      logger.log(`📧 [EmailNotifications] Envoi rappels loteries`);
       const success = await EmailService.sendLotteryReminders();
       
       if (success) {
-        console.log(`✅ [EmailNotifications] Rappels loteries envoyés`);
+        logger.log(`✅ [EmailNotifications] Rappels loteries envoyés`);
         toast({
           title: "Rappels envoyés",
           description: "Rappels de loteries envoyés aux clients"

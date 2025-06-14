@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -53,7 +54,7 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
 
     setIsGenerating(true);
     try {
-      console.log('Génération d\'image avec prompt:', prompt);
+      logger.log('Génération d\'image avec prompt:', prompt);
       
       const result = await generateImage(prompt);
       
@@ -66,7 +67,7 @@ const AIImageGenerator = ({ isOpen, onClose, onImageGenerated }: AIImageGenerato
         throw new Error(result.error);
       }
 
-      console.log('Image générée avec succès');
+      logger.log('Image générée avec succès');
       setGeneratedImage(result.imageUrl);
       setLastMessage(result.message || '');
       

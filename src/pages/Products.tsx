@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
@@ -12,7 +13,7 @@ const Products = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
-  console.log('[Products Page] Rendering with search:', searchTerm, 'category:', selectedCategory);
+  logger.log('[Products Page] Rendering with search:', searchTerm, 'category:', selectedCategory);
   
   const { data: products, isLoading, error, refetch } = useOptimizedProductsQuery();
 
@@ -39,10 +40,10 @@ const Products = () => {
     return uniqueCategories.filter(Boolean);
   }, [products]);
 
-  console.log('[Products Page] Filtered products count:', filteredProducts?.length || 0);
+  logger.log('[Products Page] Filtered products count:', filteredProducts?.length || 0);
 
   const handleRetry = () => {
-    console.log('[Products Page] Retrying fetch...');
+    logger.log('[Products Page] Retrying fetch...');
     refetch();
   };
 

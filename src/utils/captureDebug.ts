@@ -1,6 +1,7 @@
+import logger from '@/utils/logger';
 
 export const logCaptureState = (stage: string, data?: any) => {
-  console.log(`🔍 [Capture Debug] ${stage}`, data || '');
+  logger.log(`🔍 [Capture Debug] ${stage}`, data || '');
 };
 
 export const validateElementForCapture = (elementId: string): boolean => {
@@ -17,7 +18,7 @@ export const validateElementForCapture = (elementId: string): boolean => {
 
   const isValid = hasVisibleContent && (hasChildren || hasTextContent || hasImages);
   
-  console.log(`🔍 [Capture Debug] Validation ${elementId}:`, {
+  logger.log(`🔍 [Capture Debug] Validation ${elementId}:`, {
     hasVisibleContent,
     hasChildren,
     hasTextContent,

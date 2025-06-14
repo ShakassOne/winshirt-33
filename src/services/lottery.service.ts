@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -10,7 +11,7 @@ export const processExistingOrdersForLottery = async () => {
       throw error;
     }
     
-    console.log('Successfully processed existing orders for lottery');
+    logger.log('Successfully processed existing orders for lottery');
     return { success: true };
   } catch (error) {
     console.error('Exception processing existing orders:', error);
@@ -29,7 +30,7 @@ export const generateLotteryEntriesForOrder = async (orderId: string) => {
       throw error;
     }
     
-    console.log(`Successfully generated lottery entries for order ${orderId}`);
+    logger.log(`Successfully generated lottery entries for order ${orderId}`);
     return { success: true };
   } catch (error) {
     console.error('Exception generating lottery entries:', error);

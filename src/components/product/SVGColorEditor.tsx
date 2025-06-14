@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
@@ -37,7 +38,7 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
       setError(null);
       setUseFallbackDisplay(false);
       
-      console.log('🎨 [SVGColorEditor] Chargement du SVG:', imageUrl);
+      logger.log('🎨 [SVGColorEditor] Chargement du SVG:', imageUrl);
       
       // Gérer différents types d'URLs SVG
       const fetchSvg = async () => {
@@ -80,7 +81,7 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
           }
           
           const text = await response.text();
-          console.log('✅ [SVGColorEditor] SVG chargé avec succès, longueur:', text.length);
+          logger.log('✅ [SVGColorEditor] SVG chargé avec succès, longueur:', text.length);
           
           // Vérifier que c'est bien du SVG
           if (!text.includes('<svg')) {
@@ -119,7 +120,7 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
           console.error('❌ [SVGColorEditor] Erreur lors du chargement du SVG:', error);
           
           if (error.message === 'CORS_ERROR' || error.message.includes('CORS') || error.message.includes('fetch')) {
-            console.log('🔄 [SVGColorEditor] Activation du mode fallback pour SVG externe');
+            logger.log('🔄 [SVGColorEditor] Activation du mode fallback pour SVG externe');
             // Mode fallback : créer un SVG colorisable basique mais fonctionnel
             setUseFallbackDisplay(true);
             setError('SVG externe - Mode image simple activé');
@@ -179,7 +180,7 @@ export const SVGColorEditor: React.FC<SVGColorEditorProps> = ({
         setSvgContent(coloredSvg);
         onSvgContentChange(coloredSvg);
         onColorChange(color);
-        console.log('🎨 [SVGColorEditor] Couleur appliquée:', color);
+        logger.log('🎨 [SVGColorEditor] Couleur appliquée:', color);
       } catch (error) {
         console.error('❌ [SVGColorEditor] Erreur lors du changement de couleur:', error);
         setError('Erreur lors du changement de couleur');

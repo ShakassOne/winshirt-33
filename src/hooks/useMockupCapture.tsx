@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import { useState, useCallback } from 'react';
 import html2canvas from 'html2canvas';
@@ -47,7 +48,7 @@ export const useMockupCapture = () => {
       });
       
       if (response.data?.url) {
-        console.log(`Capture ${side} réussie:`, response.data.url);
+        logger.log(`Capture ${side} réussie:`, response.data.url);
         return response.data.url;
       }
       
@@ -66,7 +67,7 @@ export const useMockupCapture = () => {
     }
 
     try {
-      console.log(`🎯 [HDCapture] Début capture HD ${side} de l'élément:`, elementId);
+      logger.log(`🎯 [HDCapture] Début capture HD ${side} de l'élément:`, elementId);
       
       // Vérifier que l'élément a du contenu
       const hasContent = element.children.length > 0 || element.textContent?.trim() || element.innerHTML.includes('svg') || element.innerHTML.includes('img');
@@ -92,7 +93,7 @@ export const useMockupCapture = () => {
         removeContainer: true
       });
       
-      console.log(`✅ [HDCapture] Canvas créé - Taille: ${canvas.width}x${canvas.height}`);
+      logger.log(`✅ [HDCapture] Canvas créé - Taille: ${canvas.width}x${canvas.height}`);
       
       const blob = await new Promise<Blob>((resolve) => 
         canvas.toBlob((blob) => resolve(blob!), 'image/png', 0.95)
@@ -102,7 +103,7 @@ export const useMockupCapture = () => {
       const formData = new FormData();
       formData.append('image', file);
 
-      console.log(`📤 [HDCapture] Upload fichier HD ${side} - Taille: ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
+      logger.log(`📤 [HDCapture] Upload fichier HD ${side} - Taille: ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
 
       // Upload avec timeout réduit et gestion d'erreur simplifiée
       const response = await axios.post('https://media.winshirt.fr/upload-visuel.php', formData, {
@@ -113,7 +114,7 @@ export const useMockupCapture = () => {
       });
       
       if (response.data?.url) {
-        console.log(`🎉 [HDCapture] Capture HD ${side} réussie:`, response.data.url);
+        logger.log(`🎉 [HDCapture] Capture HD ${side} réussie:`, response.data.url);
         return response.data.url;
       }
       
@@ -153,7 +154,7 @@ export const useMockupCapture = () => {
     setIsCapturing(true);
     
     try {
-      console.log('🚀 [HDCapture] Début capture HD de tous les visuels');
+      logger.log('🚀 [HDCapture] Début capture HD de tous les visuels');
       
       // Rechercher dynamiquement les éléments de personnalisation
       const rectoElement = document.getElementById('customization-recto') || 
@@ -178,15 +179,15 @@ export const useMockupCapture = () => {
       
       if (captures[0].status === 'fulfilled' && captures[0].value) {
         result.hdRectoUrl = captures[0].value;
-        console.log('✅ [HDCapture] HD Recto URL:', captures[0].value);
+        logger.log('✅ [HDCapture] HD Recto URL:', captures[0].value);
       }
       
       if (captures[1].status === 'fulfilled' && captures[1].value) {
         result.hdVersoUrl = captures[1].value;
-        console.log('✅ [HDCapture] HD Verso URL:', captures[1].value);
+        logger.log('✅ [HDCapture] HD Verso URL:', captures[1].value);
       }
 
-      console.log('🎯 [HDCapture] Capture HD terminée:', result);
+      logger.log('🎯 [HDCapture] Capture HD terminée:', result);
       return result;
     } finally {
       setIsCapturing(false);

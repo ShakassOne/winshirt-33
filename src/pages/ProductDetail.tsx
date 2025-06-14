@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -1007,7 +1008,7 @@ const ProductDetail = () => {
         };
       }
       if (Object.keys(customization).length > 0) {
-        console.log('🎨 [ProductDetail] Personnalisation détectée, génération des fichiers HD...');
+        logger.log('🎨 [ProductDetail] Personnalisation détectée, génération des fichiers HD...');
 
         // Capturer les visuels HD et récupérer la personnalisation enrichie
         const enrichedCustomization = await captureForProduction(customization);

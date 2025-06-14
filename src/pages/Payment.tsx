@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -50,7 +51,7 @@ const Payment = () => {
     setPaymentLoading(true);
     
     try {
-      console.log("Creating Stripe checkout session...");
+      logger.log("Creating Stripe checkout session...");
       
       const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
         body: {
@@ -74,7 +75,7 @@ const Payment = () => {
       }
 
       if (data?.url) {
-        console.log("Redirecting to Stripe checkout:", data.url);
+        logger.log("Redirecting to Stripe checkout:", data.url);
         // Rediriger vers Stripe Checkout
         window.location.href = data.url;
       } else {

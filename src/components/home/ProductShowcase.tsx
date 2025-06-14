@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,7 @@ interface ProductShowcaseProps {
 const ProductShowcase: React.FC<ProductShowcaseProps> = ({ className }) => {
   const { data: products, isLoading, error } = useProductsQuery();
 
-  console.log('[ProductShowcase] Rendering with products count:', products?.length || 0);
+  logger.log('[ProductShowcase] Rendering with products count:', products?.length || 0);
 
   if (isLoading) {
     return (

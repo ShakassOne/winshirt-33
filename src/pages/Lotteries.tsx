@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -13,7 +14,7 @@ const Lotteries = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
   
-  console.log('[Lotteries Page] Rendering with filterActive:', filterActive, 'search:', searchTerm);
+  logger.log('[Lotteries Page] Rendering with filterActive:', filterActive, 'search:', searchTerm);
   
   const { data: lotteries, isLoading, error, refetch } = useOptimizedLotteriesQuery();
 
@@ -38,12 +39,12 @@ const Lotteries = () => {
   
   const currentFeaturedLottery = featuredLotteries[activeHeroIndex];
 
-  console.log('[Lotteries Page] Featured lotteries:', featuredLotteries.length);
-  console.log('[Lotteries Page] Filtered lotteries count:', filteredLotteries?.length || 0);
+  logger.log('[Lotteries Page] Featured lotteries:', featuredLotteries.length);
+  logger.log('[Lotteries Page] Filtered lotteries count:', filteredLotteries?.length || 0);
 
   // Function to retry fetching lotteries
   const handleRetry = () => {
-    console.log('[Lotteries Page] Retrying fetch...');
+    logger.log('[Lotteries Page] Retrying fetch...');
     refetch();
   };
 

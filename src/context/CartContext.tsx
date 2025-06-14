@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -36,7 +37,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           console.error('Error creating cart token:', err);
         }
         setCartToken(newCartToken);
-        console.log('Created new cart token:', newCartToken);
+        logger.log('Created new cart token:', newCartToken);
       }
     };
     initToken();
@@ -54,7 +55,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         if (mounted) {
           setCurrentUser(userFromSession);
           setIsInitialized(true);
-          console.log("Current user:", userFromSession ? userFromSession.id : "not logged in");
+          logger.log("Current user:", userFromSession ? userFromSession.id : "not logged in");
         }
       } catch (error) {
         console.error("Error checking current user:", error);
@@ -71,12 +72,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (!mounted) return;
       
       const user = session?.user || null;
-      console.log("Auth state changed in cart context:", event, user ? user.id : "no user");
+      logger.log("Auth state changed in cart context:", event, user ? user.id : "no user");
       setCurrentUser(user);
       
       // Handle sign in - migrate cart if user just signed in
       if (event === 'SIGNED_IN' && user && cartToken) {
-        console.log("User signed in, migrating cart");
+        logger.log("User signed in, migrating cart");
         try {
           await migrateCartToUser(user.id, cartToken);
           toast({
@@ -99,11 +100,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const loadCartItems = useCallback(async () => {
     if (!cartToken || !isInitialized) return;
     
-    console.log("Loading cart items for token:", cartToken);
+    logger.log("Loading cart items for token:", cartToken);
     setIsLoading(true);
     try {
       const cartItems = await getCartItems(cartToken, currentUser?.id);
-      console.log("Loaded cart items:", cartItems);
+      logger.log("Loaded cart items:", cartItems);
       setItems(cartItems);
       setError(null);
     } catch (err: any) {
@@ -119,7 +120,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [loadCartItems]);
   
   const addItem = useCallback(async (item: CartItem) => {
-    console.log("Starting addItem function with item:", JSON.stringify(item, null, 2));
+    logger.log("Starting addItem function with item:", JSON.stringify(item, null, 2));
     
     if (!cartToken) {
       console.error("Cannot add item to cart - no cart token available");
@@ -166,7 +167,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     
     setIsLoading(true);
     try {
-      console.log("About to call addToCart with:", { 
+      logger.log("About to call addToCart with:", { 
         cartToken, 
         item, 
         currentUser: currentUser ? `User ID: ${currentUser.id}` : 'No user'
@@ -180,7 +181,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         description: `${item.name} a été ajouté à votre panier`,
       });
       
-      console.log("Item added successfully");
+      logger.log("Item added successfully");
     } catch (err: any) {
       setError(err.message);
       console.error("Error adding to cart:", err);
@@ -197,7 +198,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const removeItem = useCallback(async (productId: string) => {
     if (!cartToken) return;
     
-    console.log("Removing item from cart:", productId);
+    logger.log("Removing item from cart:", productId);
     setIsLoading(true);
     try {
       await removeFromCart(cartToken, productId, currentUser?.id);
@@ -206,7 +207,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         description: "Le produit a été retiré de votre panier",
       });
       await loadCartItems();
-      console.log("Item removed successfully");
+      logger.log("Item removed successfully");
     } catch (err: any) {
       setError(err.message);
       console.error("Error removing from cart:", err);
@@ -223,12 +224,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const updateItemQuantity = useCallback(async (productId: string, quantity: number) => {
     if (!cartToken || quantity < 1) return;
     
-    console.log("Updating item quantity:", productId, quantity);
+    logger.log("Updating item quantity:", productId, quantity);
     setIsLoading(true);
     try {
       await updateCartItemQuantity(cartToken, productId, quantity, currentUser?.id);
       await loadCartItems();
-      console.log("Item quantity updated successfully");
+      logger.log("Item quantity updated successfully");
     } catch (err: any) {
       setError(err.message);
       console.error("Error updating quantity:", err);
@@ -245,7 +246,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = useCallback(async () => {
     if (!cartToken) return;
     
-    console.log("Clearing cart");
+    logger.log("Clearing cart");
     setIsLoading(true);
     try {
       await clearCartService(cartToken, currentUser?.id);
@@ -254,7 +255,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         description: "Votre panier a été vidé",
       });
       await loadCartItems();
-      console.log("Cart cleared successfully");
+      logger.log("Cart cleared successfully");
     } catch (err: any) {
       setError(err.message);
       console.error("Error clearing cart:", err);

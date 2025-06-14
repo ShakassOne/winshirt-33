@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -66,8 +67,8 @@ const UsersAdmin = () => {
       }
 
       if (profilesData) {
-        console.log("Loaded profiles:", profilesData.length);
-        console.log("Loaded roles:", rolesData?.length || 0);
+        logger.log("Loaded profiles:", profilesData.length);
+        logger.log("Loaded roles:", rolesData?.length || 0);
         
         // Create a map of user roles for easy lookup
         const roleMap = new Map();
@@ -97,7 +98,7 @@ const UsersAdmin = () => {
         
         setUsers(usersWithRoles);
       } else {
-        console.log("No users found or not authorized");
+        logger.log("No users found or not authorized");
         setUsers([]);
       }
     } catch (error: any) {

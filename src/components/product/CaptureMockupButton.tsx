@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { useState } from 'react';
 import html2canvas from 'html2canvas';
@@ -52,7 +53,7 @@ export default function CaptureMockupButton({
       });
       
       if (response.data?.url) {
-        console.log(`Upload ${side} réussi:`, response.data.url);
+        logger.log(`Upload ${side} réussi:`, response.data.url);
         onUploadSuccess && onUploadSuccess(response.data.url);
       } else {
         console.error("Erreur lors de l'upload:", response.data);

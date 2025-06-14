@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
@@ -51,7 +52,7 @@ export const AdminSVGUpload: React.FC<AdminSVGUploadProps> = ({
     if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
       setIsAnalyzing(true);
       try {
-        console.log('🔍 [AdminSVGUpload] Analyse du SVG:', file.name);
+        logger.log('🔍 [AdminSVGUpload] Analyse du SVG:', file.name);
         
         // Lire le contenu pour l'aperçu
         const reader = new FileReader();
@@ -98,7 +99,7 @@ export const AdminSVGUpload: React.FC<AdminSVGUploadProps> = ({
 
     setIsProcessing(true);
     try {
-      console.log('🔧 [AdminSVGUpload] Nettoyage SVG:', selectedFile.name);
+      logger.log('🔧 [AdminSVGUpload] Nettoyage SVG:', selectedFile.name);
       const result = await SVGAnalyzerService.cleanSVG(selectedFile);
       
       setCleanupResult(result);
@@ -106,7 +107,7 @@ export const AdminSVGUpload: React.FC<AdminSVGUploadProps> = ({
       // Mettre à jour l'aperçu avec le SVG nettoyé
       setSvgPreview(result.cleanedSvg);
       
-      console.log('✅ [AdminSVGUpload] SVG nettoyé:', result.appliedFixes);
+      logger.log('✅ [AdminSVGUpload] SVG nettoyé:', result.appliedFixes);
       toast({
         title: "SVG corrigé avec succès",
         description: `${result.appliedFixes.length} correction(s) appliquée(s)`,
@@ -126,7 +127,7 @@ export const AdminSVGUpload: React.FC<AdminSVGUploadProps> = ({
   const handleDirectUpload = async (fileToUpload: File) => {
     setIsUploading(true);
     try {
-      console.log('📁 [AdminSVGUpload] Upload vers le serveur...');
+      logger.log('📁 [AdminSVGUpload] Upload vers le serveur...');
       const url = await uploadToExternalScript(fileToUpload);
       
       onChange(url);

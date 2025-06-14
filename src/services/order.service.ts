@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import { supabase } from "@/integrations/supabase/client";
 import { CheckoutFormData } from "@/types/cart.types";
@@ -23,9 +24,9 @@ export const createOrder = async (
     const shippingCost = shippingOption.price;
     const totalAmount = subtotal + shippingCost;
     
-    console.log('Creating order with items:', items);
-    console.log('Shipping option:', shippingOption);
-    console.log('Subtotal:', subtotal, 'Shipping:', shippingCost, 'Total:', totalAmount);
+    logger.log('Creating order with items:', items);
+    logger.log('Shipping option:', shippingOption);
+    logger.log('Subtotal:', subtotal, 'Shipping:', shippingCost, 'Total:', totalAmount);
     
     // Create order
     const { data: order, error: orderError } = await supabase
@@ -58,8 +59,8 @@ export const createOrder = async (
     
     // Create order items avec gestion améliorée des captures
     const orderItems = items.map(item => {
-      console.log('🔍 [Order Service] Processing item for order:', item.productId);
-      console.log('📋 [Order Service] Item customization:', item.customization);
+      logger.log('🔍 [Order Service] Processing item for order:', item.productId);
+      logger.log('📋 [Order Service] Item customization:', item.customization);
       
       const customization = item.customization;
       
@@ -80,11 +81,11 @@ export const createOrder = async (
         hdRectoUrl = customObj.visual_front_url || customObj.hdRectoUrl || null;
         hdVersoUrl = customObj.visual_back_url || customObj.hdVersoUrl || null;
         
-        console.log('📸 [Order Service] URLs extraites:');
-        console.log('   - Mockup Recto:', mockupRectoUrl);
-        console.log('   - Mockup Verso:', mockupVersoUrl);
-        console.log('   - HD Recto:', hdRectoUrl);
-        console.log('   - HD Verso:', hdVersoUrl);
+        logger.log('📸 [Order Service] URLs extraites:');
+        logger.log('   - Mockup Recto:', mockupRectoUrl);
+        logger.log('   - Mockup Verso:', mockupVersoUrl);
+        logger.log('   - HD Recto:', hdRectoUrl);
+        logger.log('   - HD Verso:', hdVersoUrl);
       }
       
       const selectedSize = item.size || customization?.selectedSize || null;
@@ -106,7 +107,7 @@ export const createOrder = async (
         lottery_name: lotteryName
       };
       
-      console.log('💾 [Order Service] Order item à insérer:', orderItem);
+      logger.log('💾 [Order Service] Order item à insérer:', orderItem);
       
       return orderItem;
     });
@@ -120,7 +121,7 @@ export const createOrder = async (
       throw itemsError;
     }
     
-    console.log('✅ [Order Service] Order items créés avec succès avec système de capture unifié');
+    logger.log('✅ [Order Service] Order items créés avec succès avec système de capture unifié');
     
     return order;
   } catch (error) {
@@ -218,7 +219,7 @@ export const updateOrderPaymentStatus = async (
 
     // Si le paiement est confirmé, envoyer l'email de confirmation
     if (status === 'paid') {
-      console.log(`📧 [Order Service] Commande payée, envoi email confirmation ${orderId}`);
+      logger.log(`📧 [Order Service] Commande payée, envoi email confirmation ${orderId}`);
       try {
         await EmailService.sendOrderConfirmation(orderId);
       } catch (emailError) {
@@ -238,7 +239,7 @@ export const updateOrderPaymentStatus = async (
           console.error('Error generating lottery entries:', lotteryError);
           // Don't throw - order update succeeded
         } else {
-          console.log(`Generated lottery entries for order ${orderId} using corrected function`);
+          logger.log(`Generated lottery entries for order ${orderId} using corrected function`);
         }
       } catch (lotteryErr) {
         console.error('Exception generating lottery entries:', lotteryErr);
@@ -272,7 +273,7 @@ export const updateOrderShippingStatus = async (
 
     // Si le statut passe à "shipped", envoyer la notification d'expédition
     if (status === 'shipped') {
-      console.log(`📧 [Order Service] Commande expédiée, envoi notification ${orderId}`);
+      logger.log(`📧 [Order Service] Commande expédiée, envoi notification ${orderId}`);
       try {
         await EmailService.sendShippingNotification(orderId, trackingNumber);
       } catch (emailError) {

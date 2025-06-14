@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
@@ -31,7 +32,7 @@ export const OptimizedAuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const authStateListenerRef = useRef<any>(null);
 
   const handleAuthChange = useCallback((event: string, currentSession: Session | null) => {
-    console.log(`[OptimizedAuth] Auth state changed: ${event}`, currentSession ? 'User logged in' : 'User logged out');
+    logger.log(`[OptimizedAuth] Auth state changed: ${event}`, currentSession ? 'User logged in' : 'User logged out');
     
     // Stabilisation des mises à jour d'état
     setSession(prev => {
@@ -57,7 +58,7 @@ export const OptimizedAuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    console.log('[OptimizedAuth] Setting up optimized auth...');
+    logger.log('[OptimizedAuth] Setting up optimized auth...');
     
     let isActive = true;
     
@@ -71,7 +72,7 @@ export const OptimizedAuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         
         if (isActive) {
-          console.log('[OptimizedAuth] Initial session check completed', initialSession ? 'User found' : 'No user');
+          logger.log('[OptimizedAuth] Initial session check completed', initialSession ? 'User found' : 'No user');
           
           setSession(initialSession);
           setUser(initialSession?.user ?? null);
@@ -91,16 +92,16 @@ export const OptimizedAuthProvider: React.FC<{ children: React.ReactNode }> = ({
     
     return () => {
       isActive = false;
-      console.log('[OptimizedAuth] Cleaning up auth subscription');
+      logger.log('[OptimizedAuth] Cleaning up auth subscription');
       authStateListenerRef.current?.unsubscribe();
     };
   }, [handleAuthChange]);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    console.log('[OptimizedAuth] Attempting sign in for:', email);
+    logger.log('[OptimizedAuth] Attempting sign in for:', email);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      console.log('[OptimizedAuth] Sign in result:', error ? 'Error' : 'Success');
+      logger.log('[OptimizedAuth] Sign in result:', error ? 'Error' : 'Success');
       return { error };
     } catch (error) {
       console.error('[OptimizedAuth] Sign in error:', error);
@@ -109,14 +110,14 @@ export const OptimizedAuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, metadata?: any) => {
-    console.log('[OptimizedAuth] Attempting sign up for:', email);
+    logger.log('[OptimizedAuth] Attempting sign up for:', email);
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { data: metadata }
       });
-      console.log('[OptimizedAuth] Sign up result:', error ? 'Error' : 'Success');
+      logger.log('[OptimizedAuth] Sign up result:', error ? 'Error' : 'Success');
       return { error, user: data?.user || null };
     } catch (error) {
       console.error('[OptimizedAuth] Sign up error:', error);
@@ -125,10 +126,10 @@ export const OptimizedAuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const signOut = useCallback(async () => {
-    console.log('[OptimizedAuth] Attempting sign out');
+    logger.log('[OptimizedAuth] Attempting sign out');
     try {
       await supabase.auth.signOut();
-      console.log('[OptimizedAuth] Sign out completed');
+      logger.log('[OptimizedAuth] Sign out completed');
       
       // Nettoyage optimisé de l'état
       setUser(null);

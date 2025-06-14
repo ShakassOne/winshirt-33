@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
@@ -30,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isInitializedRef = useRef(false);
 
   const handleAuthChange = useCallback((event: string, currentSession: Session | null) => {
-    console.log(`[Auth] Auth state changed: ${event}`, currentSession ? 'User logged in' : 'User logged out');
+    logger.log(`[Auth] Auth state changed: ${event}`, currentSession ? 'User logged in' : 'User logged out');
     setSession(currentSession);
     setUser(currentSession?.user ?? null);
     
@@ -42,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    console.log('[Auth] Setting up auth...');
+    logger.log('[Auth] Setting up auth...');
     
     let cleanup: (() => void) | undefined;
     
@@ -55,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Then check for existing session
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         
-        console.log('[Auth] Initial session check completed', initialSession ? 'User found' : 'No user');
+        logger.log('[Auth] Initial session check completed', initialSession ? 'User found' : 'No user');
         
         // Update state and mark as initialized
         setSession(initialSession);
@@ -72,16 +73,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setupAuth();
     
     return () => {
-      console.log('[Auth] Cleaning up auth subscription');
+      logger.log('[Auth] Cleaning up auth subscription');
       cleanup?.();
     };
   }, [handleAuthChange]);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    console.log('[Auth] Attempting sign in for:', email);
+    logger.log('[Auth] Attempting sign in for:', email);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      console.log('[Auth] Sign in result:', error ? 'Error' : 'Success');
+      logger.log('[Auth] Sign in result:', error ? 'Error' : 'Success');
       return { error };
     } catch (error) {
       console.error('[Auth] Sign in error:', error);
@@ -90,14 +91,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, metadata?: any) => {
-    console.log('[Auth] Attempting sign up for:', email);
+    logger.log('[Auth] Attempting sign up for:', email);
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { data: metadata }
       });
-      console.log('[Auth] Sign up result:', error ? 'Error' : 'Success');
+      logger.log('[Auth] Sign up result:', error ? 'Error' : 'Success');
       return { error, user: data?.user || null };
     } catch (error) {
       console.error('[Auth] Sign up error:', error);
@@ -106,10 +107,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = useCallback(async () => {
-    console.log('[Auth] Attempting sign out');
+    logger.log('[Auth] Attempting sign out');
     try {
       await supabase.auth.signOut();
-      console.log('[Auth] Sign out completed');
+      logger.log('[Auth] Sign out completed');
       
       // Clear state
       setUser(null);

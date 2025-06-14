@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -260,7 +261,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
   const handleRemoveDesign = () => {
     // Cette fonction devrait être passée en props ou implémentée
-    console.log('Remove design not implemented');
+    logger.log('Remove design not implemented');
   };
 
   const handleRemoveText = () => {

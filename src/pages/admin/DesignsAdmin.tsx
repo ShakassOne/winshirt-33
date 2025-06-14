@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 import React, { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import {
@@ -16,7 +17,7 @@ import { useStableAdminQuery } from '@/hooks/useStableAdminQuery';
 import { useStableAdminMutations } from '@/hooks/useStableAdminMutations';
 
 const DesignsAdmin = () => {
-  console.log('🎨 [DesignsAdmin] Rendering page...');
+  logger.log('🎨 [DesignsAdmin] Rendering page...');
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -37,7 +38,7 @@ const DesignsAdmin = () => {
   const createDesignMutation = useMutation({
     mutationFn: (designData: any) => createDesign(designData),
     onSuccess: () => {
-      console.log('✅ [DesignsAdmin] Design created - invalidating only');
+      logger.log('✅ [DesignsAdmin] Design created - invalidating only');
       invalidateDesigns(); // ✅ Une seule invalidation
       closeDialog();
       toast({
@@ -59,7 +60,7 @@ const DesignsAdmin = () => {
     mutationFn: (designData: { id: string; data: any }) => 
       updateDesign(designData.id, designData.data),
     onSuccess: () => {
-      console.log('✅ [DesignsAdmin] Design updated - invalidating only');
+      logger.log('✅ [DesignsAdmin] Design updated - invalidating only');
       invalidateDesigns(); // ✅ Une seule invalidation
       closeDialog();
       toast({
@@ -80,7 +81,7 @@ const DesignsAdmin = () => {
   const deleteDesignMutation = useMutation({
     mutationFn: (id: string) => deleteDesign(id),
     onSuccess: () => {
-      console.log('✅ [DesignsAdmin] Design deleted - invalidating only');
+      logger.log('✅ [DesignsAdmin] Design deleted - invalidating only');
       invalidateDesigns(); // ✅ Une seule invalidation
       toast({
         title: "Succès",

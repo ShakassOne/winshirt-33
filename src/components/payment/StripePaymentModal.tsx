@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -43,9 +44,9 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
 
   // Debug logs pour vérifier le chargement de Stripe
   useEffect(() => {
-    console.log('Stripe instance:', stripe);
-    console.log('Elements instance:', elements);
-    console.log('Modal open:', isOpen);
+    logger.log('Stripe instance:', stripe);
+    logger.log('Elements instance:', elements);
+    logger.log('Modal open:', isOpen);
   }, [stripe, elements, isOpen]);
 
   // Créer le PaymentIntent quand la modal s'ouvre
@@ -74,7 +75,7 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
 
       if (error) throw error;
       setClientSecret(data.clientSecret);
-      console.log('PaymentIntent created with clientSecret:', data.clientSecret);
+      logger.log('PaymentIntent created with clientSecret:', data.clientSecret);
     } catch (error) {
       console.error('Erreur lors de la création du PaymentIntent:', error);
       toast({
@@ -89,7 +90,7 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
     event.preventDefault();
 
     if (!stripe || !elements || !clientSecret) {
-      console.log('Missing requirements - stripe:', !!stripe, 'elements:', !!elements, 'clientSecret:', !!clientSecret);
+      logger.log('Missing requirements - stripe:', !!stripe, 'elements:', !!elements, 'clientSecret:', !!clientSecret);
       return;
     }
 
@@ -102,7 +103,7 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
       return;
     }
 
-    console.log('Processing payment with cardElement:', cardElement);
+    logger.log('Processing payment with cardElement:', cardElement);
 
     try {
       const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
@@ -241,8 +242,8 @@ const StripePaymentModal: React.FC<StripePaymentModalProps> = ({
                 <div className="p-4 border border-white/20 rounded-lg bg-white">
                   <CardElement 
                     options={cardElementOptions}
-                    onReady={() => console.log('CardElement is ready')}
-                    onChange={(event) => console.log('CardElement changed:', event)}
+                    onReady={() => logger.log('CardElement is ready')}
+                    onChange={(event) => logger.log('CardElement changed:', event)}
                   />
                 </div>
                 <p className="text-xs text-gray-400">
