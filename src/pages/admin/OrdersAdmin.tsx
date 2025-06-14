@@ -156,6 +156,35 @@ const OrdersAdmin = () => {
       });
     }
   };
+
+  const handleGenerateDTF = async () => {
+    if (!selectedOrder) return;
+    try {
+      const response = await fetch('/api/generate-design', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: selectedOrder.id,
+          json: (selectedOrder as any).json || selectedOrder.items?.[0]?.customization || {}
+        })
+      });
+
+      if (!response.ok) throw new Error('Request failed');
+
+      toast({
+        title: 'Fichiers générés',
+        description: 'Les fichiers DTF ont été générés avec succès'
+      });
+      await fetchOrders();
+    } catch (error) {
+      console.error('Error generating DTF files:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erreur',
+        description: "Impossible de générer les fichiers DTF"
+      });
+    }
+  };
   
   const getOrderStatusColor = (status: OrderStatus) => {
     switch (status) {
@@ -462,7 +491,18 @@ const OrdersAdmin = () => {
                   </div>
                 </div>
               </div>
-              
+
+              {selectedOrder.preview_url && (
+                <div className="mb-6 text-center md:col-span-2">
+                  <h3 className="text-lg font-semibold mb-2">Aperçu généré</h3>
+                  <img
+                    src={selectedOrder.preview_url}
+                    alt="Aperçu commande"
+                    className="max-w-full mx-auto rounded-lg border border-gray-700"
+                  />
+                </div>
+              )}
+
               {/* Articles avec détails complets */}
               <div>
                 <h3 className="text-lg font-semibold mb-4">Articles commandés</h3>
@@ -475,7 +515,10 @@ const OrdersAdmin = () => {
                 <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
                   Fermer
                 </Button>
-                <Button 
+                <Button onClick={handleGenerateDTF}>
+                  Générer fichiers DTF
+                </Button>
+                <Button
                   onClick={() => window.open(`/order-confirmation/${selectedOrder.id}`, '_blank')}
                 >
                   Voir page de confirmation
