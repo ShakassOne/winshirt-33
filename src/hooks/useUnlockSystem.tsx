@@ -65,8 +65,8 @@ export const useUnlockSystem = () => {
       console.log(`Query [${query.queryHash}]:`, {
         status: state.status,
         fetchStatus: state.fetchStatus,
-        isLoading: state.isLoading,
-        isError: state.isError,
+        isLoading: state.fetchStatus === 'fetching',
+        isError: state.status === 'error',
         error: state.error?.message,
         dataUpdatedAt: new Date(state.dataUpdatedAt),
         errorUpdatedAt: state.errorUpdatedAt ? new Date(state.errorUpdatedAt) : null,
@@ -75,7 +75,7 @@ export const useUnlockSystem = () => {
     
     // Forcer le refresh des requêtes bloquées
     const stuckQueries = queries.filter(q => 
-      q.state.isLoading && (Date.now() - q.state.dataUpdatedAt > 10000)
+      q.state.fetchStatus === 'fetching' && (Date.now() - q.state.dataUpdatedAt > 10000)
     );
     
     if (stuckQueries.length > 0) {
