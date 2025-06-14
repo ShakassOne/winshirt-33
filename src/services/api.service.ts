@@ -567,6 +567,24 @@ export const deleteSocialNetwork = async (id: string): Promise<void> => {
   }
 };
 
+export const generateDesign = async (
+  orderId: string,
+  json: any
+): Promise<any> => {
+  logger.log('[API] Generating design for order', orderId);
+  try {
+    const response = await axios.post('/api/generate-design', {
+      orderId,
+      json,
+    });
+    logger.log('[API] Design generation response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('[API] Error generating design:', error);
+    throw error;
+  }
+};
+
 export const uploadToExternalScript = async (file: File): Promise<string> => {
   logger.log('[API] Upload vers media.winshirt.fr/upload-visuel.php:', file.name);
   
