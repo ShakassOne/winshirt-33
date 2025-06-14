@@ -80,6 +80,8 @@ export type ExtendedOrderItem = OrderItem & {
 
 export type ExtendedOrder = Order & {
   items: ExtendedOrderItem[];
+  preview_url?: string | null;
+  hd_url?: string | null;
 };
 
 // Ajout des types manquants
