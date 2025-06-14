@@ -1,5 +1,6 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { getCookie, setCookie } from "@/utils/cookies";
 
 type Theme = "dark" | "light" | "system";
 
@@ -28,7 +29,7 @@ export function WinShirtThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
+    () => (getCookie(storageKey) as Theme) || defaultTheme
   );
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export function WinShirtThemeProvider({
   const value = {
     theme,
     setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme);
+      setCookie(storageKey, theme);
       setTheme(theme);
     },
   };

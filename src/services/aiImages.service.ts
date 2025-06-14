@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { getCookie, setCookie } from "@/utils/cookies";
 
 export interface AIImage {
   id: string;
@@ -53,10 +54,10 @@ export const uploadImageToSupabase = async (
 
 // Get session token for anonymous users
 export const getSessionToken = (): string => {
-  let token = localStorage.getItem('ai_session_token');
+  let token = getCookie('ai_session_token');
   if (!token) {
     token = `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-    localStorage.setItem('ai_session_token', token);
+    setCookie('ai_session_token', token);
   }
   return token;
 };
