@@ -1,4 +1,3 @@
-
 import logger from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { CartItem } from "@/types/supabase.types";
@@ -83,14 +82,10 @@ export const enhancedSecureCartService = {
         errors.push('Nom de design trop long (max 100 caractères)');
       }
 
-      // Validate uploaded images URLs
-      if (item.customization.uploadedImages) {
-        for (const imageUrl of item.customization.uploadedImages) {
-          if (!imageUrl.startsWith('https://') || imageUrl.length > 500) {
-            errors.push('URL d\'image invalide');
-            break;
-          }
-        }
+      // Validate design URL if present
+      if (item.customization.designUrl && 
+          (!item.customization.designUrl.startsWith('https://') || item.customization.designUrl.length > 500)) {
+        errors.push('URL de design invalide');
       }
     }
 
