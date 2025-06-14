@@ -6,8 +6,9 @@ import Footer from '@/components/layout/Footer';
 import { useOptimizedProductsQuery } from '@/hooks/useOptimizedProductsQuery';
 import ProductCard from '@/components/ui/ProductCard';
 import { Button } from '@/components/ui/button';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, RefreshCw } from 'lucide-react';
 import { Product } from '@/types/supabase.types';
+import UnlockButton from '@/components/ui/UnlockButton';
 
 const Products = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,7 +16,7 @@ const Products = () => {
   
   logger.log('[Products Page] Rendering with search:', searchTerm, 'category:', selectedCategory);
   
-  const { data: products, isLoading, error, refetch } = useOptimizedProductsQuery();
+  const { data: products, isLoading, error, refetch, forceRefresh } = useOptimizedProductsQuery();
 
   // Mémoriser les produits filtrés pour éviter les recalculs
   const filteredProducts = useMemo(() => {
@@ -45,6 +46,11 @@ const Products = () => {
   const handleRetry = () => {
     logger.log('[Products Page] Retrying fetch...');
     refetch();
+  };
+
+  const handleForceRefresh = () => {
+    logger.log('[Products Page] Force refreshing...');
+    forceRefresh();
   };
 
   return (
@@ -99,6 +105,15 @@ const Products = () => {
                   </Button>
                 ))}
               </div>
+              
+              {/* Ajout des boutons de déblocage */}
+              <div className="flex gap-2">
+                <Button onClick={handleRetry} variant="outline" size="sm">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Actualiser
+                </Button>
+                <UnlockButton />
+              </div>
             </div>
           </div>
         </section>
@@ -108,16 +123,34 @@ const Products = () => {
           <div className="container mx-auto px-4">
             {isLoading ? (
               <div className="text-center py-20">
-                <p>Chargement des produits...</p>
+                <p className="mb-4">Chargement des produits...</p>
+                <div className="flex gap-2 justify-center">
+                  <Button onClick={handleRetry} variant="outline">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Réessayer
+                  </Button>
+                  <UnlockButton />
+                </div>
               </div>
             ) : error ? (
               <div className="text-center py-20">
-                <p className="text-lg mb-4">Une erreur est survenue lors du chargement des produits.</p>
-                <Button onClick={handleRetry}>Réessayer</Button>
+                <p className="text-lg mb-4 text-red-500">Une erreur est survenue lors du chargement des produits.</p>
+                <div className="flex gap-2 justify-center">
+                  <Button onClick={handleRetry}>Réessayer</Button>
+                  <Button onClick={handleForceRefresh} variant="outline">Force Refresh</Button>
+                  <UnlockButton />
+                </div>
               </div>
             ) : filteredProducts?.length === 0 ? (
               <div className="text-center py-20">
-                <p>Aucun produit ne correspond à votre recherche.</p>
+                <p className="mb-4">Aucun produit ne correspond à votre recherche.</p>
+                <div className="flex gap-2 justify-center">
+                  <Button onClick={handleRetry} variant="outline">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Actualiser
+                  </Button>
+                  <UnlockButton />
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

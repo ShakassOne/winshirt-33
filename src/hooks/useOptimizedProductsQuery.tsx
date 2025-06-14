@@ -5,9 +5,18 @@ import { fetchAllProducts } from '@/services/api.service';
 export const useOptimizedProductsQuery = () => {
   return useSimpleQuery({
     queryKey: ['products-optimized'],
-    queryFn: fetchAllProducts,
+    queryFn: async () => {
+      const products = await fetchAllProducts();
+      if (!products) {
+        console.warn('[ProductsOptimized] No products returned, returning empty array');
+        return [];
+      }
+      return products;
+    },
     debugName: 'ProductsOptimized',
-    staleTime: 5 * 60 * 1000,
-    gcTime: 8 * 60 * 1000,
+    staleTime: 30 * 1000, // 30 secondes seulement
+    gcTime: 2 * 60 * 1000, // 2 minutes seulement
+    refetchOnMount: true, // TOUJOURS refetch
+    enableForceRefresh: true,
   });
 };

@@ -1,10 +1,10 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import { OptimizedAuthProvider } from '@/context/OptimizedAuthContext';
 import { CartProvider } from '@/context/CartContext';
+import { createOptimizedQueryClient } from '@/lib/queryClient';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
@@ -51,14 +51,7 @@ import LexiqueAdmin from '@/pages/admin/LexiqueAdmin';
 // Components
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-    },
-  },
-});
+const queryClient = createOptimizedQueryClient();
 
 function App() {
   return (

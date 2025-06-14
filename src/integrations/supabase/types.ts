@@ -605,9 +605,11 @@ export type Database = {
           created_at: string | null
           delivery_notes: string | null
           guest_email: string | null
+          hd_url: string | null
           id: string
           payment_intent_id: string | null
           payment_status: string | null
+          preview_url: string | null
           session_id: string | null
           shipping_address: string | null
           shipping_city: string | null
@@ -624,16 +626,16 @@ export type Database = {
           total_amount: number
           updated_at: string | null
           user_id: string | null
-          preview_url: string | null
-          hd_url: string | null
         }
         Insert: {
           created_at?: string | null
           delivery_notes?: string | null
           guest_email?: string | null
+          hd_url?: string | null
           id?: string
           payment_intent_id?: string | null
           payment_status?: string | null
+          preview_url?: string | null
           session_id?: string | null
           shipping_address?: string | null
           shipping_city?: string | null
@@ -650,16 +652,16 @@ export type Database = {
           total_amount: number
           updated_at?: string | null
           user_id?: string | null
-          preview_url?: string | null
-          hd_url?: string | null
         }
         Update: {
           created_at?: string | null
           delivery_notes?: string | null
           guest_email?: string | null
+          hd_url?: string | null
           id?: string
           payment_intent_id?: string | null
           payment_status?: string | null
+          preview_url?: string | null
           session_id?: string | null
           shipping_address?: string | null
           shipping_city?: string | null
@@ -676,8 +678,6 @@ export type Database = {
           total_amount?: number
           updated_at?: string | null
           user_id?: string | null
-          preview_url?: string | null
-          hd_url?: string | null
         }
         Relationships: [
           {

@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import GlassCard from './GlassCard';
 import { ShoppingCart, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface ProductCardProps {
@@ -31,7 +31,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const navigate = useNavigate();
   
   useEffect(() => {
     const card = cardRef.current;
@@ -95,88 +95,105 @@ const ProductCard: React.FC<ProductCardProps> = ({
     };
   }, []);
   
+  const handleCardClick = () => {
+    navigate(`/product/${id}`);
+  };
+
+  const handleButtonClick = (e: React.MouseEvent, action: 'add' | 'view') => {
+    e.stopPropagation();
+    if (action === 'view') {
+      navigate(`/product/${id}`);
+    }
+    // Pour 'add', on peut ajouter la logique d'ajout au panier ici plus tard
+  };
+  
   return (
-    <Link to={`/product/${id}`} className="block">
-      <div 
-        ref={cardRef} 
-        className="tilt-card relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-lg border border-white/10 shadow-lg"
-      >
-        <div className="relative overflow-hidden">
-          <AspectRatio ratio={1} className="w-full">
-            <div className="h-full w-full overflow-hidden">
-              <img
-                ref={imageRef}
-                src={image}
-                alt={name}
-                className="absolute left-50% top-50% w-full h-full object-cover transform-center"
-              />
-            </div>
-          </AspectRatio>
-          
-          {isCustomizable && (
-            <div className="absolute top-2 left-2 bg-winshirt-purple/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium">
-              Personnalisable
-            </div>
-          )}
-          {tickets > 0 && (
-            <div className="absolute top-2 right-2 bg-winshirt-blue/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium">
-              {tickets} {tickets > 1 ? 'tickets' : 'ticket'}
-            </div>
-          )}
-          
-          <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-between items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-            <Button size="sm" variant="secondary" className="flex items-center gap-1" asChild>
-              <Link to={`/product/${id}`} onClick={(e) => e.stopPropagation()}>
-                <ShoppingCart className="h-4 w-4" />
-                <span className="hidden sm:inline-block">Ajouter</span>
-              </Link>
-            </Button>
-            <Button size="sm" variant="outline" className="flex items-center gap-1" asChild>
-              <Link to={`/product/${id}`} onClick={(e) => e.stopPropagation()}>
-                <Eye className="h-4 w-4" />
-                <span className="hidden sm:inline-block">Détails</span>
-              </Link>
-            </Button>
+    <div 
+      ref={cardRef} 
+      className="tilt-card relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-lg border border-white/10 shadow-lg cursor-pointer"
+      onClick={handleCardClick}
+    >
+      <div className="relative overflow-hidden">
+        <AspectRatio ratio={1} className="w-full">
+          <div className="h-full w-full overflow-hidden">
+            <img
+              ref={imageRef}
+              src={image}
+              alt={name}
+              className="absolute left-50% top-50% w-full h-full object-cover transform-center"
+            />
+          </div>
+        </AspectRatio>
+        
+        {isCustomizable && (
+          <div className="absolute top-2 left-2 bg-winshirt-purple/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium">
+            Personnalisable
+          </div>
+        )}
+        {tickets > 0 && (
+          <div className="absolute top-2 right-2 bg-winshirt-blue/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium">
+            {tickets} {tickets > 1 ? 'tickets' : 'ticket'}
+          </div>
+        )}
+        
+        <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-between items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <Button 
+            size="sm" 
+            variant="secondary" 
+            className="flex items-center gap-1"
+            onClick={(e) => handleButtonClick(e, 'add')}
+          >
+            <ShoppingCart className="h-4 w-4" />
+            <span className="hidden sm:inline-block">Ajouter</span>
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="flex items-center gap-1"
+            onClick={(e) => handleButtonClick(e, 'view')}
+          >
+            <Eye className="h-4 w-4" />
+            <span className="hidden sm:inline-block">Détails</span>
+          </Button>
+        </div>
+      </div>
+      
+      <div className="p-4">
+        <p className="text-sm text-muted-foreground">{category}</p>
+        <h3 className="font-medium mt-1 hover:text-winshirt-blue transition-colors">
+          {name}
+        </h3>
+        
+        <div className="mt-2 flex justify-between items-center">
+          <p className="font-bold text-lg">{price.toFixed(2)} €</p>
+          <div className="flex items-center">
+            {Array(5).fill(0).map((_, i) => (
+              <svg
+                key={i}
+                xmlns="http://www.w3.org/2000/svg"
+                className={cn(
+                  "h-4 w-4",
+                  i < rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                )}
+                viewBox="0 0 20 20"
+              >
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            ))}
           </div>
         </div>
         
-        <div className="p-4">
-          <p className="text-sm text-muted-foreground">{category}</p>
-          <h3 className="font-medium mt-1 hover:text-winshirt-blue transition-colors">
-            {name}
-          </h3>
-          
-          <div className="mt-2 flex justify-between items-center">
-            <p className="font-bold text-lg">{price.toFixed(2)} €</p>
-            <div className="flex items-center">
-              {Array(5).fill(0).map((_, i) => (
-                <svg
-                  key={i}
-                  xmlns="http://www.w3.org/2000/svg"
-                  className={cn(
-                    "h-4 w-4",
-                    i < rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-                  )}
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-              ))}
-            </div>
+        {color && (
+          <div className="mt-2 flex items-center gap-1">
+            <div 
+              className="h-4 w-4 rounded-full border border-white/30" 
+              style={{ backgroundColor: color }}
+            />
+            <div className="h-4 w-4 rounded-full bg-white border border-white/30" />
           </div>
-          
-          {color && (
-            <div className="mt-2 flex items-center gap-1">
-              <div 
-                className="h-4 w-4 rounded-full border border-white/30" 
-                style={{ backgroundColor: color }}
-              />
-              <div className="h-4 w-4 rounded-full bg-white border border-white/30" />
-            </div>
-          )}
-        </div>
+        )}
       </div>
-    </Link>
+    </div>
   );
 };
 
