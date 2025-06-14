@@ -624,6 +624,8 @@ export type Database = {
           total_amount: number
           updated_at: string | null
           user_id: string | null
+          preview_url: string | null
+          hd_url: string | null
         }
         Insert: {
           created_at?: string | null
@@ -648,6 +650,8 @@ export type Database = {
           total_amount: number
           updated_at?: string | null
           user_id?: string | null
+          preview_url?: string | null
+          hd_url?: string | null
         }
         Update: {
           created_at?: string | null
@@ -672,6 +676,8 @@ export type Database = {
           total_amount?: number
           updated_at?: string | null
           user_id?: string | null
+          preview_url?: string | null
+          hd_url?: string | null
         }
         Relationships: [
           {
