@@ -58,7 +58,7 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
   };
 
   // Gestionnaires d'événements tactiles améliorés pour mobile
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent, type: 'design' | 'text') => {
     e.preventDefault();
     const touch = e.touches[0];
     setIsDragging(true);
@@ -66,16 +66,18 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
   }, []);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isDragging || !currentData.design) return;
+    if (!isDragging) return;
     e.preventDefault();
     
     const touch = e.touches[0];
     const deltaX = touch.clientX - dragStart.x;
     const deltaY = touch.clientY - dragStart.y;
     
-    const newX = currentData.design.transform.position.x + deltaX;
-    const newY = currentData.design.transform.position.y + deltaY;
-    onDesignTransformChange('position', { x: newX, y: newY });
+    if (currentData.design) {
+      const newX = currentData.design.transform.position.x + deltaX;
+      const newY = currentData.design.transform.position.y + deltaY;
+      onDesignTransformChange('position', { x: newX, y: newY });
+    }
     
     setDragStart({ x: touch.clientX, y: touch.clientY });
   }, [isDragging, dragStart, currentData.design, onDesignTransformChange]);
@@ -84,22 +86,24 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
     setIsDragging(false);
   }, []);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent, type: 'design' | 'text') => {
     e.preventDefault();
     setIsDragging(true);
     setDragStart({ x: e.clientX, y: e.clientY });
   }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging || !currentData.design) return;
+    if (!isDragging) return;
     e.preventDefault();
     
     const deltaX = e.clientX - dragStart.x;
     const deltaY = e.clientY - dragStart.y;
     
-    const newX = currentData.design.transform.position.x + deltaX;
-    const newY = currentData.design.transform.position.y + deltaY;
-    onDesignTransformChange('position', { x: newX, y: newY });
+    if (currentData.design) {
+      const newX = currentData.design.transform.position.x + deltaX;
+      const newY = currentData.design.transform.position.y + deltaY;
+      onDesignTransformChange('position', { x: newX, y: newY });
+    }
     
     setDragStart({ x: e.clientX, y: e.clientY });
   }, [isDragging, dragStart, currentData.design, onDesignTransformChange]);
@@ -114,22 +118,28 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
         {/* Preview Area avec rendu unifié - Vue principale visible */}
         <div 
           ref={previewRef}
-          className="relative w-full h-full cursor-move"
-          onTouchStart={handleTouchStart}
+          className="relative w-full h-full"
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
-          <div className="w-full h-full pointer-events-none">
+          <div className="w-full h-full">
             <UnifiedCustomizationRenderer
               customization={customization}
               side={currentViewSide}
               withBackground={true}
               backgroundUrl={getProductImage()}
               className="w-full h-full"
+              onDesignInteraction={{
+                onTouchStart: (e) => handleTouchStart(e, 'design'),
+                onMouseDown: (e) => handleMouseDown(e, 'design'),
+              }}
+              onTextInteraction={{
+                onTouchStart: (e) => handleTouchStart(e, 'text'),
+                onMouseDown: (e) => handleMouseDown(e, 'text'),
+              }}
             />
           </div>
         </div>
