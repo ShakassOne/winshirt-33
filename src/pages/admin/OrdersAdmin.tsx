@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { Skeleton } from '@/components/ui/skeleton';
+import { generateDesign } from '@/services/api.service';
 
 const OrdersAdmin = () => {
   const [orders, setOrders] = useState<ExtendedOrder[]>([]);
@@ -160,16 +161,10 @@ const OrdersAdmin = () => {
   const handleGenerateDTF = async () => {
     if (!selectedOrder) return;
     try {
-      const response = await fetch('/api/generate-design', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: selectedOrder.id,
-          json: (selectedOrder as any).json || selectedOrder.items?.[0]?.customization || {}
-        })
-      });
-
-      if (!response.ok) throw new Error('Request failed');
+      await generateDesign(
+        selectedOrder.id,
+        (selectedOrder as any).json || selectedOrder.items?.[0]?.customization || {}
+      );
 
       toast({
         title: 'Fichiers générés',
