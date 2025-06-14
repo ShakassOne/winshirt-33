@@ -804,6 +804,13 @@ const ProductDetail = () => {
     setIsDraggingText(false);
     setPageScrollLocked(false);
   };
+  const handleMouseMoveRef = useRef<(event: MouseEvent | TouchEvent) => void>(handleMouseMove);
+  const handleMouseUpRef = useRef<() => void>(handleMouseUp);
+
+  useEffect(() => {
+    handleMouseMoveRef.current = handleMouseMove;
+    handleMouseUpRef.current = handleMouseUp;
+  });
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -831,19 +838,21 @@ const ProductDetail = () => {
     }
   };
   useEffect(() => {
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    window.addEventListener('touchmove', handleMouseMove, {
-      passive: false
-    });
-    window.addEventListener('touchend', handleMouseUp);
+    const onMove = (e: MouseEvent | TouchEvent) => handleMouseMoveRef.current(e);
+    const onUp = () => handleMouseUpRef.current();
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onUp);
+
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('touchmove', handleMouseMove);
-      window.removeEventListener('touchend', handleMouseUp);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onUp);
     };
-  }, [isDragging, startPos, isDraggingText, startPosText]);
+  }, []);
   useEffect(() => {
     if (currentViewSide === 'front') {
       setActiveDesignSide('front');
