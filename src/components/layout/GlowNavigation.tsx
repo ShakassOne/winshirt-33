@@ -3,12 +3,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Heart, User, ShoppingCart, Moon, Sun, Settings, Shirt, Clover } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { UnifiedThemeToggle } from '@/components/theme/theme-toggle-unified';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { useCart } from '@/context/CartContext';
-import { useTheme } from '@/components/theme-provider';
+import { useWinShirtTheme } from '@/components/theme/theme-provider-wrapper';
 import { toast } from 'sonner';
 
 interface NavItem {
@@ -29,7 +30,7 @@ export const GlowNavigation: React.FC = () => {
   const { isAuthenticated, signOut } = useOptimizedAuth();
   const { isAdmin } = useAdminCheck();
   const { itemCount } = useCart();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useWinShirtTheme();
   const [activeIndex, setActiveIndex] = useState(0);
   const markerRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLUListElement>(null);
