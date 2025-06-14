@@ -1,4 +1,3 @@
-
 import logger from '@/utils/logger';
 
 import React, { useState, useMemo } from 'react';
@@ -19,6 +18,7 @@ import { ProductColorSelector } from './ProductColorSelector';
 import { EnhancedProductPreview } from './EnhancedProductPreview';
 import { CompactMobileTools } from './CompactMobileTools';
 import { CompactAIGenerator } from './CompactAIGenerator';
+import { DesignControls } from './DesignControls';
 
 interface ModalPersonnalisationProps {
   open: boolean;
@@ -176,7 +176,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('designs');
 
-  // Memoized getters for better performance
   const currentData = useMemo(() => ({
     design: currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack,
     svgColor: currentViewSide === 'front' ? svgColorFront : svgColorBack,
@@ -205,7 +204,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
   const hasTwoSides = mockup?.svg_back_url ? true : false;
 
-  // Créer la structure de données unifiée pour le nouveau composant
   const unifiedCustomization = useMemo(() => {
     const frontDesign = selectedDesignFront ? {
       designId: selectedDesignFront.id,
@@ -271,8 +269,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
   const desktopContent = (
     <div className="flex h-full gap-4">
-      {/* Zone de prévisualisation agrandie - 65% au lieu de 50% */}
-      <div className="w-[65%] flex flex-col">
+      {/* Zone de prévisualisation réduite - 35% au lieu de 65% */}
+      <div className="w-[35%] flex flex-col">
         <ProductPreview
           productName={productName}
           productImageUrl={productImageUrl}
@@ -305,8 +303,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         />
       </div>
 
-      {/* Zone des outils réduite - 35% au lieu de 50% */}
-      <div className="w-[35%] flex flex-col">
+      {/* Zone des outils agrandie - 65% au lieu de 35% */}
+      <div className="w-[65%] flex flex-col">
         {filteredMockupColors.length > 0 && (
           <div className="mb-4">
             <h3 className="text-lg font-medium mb-2">Couleur du produit</h3>
@@ -370,27 +368,56 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             </TabsContent>
 
             <TabsContent value="upload" className="h-full overflow-y-auto">
-              <UploadDesign
-                onFileUpload={onFileUpload}
-                onRemoveBackground={onRemoveBackground}
-                isRemovingBackground={isRemovingBackground}
-                currentDesign={currentData.design}
-              />
+              <div className="space-y-4">
+                <UploadDesign
+                  onFileUpload={onFileUpload}
+                  onRemoveBackground={onRemoveBackground}
+                  isRemovingBackground={isRemovingBackground}
+                  currentDesign={currentData.design}
+                />
+                <DesignControls
+                  selectedDesign={currentData.design}
+                  designTransform={currentData.designTransform}
+                  selectedSize={currentData.selectedSize}
+                  onDesignTransformChange={onDesignTransformChange}
+                  onSizeChange={onSizeChange}
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="ai" className="h-full overflow-y-auto">
-              <CompactAIGenerator onImageGenerated={onAIImageGenerated} />
+              <div className="h-full flex flex-col space-y-4">
+                <div className="flex-1">
+                  <CompactAIGenerator onImageGenerated={onAIImageGenerated} />
+                </div>
+                <DesignControls
+                  selectedDesign={currentData.design}
+                  designTransform={currentData.designTransform}
+                  selectedSize={currentData.selectedSize}
+                  onDesignTransformChange={onDesignTransformChange}
+                  onSizeChange={onSizeChange}
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="svg" className="h-full overflow-y-auto">
-              <SVGDesigns
-                onSelectDesign={handleDesignSelection}
-                selectedDesign={currentData.design}
-                onFileUpload={onFileUpload}
-                onSvgColorChange={onSvgColorChange}
-                onSvgContentChange={onSvgContentChange}
-                defaultSvgColor={currentData.svgColor}
-              />
+              <div className="space-y-4">
+                <SVGDesigns
+                  onSelectDesign={handleDesignSelection}
+                  selectedDesign={currentData.design}
+                  onFileUpload={onFileUpload}
+                  onSvgColorChange={onSvgColorChange}
+                  onSvgContentChange={onSvgContentChange}
+                  defaultSvgColor={currentData.svgColor}
+                />
+                <DesignControls
+                  selectedDesign={currentData.design}
+                  designTransform={currentData.designTransform}
+                  selectedSize={currentData.selectedSize}
+                  onDesignTransformChange={onDesignTransformChange}
+                  onSizeChange={onSizeChange}
+                />
+              </div>
             </TabsContent>
           </div>
         </Tabs>
