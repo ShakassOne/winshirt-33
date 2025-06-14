@@ -9,19 +9,15 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/components/ui/use-toast';
 import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
-import { Loader2, Eye, EyeOff, Shield } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { SecureValidationUtils } from '@/components/validation/SecureValidationUtils';
-import { passwordValidator } from '@/utils/enhancedSecurityHeaders';
 
 const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, signUp, isAuthenticated, isLoading: authLoading } = useOptimizedAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   // Form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -32,10 +28,7 @@ const Auth = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
-
-  // Password strength indicator
-  const [passwordStrength, setPasswordStrength] = useState({ score: 0, feedback: [] as string[] });
-
+  
   // Redirect to previous page or home if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
@@ -43,16 +36,6 @@ const Auth = () => {
       navigate(from);
     }
   }, [isAuthenticated, navigate, location]);
-
-  // Update password strength on change
-  useEffect(() => {
-    if (signupPassword) {
-      const validation = passwordValidator.validatePasswordStrength(signupPassword);
-      setPasswordStrength({ score: validation.score, feedback: validation.feedback });
-    } else {
-      setPasswordStrength({ score: 0, feedback: [] });
-    }
-  }, [signupPassword]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,19 +77,11 @@ const Auth = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Enhanced validation using SecureValidationUtils
-    const validationResult = SecureValidationUtils.validateUserRegistration({
-      email: signupEmail,
-      password: signupPassword,
-      firstName,
-      lastName
-    });
-
-    if (!validationResult.isValid) {
-      SecureValidationUtils.logValidationAttempt('user_registration', false, validationResult.errors);
+    // Validation
+    if (!signupEmail || !signupPassword || !confirmPassword || !firstName || !lastName) {
       toast({
-        title: "Erreur de validation",
-        description: validationResult.errors.join(', '),
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs",
         variant: "destructive",
       });
       return;
@@ -133,23 +108,18 @@ const Auth = () => {
     setIsSubmitting(true);
     
     try {
-      const { error, user } = await signUp(
-        validationResult.sanitized.email,
-        validationResult.sanitized.password,
-        {
-          first_name: validationResult.sanitized.firstName,
-          last_name: validationResult.sanitized.lastName,
-        }
-      );
+      const { error, user } = await signUp(signupEmail, signupPassword, {
+        first_name: firstName,
+        last_name: lastName,
+      });
       
       if (error) {
         throw error;
       }
       
-      SecureValidationUtils.logValidationAttempt('user_registration', true);
       toast({
         title: "Inscription réussie",
-        description: "Votre compte a été créé avec succès. Vérifiez votre email pour confirmer votre compte.",
+        description: "Votre compte a été créé avec succès",
       });
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -163,29 +133,11 @@ const Auth = () => {
     }
   };
 
-  const getPasswordStrengthColor = (score: number) => {
-    if (score < 2) return 'bg-red-500';
-    if (score < 4) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
-
-  const getPasswordStrengthText = (score: number) => {
-    if (score < 2) return 'Faible';
-    if (score < 4) return 'Moyen';
-    return 'Fort';
-  };
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <div className="flex-1 container mx-auto px-4 py-8 mt-16">
         <div className="max-w-md mx-auto">
-          <div className="text-center mb-6">
-            <Shield className="mx-auto h-12 w-12 text-winshirt-purple mb-4" />
-            <h1 className="text-2xl font-bold">Connexion Sécurisée</h1>
-            <p className="text-white/70">Votre sécurité est notre priorité</p>
-          </div>
-
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Connexion</TabsTrigger>
@@ -212,35 +164,17 @@ const Auth = () => {
                           value={loginEmail}
                           onChange={(e) => setLoginEmail(e.target.value)}
                           disabled={isSubmitting}
-                          autoComplete="email"
                         />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="password">Mot de passe</Label>
-                        <div className="relative">
-                          <Input 
-                            id="password" 
-                            type={showPassword ? "text" : "password"}
-                            value={loginPassword}
-                            onChange={(e) => setLoginPassword(e.target.value)}
-                            disabled={isSubmitting}
-                            autoComplete="current-password"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                            onClick={() => setShowPassword(!showPassword)}
-                            disabled={isSubmitting}
-                          >
-                            {showPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
+                        <Input 
+                          id="password" 
+                          type="password" 
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          disabled={isSubmitting}
+                        />
                       </div>
                       
                       <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -276,7 +210,6 @@ const Auth = () => {
                             value={firstName}
                             onChange={(e) => setFirstName(e.target.value)}
                             disabled={isSubmitting}
-                            autoComplete="given-name"
                           />
                         </div>
                         <div className="space-y-2">
@@ -287,7 +220,6 @@ const Auth = () => {
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
                             disabled={isSubmitting}
-                            autoComplete="family-name"
                           />
                         </div>
                       </div>
@@ -301,94 +233,29 @@ const Auth = () => {
                           value={signupEmail}
                           onChange={(e) => setSignupEmail(e.target.value)}
                           disabled={isSubmitting}
-                          autoComplete="email"
                         />
                       </div>
                       
                       <div className="space-y-2">
                         <Label htmlFor="signupPassword">Mot de passe</Label>
-                        <div className="relative">
-                          <Input 
-                            id="signupPassword" 
-                            type={showPassword ? "text" : "password"}
-                            value={signupPassword}
-                            onChange={(e) => setSignupPassword(e.target.value)}
-                            disabled={isSubmitting}
-                            autoComplete="new-password"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                            onClick={() => setShowPassword(!showPassword)}
-                            disabled={isSubmitting}
-                          >
-                            {showPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                        
-                        {signupPassword && (
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-sm">
-                              <span>Force du mot de passe:</span>
-                              <span className={
-                                passwordStrength.score < 2 ? 'text-red-500' :
-                                passwordStrength.score < 4 ? 'text-yellow-500' : 'text-green-500'
-                              }>
-                                {getPasswordStrengthText(passwordStrength.score)}
-                              </span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div 
-                                className={`h-2 rounded-full transition-all ${getPasswordStrengthColor(passwordStrength.score)}`}
-                                style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
-                              />
-                            </div>
-                            {passwordStrength.feedback.length > 0 && (
-                              <ul className="text-xs text-red-500 space-y-1">
-                                {passwordStrength.feedback.map((feedback, index) => (
-                                  <li key={index}>• {feedback}</li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        )}
+                        <Input 
+                          id="signupPassword" 
+                          type="password" 
+                          value={signupPassword}
+                          onChange={(e) => setSignupPassword(e.target.value)}
+                          disabled={isSubmitting}
+                        />
                       </div>
                       
                       <div className="space-y-2">
                         <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-                        <div className="relative">
-                          <Input 
-                            id="confirmPassword" 
-                            type={showConfirmPassword ? "text" : "password"}
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            disabled={isSubmitting}
-                            autoComplete="new-password"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            disabled={isSubmitting}
-                          >
-                            {showConfirmPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                        {confirmPassword && signupPassword !== confirmPassword && (
-                          <p className="text-xs text-red-500">Les mots de passe ne correspondent pas</p>
-                        )}
+                        <Input 
+                          id="confirmPassword" 
+                          type="password" 
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          disabled={isSubmitting}
+                        />
                       </div>
                       
                       <div className="flex items-center space-x-2">
@@ -402,11 +269,11 @@ const Auth = () => {
                           htmlFor="terms"
                           className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                         >
-                          J'accepte les conditions générales d'utilisation et la politique de confidentialité
+                          J'accepte les conditions générales d'utilisation
                         </label>
                       </div>
                       
-                      <Button type="submit" className="w-full" disabled={isSubmitting || passwordStrength.score < 4}>
+                      <Button type="submit" className="w-full" disabled={isSubmitting}>
                         {isSubmitting ? (
                           <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Inscription en cours...</>
                         ) : (

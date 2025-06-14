@@ -11,7 +11,6 @@ import { CompactDesignGallery } from './CompactDesignGallery';
 import { CompactSVGGallery } from './CompactSVGGallery';
 import { CompactUpload } from './CompactUpload';
 import { CompactAIGenerator } from './CompactAIGenerator';
-import { DesignControls } from './DesignControls';
 
 interface CompactMobileToolsProps {
   activeTab: string;
@@ -142,20 +141,10 @@ export const CompactMobileTools: React.FC<CompactMobileToolsProps> = ({
         {/* Compact content area */}
         <div className="flex-1 overflow-hidden bg-black/40 rounded border border-white/10">
           <TabsContent value="designs" className="h-full overflow-y-auto p-2 m-0">
-            <div className="space-y-2">
-              <CompactDesignGallery
-                onSelectDesign={onSelectDesign}
-                selectedDesign={selectedDesign}
-              />
-              <DesignControls
-                selectedDesign={selectedDesign}
-                designTransform={designTransform}
-                selectedSize={selectedSize}
-                onDesignTransformChange={onDesignTransformChange}
-                onSizeChange={onSizeChange}
-                compact={true}
-              />
-            </div>
+            <CompactDesignGallery
+              onSelectDesign={onSelectDesign}
+              selectedDesign={selectedDesign}
+            />
           </TabsContent>
 
           <TabsContent value="text" className="h-full overflow-y-auto p-2 m-0 space-y-2">
@@ -230,40 +219,18 @@ export const CompactMobileTools: React.FC<CompactMobileToolsProps> = ({
           </TabsContent>
 
           <TabsContent value="upload" className="h-full overflow-y-auto p-2 m-0">
-            <div className="space-y-2">
-              <CompactUpload
-                onFileUpload={onFileUpload}
-                onRemoveBackground={onRemoveBackground}
-                isRemovingBackground={isRemovingBackground}
-                currentDesign={selectedDesign}
-              />
-              <DesignControls
-                selectedDesign={selectedDesign}
-                designTransform={designTransform}
-                selectedSize={selectedSize}
-                onDesignTransformChange={onDesignTransformChange}
-                onSizeChange={onSizeChange}
-                compact={true}
-              />
-            </div>
+            <CompactUpload
+              onFileUpload={onFileUpload}
+              onRemoveBackground={onRemoveBackground}
+              isRemovingBackground={isRemovingBackground}
+              currentDesign={selectedDesign}
+            />
           </TabsContent>
 
           <TabsContent value="ai" className="h-full overflow-y-auto p-2 m-0">
-            <div className="h-full flex flex-col space-y-2">
-              <div className="flex-1 min-h-0">
-                <CompactAIGenerator
-                  onImageGenerated={onAIImageGenerated}
-                />
-              </div>
-              <DesignControls
-                selectedDesign={selectedDesign}
-                designTransform={designTransform}
-                selectedSize={selectedSize}
-                onDesignTransformChange={onDesignTransformChange}
-                onSizeChange={onSizeChange}
-                compact={true}
-              />
-            </div>
+            <CompactAIGenerator
+              onImageGenerated={onAIImageGenerated}
+            />
           </TabsContent>
 
           <TabsContent value="svg" className="h-full overflow-y-auto p-2 m-0 space-y-2">
@@ -289,15 +256,6 @@ export const CompactMobileTools: React.FC<CompactMobileToolsProps> = ({
                 </div>
               </div>
             )}
-
-            <DesignControls
-              selectedDesign={selectedDesign}
-              designTransform={designTransform}
-              selectedSize={selectedSize}
-              onDesignTransformChange={onDesignTransformChange}
-              onSizeChange={onSizeChange}
-              compact={true}
-            />
           </TabsContent>
         </div>
       </Tabs>

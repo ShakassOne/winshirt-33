@@ -1,229 +1,159 @@
+import logger from '@/utils/logger';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session, AuthError } from '@supabase/supabase-js';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { enhancedErrorUtils, enhancedRateLimiter, passwordValidator, inputSanitizer } from '@/utils/enhancedSecurityHeaders';
 
-interface AuthContextType {
+interface OptimizedAuthContextType {
   user: User | null;
   session: Session | null;
-  isLoading: boolean;
   isAuthenticated: boolean;
-  signUp: (email: string, password: string, additionalData?: any) => Promise<{ user: User | null; error: AuthError | null }>;
-  signIn: (email: string, password: string) => Promise<{ user: User | null; error: AuthError | null }>;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any, user: User | null }>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const OptimizedAuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signUp = async (email: string, password: string, additionalData?: any) => {
-    try {
-      // Rate limiting check
-      const rateLimitKey = `signup_${email}`;
-      const rateCheck = enhancedRateLimiter.checkRateLimit(rateLimitKey, 3, 300000); // 3 attempts per 5 minutes
-      
-      if (!rateCheck.allowed) {
-        const error = new Error('Trop de tentatives d\'inscription. Veuillez réessayer plus tard.') as AuthError;
-        toast.error(enhancedErrorUtils.getUserFriendlyError(error));
-        return { user: null, error };
-      }
-
-      // Validate email
-      const emailValidation = inputSanitizer.validateEmail(email);
-      if (!emailValidation.isValid) {
-        const error = new Error(emailValidation.error) as AuthError;
-        toast.error(enhancedErrorUtils.getUserFriendlyError(error));
-        return { user: null, error };
-      }
-
-      // Validate password strength
-      const passwordValidation = passwordValidator.validatePasswordStrength(password);
-      if (!passwordValidation.isValid) {
-        const error = new Error(passwordValidation.feedback.join('. ')) as AuthError;
-        toast.error(enhancedErrorUtils.getUserFriendlyError(error));
-        return { user: null, error };
-      }
-
-      // Sanitize additional data
-      const sanitizedData = additionalData ? {
-        first_name: inputSanitizer.sanitizeUserInput(additionalData.first_name || '', 50),
-        last_name: inputSanitizer.sanitizeUserInput(additionalData.last_name || '', 50),
-      } : undefined;
-
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim().toLowerCase(),
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth`,
-          data: sanitizedData
-        }
-      });
-      
-      if (error) {
-        enhancedErrorUtils.logSecurityEvent('Signup failed', { email, error: error.message });
-        toast.error(enhancedErrorUtils.getUserFriendlyError(error));
-        return { user: null, error };
-      }
-      
-      if (data.user) {
-        enhancedRateLimiter.resetRateLimit(rateLimitKey);
-        toast.success('Compte créé avec succès ! Vérifiez votre email pour confirmer votre compte.');
-      }
-      
-      return { user: data.user, error: null };
-    } catch (error) {
-      enhancedErrorUtils.logSecurityEvent('Unexpected signup error', error);
-      const authError = error as AuthError;
-      toast.error(enhancedErrorUtils.getUserFriendlyError(authError));
-      return { user: null, error: authError };
-    }
-  };
-
-  const signIn = async (email: string, password: string) => {
-    try {
-      // Rate limiting check
-      const rateLimitKey = `signin_${email}`;
-      const rateCheck = enhancedRateLimiter.checkRateLimit(rateLimitKey, 5, 900000); // 5 attempts per 15 minutes
-      
-      if (!rateCheck.allowed) {
-        const error = new Error('Trop de tentatives de connexion. Veuillez réessayer plus tard.') as AuthError;
-        toast.error(enhancedErrorUtils.getUserFriendlyError(error));
-        return { user: null, error };
-      }
-
-      // Validate email
-      const emailValidation = inputSanitizer.validateEmail(email);
-      if (!emailValidation.isValid) {
-        const error = new Error(emailValidation.error) as AuthError;
-        toast.error(enhancedErrorUtils.getUserFriendlyError(error));
-        return { user: null, error };
-      }
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      });
-      
-      if (error) {
-        enhancedErrorUtils.logSecurityEvent('Login failed', { email, error: error.message });
-        toast.error(enhancedErrorUtils.getUserFriendlyError(error));
-        return { user: null, error };
-      }
-      
-      if (data.user) {
-        enhancedRateLimiter.resetRateLimit(rateLimitKey);
-        toast.success('Connexion réussie !');
-      }
-      
-      return { user: data.user, error: null };
-    } catch (error) {
-      enhancedErrorUtils.logSecurityEvent('Unexpected login error', error);
-      const authError = error as AuthError;
-      toast.error(enhancedErrorUtils.getUserFriendlyError(authError));
-      return { user: null, error: authError };
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        enhancedErrorUtils.logSecurityEvent('Logout error', error);
-        toast.error(enhancedErrorUtils.getUserFriendlyError(error));
-        throw error;
-      }
-      toast.success('Déconnexion réussie');
-    } catch (error) {
-      enhancedErrorUtils.logSecurityEvent('Unexpected logout error', error);
-      throw error;
-    }
-  };
-
-  const resetPassword = async (email: string) => {
-    try {
-      // Rate limiting check
-      const rateLimitKey = `reset_${email}`;
-      const rateCheck = enhancedRateLimiter.checkRateLimit(rateLimitKey, 2, 600000); // 2 attempts per 10 minutes
-      
-      if (!rateCheck.allowed) {
-        const error = new Error('Trop de demandes de réinitialisation. Veuillez réessayer plus tard.') as AuthError;
-        toast.error(enhancedErrorUtils.getUserFriendlyError(error));
-        return { error };
-      }
-
-      // Validate email
-      const emailValidation = inputSanitizer.validateEmail(email);
-      if (!emailValidation.isValid) {
-        const error = new Error(emailValidation.error) as AuthError;
-        toast.error(enhancedErrorUtils.getUserFriendlyError(error));
-        return { error };
-      }
-
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-        redirectTo: `${window.location.origin}/auth?mode=reset-password`,
-      });
-      
-      if (error) {
-        enhancedErrorUtils.logSecurityEvent('Password reset error', { email, error: error.message });
-        toast.error(enhancedErrorUtils.getUserFriendlyError(error));
-        return { error };
-      }
-      
-      toast.success('Email de réinitialisation envoyé ! Vérifiez votre boîte de réception.');
-      return { error: null };
-    } catch (error) {
-      enhancedErrorUtils.logSecurityEvent('Unexpected password reset error', error);
-      const authError = error as AuthError;
-      toast.error(enhancedErrorUtils.getUserFriendlyError(authError));
-      return { error: authError };
-    }
-  };
-
-  const value = {
-    user,
-    session,
-    isLoading,
-    isAuthenticated: !!user,
-    signUp,
-    signIn,
-    signOut,
-    resetPassword,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+const OptimizedAuthContext = createContext<OptimizedAuthContextType | undefined>(undefined);
 
 export const useOptimizedAuth = () => {
-  const context = useContext(AuthContext);
+  const context = useContext(OptimizedAuthContext);
   if (context === undefined) {
     throw new Error('useOptimizedAuth must be used within an OptimizedAuthProvider');
   }
   return context;
 };
+
+export const OptimizedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const isInitializedRef = useRef(false);
+  const authStateListenerRef = useRef<any>(null);
+
+  const handleAuthChange = useCallback((event: string, currentSession: Session | null) => {
+    logger.log(`[OptimizedAuth] Auth state changed: ${event}`, currentSession ? 'User logged in' : 'User logged out');
+    
+    // Stabilisation des mises à jour d'état
+    setSession(prev => {
+      if (prev?.access_token === currentSession?.access_token) {
+        return prev; // Évite les mises à jour inutiles
+      }
+      return currentSession;
+    });
+    
+    setUser(prev => {
+      const newUser = currentSession?.user ?? null;
+      if (prev?.id === newUser?.id) {
+        return prev; // Évite les mises à jour inutiles
+      }
+      return newUser;
+    });
+    
+    // Marquer comme initialisé après le premier événement
+    if (!isInitializedRef.current) {
+      isInitializedRef.current = true;
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    logger.log('[OptimizedAuth] Setting up optimized auth...');
+    
+    let isActive = true;
+    
+    const setupAuth = async () => {
+      try {
+        // Configuration du listener d'état d'auth en premier
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+        authStateListenerRef.current = subscription;
+        
+        // Vérification de la session existante
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        
+        if (isActive) {
+          logger.log('[OptimizedAuth] Initial session check completed', initialSession ? 'User found' : 'No user');
+          
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+          isInitializedRef.current = true;
+          setIsLoading(false);
+        }
+        
+      } catch (error) {
+        console.error('[OptimizedAuth] Error setting up auth:', error);
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    setupAuth();
+    
+    return () => {
+      isActive = false;
+      logger.log('[OptimizedAuth] Cleaning up auth subscription');
+      authStateListenerRef.current?.unsubscribe();
+    };
+  }, [handleAuthChange]);
+
+  const signIn = useCallback(async (email: string, password: string) => {
+    logger.log('[OptimizedAuth] Attempting sign in for:', email);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      logger.log('[OptimizedAuth] Sign in result:', error ? 'Error' : 'Success');
+      return { error };
+    } catch (error) {
+      console.error('[OptimizedAuth] Sign in error:', error);
+      return { error };
+    }
+  }, []);
+
+  const signUp = useCallback(async (email: string, password: string, metadata?: any) => {
+    logger.log('[OptimizedAuth] Attempting sign up for:', email);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: metadata }
+      });
+      logger.log('[OptimizedAuth] Sign up result:', error ? 'Error' : 'Success');
+      return { error, user: data?.user || null };
+    } catch (error) {
+      console.error('[OptimizedAuth] Sign up error:', error);
+      return { error, user: null };
+    }
+  }, []);
+
+  const signOut = useCallback(async () => {
+    logger.log('[OptimizedAuth] Attempting sign out');
+    try {
+      await supabase.auth.signOut();
+      logger.log('[OptimizedAuth] Sign out completed');
+      
+      // Nettoyage optimisé de l'état
+      setUser(null);
+      setSession(null);
+      
+    } catch (error) {
+      console.error("[OptimizedAuth] Sign out error:", error);
+      // Nettoyer l'état local même si l'appel API échoue
+      setUser(null);
+      setSession(null);
+    }
+  }, []);
+
+  const value = {
+    user,
+    session,
+    isAuthenticated: !!user,
+    isLoading,
+    signIn,
+    signUp,
+    signOut
+  };
+
+  return <OptimizedAuthContext.Provider value={value}>{children}</OptimizedAuthContext.Provider>;
+};
+
+export default OptimizedAuthProvider;

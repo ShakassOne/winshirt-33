@@ -40,8 +40,6 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
 }) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const [showControls, setShowControls] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   const currentData = {
     design: currentViewSide === 'front' ? customization?.frontDesign : customization?.backDesign,
@@ -57,61 +55,6 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
     return undefined;
   };
 
-  // Gestionnaires d'événements tactiles améliorés pour mobile
-  const handleTouchStart = useCallback((e: React.TouchEvent, type: 'design' | 'text') => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    setIsDragging(true);
-    setDragStart({ x: touch.clientX, y: touch.clientY });
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - dragStart.x;
-    const deltaY = touch.clientY - dragStart.y;
-    
-    if (currentData.design) {
-      const newX = currentData.design.transform.position.x + deltaX;
-      const newY = currentData.design.transform.position.y + deltaY;
-      onDesignTransformChange('position', { x: newX, y: newY });
-    }
-    
-    setDragStart({ x: touch.clientX, y: touch.clientY });
-  }, [isDragging, dragStart, currentData.design, onDesignTransformChange]);
-
-  const handleTouchEnd = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent, type: 'design' | 'text') => {
-    e.preventDefault();
-    setIsDragging(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
-  }, []);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    
-    const deltaX = e.clientX - dragStart.x;
-    const deltaY = e.clientY - dragStart.y;
-    
-    if (currentData.design) {
-      const newX = currentData.design.transform.position.x + deltaX;
-      const newY = currentData.design.transform.position.y + deltaY;
-      onDesignTransformChange('position', { x: newX, y: newY });
-    }
-    
-    setDragStart({ x: e.clientX, y: e.clientY });
-  }, [isDragging, dragStart, currentData.design, onDesignTransformChange]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
   return (
     <>
       <div className="relative w-full h-full bg-gray-900/50 rounded-lg overflow-hidden">
@@ -119,11 +62,6 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
         <div 
           ref={previewRef}
           className="relative w-full h-full"
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
         >
           <div className="w-full h-full">
             <UnifiedCustomizationRenderer
@@ -132,14 +70,6 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
               withBackground={true}
               backgroundUrl={getProductImage()}
               className="w-full h-full"
-              onDesignInteraction={{
-                onTouchStart: (e) => handleTouchStart(e, 'design'),
-                onMouseDown: (e) => handleMouseDown(e, 'design'),
-              }}
-              onTextInteraction={{
-                onTouchStart: (e) => handleTouchStart(e, 'text'),
-                onMouseDown: (e) => handleMouseDown(e, 'text'),
-              }}
             />
           </div>
         </div>
