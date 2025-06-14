@@ -1,3 +1,4 @@
+
 import logger from '@/utils/logger';
 
 import React, { useState, useMemo } from 'react';
@@ -269,8 +270,9 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   };
 
   const desktopContent = (
-    <div className="flex h-full gap-6">
-      <div className="w-1/2 flex flex-col">
+    <div className="flex h-full gap-4">
+      {/* Zone de prévisualisation agrandie - 65% au lieu de 50% */}
+      <div className="w-[65%] flex flex-col">
         <ProductPreview
           productName={productName}
           productImageUrl={productImageUrl}
@@ -303,10 +305,11 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         />
       </div>
 
-      <div className="w-1/2 flex flex-col">
+      {/* Zone des outils réduite - 35% au lieu de 50% */}
+      <div className="w-[35%] flex flex-col">
         {filteredMockupColors.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-lg font-medium mb-3">Couleur du produit</h3>
+          <div className="mb-4">
+            <h3 className="text-lg font-medium mb-2">Couleur du produit</h3>
             <ProductColorSelector
               colors={filteredMockupColors}
               selectedColor={selectedMockupColor}
@@ -316,25 +319,25 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-5 mb-4">
-            <TabsTrigger value="designs" className="flex items-center gap-2">
-              <ImageIcon className="h-4 w-4" />
+          <TabsList className="grid w-full grid-cols-5 mb-3">
+            <TabsTrigger value="designs" className="flex items-center gap-1 text-xs">
+              <ImageIcon className="h-3 w-3" />
               <span className="hidden sm:inline">Images</span>
             </TabsTrigger>
-            <TabsTrigger value="text" className="flex items-center gap-2">
-              <Type className="h-4 w-4" />
+            <TabsTrigger value="text" className="flex items-center gap-1 text-xs">
+              <Type className="h-3 w-3" />
               <span className="hidden sm:inline">Texte</span>
             </TabsTrigger>
-            <TabsTrigger value="upload" className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
+            <TabsTrigger value="upload" className="flex items-center gap-1 text-xs">
+              <Upload className="h-3 w-3" />
               <span className="hidden sm:inline">Upload</span>
             </TabsTrigger>
-            <TabsTrigger value="ai" className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
+            <TabsTrigger value="ai" className="flex items-center gap-1 text-xs">
+              <Sparkles className="h-3 w-3" />
               <span className="hidden sm:inline">IA</span>
             </TabsTrigger>
-            <TabsTrigger value="svg" className="flex items-center gap-2">
-              <Paintbrush className="h-4 w-4" />
+            <TabsTrigger value="svg" className="flex items-center gap-1 text-xs">
+              <Paintbrush className="h-3 w-3" />
               <span className="hidden sm:inline">SVG</span>
             </TabsTrigger>
           </TabsList>
@@ -479,13 +482,13 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         onClose();
       }
     }}>
-      <DialogContent className="bg-black/90 backdrop-blur-lg border-white/20 max-w-[95vw] w-[95vw] h-[95vh] overflow-hidden">
-        <DialogHeader className="border-b border-white/10 pb-4">
-          <DialogTitle className="text-2xl font-semibold">
+      <DialogContent className="bg-black/90 backdrop-blur-lg border-white/20 max-w-[98vw] w-[98vw] h-[98vh] overflow-hidden">
+        <DialogHeader className="border-b border-white/10 pb-3">
+          <DialogTitle className="text-xl font-semibold">
             🎨 Personnalisation - {currentViewSide === 'front' ? 'Avant' : 'Arrière'}
           </DialogTitle>
         </DialogHeader>
-        <div className="pt-4 h-full overflow-hidden">
+        <div className="pt-3 h-full overflow-hidden">
           {desktopContent}
         </div>
       </DialogContent>
