@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,7 +43,7 @@ const LexiqueAdmin = () => {
 
   const handleAddTerm = () => {
     // Logic pour ajouter un nouveau terme
-    console.log('Ajout du terme:', newTerm);
+    logger.log('Ajout du terme:', newTerm);
     setNewTerm({ word: '', definition: '', category: '' });
     setIsAddingTerm(false);
   };

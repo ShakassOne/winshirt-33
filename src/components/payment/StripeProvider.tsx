@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React from 'react';
 import { Elements } from '@stripe/react-stripe-js';
@@ -7,8 +8,8 @@ import { loadStripe } from '@stripe/stripe-js';
 const stripePublishableKey = 'pk_test_51RG3RwQZp9KyWcDgNqtcHRoqMDR9pa2QzxVgaItN32kXpllhwRFYHMaaOUmn9jAZ56duJwIZ4OIFEVlYcd2pa6O600qTFJdlH8';
 
 // Debug détaillé
-console.log('=== STRIPE CONFIGURATION DEBUG ===');
-console.log('Environment variables:', {
+logger.log('=== STRIPE CONFIGURATION DEBUG ===');
+logger.log('Environment variables:', {
   VITE_STRIPE_PUBLISHABLE_KEY: stripePublishableKey ? 'PRESENT' : 'MISSING',
   raw_value: stripePublishableKey
 });
@@ -23,7 +24,7 @@ const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : 
 // Debug du chargement de Stripe
 if (stripePromise) {
   stripePromise.then((stripe) => {
-    console.log('✅ Stripe loaded successfully:', !!stripe);
+    logger.log('✅ Stripe loaded successfully:', !!stripe);
   }).catch((error) => {
     console.error('❌ Error loading Stripe:', error);
   });

@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
 
@@ -111,7 +112,7 @@ export class EmailService {
       is_active: true
     };
 
-    console.log('🔍 [EmailService] Mise à jour paramètres SMTP avec:', {
+    logger.log('🔍 [EmailService] Mise à jour paramètres SMTP avec:', {
       host: ionosSettings.smtp_host,
       port: ionosSettings.smtp_port,
       secure: ionosSettings.smtp_secure,
@@ -213,13 +214,13 @@ export class EmailService {
     templateType: string
   ): Promise<{ success: boolean; message?: string; debug?: any }> {
     try {
-      console.log(`🔍 [EmailService] Test email ${templateType} vers ${recipientEmail}`);
+      logger.log(`🔍 [EmailService] Test email ${templateType} vers ${recipientEmail}`);
       
       const { data, error } = await supabase.functions.invoke('test-email', {
         body: { recipientEmail, templateType }
       });
 
-      console.log(`🔍 [EmailService] Réponse fonction:`, { data, error });
+      logger.log(`🔍 [EmailService] Réponse fonction:`, { data, error });
 
       if (error) {
         console.error('❌ [EmailService] Erreur fonction:', error);
@@ -244,7 +245,7 @@ export class EmailService {
         }
 
         if ('success' in data && data.success) {
-          console.log('✅ [EmailService] Email envoyé avec succès');
+          logger.log('✅ [EmailService] Email envoyé avec succès');
           return { 
             success: true, 
             message: data.message,

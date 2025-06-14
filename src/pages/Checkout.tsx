@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -190,9 +191,9 @@ const Checkout = () => {
   };
 
   const onSubmit = async (data: CheckoutFormData) => {
-    console.log("Checkout form submitted with data:", data);
-    console.log("Cart items:", items);
-    console.log("Cart token:", cartToken);
+    logger.log("Checkout form submitted with data:", data);
+    logger.log("Cart items:", items);
+    logger.log("Cart token:", cartToken);
     
     if (!items || items.length === 0) {
       toast({
@@ -214,12 +215,12 @@ const Checkout = () => {
 
     try {
       setIsLoading(true);
-      console.log("Starting checkout process...");
+      logger.log("Starting checkout process...");
       
       let userId = user?.id;
       
       if (data.createAccount && !user) {
-        console.log("Creating new account...");
+        logger.log("Creating new account...");
         const { error, data: authData } = await supabase.auth.signUp({
           email: data.email,
           password: data.password as string,
@@ -265,9 +266,9 @@ const Checkout = () => {
         }
       }
       
-      console.log("Creating order...");
+      logger.log("Creating order...");
       const order = await createOrder(data, items, cartToken, userId);
-      console.log("Order created:", order);
+      logger.log("Order created:", order);
       
       setCurrentOrderId(order.id);
       setShowPaymentModal(true);
@@ -297,7 +298,7 @@ const Checkout = () => {
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
-    console.log("Form submit triggered");
+    logger.log("Form submit triggered");
     e.preventDefault();
     form.handleSubmit(onSubmit)(e);
   };
@@ -538,7 +539,7 @@ const Checkout = () => {
                           size="lg"
                           disabled={isLoading}
                           onClick={(e) => {
-                            console.log("Button clicked");
+                            logger.log("Button clicked");
                           }}
                         >
                           {isLoading ? "Création de la commande..." : "Procéder au paiement"}

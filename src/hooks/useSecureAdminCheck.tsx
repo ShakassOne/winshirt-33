@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import { useState, useEffect } from 'react';
 import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
@@ -32,7 +33,7 @@ export const useSecureAdminCheck = () => {
           const userIsAdmin = roleData !== null;
           setIsAdmin(userIsAdmin);
           
-          console.log('[useSecureAdminCheck] Admin check result:', { 
+          logger.log('[useSecureAdminCheck] Admin check result:', { 
             userId: user.id,
             email: user.email, 
             isAdmin: userIsAdmin 

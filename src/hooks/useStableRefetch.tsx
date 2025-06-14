@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import { useCallback, useRef } from 'react';
 
@@ -10,9 +11,9 @@ export const useStableRefetch = (refetchFn: () => void) => {
     if (now - lastRefetch.current > DEBOUNCE_MS) {
       lastRefetch.current = now;
       refetchFn();
-      console.log('[StableRefetch] Refetch triggered');
+      logger.log('[StableRefetch] Refetch triggered');
     } else {
-      console.log('[StableRefetch] Refetch debounced');
+      logger.log('[StableRefetch] Refetch debounced');
     }
   }, [refetchFn]);
 };

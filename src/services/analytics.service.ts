@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -5,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const trackEvent = (eventName: string, parameters: any = {}) => {
   if (typeof window !== 'undefined' && window.gtag) {
     window.gtag('event', eventName, parameters);
-    console.log(`🔍 [Analytics] Event tracked: ${eventName}`, parameters);
+    logger.log(`🔍 [Analytics] Event tracked: ${eventName}`, parameters);
   }
 };
 

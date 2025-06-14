@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 /**
  * Example of the URLs saved for a customized order.
@@ -48,9 +49,9 @@ export const enrichCustomizationWithCaptures = (
     back?: { mockupUrl?: string; hdUrl?: string };
   }
 ): UnifiedCustomizationData => {
-  console.log('🔄 [UnifiedCapture Service] Enrichissement des données...');
-  console.log('📋 [UnifiedCapture Service] Base:', baseCustomization);
-  console.log('📸 [UnifiedCapture Service] Captures:', captures);
+  logger.log('🔄 [UnifiedCapture Service] Enrichissement des données...');
+  logger.log('📋 [UnifiedCapture Service] Base:', baseCustomization);
+  logger.log('📸 [UnifiedCapture Service] Captures:', captures);
   
   // Vérifier que captures existe et a la bonne structure
   const frontCapture = captures?.front || {};
@@ -69,14 +70,14 @@ export const enrichCustomizationWithCaptures = (
     visual_back_url: backCapture.hdUrl || null,
   };
 
-  console.log('✅ [UnifiedCapture Service] Données enrichies:', enriched);
+  logger.log('✅ [UnifiedCapture Service] Données enrichies:', enriched);
   
   // Vérifier que les URLs ont été correctement assignées
   if (enriched.hdRectoUrl) {
-    console.log('✅ [UnifiedCapture Service] URL HD Recto générée:', enriched.hdRectoUrl);
+    logger.log('✅ [UnifiedCapture Service] URL HD Recto générée:', enriched.hdRectoUrl);
   }
   if (enriched.hdVersoUrl) {
-    console.log('✅ [UnifiedCapture Service] URL HD Verso générée:', enriched.hdVersoUrl);
+    logger.log('✅ [UnifiedCapture Service] URL HD Verso générée:', enriched.hdVersoUrl);
   }
   
   return enriched;
@@ -98,9 +99,9 @@ export const validateUnifiedCustomization = (customization: any): boolean => {
   const isValid = hasNewStructure || hasOldStructure;
   
   if (hasNewStructure) {
-    console.log('✅ [UnifiedCapture Service] Structure moderne détectée');
+    logger.log('✅ [UnifiedCapture Service] Structure moderne détectée');
   } else if (hasOldStructure) {
-    console.log('✅ [UnifiedCapture Service] Structure legacy détectée');
+    logger.log('✅ [UnifiedCapture Service] Structure legacy détectée');
   } else {
     console.warn('⚠️ [UnifiedCapture Service] Aucune personnalisation valide trouvée');
   }
@@ -116,6 +117,6 @@ export const extractCaptureUrls = (customization: any) => {
     hdVersoUrl: customization?.hdVersoUrl || customization?.visual_back_url || null,
   };
   
-  console.log('📤 [UnifiedCapture Service] URLs extraites:', urls);
+  logger.log('📤 [UnifiedCapture Service] URLs extraites:', urls);
   return urls;
 };

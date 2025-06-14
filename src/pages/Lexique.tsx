@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { useState } from 'react';
 import { BookOpen, Code, Database, Settings, Wrench, Bug, Folder, Cpu } from 'lucide-react';

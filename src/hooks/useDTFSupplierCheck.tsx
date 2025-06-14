@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import { useState, useEffect } from 'react';
 import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
@@ -32,7 +33,7 @@ export const useDTFSupplierCheck = () => {
           const userIsDTFSupplier = roleData !== null;
           setIsDTFSupplier(userIsDTFSupplier);
           
-          console.log('[useDTFSupplierCheck] DTF supplier check result:', { 
+          logger.log('[useDTFSupplierCheck] DTF supplier check result:', { 
             userId: user.id,
             email: user.email, 
             isDTFSupplier: userIsDTFSupplier 

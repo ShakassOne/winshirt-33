@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,7 +38,7 @@ interface ProductFormProps {
 }
 
 const ProductForm = ({ isOpen, onClose, onSuccess, initialData, mockups = [] }: ProductFormProps) => {
-  console.log('🎭 [ProductForm] Rendering with mockups:', mockups?.length || 0);
+  logger.log('🎭 [ProductForm] Rendering with mockups:', mockups?.length || 0);
   
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);

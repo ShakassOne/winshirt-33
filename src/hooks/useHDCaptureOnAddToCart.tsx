@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import { useCallback } from 'react';
 import { useUnifiedCapture } from './useUnifiedCapture';
@@ -8,8 +9,8 @@ export const useHDCaptureOnAddToCart = () => {
 
   const captureForProduction = useCallback(async (customization: any): Promise<any> => {
     try {
-      console.log('🎬 [HDCaptureOnAddToCart] Début capture pour production');
-      console.log('📋 [HDCaptureOnAddToCart] Données reçues:', customization);
+      logger.log('🎬 [HDCaptureOnAddToCart] Début capture pour production');
+      logger.log('📋 [HDCaptureOnAddToCart] Données reçues:', customization);
       
       // Valider la personnalisation
       if (!validateUnifiedCustomization(customization)) {
@@ -17,15 +18,15 @@ export const useHDCaptureOnAddToCart = () => {
         return customization;
       }
 
-      console.log('✅ [HDCaptureOnAddToCart] Personnalisation valide, lancement capture...');
+      logger.log('✅ [HDCaptureOnAddToCart] Personnalisation valide, lancement capture...');
 
       // Attendre que les éléments soient bien rendus dans le DOM
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      console.log('🚀 [HDCaptureOnAddToCart] Démarrage de la capture unifiée...');
+      logger.log('🚀 [HDCaptureOnAddToCart] Démarrage de la capture unifiée...');
       const captureResult = await captureUnified(customization);
       
-      console.log('📤 [HDCaptureOnAddToCart] Résultat capture:', captureResult);
+      logger.log('📤 [HDCaptureOnAddToCart] Résultat capture:', captureResult);
 
       // Vérifier si au moins une capture a réussi
       const hasAnyCapture = 
@@ -33,10 +34,10 @@ export const useHDCaptureOnAddToCart = () => {
         captureResult.front.hdUrl || captureResult.back.hdUrl;
       
       if (hasAnyCapture) {
-        console.log('🎉 [HDCaptureOnAddToCart] Au moins une capture réussie');
+        logger.log('🎉 [HDCaptureOnAddToCart] Au moins une capture réussie');
         
         const enrichedCustomization = enrichCustomizationWithCaptures(customization, captureResult);
-        console.log('📦 [HDCaptureOnAddToCart] Customization enrichie:', enrichedCustomization);
+        logger.log('📦 [HDCaptureOnAddToCart] Customization enrichie:', enrichedCustomization);
         
         return enrichedCustomization;
       } else {

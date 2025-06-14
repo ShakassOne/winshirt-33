@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import { useStableAdminQuery } from './useStableAdminQuery';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,7 +24,7 @@ export const useAnalyticsData = () => {
   return useStableAdminQuery<AnalyticsData>({
     queryKey: ['analytics-data'],
     queryFn: async () => {
-      console.log('🔄 [Analytics] Fetching analytics data...');
+      logger.log('🔄 [Analytics] Fetching analytics data...');
       
       // Récupérer les commandes payées
       const { data: orders, error: ordersError } = await supabase

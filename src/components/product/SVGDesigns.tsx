@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -67,7 +68,7 @@ export const SVGDesigns: React.FC<SVGDesignsProps> = ({
 
   const handleDesignSelect = (design: Design, e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('🎨 [SVGDesigns] Sélection du design SVG:', design.name);
+    logger.log('🎨 [SVGDesigns] Sélection du design SVG:', design.name);
     onSelectDesign(design);
   };
 
@@ -89,7 +90,7 @@ export const SVGDesigns: React.FC<SVGDesignsProps> = ({
     // Analyser automatiquement le SVG
     setIsAnalyzing(true);
     try {
-      console.log('🔍 [SVGDesigns] Analyse du SVG:', file.name);
+      logger.log('🔍 [SVGDesigns] Analyse du SVG:', file.name);
       const analysis = await SVGAnalyzerService.analyzeSVG(file);
       setSvgAnalysis(analysis);
       
@@ -109,7 +110,7 @@ export const SVGDesigns: React.FC<SVGDesignsProps> = ({
   };
 
   const handleSvgCleanupComplete = (cleanedFile: File) => {
-    console.log('✅ [SVGDesigns] SVG nettoyé, procédure d\'upload:', cleanedFile.name);
+    logger.log('✅ [SVGDesigns] SVG nettoyé, procédure d\'upload:', cleanedFile.name);
     
     // Créer un événement synthetic pour le fichier nettoyé
     const dataTransfer = new DataTransfer();

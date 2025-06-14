@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { useState } from 'react';
 import Navbar from '@/components/layout/Navbar';
@@ -19,7 +20,7 @@ interface NormalizedMockup extends Mockup {
 }
 
 const MockupsAdmin = () => {
-  console.log('🖼️ [MockupsAdmin] Rendering page...');
+  logger.log('🖼️ [MockupsAdmin] Rendering page...');
   
   const { toast } = useToast();
   const { invalidateMockups } = useStableAdminMutations();
@@ -64,7 +65,7 @@ const MockupsAdmin = () => {
   }, [mockupsData]);
 
   const handleCreateSuccess = () => {
-    console.log('✅ [MockupsAdmin] Mockup operation success - invalidating only');
+    logger.log('✅ [MockupsAdmin] Mockup operation success - invalidating only');
     invalidateMockups(); // ✅ Une seule invalidation
     toast({
       title: "Mockup créé",

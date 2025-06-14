@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import { useQuery, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
 
@@ -14,15 +15,15 @@ export function useStableAdminQuery<T>({
   ...options
 }: StableAdminQueryOptions<T>): UseQueryResult<T> {
   
-  console.log(`🔄 [StableAdmin:${debugName || 'Unknown'}] Query key:`, queryKey);
+  logger.log(`🔄 [StableAdmin:${debugName || 'Unknown'}] Query key:`, queryKey);
   
   return useQuery({
     queryKey,
     queryFn: async () => {
-      console.log(`⬇️ [StableAdmin:${debugName}] Fetching data...`);
+      logger.log(`⬇️ [StableAdmin:${debugName}] Fetching data...`);
       try {
         const result = await queryFn();
-        console.log(`✅ [StableAdmin:${debugName}] Success:`, Array.isArray(result) ? `${result.length} items` : 'data received');
+        logger.log(`✅ [StableAdmin:${debugName}] Success:`, Array.isArray(result) ? `${result.length} items` : 'data received');
         return result;
       } catch (error) {
         console.error(`❌ [StableAdmin:${debugName}] Error:`, error);

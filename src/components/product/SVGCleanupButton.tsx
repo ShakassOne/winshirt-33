@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -28,7 +29,7 @@ export const SVGCleanupButton: React.FC<SVGCleanupButtonProps> = ({
     setError(null);
 
     try {
-      console.log('🔧 [SVGCleanup] Début du nettoyage SVG:', file.name);
+      logger.log('🔧 [SVGCleanup] Début du nettoyage SVG:', file.name);
       const result = await SVGAnalyzerService.cleanSVG(file);
       
       setCleanupResult(result);
@@ -36,7 +37,7 @@ export const SVGCleanupButton: React.FC<SVGCleanupButtonProps> = ({
       // Créer le fichier nettoyé
       const cleanedFile = SVGAnalyzerService.createCleanedFile(result.cleanedBlob, file.name);
       
-      console.log('✅ [SVGCleanup] SVG nettoyé avec succès:', result.appliedFixes);
+      logger.log('✅ [SVGCleanup] SVG nettoyé avec succès:', result.appliedFixes);
       onCleanupComplete(cleanedFile);
       
     } catch (err) {

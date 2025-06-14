@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
@@ -70,8 +71,8 @@ export const GalleryDesigns: React.FC<GalleryDesignsProps> = ({
 
   const handleDesignSelect = (design: Design, e: React.MouseEvent) => {
     e.stopPropagation(); // ← Empêche le clic de "sortir" du Dialog
-    console.log('🎨 [GalleryDesigns] Sélection du design:', design.name);
-    console.log('🔒 Appel de onSelectDesign sans fermeture de modal');
+    logger.log('🎨 [GalleryDesigns] Sélection du design:', design.name);
+    logger.log('🔒 Appel de onSelectDesign sans fermeture de modal');
     
     // Appeler directement la fonction sans aucune logique de fermeture
     onSelectDesign(design);

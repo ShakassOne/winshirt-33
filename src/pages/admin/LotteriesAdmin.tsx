@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 import React, { useState, useMemo } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -16,7 +17,7 @@ import { useStableAdminQuery } from '@/hooks/useStableAdminQuery';
 import { useStableAdminMutations } from '@/hooks/useStableAdminMutations';
 
 const LotteriesAdmin = React.memo(() => {
-  console.log('🎲 [LotteriesAdmin] Rendering page...');
+  logger.log('🎲 [LotteriesAdmin] Rendering page...');
   
   const { toast: toastHook } = useToast();
   const { invalidateLotteries } = useStableAdminMutations();
@@ -32,7 +33,7 @@ const LotteriesAdmin = React.memo(() => {
   });
 
   const handleCreateSuccess = React.useCallback(() => {
-    console.log('✅ [LotteriesAdmin] Lottery operation success - invalidating only');
+    logger.log('✅ [LotteriesAdmin] Lottery operation success - invalidating only');
     invalidateLotteries(); // ✅ Une seule invalidation, pas de refetch
     toastHook({
       title: "Loterie créée",
@@ -49,7 +50,7 @@ const LotteriesAdmin = React.memo(() => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette loterie ?')) {
       try {
         await deleteLottery(lotteryId);
-        console.log('✅ [LotteriesAdmin] Lottery deleted - invalidating only');
+        logger.log('✅ [LotteriesAdmin] Lottery deleted - invalidating only');
         invalidateLotteries(); // ✅ Une seule invalidation
         toast.success('Loterie supprimée avec succès');
       } catch (error) {

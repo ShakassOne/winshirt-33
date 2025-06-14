@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React, { memo } from 'react';
 
@@ -19,7 +20,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = memo(({
   };
 
   React.useEffect(() => {
-    console.log(`[LoadingSpinner] Rendered with text: ${text}`);
+    logger.log(`[LoadingSpinner] Rendered with text: ${text}`);
   }, [text]);
 
   return (

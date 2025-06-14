@@ -1,3 +1,4 @@
+import logger from '@/utils/logger';
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ export const SocialShareButton: React.FC<SocialShareButtonProps> = ({
           url: fullUrl,
         });
       } catch (error) {
-        console.log('Partage annulé');
+        logger.log('Partage annulé');
       }
     } else {
       try {
