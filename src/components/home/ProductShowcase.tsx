@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import ProductCard from '../ui/ProductCard';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
-import { useProductsQuery } from '@/hooks/useProductsQuery';
+import { useProductsUnified } from '@/hooks/useProductsUnified';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import UnlockButton from '@/components/ui/UnlockButton';
 import { RefreshCw } from 'lucide-react';
@@ -15,7 +15,7 @@ interface ProductShowcaseProps {
 }
 
 const ProductShowcase: React.FC<ProductShowcaseProps> = ({ className }) => {
-  const { data: products, isLoading, error, refetch, forceRefresh } = useProductsQuery();
+  const { data: products, isLoading, error, refetch, forceRefresh } = useProductsUnified();
 
   logger.log('[ProductShowcase] Rendering with products count:', products?.length || 0);
 

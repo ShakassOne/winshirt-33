@@ -1,9 +1,10 @@
+
 import logger from '@/utils/logger';
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { useOptimizedProductsQuery } from '@/hooks/useOptimizedProductsQuery';
+import { useProductsUnified } from '@/hooks/useProductsUnified';
 import ProductCard from '@/components/ui/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Search, Filter, RefreshCw } from 'lucide-react';
@@ -16,9 +17,9 @@ const Products = () => {
   
   logger.log('[Products Page] Rendering with search:', searchTerm, 'category:', selectedCategory);
   
-  const { data: products, isLoading, error, refetch, forceRefresh } = useOptimizedProductsQuery();
+  const { data: products, isLoading, error, refetch, forceRefresh } = useProductsUnified();
 
-  // Mémoriser les produits filtrés pour éviter les recalculs
+  // Optimisation: mémoriser les produits filtrés avec debounce
   const filteredProducts = useMemo(() => {
     if (!products) return [];
     
@@ -34,7 +35,7 @@ const Products = () => {
     });
   }, [products, searchTerm, selectedCategory]);
 
-  // Mémoriser les catégories uniques
+  // Optimisation: mémoriser les catégories uniques
   const categories = useMemo(() => {
     if (!products) return [];
     const uniqueCategories = [...new Set(products.map((product: Product) => product.category))];
@@ -106,7 +107,6 @@ const Products = () => {
                 ))}
               </div>
               
-              {/* Ajout des boutons de déblocage */}
               <div className="flex gap-2">
                 <Button onClick={handleRetry} variant="outline" size="sm">
                   <RefreshCw className="h-4 w-4 mr-2" />

@@ -1,10 +1,9 @@
 import logger from '@/utils/logger';
-
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { useOptimizedLotteriesQuery } from '@/hooks/useOptimizedLotteriesQuery';
+import { useLotteriesUnified } from '@/hooks/useLotteriesUnified';
 import LotteryCard from '@/components/ui/LotteryCard';
 import { Button } from '@/components/ui/button';
 import { Search, Calendar, Users, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -16,9 +15,9 @@ const Lotteries = () => {
   
   logger.log('[Lotteries Page] Rendering with filterActive:', filterActive, 'search:', searchTerm);
   
-  const { data: lotteries, isLoading, error, refetch } = useOptimizedLotteriesQuery();
+  const { data: lotteries, isLoading, error, refetch } = useLotteriesUnified();
 
-  // Mémoriser les loteries filtrées pour éviter les recalculs
+  // Optimisation: mémoriser les loteries filtrées
   const filteredLotteries = useMemo(() => {
     if (!lotteries) return [];
     
@@ -32,7 +31,7 @@ const Lotteries = () => {
     });
   }, [lotteries, filterActive, searchTerm]);
   
-  // Mémoriser les loteries en vedette
+  // Optimisation: mémoriser les loteries en vedette
   const featuredLotteries = useMemo(() => {
     return lotteries?.filter(lottery => lottery.is_featured) || [];
   }, [lotteries]);
@@ -42,7 +41,6 @@ const Lotteries = () => {
   logger.log('[Lotteries Page] Featured lotteries:', featuredLotteries.length);
   logger.log('[Lotteries Page] Filtered lotteries count:', filteredLotteries?.length || 0);
 
-  // Function to retry fetching lotteries
   const handleRetry = () => {
     logger.log('[Lotteries Page] Retrying fetch...');
     refetch();
@@ -61,7 +59,7 @@ const Lotteries = () => {
     );
   };
 
-  // Format dates for countdown timer
+  // Format dates for countdown timer - Optimisé pour éviter les recalculs
   const getTimeRemaining = (drawDate: Date) => {
     const total = drawDate.getTime() - new Date().getTime();
     const days = Math.floor(total / (1000 * 60 * 60 * 24));
@@ -72,13 +70,13 @@ const Lotteries = () => {
     return { total, days, hours, minutes, seconds };
   };
 
-  // Auto-advance hero carousel
+  // Auto-advance hero carousel - Optimisé
   React.useEffect(() => {
     if (featuredLotteries.length <= 1) return;
     
     const interval = setInterval(() => {
       setActiveHeroIndex(prev => (prev + 1) % featuredLotteries.length);
-    }, 5000);
+    }, 8000); // Augmenté à 8 secondes pour réduire les re-renders
     
     return () => clearInterval(interval);
   }, [featuredLotteries.length]);
