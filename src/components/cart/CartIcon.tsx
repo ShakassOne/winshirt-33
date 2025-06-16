@@ -1,11 +1,11 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
 import { Link } from 'react-router-dom';
 
-const CartIcon = () => {
+const CartIcon = memo(() => {
   const { itemCount } = useCart();
 
   return (
@@ -20,6 +20,8 @@ const CartIcon = () => {
       </Link>
     </Button>
   );
-};
+});
+
+CartIcon.displayName = 'CartIcon';
 
 export default CartIcon;

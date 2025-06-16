@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { TrashIcon, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CartItem as CartItemType } from '@/types/supabase.types';
@@ -12,13 +12,25 @@ interface CartItemProps {
   onUpdateQuantity: (productId: string, quantity: number) => void;
 }
 
-const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity }) => {
-  const handleQuantityChange = (change: number) => {
+const CartItem: React.FC<CartItemProps> = memo(({ item, onRemove, onUpdateQuantity }) => {
+  const handleQuantityChange = useCallback((change: number) => {
     const newQuantity = item.quantity + change;
     if (newQuantity >= 1) {
       onUpdateQuantity(item.productId, newQuantity);
     }
-  };
+  }, [item.quantity, item.productId, onUpdateQuantity]);
+
+  const handleRemove = useCallback(() => {
+    onRemove(item.productId);
+  }, [item.productId, onRemove]);
+
+  const handleIncrement = useCallback(() => {
+    handleQuantityChange(1);
+  }, [handleQuantityChange]);
+
+  const handleDecrement = useCallback(() => {
+    handleQuantityChange(-1);
+  }, [handleQuantityChange]);
 
   return (
     <div className="flex flex-col sm:flex-row gap-4 p-4 border-b border-gray-100/10">
@@ -27,6 +39,7 @@ const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity })
           src={item.image_url} 
           alt={item.name} 
           className="w-full h-full object-cover"
+          loading="lazy"
         />
       </div>
       
@@ -39,7 +52,7 @@ const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity })
             variant="ghost" 
             size="icon" 
             className="h-8 w-8 text-gray-500 hover:text-red-500"
-            onClick={() => onRemove(item.productId)}
+            onClick={handleRemove}
           >
             <TrashIcon className="h-4 w-4" />
           </Button>
@@ -82,7 +95,7 @@ const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity })
               variant="ghost" 
               size="icon" 
               className="h-8 w-8 rounded-r-none"
-              onClick={() => handleQuantityChange(-1)}
+              onClick={handleDecrement}
               disabled={item.quantity <= 1}
             >
               <Minus className="h-3 w-3" />
@@ -92,7 +105,7 @@ const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity })
               variant="ghost" 
               size="icon" 
               className="h-8 w-8 rounded-l-none"
-              onClick={() => handleQuantityChange(1)}
+              onClick={handleIncrement}
             >
               <Plus className="h-3 w-3" />
             </Button>
@@ -103,6 +116,17 @@ const CartItem: React.FC<CartItemProps> = ({ item, onRemove, onUpdateQuantity })
       </div>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function pour éviter les re-renders inutiles
+  return (
+    prevProps.item.productId === nextProps.item.productId &&
+    prevProps.item.quantity === nextProps.item.quantity &&
+    prevProps.item.price === nextProps.item.price &&
+    prevProps.onRemove === nextProps.onRemove &&
+    prevProps.onUpdateQuantity === nextProps.onUpdateQuantity
+  );
+});
+
+CartItem.displayName = 'CartItem';
 
 export default CartItem;
