@@ -5,23 +5,23 @@ import { throttle, debounce } from 'lodash';
 export const usePerformanceOptimization = () => {
   // Throttle pour les événements de déplacement (drag)
   const throttledDrag = useMemo(
-    () => throttle((callback: Function, ...args: any[]) => {
-      callback(...args);
+    () => throttle((callback: () => void, ...args: any[]) => {
+      callback();
     }, 16), // 60 FPS
     []
   );
 
   // Debounce pour les mises à jour de texte
   const debouncedTextUpdate = useMemo(
-    () => debounce((callback: Function, ...args: any[]) => {
-      callback(...args);
+    () => debounce((callback: () => void, ...args: any[]) => {
+      callback();
     }, 300),
     []
   );
 
-  // Optimisation des re-renders avec useCallback
-  const optimizedCallback = useCallback((callback: Function) => {
-    return useCallback(callback, []);
+  // Optimisation des re-renders avec useCallback - maintenant retourne la fonction telle quelle
+  const optimizedCallback = useCallback(<T extends (...args: any[]) => any>(callback: T): T => {
+    return useCallback(callback, []) as T;
   }, []);
 
   // Memoization helper

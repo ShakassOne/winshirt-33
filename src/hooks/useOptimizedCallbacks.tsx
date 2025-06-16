@@ -17,12 +17,12 @@ export const useOptimizedCallbacks = (
   currentSide: 'front' | 'back',
   handlers: CallbackHandlers
 ) => {
-  const { debouncedTextUpdate, optimizedCallback } = usePerformanceOptimization();
+  const { debouncedTextUpdate } = usePerformanceOptimization();
 
-  const handleDesignSelect = optimizedCallback((design: Design) => {
+  const handleDesignSelect = useCallback((design: Design) => {
     logger.log(`[OptimizedCallbacks] Design select - ${currentSide}:`, design.name);
     handlers.onSelectDesign(design);
-  });
+  }, [handlers, currentSide]);
 
   const handleTextContentChange = useCallback((content: string) => {
     debouncedTextUpdate(() => {
@@ -31,25 +31,25 @@ export const useOptimizedCallbacks = (
     }, content);
   }, [debouncedTextUpdate, handlers, currentSide]);
 
-  const handleTextFontChange = optimizedCallback((font: string) => {
+  const handleTextFontChange = useCallback((font: string) => {
     logger.log(`[OptimizedCallbacks] Text font change - ${currentSide}: ${font}`);
     handlers.onTextFontChange(font);
-  });
+  }, [handlers, currentSide]);
 
-  const handleTextColorChange = optimizedCallback((color: string) => {
+  const handleTextColorChange = useCallback((color: string) => {
     logger.log(`[OptimizedCallbacks] Text color change - ${currentSide}: ${color}`);
     handlers.onTextColorChange(color);
-  });
+  }, [handlers, currentSide]);
 
-  const handleTextStylesChange = optimizedCallback((styles: { bold: boolean; italic: boolean; underline: boolean }) => {
+  const handleTextStylesChange = useCallback((styles: { bold: boolean; italic: boolean; underline: boolean }) => {
     logger.log(`[OptimizedCallbacks] Text styles change - ${currentSide}:`, styles);
     handlers.onTextStylesChange(styles);
-  });
+  }, [handlers, currentSide]);
 
-  const handleSvgColorChange = optimizedCallback((color: string) => {
+  const handleSvgColorChange = useCallback((color: string) => {
     logger.log(`[OptimizedCallbacks] SVG color change - ${currentSide}: ${color}`);
     handlers.onSvgColorChange(color);
-  });
+  }, [handlers, currentSide]);
 
   return {
     handleDesignSelect,

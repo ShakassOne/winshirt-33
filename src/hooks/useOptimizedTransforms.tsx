@@ -14,40 +14,40 @@ export const useOptimizedTransforms = (
 ) => {
   const { throttledDrag, optimizedCallback } = usePerformanceOptimization();
 
-  // Handlers optimisés pour les transformations
-  const handleDesignMove = optimizedCallback((deltaX: number, deltaY: number) => {
+  // Handlers optimisés pour les transformations avec types corrects
+  const handleDesignMove = useCallback((deltaX: number, deltaY: number) => {
     throttledDrag(() => {
       logger.log(`[OptimizedTransforms] Design move - ${currentSide}: ${deltaX}, ${deltaY}`);
       handlers.onDesignTransformChange('position', { x: deltaX, y: deltaY });
     }, deltaX, deltaY);
-  });
+  }, [throttledDrag, handlers, currentSide]);
 
-  const handleDesignScale = optimizedCallback((scale: number) => {
+  const handleDesignScale = useCallback((scale: number) => {
     logger.log(`[OptimizedTransforms] Design scale - ${currentSide}: ${scale}`);
     handlers.onDesignTransformChange('scale', Math.max(0.5, Math.min(2, scale)));
-  });
+  }, [handlers, currentSide]);
 
-  const handleDesignRotate = optimizedCallback((rotation: number) => {
+  const handleDesignRotate = useCallback((rotation: number) => {
     logger.log(`[OptimizedTransforms] Design rotate - ${currentSide}: ${rotation}`);
     handlers.onDesignTransformChange('rotation', rotation);
-  });
+  }, [handlers, currentSide]);
 
-  const handleTextMove = optimizedCallback((deltaX: number, deltaY: number) => {
+  const handleTextMove = useCallback((deltaX: number, deltaY: number) => {
     throttledDrag(() => {
       logger.log(`[OptimizedTransforms] Text move - ${currentSide}: ${deltaX}, ${deltaY}`);
       handlers.onTextTransformChange('position', { x: deltaX, y: deltaY });
     }, deltaX, deltaY);
-  });
+  }, [throttledDrag, handlers, currentSide]);
 
-  const handleTextScale = optimizedCallback((scale: number) => {
+  const handleTextScale = useCallback((scale: number) => {
     logger.log(`[OptimizedTransforms] Text scale - ${currentSide}: ${scale}`);
     handlers.onTextTransformChange('scale', Math.max(0.5, Math.min(2, scale)));
-  });
+  }, [handlers, currentSide]);
 
-  const handleTextRotate = optimizedCallback((rotation: number) => {
+  const handleTextRotate = useCallback((rotation: number) => {
     logger.log(`[OptimizedTransforms] Text rotate - ${currentSide}: ${rotation}`);
     handlers.onTextTransformChange('rotation', rotation);
-  });
+  }, [handlers, currentSide]);
 
   // Actions rapides mémoisées
   const quickActions = useMemo(() => ({
