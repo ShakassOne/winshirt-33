@@ -100,6 +100,7 @@ const OrdersAdmin = () => {
           
           return {
             ...item,
+            product: item.products, // Fix: rename products to product for ExtendedOrderItem compatibility
             customization: typedCustomization
           };
         });
