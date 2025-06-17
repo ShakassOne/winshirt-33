@@ -42,42 +42,40 @@ interface UnifiedCustomizationData {
   visual_back_url?: string;
 }
 
-export const enrichCustomizationWithCaptures = (
+export const enrichCustomizationWithProductionFiles = (
   baseCustomization: any,
-  captures: {
+  productionFiles: {
     front?: { mockupUrl?: string; hdUrl?: string };
     back?: { mockupUrl?: string; hdUrl?: string };
   }
 ): UnifiedCustomizationData => {
-  logger.log('🔄 [UnifiedCapture Service] Enrichissement des données...');
-  logger.log('📋 [UnifiedCapture Service] Base:', baseCustomization);
-  logger.log('📸 [UnifiedCapture Service] Captures:', captures);
+  logger.log('🔄 [Unified Capture Service] Enrichissement avec fichiers de production...');
+  logger.log('📋 [Unified Capture Service] Base:', baseCustomization);
+  logger.log('📸 [Unified Capture Service] Production files:', productionFiles);
   
-  // Vérifier que captures existe et a la bonne structure
-  const frontCapture = captures?.front || {};
-  const backCapture = captures?.back || {};
+  const frontFiles = productionFiles?.front || {};
+  const backFiles = productionFiles?.back || {};
   
   const enriched: UnifiedCustomizationData = {
     ...baseCustomization,
     // URLs de mockup (preview basse définition)
-    mockupRectoUrl: frontCapture.mockupUrl || null,
-    mockupVersoUrl: backCapture.mockupUrl || null,
+    mockupRectoUrl: frontFiles.mockupUrl || null,
+    mockupVersoUrl: backFiles.mockupUrl || null,
     // URLs HD (production)
-    hdRectoUrl: frontCapture.hdUrl || null,
-    hdVersoUrl: backCapture.hdUrl || null,
+    hdRectoUrl: frontFiles.hdUrl || null,
+    hdVersoUrl: backFiles.hdUrl || null,
     // Nouvelles colonnes en base (structure unifiée)
-    visual_front_url: frontCapture.hdUrl || null,
-    visual_back_url: backCapture.hdUrl || null,
+    visual_front_url: frontFiles.hdUrl || null,
+    visual_back_url: backFiles.hdUrl || null,
   };
 
-  logger.log('✅ [UnifiedCapture Service] Données enrichies:', enriched);
+  logger.log('✅ [Unified Capture Service] Données enrichies avec production files:', enriched);
   
-  // Vérifier que les URLs ont été correctement assignées
   if (enriched.hdRectoUrl) {
-    logger.log('✅ [UnifiedCapture Service] URL HD Recto générée:', enriched.hdRectoUrl);
+    logger.log('✅ [Unified Capture Service] URL HD Recto générée (server-side):', enriched.hdRectoUrl);
   }
   if (enriched.hdVersoUrl) {
-    logger.log('✅ [UnifiedCapture Service] URL HD Verso générée:', enriched.hdVersoUrl);
+    logger.log('✅ [Unified Capture Service] URL HD Verso générée (server-side):', enriched.hdVersoUrl);
   }
   
   return enriched;
