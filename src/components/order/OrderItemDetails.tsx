@@ -61,7 +61,7 @@ export const OrderItemDetails: React.FC<OrderItemDetailsProps> = ({ item }) => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-400">Produit:</span>
-                <span className="font-medium">{item.products?.name}</span>
+                <span className="font-medium">{item.product?.name}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Quantité:</span>

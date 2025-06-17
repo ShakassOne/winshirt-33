@@ -1,4 +1,5 @@
 
+
 export interface Database {
   public: {
     Tables: {
@@ -135,8 +136,8 @@ export interface Mockup {
   category: string;
   svg_front_url: string;
   svg_back_url?: string;
-  print_areas: any[];
-  colors?: string[];
+  print_areas: any;
+  colors?: any;
   price_a4: number;
   price_a3: number;
   price_a5: number;
@@ -161,6 +162,7 @@ export interface Product {
   is_active: boolean;
   tickets_offered: number;
   mockup_id?: string;
+  color?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -210,6 +212,7 @@ export interface Order {
   shipping_postal_code?: string;
   shipping_country?: string;
   delivery_notes?: string;
+  preview_url?: string;
   created_at?: string;
   updated_at?: string;
 }

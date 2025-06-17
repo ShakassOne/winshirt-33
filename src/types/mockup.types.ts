@@ -22,8 +22,8 @@ export interface PrintArea {
   y?: number;
 }
 
-// Étend le type BaseMockup en ajoutant la propriété colors
-export interface MockupWithColors extends BaseMockup {
+// Étend le type BaseMockup en modifiant la propriété colors
+export interface MockupWithColors extends Omit<BaseMockup, 'colors'> {
   colors: MockupColor[];
   // Assurons-nous que toutes les propriétés nécessaires sont présentes
   price_a3: number;

@@ -42,6 +42,7 @@ const PaymentSuccess = () => {
         // Valider et convertir les types pour les items
         const validatedItems: ExtendedOrderItem[] = orderData.order_items.map((item: any) => ({
           ...item,
+          product: item.products, // Renommer products en product
           customization: typeof item.customization === 'string' 
             ? JSON.parse(item.customization) 
             : item.customization || null
@@ -178,12 +179,12 @@ const PaymentSuccess = () => {
                   {order.items?.map((item) => (
                     <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                       <img
-                        src={item.products.image_url}
-                        alt={item.products.name}
+                        src={item.product.image_url}
+                        alt={item.product.name}
                         className="w-12 h-12 object-cover rounded"
                       />
                       <div className="flex-grow text-left">
-                        <p className="font-medium text-sm">{item.products.name}</p>
+                        <p className="font-medium text-sm">{item.product.name}</p>
                         <p className="text-xs text-gray-500">
                           Quantité: {item.quantity}
                           {item.selected_color && ` • ${item.selected_color}`}
