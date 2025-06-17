@@ -1,26 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Product as ProductType, Mockup as MockupType, CartItem, Lottery } from '@/types/supabase.types';
+import { Product as ProductType, Mockup as MockupType, CartItem, Lottery, Design } from '@/types/supabase.types';
 import { MockupWithColors, MockupColor } from '@/types/mockup.types';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Slider } from "@/components/ui/slider"
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
 import { toast } from "@/components/ui/use-toast"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { ReloadIcon } from "@radix-ui/react-icons"
-import { Palette } from "lucide-react"
+import { Palette, Star, Zap, Sparkles } from "lucide-react"
 import { ModalPersonnalisation } from '@/components/product/ModalPersonnalisation';
 import { LotterySelector } from '@/components/product/LotterySelector';
 
@@ -29,19 +27,76 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { addItem } = useCart();
 
+  // Product and mockup states
   const [product, setProduct] = useState<ProductType | null>(null);
   const [mockup, setMockup] = useState<MockupWithColors | null>(null);
   const [lotteries, setLotteries] = useState<Lottery[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMockupLoading, setIsMockupLoading] = useState(true);
+
+  // Product selection states
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(undefined);
   const [selectedColor, setSelectedColor] = useState<MockupColor | null>(null);
   const [selectedLottery, setSelectedLottery] = useState<string>('none');
-  const [customization, setCustomization] = useState<any>(null);
-  const [isAdding, setIsAdding] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isMockupLoading, setIsMockupLoading] = useState(true);
-  const [hasCustomization, setHasCustomization] = useState(false);
+
+  // Customization modal state
   const [isCustomizationModalOpen, setIsCustomizationModalOpen] = useState(false);
+  const [currentViewSide, setCurrentViewSide] = useState<'front' | 'back'>('front');
+
+  // Design states
+  const [selectedDesignFront, setSelectedDesignFront] = useState<Design | null>(null);
+  const [selectedDesignBack, setSelectedDesignBack] = useState<Design | null>(null);
+  const [designTransformFront, setDesignTransformFront] = useState({
+    position: { x: 0, y: 0 },
+    scale: 1,
+    rotation: 0
+  });
+  const [designTransformBack, setDesignTransformBack] = useState({
+    position: { x: 0, y: 0 },
+    scale: 1,
+    rotation: 0
+  });
+  const [selectedSizeFront, setSelectedSizeFront] = useState('A4');
+  const [selectedSizeBack, setSelectedSizeBack] = useState('A4');
+
+  // Text states
+  const [textContentFront, setTextContentFront] = useState('');
+  const [textContentBack, setTextContentBack] = useState('');
+  const [textFontFront, setTextFontFront] = useState('Arial');
+  const [textFontBack, setTextFontBack] = useState('Arial');
+  const [textColorFront, setTextColorFront] = useState('#ffffff');
+  const [textColorBack, setTextColorBack] = useState('#ffffff');
+  const [textStylesFront, setTextStylesFront] = useState({
+    bold: false,
+    italic: false,
+    underline: false
+  });
+  const [textStylesBack, setTextStylesBack] = useState({
+    bold: false,
+    italic: false,
+    underline: false
+  });
+  const [textTransformFront, setTextTransformFront] = useState({
+    position: { x: 0, y: 0 },
+    scale: 1,
+    rotation: 0
+  });
+  const [textTransformBack, setTextTransformBack] = useState({
+    position: { x: 0, y: 0 },
+    scale: 1,
+    rotation: 0
+  });
+
+  // SVG states
+  const [svgColorFront, setSvgColorFront] = useState('#ffffff');
+  const [svgColorBack, setSvgColorBack] = useState('#ffffff');
+  const [svgContentFront, setSvgContentFront] = useState('');
+  const [svgContentBack, setSvgContentBack] = useState('');
+
+  // Other states
+  const [isAdding, setIsAdding] = useState(false);
+  const [isRemovingBackground, setIsRemovingBackground] = useState(false);
 
   // Helper function to validate and convert Json to MockupColor[]
   const validateMockupColors = (colors: any): MockupColor[] => {
@@ -59,6 +114,174 @@ const ProductDetail = () => {
       front_image_url: color.front_image_url || '',
       back_image_url: color.back_image_url || ''
     }));
+  };
+
+  // Generate customization object
+  const generateCustomization = () => {
+    const frontDesign = selectedDesignFront ? {
+      designId: selectedDesignFront.id,
+      designUrl: selectedDesignFront.image_url,
+      designName: selectedDesignFront.name,
+      printSize: selectedSizeFront,
+      transform: designTransformFront
+    } : null;
+
+    const backDesign = selectedDesignBack ? {
+      designId: selectedDesignBack.id,
+      designUrl: selectedDesignBack.image_url,
+      designName: selectedDesignBack.name,
+      printSize: selectedSizeBack,
+      transform: designTransformBack
+    } : null;
+
+    const frontText = textContentFront ? {
+      content: textContentFront,
+      font: textFontFront,
+      color: textColorFront,
+      styles: textStylesFront,
+      transform: textTransformFront
+    } : null;
+
+    const backText = textContentBack ? {
+      content: textContentBack,
+      font: textFontBack,
+      color: textColorBack,
+      styles: textStylesBack,
+      transform: textTransformBack
+    } : null;
+
+    return {
+      frontDesign,
+      backDesign,
+      frontText,
+      backText,
+      svgColorFront: svgColorFront !== '#ffffff' ? svgColorFront : null,
+      svgColorBack: svgColorBack !== '#ffffff' ? svgColorBack : null,
+      svgContentFront: svgContentFront || null,
+      svgContentBack: svgContentBack || null
+    };
+  };
+
+  const hasCustomization = () => {
+    const customization = generateCustomization();
+    return !!(customization.frontDesign || customization.backDesign || 
+              customization.frontText || customization.backText ||
+              customization.svgContentFront || customization.svgContentBack);
+  };
+
+  // Handlers
+  const handleSelectDesign = (design: Design) => {
+    if (currentViewSide === 'front') {
+      setSelectedDesignFront(design);
+    } else {
+      setSelectedDesignBack(design);
+    }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Implementation for file upload
+    console.log('File upload:', event.target.files);
+  };
+
+  const handleAIImageGenerated = (imageUrl: string, imageName: string) => {
+    const aiDesign: Design = {
+      id: `ai-${Date.now()}`,
+      name: imageName,
+      image_url: imageUrl,
+      category: 'AI Generated',
+      is_active: true
+    };
+    handleSelectDesign(aiDesign);
+  };
+
+  const handleRemoveBackground = () => {
+    setIsRemovingBackground(true);
+    // Implementation for background removal
+    setTimeout(() => setIsRemovingBackground(false), 2000);
+  };
+
+  const handleTextContentChange = (content: string) => {
+    if (currentViewSide === 'front') {
+      setTextContentFront(content);
+    } else {
+      setTextContentBack(content);
+    }
+  };
+
+  const handleTextFontChange = (font: string) => {
+    if (currentViewSide === 'front') {
+      setTextFontFront(font);
+    } else {
+      setTextFontBack(font);
+    }
+  };
+
+  const handleTextColorChange = (color: string) => {
+    if (currentViewSide === 'front') {
+      setTextColorFront(color);
+    } else {
+      setTextColorBack(color);
+    }
+  };
+
+  const handleTextStylesChange = (styles: { bold: boolean; italic: boolean; underline: boolean }) => {
+    if (currentViewSide === 'front') {
+      setTextStylesFront(styles);
+    } else {
+      setTextStylesBack(styles);
+    }
+  };
+
+  const handleTextTransformChange = (property: string, value: any) => {
+    if (currentViewSide === 'front') {
+      setTextTransformFront(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    } else {
+      setTextTransformBack(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    }
+  };
+
+  const handleDesignTransformChange = (property: string, value: any) => {
+    if (currentViewSide === 'front') {
+      setDesignTransformFront(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    } else {
+      setDesignTransformBack(prev => ({
+        ...prev,
+        [property]: value
+      }));
+    }
+  };
+
+  const handleSizeChange = (size: string) => {
+    if (currentViewSide === 'front') {
+      setSelectedSizeFront(size);
+    } else {
+      setSelectedSizeBack(size);
+    }
+  };
+
+  const handleSvgColorChange = (color: string) => {
+    if (currentViewSide === 'front') {
+      setSvgColorFront(color);
+    } else {
+      setSvgColorBack(color);
+    }
+  };
+
+  const handleSvgContentChange = (content: string) => {
+    if (currentViewSide === 'front') {
+      setSvgContentFront(content);
+    } else {
+      setSvgContentBack(content);
+    }
   };
 
   useEffect(() => {
@@ -79,7 +302,6 @@ const ProductDetail = () => {
         if (productError) throw productError;
 
         setProduct(productData);
-        setHasCustomization(productData?.is_customizable || false);
 
         if (productData?.mockup_id) {
           fetchMockup(productData.mockup_id);
@@ -110,7 +332,6 @@ const ProductDetail = () => {
 
         if (mockupError) throw mockupError;
 
-        // Transform the mockup data to match MockupWithColors interface
         const transformedMockup: MockupWithColors = {
           ...mockupData,
           colors: validateMockupColors(mockupData.colors),
@@ -121,7 +342,6 @@ const ProductDetail = () => {
 
         setMockup(transformedMockup);
         
-        // Set default color if available
         if (transformedMockup.colors && transformedMockup.colors.length > 0) {
           setSelectedColor(transformedMockup.colors[0]);
         }
@@ -162,6 +382,8 @@ const ProductDetail = () => {
     try {
       setIsAdding(true);
       
+      const customization = hasCustomization() ? generateCustomization() : null;
+      
       const cartItem: CartItem = {
         productId: product.id,
         name: product.name,
@@ -195,211 +417,228 @@ const ProductDetail = () => {
   };
 
   if (isLoading) {
-    return <div className="text-center">Chargement du produit...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-lg">Chargement du produit...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!product) {
-    return <div className="text-center">Produit non trouvé.</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+        <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+          <CardContent className="p-8 text-center">
+            <p className="text-white text-lg">Produit non trouvé.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 mt-16">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Product Image */}
-        <div>
-          <AspectRatio ratio={1 / 1} className="w-full">
-            <img
-              src={product.image_url}
-              alt={product.name}
-              className="w-full h-auto object-cover rounded-lg"
-            />
-          </AspectRatio>
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 pt-20 pb-12">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+          {/* Product Image */}
+          <Card className="bg-white/10 backdrop-blur-lg border-white/20 overflow-hidden">
+            <CardContent className="p-0">
+              <AspectRatio ratio={1 / 1} className="w-full">
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              </AspectRatio>
+            </CardContent>
+          </Card>
+
+          {/* Product Details */}
+          <div className="space-y-6">
+            <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+              <CardHeader>
+                <CardTitle className="text-3xl font-bold text-white flex items-center gap-3">
+                  {product.name}
+                  {product.tickets_offered && product.tickets_offered > 0 && (
+                    <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black border-0 animate-pulse">
+                      <Star className="h-4 w-4 mr-1" />
+                      {product.tickets_offered} tickets
+                    </Badge>
+                  )}
+                </CardTitle>
+                <CardDescription className="text-gray-300 text-lg">
+                  {product.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-3xl font-bold text-white">
+                    {product.price.toFixed(2)} €
+                  </span>
+                  {hasCustomization() && (
+                    <Badge className="bg-green-500/20 text-green-300 border-green-500/50 animate-pulse">
+                      <Sparkles className="h-4 w-4 mr-1" />
+                      Personnalisé
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Color Selector */}
+                {mockup && mockup.colors && mockup.colors.length > 0 && (
+                  <div>
+                    <Label className="text-white font-medium mb-3 block">Couleur:</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {mockup.colors.map((color) => (
+                        <button
+                          key={color.name}
+                          onClick={() => setSelectedColor(color)}
+                          className={`px-4 py-2 rounded-lg border-2 transition-all duration-200 ${
+                            selectedColor?.name === color.name 
+                              ? 'border-blue-400 bg-blue-400/20 text-white shadow-lg shadow-blue-400/25' 
+                              : 'border-white/30 bg-white/10 text-gray-300 hover:border-white/50 hover:bg-white/20'
+                          }`}
+                        >
+                          {color.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Size Selector */}
+                {product.available_sizes && product.available_sizes.length > 0 && (
+                  <div>
+                    <Label className="text-white font-medium mb-3 block">Taille:</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {product.available_sizes.map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => setSelectedSize(size)}
+                          className={`px-4 py-2 rounded-lg border-2 transition-all duration-200 ${
+                            selectedSize === size 
+                              ? 'border-purple-400 bg-purple-400/20 text-white shadow-lg shadow-purple-400/25' 
+                              : 'border-white/30 bg-white/10 text-gray-300 hover:border-white/50 hover:bg-white/20'
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Lottery Selection */}
+                <LotterySelector
+                  lotteries={lotteries}
+                  selectedLottery={selectedLottery}
+                  onLotteryChange={setSelectedLottery}
+                  ticketsOffered={product.tickets_offered || 0}
+                />
+
+                {/* Quantity Input */}
+                <div>
+                  <Label htmlFor="quantity" className="text-white font-medium mb-3 block">
+                    Quantité:
+                  </Label>
+                  <Input
+                    type="number"
+                    id="quantity"
+                    value={quantity}
+                    onChange={(e) => setQuantity(parseInt(e.target.value))}
+                    min="1"
+                    className="w-24 bg-white/10 border-white/30 text-white"
+                  />
+                </div>
+
+                {/* Customization Button */}
+                {product.is_customizable && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCustomizationModalOpen(true)}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0 text-white font-semibold py-3 transition-all duration-200 transform hover:scale-105"
+                  >
+                    <Palette className="mr-2 h-5 w-5" />
+                    <Zap className="mr-2 h-4 w-4" />
+                    Personnaliser ce produit
+                  </Button>
+                )}
+
+                {/* Add to Cart Button */}
+                <Button
+                  onClick={handleAddToCart}
+                  disabled={isAdding}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-4 text-lg transition-all duration-200 transform hover:scale-105 shadow-lg shadow-green-500/25"
+                >
+                  {isAdding ? (
+                    <>
+                      <ReloadIcon className="mr-2 h-5 w-5 animate-spin" />
+                      Ajout au panier...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Ajouter au panier
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        {/* Product Details */}
-        <div>
-          <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
-          <p className="text-gray-600 mb-6">{product.description}</p>
-
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <span className="text-xl font-semibold">{product.price.toFixed(2)} €</span>
-              {product.tickets_offered && product.tickets_offered > 0 && (
-                <Badge className="ml-2 bg-purple-500/20 text-purple-300 border-purple-500/50">
-                  {product.tickets_offered} tickets offerts
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {/* Color Selector */}
-          {mockup && mockup.colors && mockup.colors.length > 0 && (
-            <div className="mb-4">
-              <Label className="block text-sm font-medium text-gray-700 mb-2">Couleur:</Label>
-              <div className="flex gap-2">
-                {mockup.colors.map((color) => (
-                  <button
-                    key={color.name}
-                    onClick={() => setSelectedColor(color)}
-                    className={`px-3 py-1 border rounded ${
-                      selectedColor?.name === color.name 
-                        ? 'border-blue-500 bg-blue-50' 
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    {color.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Color Selector - Fallback to product colors */}
-          {(!mockup || !mockup.colors || mockup.colors.length === 0) && product.available_colors && product.available_colors.length > 0 && (
-            <div className="mb-4">
-              <Label className="block text-sm font-medium text-gray-700 mb-2">Couleur:</Label>
-              <div className="flex gap-2">
-                {product.available_colors.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setSelectedColor({ name: color, color_code: color, front_image_url: '', back_image_url: '' })}
-                    className={`px-3 py-1 border rounded ${
-                      selectedColor?.name === color 
-                        ? 'border-blue-500 bg-blue-50' 
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    {color}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Size Selector */}
-          {product.available_sizes && product.available_sizes.length > 0 && (
-            <div className="mb-4">
-              <Label className="block text-sm font-medium text-gray-700 mb-2">Taille:</Label>
-              <div className="flex gap-2">
-                {product.available_sizes.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-3 py-1 border rounded ${
-                      selectedSize === size 
-                        ? 'border-blue-500 bg-blue-50' 
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Lottery Selection */}
-          <LotterySelector
-            lotteries={lotteries}
-            selectedLottery={selectedLottery}
-            onLotteryChange={setSelectedLottery}
-            ticketsOffered={product.tickets_offered || 0}
+        {/* Customization Modal */}
+        {product.is_customizable && isCustomizationModalOpen && (
+          <ModalPersonnalisation
+            open={isCustomizationModalOpen}
+            onClose={() => setIsCustomizationModalOpen(false)}
+            currentViewSide={currentViewSide}
+            onViewSideChange={setCurrentViewSide}
+            productName={product.name}
+            productImageUrl={product.image_url}
+            productAvailableColors={product.available_colors}
+            mockup={mockup}
+            selectedMockupColor={selectedColor}
+            onMockupColorChange={setSelectedColor}
+            selectedDesignFront={selectedDesignFront}
+            selectedDesignBack={selectedDesignBack}
+            onSelectDesign={handleSelectDesign}
+            onFileUpload={handleFileUpload}
+            onAIImageGenerated={handleAIImageGenerated}
+            onRemoveBackground={handleRemoveBackground}
+            isRemovingBackground={isRemovingBackground}
+            svgColorFront={svgColorFront}
+            svgColorBack={svgColorBack}
+            svgContentFront={svgContentFront}
+            svgContentBack={svgContentBack}
+            onSvgColorChange={handleSvgColorChange}
+            onSvgContentChange={handleSvgContentChange}
+            textContentFront={textContentFront}
+            textContentBack={textContentBack}
+            textFontFront={textFontFront}
+            textFontBack={textFontBack}
+            textColorFront={textColorFront}
+            textColorBack={textColorBack}
+            textStylesFront={textStylesFront}
+            textStylesBack={textStylesBack}
+            textTransformFront={textTransformFront}
+            textTransformBack={textTransformBack}
+            onTextContentChange={handleTextContentChange}
+            onTextFontChange={handleTextFontChange}
+            onTextColorChange={handleTextColorChange}
+            onTextStylesChange={handleTextStylesChange}
+            onTextTransformChange={handleTextTransformChange}
+            designTransformFront={designTransformFront}
+            designTransformBack={designTransformBack}
+            selectedSizeFront={selectedSizeFront}
+            selectedSizeBack={selectedSizeBack}
+            onDesignTransformChange={handleDesignTransformChange}
+            onSizeChange={handleSizeChange}
           />
-
-          {/* Quantity Input */}
-          <div className="mb-6">
-            <Label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-2">Quantité:</Label>
-            <Input
-              type="number"
-              id="quantity"
-              value={quantity}
-              onChange={(e) => setQuantity(parseInt(e.target.value))}
-              min="1"
-              className="w-24"
-            />
-          </div>
-
-          {/* Customization Button */}
-          {product.is_customizable && (
-            <div className="mb-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsCustomizationModalOpen(true)}
-                className="w-full mb-2"
-              >
-                <Palette className="mr-2 h-4 w-4" />
-                Personnaliser ce produit
-              </Button>
-              {customization && (
-                <p className="text-sm text-green-600">✓ Personnalisation appliquée</p>
-              )}
-            </div>
-          )}
-
-          {/* Add to Cart Button */}
-          <Button
-            onClick={handleAddToCart}
-            disabled={isAdding}
-            className="w-full"
-          >
-            {isAdding ? (
-              <><ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> Ajout au panier...</>
-            ) : (
-              "Ajouter au panier"
-            )}
-          </Button>
-        </div>
+        )}
       </div>
-
-      {/* Customization Modal */}
-      {product.is_customizable && isCustomizationModalOpen && (
-        <ModalPersonnalisation
-          open={isCustomizationModalOpen}
-          onClose={() => setIsCustomizationModalOpen(false)}
-          currentViewSide="front"
-          onViewSideChange={() => {}}
-          productName={product.name}
-          productImageUrl={product.image_url}
-          productAvailableColors={product.available_colors}
-          mockup={mockup}
-          selectedMockupColor={selectedColor}
-          onMockupColorChange={setSelectedColor}
-          selectedDesignFront={null}
-          selectedDesignBack={null}
-          onSelectDesign={() => {}}
-          onFileUpload={() => {}}
-          onAIImageGenerated={() => {}}
-          onRemoveBackground={() => {}}
-          isRemovingBackground={false}
-          svgColorFront="#000000"
-          svgColorBack="#000000"
-          svgContentFront=""
-          svgContentBack=""
-          onSvgColorChange={() => {}}
-          onSvgContentChange={() => {}}
-          textContentFront=""
-          textContentBack=""
-          textFontFront="Arial"
-          textFontBack="Arial"
-          textColorFront="#000000"
-          textColorBack="#000000"
-          textStylesFront={{ bold: false, italic: false, underline: false }}
-          textStylesBack={{ bold: false, italic: false, underline: false }}
-          textTransformFront={{ position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
-          textTransformBack={{ position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
-          onTextContentChange={() => {}}
-          onTextFontChange={() => {}}
-          onTextColorChange={() => {}}
-          onTextStylesChange={() => {}}
-          onTextTransformChange={() => {}}
-          designTransformFront={{ position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
-          designTransformBack={{ position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
-          selectedSizeFront="A4"
-          selectedSizeBack="A4"
-          onDesignTransformChange={() => {}}
-          onSizeChange={() => {}}
-        />
-      )}
     </div>
   );
 };
