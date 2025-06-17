@@ -39,6 +39,24 @@ const ProductDetail = () => {
   const [isMockupLoading, setIsMockupLoading] = useState(true);
   const [hasCustomization, setHasCustomization] = useState(false);
 
+  // Helper function to validate and convert Json to MockupColor[]
+  const validateMockupColors = (colors: any): MockupColor[] => {
+    if (!Array.isArray(colors)) return [];
+    
+    return colors.filter((color: any) => {
+      return color && 
+             typeof color === 'object' &&
+             typeof color.name === 'string' &&
+             typeof color.color_code === 'string';
+    }).map((color: any) => ({
+      id: color.id || undefined,
+      name: color.name,
+      color_code: color.color_code,
+      front_image_url: color.front_image_url || '',
+      back_image_url: color.back_image_url || ''
+    }));
+  };
+
   useEffect(() => {
     if (!id) {
       navigate('/products');
@@ -91,9 +109,7 @@ const ProductDetail = () => {
         // Transform the mockup data to match MockupWithColors interface
         const transformedMockup: MockupWithColors = {
           ...mockupData,
-          colors: Array.isArray(mockupData.colors) 
-            ? mockupData.colors as MockupColor[]
-            : [],
+          colors: validateMockupColors(mockupData.colors),
           print_areas: Array.isArray(mockupData.print_areas) 
             ? mockupData.print_areas 
             : []
