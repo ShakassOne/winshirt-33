@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Product as ProductType, Mockup as MockupType, CartItem, Lottery } from '@/types/supabase.types';
-import { MockupWithColors } from '@/types/mockup.types';
+import { MockupWithColors, MockupColor } from '@/types/mockup.types';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +32,7 @@ const ProductDetail = () => {
   const [lotteries, setLotteries] = useState<Lottery[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(undefined);
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<MockupColor | null>(null);
   const [customization, setCustomization] = useState<any>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -88,7 +88,23 @@ const ProductDetail = () => {
 
         if (mockupError) throw mockupError;
 
-        setMockup(mockupData as MockupWithColors);
+        // Transform the mockup data to match MockupWithColors interface
+        const transformedMockup: MockupWithColors = {
+          ...mockupData,
+          colors: Array.isArray(mockupData.colors) 
+            ? mockupData.colors as MockupColor[]
+            : [],
+          print_areas: Array.isArray(mockupData.print_areas) 
+            ? mockupData.print_areas 
+            : []
+        };
+
+        setMockup(transformedMockup);
+        
+        // Set default color if available
+        if (transformedMockup.colors && transformedMockup.colors.length > 0) {
+          setSelectedColor(transformedMockup.colors[0]);
+        }
       } catch (error) {
         console.error('Error fetching mockup:', error);
         toast({
@@ -133,7 +149,7 @@ const ProductDetail = () => {
         quantity: 1,
         image_url: product.image_url,
         size: selectedSize,
-        color: selectedColor || product.color,
+        color: selectedColor?.name || product.color,
         available_sizes: product.available_sizes,
         available_colors: product.available_colors,
         lotteries: (product.tickets_offered && product.tickets_offered > 0) ? lotteries : [],
@@ -197,16 +213,38 @@ const ProductDetail = () => {
           </div>
 
           {/* Color Selector */}
-          {product.available_colors && product.available_colors.length > 0 && (
+          {mockup && mockup.colors && mockup.colors.length > 0 && (
+            <div className="mb-4">
+              <Label className="block text-sm font-medium text-gray-700 mb-2">Couleur:</Label>
+              <div className="flex gap-2">
+                {mockup.colors.map((color) => (
+                  <button
+                    key={color.name}
+                    onClick={() => setSelectedColor(color)}
+                    className={`px-3 py-1 border rounded ${
+                      selectedColor?.name === color.name 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {color.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Color Selector - Fallback to product colors */}
+          {(!mockup || !mockup.colors || mockup.colors.length === 0) && product.available_colors && product.available_colors.length > 0 && (
             <div className="mb-4">
               <Label className="block text-sm font-medium text-gray-700 mb-2">Couleur:</Label>
               <div className="flex gap-2">
                 {product.available_colors.map((color) => (
                   <button
                     key={color}
-                    onClick={() => setSelectedColor(color)}
+                    onClick={() => setSelectedColor({ name: color, color_code: color, front_image_url: '', back_image_url: '' })}
                     className={`px-3 py-1 border rounded ${
-                      selectedColor === color 
+                      selectedColor?.name === color 
                         ? 'border-blue-500 bg-blue-50' 
                         : 'border-gray-300 hover:border-gray-400'
                     }`}
