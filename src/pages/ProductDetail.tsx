@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Product as ProductType, Mockup as MockupType, MockupWithColors, CartItem, Lottery } from '@/types/supabase.types';
-import { useCart } from '@/hooks/useCart';
+import { Product as ProductType, Mockup as MockupType, CartItem, Lottery } from '@/types/supabase.types';
+import { MockupWithColors } from '@/types/mockup.types';
+import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,25 +19,20 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { toast } from "@/components/ui/use-toast"
-import { ColorPalette } from '@/components/product/ColorPalette';
-import { SizeSelector } from '@/components/product/SizeSelector';
-import { CustomizationForm } from '@/components/product/CustomizationForm';
-import { captureProductionFiles } from '@/services/api.service';
-import { Product3DViewer } from '@/components/product/Product3DViewer';
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { ReloadIcon } from "@radix-ui/react-icons"
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addItem } = useCart();
 
   const [product, setProduct] = useState<ProductType | null>(null);
   const [mockup, setMockup] = useState<MockupWithColors | null>(null);
   const [lotteries, setLotteries] = useState<Lottery[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(undefined);
-  const [selectedColor, setSelectedColor] = useState<{ name: string; color_code: string; front_image_url: string; back_image_url: string; } | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [customization, setCustomization] = useState<any>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -124,35 +121,11 @@ const ProductDetail = () => {
   }, [id, navigate]);
 
   const handleAddToCart = async () => {
-    if (!product || !mockup) return;
+    if (!product) return;
 
     try {
       setIsAdding(true);
       
-      let capturedCustomization = customization;
-      
-      if (hasCustomization) {
-        console.log('🎯 [ProductDetail] Capturing HD visuals before adding to cart');
-        try {
-          const enrichedCustomization = await captureProductionFiles(
-            product.id,
-            mockup.id,
-            customization,
-            selectedColor?.name || product.color,
-            selectedSize
-          );
-          capturedCustomization = enrichedCustomization;
-          console.log('✅ [ProductDetail] HD capture completed successfully');
-        } catch (captureError) {
-          console.error('❌ [ProductDetail] HD capture failed:', captureError);
-          toast({
-            variant: "destructive",
-            title: "Erreur de capture",
-            description: "Impossible de capturer les visuels haute définition. L'article sera ajouté sans optimisation."
-          });
-        }
-      }
-
       const cartItem: CartItem = {
         productId: product.id,
         name: product.name,
@@ -160,14 +133,14 @@ const ProductDetail = () => {
         quantity: 1,
         image_url: product.image_url,
         size: selectedSize,
-        color: selectedColor?.name || product.color,
+        color: selectedColor || product.color,
         available_sizes: product.available_sizes,
-        available_colors: product.available_colors?.map(c => typeof c === 'string' ? c : c) || [],
-        lotteries: (product.tickets_offered && product.tickets_offered > 0) ? lotteries : [], // Fix: use lotteries array instead of strings
-        customization: capturedCustomization
+        available_colors: product.available_colors,
+        lotteries: (product.tickets_offered && product.tickets_offered > 0) ? lotteries : [],
+        customization: customization
       };
 
-      await addToCart(cartItem);
+      await addItem(cartItem);
       
       toast({
         title: "Produit ajouté au panier",
@@ -196,19 +169,15 @@ const ProductDetail = () => {
   return (
     <div className="container mx-auto px-4 py-8 mt-16">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Product Image or 3D Viewer */}
+        {/* Product Image */}
         <div>
-          {product.use_3d_viewer ? (
-            <Product3DViewer modelUrl={product.model_3d_url || ''} />
-          ) : (
-            <AspectRatio ratio={1 / 1} className="w-full">
-              <img
-                src={product.image_url}
-                alt={product.name}
-                className="w-full h-auto object-cover rounded-lg"
-              />
-            </AspectRatio>
-          )}
+          <AspectRatio ratio={1 / 1} className="w-full">
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="w-full h-auto object-cover rounded-lg"
+            />
+          </AspectRatio>
         </div>
 
         {/* Product Details */}
@@ -227,15 +196,25 @@ const ProductDetail = () => {
             </div>
           </div>
 
-          {/* Color Palette */}
+          {/* Color Selector */}
           {product.available_colors && product.available_colors.length > 0 && (
             <div className="mb-4">
               <Label className="block text-sm font-medium text-gray-700 mb-2">Couleur:</Label>
-              <ColorPalette
-                colors={product.available_colors}
-                selectedColor={selectedColor}
-                onColorSelect={setSelectedColor}
-              />
+              <div className="flex gap-2">
+                {product.available_colors.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
+                    className={`px-3 py-1 border rounded ${
+                      selectedColor === color 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -243,11 +222,21 @@ const ProductDetail = () => {
           {product.available_sizes && product.available_sizes.length > 0 && (
             <div className="mb-4">
               <Label className="block text-sm font-medium text-gray-700 mb-2">Taille:</Label>
-              <SizeSelector
-                sizes={product.available_sizes}
-                selectedSize={selectedSize}
-                onSizeSelect={setSelectedSize}
-              />
+              <div className="flex gap-2">
+                {product.available_sizes.map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className={`px-3 py-1 border rounded ${
+                      selectedSize === size 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -263,20 +252,6 @@ const ProductDetail = () => {
               className="w-24"
             />
           </div>
-
-          {/* Customization Form */}
-          {hasCustomization && mockup && (
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-4">Personnalisation</h2>
-              <CustomizationForm
-                product={product}
-                mockup={mockup}
-                selectedColor={selectedColor}
-                selectedSize={selectedSize}
-                onCustomizationChange={setCustomization}
-              />
-            </div>
-          )}
 
           {/* Add to Cart Button */}
           <Button

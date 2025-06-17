@@ -1,5 +1,3 @@
-
-
 export interface Database {
   public: {
     Tables: {
@@ -163,6 +161,8 @@ export interface Product {
   tickets_offered: number;
   mockup_id?: string;
   color?: string;
+  use_3d_viewer?: boolean;
+  model_3d_url?: string;
   created_at?: string;
   updated_at?: string;
 }
