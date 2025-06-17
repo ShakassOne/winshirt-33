@@ -39,7 +39,7 @@ export const LotterySelector: React.FC<LotterySelectorProps> = ({
           <SelectValue placeholder="Aucune préférence" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Aucune préférence</SelectItem>
+          <SelectItem value="none">Aucune préférence</SelectItem>
           {lotteries.map((lottery) => (
             <SelectItem key={lottery.id} value={lottery.title}>
               {lottery.title} - {lottery.value}€
