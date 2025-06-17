@@ -21,6 +21,9 @@ import {
 import { toast } from "@/components/ui/use-toast"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { ReloadIcon } from "@radix-ui/react-icons"
+import { Palette } from "lucide-react"
+import { ModalPersonnalisation } from '@/components/product/ModalPersonnalisation';
+import { LotterySelector } from '@/components/product/LotterySelector';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,11 +36,13 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(undefined);
   const [selectedColor, setSelectedColor] = useState<MockupColor | null>(null);
+  const [selectedLottery, setSelectedLottery] = useState<string>('');
   const [customization, setCustomization] = useState<any>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isMockupLoading, setIsMockupLoading] = useState(true);
   const [hasCustomization, setHasCustomization] = useState(false);
+  const [isCustomizationModalOpen, setIsCustomizationModalOpen] = useState(false);
 
   // Helper function to validate and convert Json to MockupColor[]
   const validateMockupColors = (colors: any): MockupColor[] => {
@@ -162,7 +167,7 @@ const ProductDetail = () => {
         productId: product.id,
         name: product.name,
         price: product.price,
-        quantity: 1,
+        quantity: quantity,
         image_url: product.image_url,
         size: selectedSize,
         color: selectedColor?.name || product.color,
@@ -294,6 +299,14 @@ const ProductDetail = () => {
             </div>
           )}
 
+          {/* Lottery Selection */}
+          <LotterySelector
+            lotteries={lotteries}
+            selectedLottery={selectedLottery}
+            onLotteryChange={setSelectedLottery}
+            ticketsOffered={product.tickets_offered || 0}
+          />
+
           {/* Quantity Input */}
           <div className="mb-6">
             <Label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-2">Quantité:</Label>
@@ -306,6 +319,23 @@ const ProductDetail = () => {
               className="w-24"
             />
           </div>
+
+          {/* Customization Button */}
+          {product.is_customizable && (
+            <div className="mb-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsCustomizationModalOpen(true)}
+                className="w-full mb-2"
+              >
+                <Palette className="mr-2 h-4 w-4" />
+                Personnaliser ce produit
+              </Button>
+              {customization && (
+                <p className="text-sm text-green-600">✓ Personnalisation appliquée</p>
+              )}
+            </div>
+          )}
 
           {/* Add to Cart Button */}
           <Button
@@ -321,6 +351,56 @@ const ProductDetail = () => {
           </Button>
         </div>
       </div>
+
+      {/* Customization Modal */}
+      {product.is_customizable && isCustomizationModalOpen && (
+        <ModalPersonnalisation
+          open={isCustomizationModalOpen}
+          onClose={() => setIsCustomizationModalOpen(false)}
+          currentViewSide="front"
+          onViewSideChange={() => {}}
+          productName={product.name}
+          productImageUrl={product.image_url}
+          productAvailableColors={product.available_colors}
+          mockup={mockup}
+          selectedMockupColor={selectedColor}
+          onMockupColorChange={setSelectedColor}
+          selectedDesignFront={null}
+          selectedDesignBack={null}
+          onSelectDesign={() => {}}
+          onFileUpload={() => {}}
+          onAIImageGenerated={() => {}}
+          onRemoveBackground={() => {}}
+          isRemovingBackground={false}
+          svgColorFront="#000000"
+          svgColorBack="#000000"
+          svgContentFront=""
+          svgContentBack=""
+          onSvgColorChange={() => {}}
+          onSvgContentChange={() => {}}
+          textContentFront=""
+          textContentBack=""
+          textFontFront="Arial"
+          textFontBack="Arial"
+          textColorFront="#000000"
+          textColorBack="#000000"
+          textStylesFront={{ bold: false, italic: false, underline: false }}
+          textStylesBack={{ bold: false, italic: false, underline: false }}
+          textTransformFront={{ position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
+          textTransformBack={{ position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
+          onTextContentChange={() => {}}
+          onTextFontChange={() => {}}
+          onTextColorChange={() => {}}
+          onTextStylesChange={() => {}}
+          onTextTransformChange={() => {}}
+          designTransformFront={{ position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
+          designTransformBack={{ position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
+          selectedSizeFront="A4"
+          selectedSizeBack="A4"
+          onDesignTransformChange={() => {}}
+          onSizeChange={() => {}}
+        />
+      )}
     </div>
   );
 };
