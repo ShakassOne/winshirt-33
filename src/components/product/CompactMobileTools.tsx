@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+
+import React, { useMemo, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { CompactDesignGallery } from './CompactDesignGallery';
 import { CompactSVGGallery } from './CompactSVGGallery';
 import { CompactUpload } from './CompactUpload';
 import { CompactAIGenerator } from './CompactAIGenerator';
+import { MobilePanelDragHandle } from './MobilePanelDragHandle';
 
 interface CompactMobileToolsProps {
   activeTab: string;
@@ -48,6 +50,10 @@ interface CompactMobileToolsProps {
   onAIImageGenerated: (imageUrl: string, imageName: string) => void;
   onRemoveBackground: () => void;
   isRemovingBackground: boolean;
+  
+  // Panel height management
+  panelHeight?: number;
+  onPanelHeightChange?: (height: number) => void;
 }
 
 export const CompactMobileTools: React.FC<CompactMobileToolsProps> = ({
@@ -75,7 +81,9 @@ export const CompactMobileTools: React.FC<CompactMobileToolsProps> = ({
   onFileUpload,
   onAIImageGenerated,
   onRemoveBackground,
-  isRemovingBackground
+  isRemovingBackground,
+  panelHeight = 176,
+  onPanelHeightChange
 }) => {
   const activeStylesValue = useMemo(() => {
     const activeStyles = [];
@@ -112,10 +120,20 @@ export const CompactMobileTools: React.FC<CompactMobileToolsProps> = ({
   );
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-black/40 rounded-t-lg border-t border-white/10">
+      {/* Drag handle */}
+      {onPanelHeightChange && (
+        <MobilePanelDragHandle
+          currentHeight={panelHeight}
+          onHeightChange={onPanelHeightChange}
+          minHeight={120}
+          maxHeight={400}
+        />
+      )}
+
       {/* Compact tabs */}
-      <Tabs value={activeTab} onValueChange={onTabChange} className="h-full flex flex-col">
-        <TabsList className="grid w-full grid-cols-5 mb-1 h-8">
+      <Tabs value={activeTab} onValueChange={onTabChange} className="flex-1 flex flex-col">
+        <TabsList className="grid w-full grid-cols-5 mb-1 h-8 mx-2">
           <TabsTrigger value="designs" className="flex items-center gap-1 text-xs py-1">
             <ImageIcon className="h-3 w-3" />
             <span className="hidden sm:inline">Images</span>
@@ -139,7 +157,7 @@ export const CompactMobileTools: React.FC<CompactMobileToolsProps> = ({
         </TabsList>
 
         {/* Compact content area */}
-        <div className="flex-1 overflow-hidden bg-black/40 rounded border border-white/10">
+        <div className="flex-1 overflow-hidden bg-black/20 rounded mx-2 mb-2 border border-white/10">
           <TabsContent value="designs" className="h-full overflow-y-auto p-2 m-0">
             <CompactDesignGallery
               onSelectDesign={onSelectDesign}

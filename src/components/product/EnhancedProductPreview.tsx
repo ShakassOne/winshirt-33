@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Design } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
 import { UnifiedCustomizationRenderer } from './UnifiedCustomizationRenderer';
+import { ElementManipulationControls } from './ElementManipulationControls';
 
 interface EnhancedProductPreviewProps {
   productName: string;
@@ -40,6 +41,10 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
 }) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const [showControls, setShowControls] = useState(true);
+  const [selectedElement, setSelectedElement] = useState<'design' | 'text' | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
 
   const currentData = {
     design: currentViewSide === 'front' ? customization?.frontDesign : customization?.backDesign,
@@ -55,9 +60,80 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
     return undefined;
   };
 
+  // Drag handlers
+  const handleElementMouseDown = useCallback((elementType: 'design' | 'text', e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    const currentTransform = elementType === 'design' ? currentData.design?.transform : currentData.text?.transform;
+    if (!currentTransform) return;
+    
+    setSelectedElement(elementType);
+    setIsDragging(true);
+    setDragStart({ x: clientX, y: clientY });
+    setInitialPosition(currentTransform.position);
+  }, [currentData]);
+
+  const handleMouseMove = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!isDragging || !selectedElement) return;
+    
+    e.preventDefault();
+    
+    const clientX = 'touches' in e ? (e as TouchEvent).touches[0].clientX : (e as MouseEvent).clientX;
+    const clientY = 'touches' in e ? (e as TouchEvent).touches[0].clientY : (e as MouseEvent).clientY;
+    
+    const deltaX = clientX - dragStart.x;
+    const deltaY = clientY - dragStart.y;
+    
+    const newPosition = {
+      x: initialPosition.x + deltaX,
+      y: initialPosition.y + deltaY
+    };
+    
+    if (selectedElement === 'design') {
+      onDesignTransformChange('position', newPosition);
+    } else if (selectedElement === 'text') {
+      onTextTransformChange('position', newPosition);
+    }
+  }, [isDragging, selectedElement, dragStart, initialPosition, onDesignTransformChange, onTextTransformChange]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Global event listeners for drag
+  React.useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('touchmove', handleMouseMove, { passive: false });
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchend', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('touchmove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchend', handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
+  // Deselect when clicking outside
+  const handleBackgroundClick = useCallback(() => {
+    setSelectedElement(null);
+  }, []);
+
+  const handleElementClick = useCallback((elementType: 'design' | 'text', e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedElement(elementType);
+  }, []);
+
   return (
     <>
-      <div className="relative w-full h-full bg-gray-900/50 rounded-lg overflow-hidden">
+      <div className="relative w-full h-full bg-gray-900/50 rounded-lg overflow-hidden" onClick={handleBackgroundClick}>
         {/* Preview Area avec rendu unifié - Vue principale visible */}
         <div 
           ref={previewRef}
@@ -72,6 +148,62 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
               className="w-full h-full"
             />
           </div>
+
+          {/* Interactive design element */}
+          {currentData.design && (
+            <div
+              className={`absolute cursor-move select-none ${
+                selectedElement === 'design' ? 'ring-2 ring-blue-400 ring-opacity-50' : ''
+              }`}
+              style={{
+                transform: `translate(${currentData.design.transform.position.x}px, ${currentData.design.transform.position.y}px) rotate(${currentData.design.transform.rotation}deg) scale(${currentData.design.transform.scale})`,
+                transformOrigin: 'center',
+                zIndex: 10,
+                left: '50%',
+                top: '50%',
+                marginLeft: '-100px',
+                marginTop: '-100px'
+              }}
+              onMouseDown={(e) => handleElementMouseDown('design', e)}
+              onTouchStart={(e) => handleElementMouseDown('design', e)}
+              onClick={(e) => handleElementClick('design', e)}
+            >
+              <img
+                src={currentData.design.designUrl}
+                alt={currentData.design.designName}
+                className="max-w-[200px] max-h-[200px] w-auto h-auto pointer-events-none"
+                draggable={false}
+              />
+            </div>
+          )}
+
+          {/* Interactive text element */}
+          {currentData.text && (
+            <div
+              className={`absolute cursor-move select-none ${
+                selectedElement === 'text' ? 'ring-2 ring-green-400 ring-opacity-50' : ''
+              }`}
+              style={{
+                transform: `translate(${currentData.text.transform.position.x}px, ${currentData.text.transform.position.y}px) rotate(${currentData.text.transform.rotation}deg) scale(${currentData.text.transform.scale})`,
+                transformOrigin: 'center',
+                fontFamily: currentData.text.font,
+                color: currentData.text.color,
+                fontWeight: currentData.text.styles.bold ? 'bold' : 'normal',
+                fontStyle: currentData.text.styles.italic ? 'italic' : 'normal',
+                textDecoration: currentData.text.styles.underline ? 'underline' : 'none',
+                fontSize: '24px',
+                textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
+                zIndex: 20,
+                left: '50%',
+                top: '50%'
+              }}
+              onMouseDown={(e) => handleElementMouseDown('text', e)}
+              onTouchStart={(e) => handleElementMouseDown('text', e)}
+              onClick={(e) => handleElementClick('text', e)}
+            >
+              {currentData.text.content}
+            </div>
+          )}
         </div>
 
         {/* Side Toggle */}
@@ -106,63 +238,42 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
           {showControls ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
         </Button>
 
-        {/* Quick Controls */}
-        {showControls && (currentData.design || currentData.text) && (
+        {/* Element Manipulation Controls */}
+        {showControls && selectedElement && (
+          <ElementManipulationControls
+            elementType={selectedElement}
+            transform={selectedElement === 'design' ? currentData.design?.transform : currentData.text?.transform}
+            onTransformChange={selectedElement === 'design' ? onDesignTransformChange : onTextTransformChange}
+            onRemove={selectedElement === 'design' ? onRemoveDesign : onRemoveText}
+            onDeselect={() => setSelectedElement(null)}
+          />
+        )}
+
+        {/* Quick Controls (simplified when element is selected) */}
+        {showControls && !selectedElement && (currentData.design || currentData.text) && (
           <div className="absolute bottom-2 left-2 right-2">
             <div className="flex justify-center gap-1 bg-black/70 rounded-md p-1">
               {currentData.design && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => onDesignTransformChange('scale', Math.max(0.5, currentData.design.transform.scale - 0.1))}
-                  >
-                    <ZoomOut className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => onDesignTransformChange('scale', Math.min(2, currentData.design.transform.scale + 0.1))}
-                  >
-                    <ZoomIn className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => onDesignTransformChange('rotation', currentData.design.transform.rotation - 15)}
-                  >
-                    <RotateCcw className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => onDesignTransformChange('rotation', currentData.design.transform.rotation + 15)}
-                  >
-                    <RotateCw className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={onRemoveDesign}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs text-white/70 hover:text-white"
+                  onClick={() => setSelectedElement('design')}
+                >
+                  <Move className="h-3 w-3 mr-1" />
+                  Design
+                </Button>
               )}
               
               {currentData.text && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={onRemoveText}
+                  className="h-6 px-2 text-xs text-white/70 hover:text-white"
+                  onClick={() => setSelectedElement('text')}
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <Move className="h-3 w-3 mr-1" />
+                  Texte
                 </Button>
               )}
             </div>

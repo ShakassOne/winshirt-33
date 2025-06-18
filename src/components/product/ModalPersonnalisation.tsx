@@ -1,4 +1,3 @@
-
 import logger from '@/utils/logger';
 
 import React, { useState, useMemo } from 'react';
@@ -175,6 +174,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('designs');
+  const [panelHeight, setPanelHeight] = useState(176); // État pour la hauteur du panneau mobile
 
   // Memoized getters for better performance
   const currentData = useMemo(() => ({
@@ -400,10 +400,10 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
   const optimizedMobileContent = (
     <div className="flex flex-col h-full">
-      {/* Maximized preview area - 80% of screen */}
+      {/* Maximized preview area - Dynamique basée sur la hauteur du panneau */}
       <div 
         className="flex-1 px-1 pt-1 overflow-hidden"
-        style={{ height: 'calc(100vh - 180px)' }}
+        style={{ height: `calc(100vh - ${panelHeight + 60}px)` }}
       >
         <EnhancedProductPreview
           productName={productName}
@@ -421,8 +421,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         />
       </div>
 
-      {/* Compacted options area - 20% of screen */}
-      <div className="h-44 px-1 pb-1">
+      {/* Compacted options area - Hauteur dynamique */}
+      <div style={{ height: `${panelHeight}px` }} className="px-1 pb-1">
         <CompactMobileTools
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -449,6 +449,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           onAIImageGenerated={onAIImageGenerated}
           onRemoveBackground={onRemoveBackground}
           isRemovingBackground={isRemovingBackground}
+          panelHeight={panelHeight}
+          onPanelHeightChange={setPanelHeight}
         />
       </div>
     </div>
