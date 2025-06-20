@@ -18,16 +18,23 @@ export const SimpleNavigation: React.FC = () => {
   const { isAdmin } = useAdminCheck();
   const { itemCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [animationCompleted, setAnimationCompleted] = useState(false);
+  
+  // Utiliser sessionStorage pour persister l'état de l'animation
+  const [animationCompleted, setAnimationCompleted] = useState(() => {
+    return sessionStorage.getItem('menu-animation-completed') === 'true';
+  });
 
   useEffect(() => {
-    // Marquer l'animation comme terminée après 1.2s
-    const timer = setTimeout(() => {
-      setAnimationCompleted(true);
-    }, 1200);
+    // Si l'animation n'est pas encore terminée, la lancer
+    if (!animationCompleted) {
+      const timer = setTimeout(() => {
+        setAnimationCompleted(true);
+        sessionStorage.setItem('menu-animation-completed', 'true');
+      }, 1000); // Durée réduite à 1s
 
-    return () => clearTimeout(timer);
-  }, []);
+      return () => clearTimeout(timer);
+    }
+  }, [animationCompleted]);
 
   const handleSignOut = async () => {
     try {
