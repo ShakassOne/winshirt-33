@@ -6,7 +6,7 @@ import { CartContextType } from '@/types/cart.types';
 import { CartItem } from '@/types/supabase.types';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useProductionGeneration } from '@/hooks/useProductionGeneration';
+import { useUnifiedCapture } from '@/hooks/useUnifiedCapture';
 import { enrichCustomizationWithProductionFiles } from '@/services/unifiedCapture.service';
 import {
   addToCart,
@@ -28,7 +28,7 @@ const MemoizedCartProvider = memo(({ children }: { children: React.ReactNode }) 
   const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   
-  const { generateProductionFiles, isGenerating } = useProductionGeneration();
+  const { captureUnified, isCapturing } = useUnifiedCapture();
   
   // Generate a cart token if not exists
   useEffect(() => {
@@ -125,7 +125,7 @@ const MemoizedCartProvider = memo(({ children }: { children: React.ReactNode }) 
   
   // Memoized handlers to prevent unnecessary re-renders
   const addItem = useCallback(async (item: CartItem) => {
-    logger.log("Starting addItem function with item:", JSON.stringify(item, null, 2));
+    logger.log("🛒 [Cart Context] Starting addItem function with item:", JSON.stringify(item, null, 2));
     
     if (!cartToken) {
       console.error("Cannot add item to cart - no cart token available");
@@ -172,52 +172,61 @@ const MemoizedCartProvider = memo(({ children }: { children: React.ReactNode }) 
     
     setIsLoading(true);
     try {
-      logger.log("About to call addToCart with:", { 
+      logger.log("🛒 [Cart Context] About to call addToCart with:", { 
         cartToken, 
         item, 
         currentUser: currentUser ? `User ID: ${currentUser.id}` : 'No user'
       });
       
-      // Si l'item a une customization, générer les fichiers de production
+      // Si l'item a une customization, capturer les fichiers avec html2canvas
       let enrichedCustomization = item.customization;
       
       if (item.customization && (item.customization.frontDesign || item.customization.backDesign || 
                                 item.customization.frontText || item.customization.backText)) {
         
-        logger.log("🎨 [Cart Context] Génération des fichiers de production pour customization");
+        logger.log("📸 [Cart Context] Début capture html2canvas pour customization");
         
         try {
-          // Préparer les URLs de mockup
-          const mockupUrls = {
-            front: item.image_url, // URL du produit comme base
-            back: item.image_url   // Même URL pour les deux côtés par défaut
-          };
+          // Attendre un peu pour s'assurer que les éléments DOM sont rendus
+          await new Promise(resolve => setTimeout(resolve, 500));
           
-          const productionFiles = await generateProductionFiles(
-            item.customization,
-            mockupUrls,
-            { name: item.name, id: item.productId }
-          );
+          // Vérifier que les éléments de capture existent
+          const frontElement = document.getElementById('preview-front-complete');
+          const backElement = document.getElementById('preview-back-complete');
           
-          // Enrichir la customization avec les URLs générées
-          enrichedCustomization = enrichCustomizationWithProductionFiles(
-            item.customization,
-            productionFiles
-          );
+          logger.log("🔍 [Cart Context] Éléments DOM trouvés:", {
+            frontElement: !!frontElement,
+            backElement: !!backElement
+          });
           
-          logger.log("✅ [Cart Context] Fichiers de production générés et customization enrichie");
-        } catch (productionError) {
-          console.error("❌ [Cart Context] Erreur génération fichiers production:", productionError);
-          // Continuer sans les fichiers de production mais afficher un warning
+          if (!frontElement || !backElement) {
+            logger.log("⚠️ [Cart Context] Éléments de capture manquants, ajout sans capture");
+          } else {
+            // Effectuer la capture avec html2canvas
+            const captureResults = await captureUnified(item.customization);
+            
+            logger.log("📸 [Cart Context] Résultats capture:", captureResults);
+            
+            // Enrichir la customization avec les URLs capturées
+            enrichedCustomization = enrichCustomizationWithProductionFiles(
+              item.customization,
+              captureResults
+            );
+            
+            logger.log("✅ [Cart Context] Customization enrichie avec capture client");
+          }
+        } catch (captureError) {
+          console.error("❌ [Cart Context] Erreur capture html2canvas:", captureError);
+          // Continuer sans les fichiers de production
           toast({
             title: "Avertissement",
-            description: "Les fichiers de production seront générés plus tard",
+            description: "La capture personnalisée a échoué, mais l'article sera ajouté",
             variant: "default",
           });
         }
       }
       
-      // Créer l'item avec la customization enrichie
+      // Créer l'item avec la customization enrichie ou originale
       const itemWithProductionFiles = {
         ...item,
         customization: enrichedCustomization
@@ -231,7 +240,7 @@ const MemoizedCartProvider = memo(({ children }: { children: React.ReactNode }) 
         description: `${item.name} a été ajouté à votre panier`,
       });
       
-      logger.log("Item added successfully with production files");
+      logger.log("✅ [Cart Context] Item ajouté avec succès");
     } catch (err: any) {
       setError(err.message);
       console.error("Error adding to cart:", err);
@@ -243,7 +252,7 @@ const MemoizedCartProvider = memo(({ children }: { children: React.ReactNode }) 
     } finally {
       setIsLoading(false);
     }
-  }, [cartToken, currentUser?.id, loadCartItems, generateProductionFiles]);
+  }, [cartToken, currentUser?.id, loadCartItems, captureUnified]);
   
   const removeItem = useCallback(async (productId: string) => {
     if (!cartToken) return;
@@ -335,7 +344,7 @@ const MemoizedCartProvider = memo(({ children }: { children: React.ReactNode }) 
     removeItem,
     updateItemQuantity,
     clearCart,
-    isLoading: isLoading || isGenerating, // Include generation loading state
+    isLoading: isLoading || isCapturing, // Include capture loading state
     error,
     total,
     itemCount,
@@ -348,7 +357,7 @@ const MemoizedCartProvider = memo(({ children }: { children: React.ReactNode }) 
     updateItemQuantity,
     clearCart,
     isLoading,
-    isGenerating,
+    isCapturing,
     error,
     total,
     itemCount,

@@ -1,3 +1,4 @@
+
 import React, { memo, useMemo } from 'react';
 import { useCart } from '@/context/CartContext';
 import Navbar from '@/components/layout/Navbar';
@@ -7,7 +8,6 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, ArrowRight } from 'lucide-react';
-import { ProductionFilesInfo } from '@/components/cart/ProductionFilesInfo';
 
 // Memoized empty cart component
 const EmptyCart = memo(() => (
@@ -85,11 +85,6 @@ const Cart = memo(() => {
       <div className="container mx-auto px-4 py-8 mt-16 flex-grow">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold mb-6">Votre Panier</h1>
-          
-          {/* Information sur le nouveau système */}
-          <div className="mb-6">
-            <ProductionFilesInfo />
-          </div>
           
           {isLoading ? (
             <div className="text-center py-12">
