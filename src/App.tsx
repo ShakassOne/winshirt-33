@@ -1,11 +1,10 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CartProvider } from "@/context/CartContext";
 import { OptimizedAuthProvider } from "@/context/OptimizedAuthContext";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
-import { ThemeProviderWrapper } from "@/components/theme/theme-provider-wrapper";
+import { WinShirtThemeProvider } from "@/components/theme/theme-provider-wrapper";
 import { GlobalCaptureElements } from "@/components/capture/GlobalCaptureElements";
 import Index from "@/pages/Index";
 import Products from "@/pages/Products";
@@ -47,12 +46,15 @@ import AnalyticsAdmin from "@/pages/admin/AnalyticsAdmin";
 import DTFProductionAdmin from "@/pages/admin/DTFProductionAdmin";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { optimizedQueryClient } from "@/lib/optimizedQueryClient";
+import { createOptimizedQueryClient } from "@/lib/optimizedQueryClient";
+
+// Create the query client instance
+const queryClient = createOptimizedQueryClient();
 
 function App() {
   return (
-    <QueryClientProvider client={optimizedQueryClient}>
-      <ThemeProviderWrapper>
+    <QueryClientProvider client={queryClient}>
+      <WinShirtThemeProvider>
         <OptimizedAuthProvider>
           <CartProvider>
             <Router>
@@ -105,7 +107,7 @@ function App() {
             </Router>
           </CartProvider>
         </OptimizedAuthProvider>
-      </ThemeProviderWrapper>
+      </WinShirtThemeProvider>
     </QueryClientProvider>
   );
 }
