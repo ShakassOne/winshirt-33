@@ -131,99 +131,36 @@
     @apply h-full rounded-full bg-gradient-to-r from-winshirt-purple to-winshirt-blue transition-all duration-300;
   }
   
-  /* Glow Navigation Styles - Unified */
-  .glow-nav {
-    @apply relative flex justify-center items-center rounded-xl;
-    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.25);
-    max-width: fit-content;
+  /* Simple Navigation avec animation lumière */
+  .nav-link {
+    @apply relative overflow-hidden rounded-md transition-all duration-300;
   }
   
-  .glow-nav-item {
-    @apply relative list-none;
+  .nav-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(155, 135, 245, 0.3),
+      rgba(51, 195, 240, 0.3),
+      transparent
+    );
+    transition: left 0.6s ease-in-out;
+    z-index: -1;
   }
   
-  .glow-nav-link {
-    @apply relative text-white no-underline inline-block z-[1000] px-6 py-4;
-    backdrop-filter: blur(15px);
+  .nav-link:hover::before {
+    left: 100%;
   }
   
-  .glow-nav-icon {
-    @apply text-3xl pointer-events-none opacity-25 transition-opacity duration-300;
-  }
-  
-  .glow-nav-item.active .glow-nav-icon {
-    @apply opacity-100;
-  }
-  
-  .glow-nav-item:hover .glow-nav-icon {
-    @apply opacity-75;
-  }
-  
-  #nav-marker {
-    @apply absolute top-0 z-[1] transition-all duration-500;
-  }
-  
-  #nav-marker::before {
-    content: "";
-    @apply absolute -top-2 left-1/2 transform -translate-x-1/2 w-12 h-10 rounded-lg;
-  }
-  
-  /* Couleurs de glow pour chaque onglet - adaptés pour plus d'items */
-  .glow-nav-item:nth-child(1).active ~ #nav-marker::before {
-    background: #5da6ff;
-    box-shadow: 0 0 15px #5da6ff, 0 0 30px #5da6ff, 0 0 45px #5da6ff, 0 0 60px #5da6ff;
-  }
-  
-  .glow-nav-item:nth-child(2).active ~ #nav-marker::before {
-    background: #ff6b35;
-    box-shadow: 0 0 15px #ff6b35, 0 0 30px #ff6b35, 0 0 45px #ff6b35, 0 0 60px #ff6b35;
-  }
-  
-  .glow-nav-item:nth-child(3).active ~ #nav-marker::before {
-    background: #ff5ff5;
-    box-shadow: 0 0 15px #ff5ff5, 0 0 30px #ff5ff5, 0 0 45px #ff5ff5, 0 0 60px #ff5ff5;
-  }
-  
-  .glow-nav-item:nth-child(4).active ~ #nav-marker::before {
-    background: #df2fff;
-    box-shadow: 0 0 15px #df2fff, 0 0 30px #df2fff, 0 0 45px #df2fff, 0 0 60px #df2fff;
-  }
-  
-  .glow-nav-item:nth-child(5).active ~ #nav-marker::before {
-    background: #00ff88;
-    box-shadow: 0 0 15px #00ff88, 0 0 30px #00ff88, 0 0 45px #00ff88, 0 0 60px #00ff88;
-  }
-  
-  .glow-nav-item:nth-child(6).active ~ #nav-marker::before {
-    background: #ffaa00;
-    box-shadow: 0 0 15px #ffaa00, 0 0 30px #ffaa00, 0 0 45px #ffaa00, 0 0 60px #ffaa00;
-  }
-  
-  .glow-nav-item:nth-child(7).active ~ #nav-marker::before {
-    background: #ff0088;
-    box-shadow: 0 0 15px #ff0088, 0 0 30px #ff0088, 0 0 45px #ff0088, 0 0 60px #ff0088;
-  }
-  
-  .glow-nav-item:nth-child(8).active ~ #nav-marker::before {
-    background: #8800ff;
-    box-shadow: 0 0 15px #8800ff, 0 0 30px #8800ff, 0 0 45px #8800ff, 0 0 60px #8800ff;
-  }
-  
-  /* Mobile Navigation - en haut maintenant */
-  .mobile-glow-nav-link {
-    @apply px-3 py-3 flex flex-col items-center;
-  }
-  
-  .mobile-glow-nav-icon {
-    @apply text-xl;
-  }
-  
-  .mobile-glow-nav-label {
-    @apply text-xs mt-1 opacity-60;
-  }
-  
-  .glow-nav-item.active .mobile-glow-nav-label {
-    @apply opacity-100;
+  .nav-link:hover {
+    @apply bg-white/5 shadow-lg;
+    box-shadow: 0 0 20px rgba(155, 135, 245, 0.2);
   }
   
   /* 3D Tilt Card Effect */

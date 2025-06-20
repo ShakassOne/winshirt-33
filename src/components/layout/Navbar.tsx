@@ -1,9 +1,9 @@
 
 import React from "react";
-import { GlowNavigation } from "./GlowNavigation";
+import { SimpleNavigation } from "./SimpleNavigation";
 
 const Navbar = () => {
-  return <GlowNavigation />;
+  return <SimpleNavigation />;
 };
 
 export default Navbar;
