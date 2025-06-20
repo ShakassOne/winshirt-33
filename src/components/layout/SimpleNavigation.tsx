@@ -47,6 +47,15 @@ export const SimpleNavigation: React.FC = () => {
     return false;
   };
 
+  // Fonction pour séparer les lettres pour l'animation flip
+  const splitTextIntoSpans = (text: string) => {
+    return text.split('').map((char, index) => (
+      <span key={index} className="nav-letter">
+        {char}
+      </span>
+    ));
+  };
+
   if (isMobile) {
     return (
       <header className="fixed top-0 left-0 w-full z-50 bg-background/95 backdrop-blur-sm border-b border-border">
@@ -105,63 +114,48 @@ export const SimpleNavigation: React.FC = () => {
   }
 
   return (
-    <header className="fixed top-0 left-0 w-full z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-      <div className="container mx-auto px-6">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="text-xl font-bold text-gradient">
-            WinShirt
-          </Link>
+    <header className="capsule-header">
+      <div className="menu-container">
+        {/* Logo circulaire coloré */}
+        <Link to="/" className="capsule-logo">
+          <div className="logo-gradient"></div>
+        </Link>
 
-          {/* Navigation Menu */}
-          <nav className="flex items-center space-x-8">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`nav-link relative px-4 py-2 text-sm font-medium transition-colors ${
-                  isActivePath(item.path)
-                    ? 'text-winshirt-purple'
-                    : 'text-foreground hover:text-winshirt-purple'
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Right Side */}
-          <div className="flex items-center space-x-4">
-            {/* Panier */}
-            <Link to="/cart" className="nav-link relative px-3 py-2">
-              <div className="flex items-center space-x-1">
-                <ShoppingCart className="h-5 w-5" />
-                <span className="text-sm font-medium">Panier</span>
-                {itemCount > 0 && (
-                  <span className="bg-winshirt-purple text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ml-1">
-                    {itemCount > 9 ? '9+' : itemCount}
-                  </span>
-                )}
-              </div>
+        {/* Navigation dans la capsule */}
+        <nav className="capsule-nav">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`capsule-nav-link ${
+                isActivePath(item.path) ? 'active' : ''
+              }`}
+            >
+              {splitTextIntoSpans(item.label)}
             </Link>
+          ))}
+        </nav>
 
-            {/* Contact/User */}
-            {isAuthenticated ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSignOut}
-                className="nav-link"
-              >
-                Déconnexion
-              </Button>
-            ) : (
-              <Link to="/auth" className="nav-link px-4 py-2 text-sm font-medium">
-                Contact
-              </Link>
-            )}
-          </div>
-        </div>
+        {/* Bouton Contact/Panier en capsule blanche */}
+        {isAuthenticated ? (
+          <button onClick={handleSignOut} className="capsule-contact-button">
+            Déconnexion
+          </button>
+        ) : (
+          <Link to="/auth" className="capsule-contact-button">
+            Contact
+          </Link>
+        )}
+
+        {/* Panier avec compteur */}
+        <Link to="/cart" className="capsule-cart-button">
+          <ShoppingCart className="h-4 w-4" />
+          {itemCount > 0 && (
+            <span className="capsule-cart-count">
+              {itemCount > 9 ? '9+' : itemCount}
+            </span>
+          )}
+        </Link>
       </div>
     </header>
   );
