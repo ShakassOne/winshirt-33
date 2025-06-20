@@ -7,7 +7,7 @@ import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { useCart } from '@/context/CartContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 export const SimpleNavigation: React.FC = () => {
@@ -18,6 +18,16 @@ export const SimpleNavigation: React.FC = () => {
   const { isAdmin } = useAdminCheck();
   const { itemCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [animationCompleted, setAnimationCompleted] = useState(false);
+
+  useEffect(() => {
+    // Marquer l'animation comme terminée après 1.2s
+    const timer = setTimeout(() => {
+      setAnimationCompleted(true);
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -115,7 +125,7 @@ export const SimpleNavigation: React.FC = () => {
 
   return (
     <header className="capsule-header">
-      <div className="menu-container">
+      <div className={`menu-container ${animationCompleted ? 'animation-completed' : ''}`}>
         {/* Logo circulaire coloré */}
         <Link to="/" className="capsule-logo">
           <div className="logo-gradient"></div>
