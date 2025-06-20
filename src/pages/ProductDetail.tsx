@@ -21,6 +21,8 @@ import { ReloadIcon } from "@radix-ui/react-icons"
 import { Palette, Star, Zap, Sparkles } from "lucide-react"
 import { ModalPersonnalisation } from '@/components/product/ModalPersonnalisation';
 import { LotterySelector } from '@/components/product/LotterySelector';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -577,230 +579,244 @@ const ProductDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-white text-lg">Chargement du produit...</p>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-white text-lg">Chargement du produit...</p>
+          </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-        <Card className="bg-white/10 backdrop-blur-lg border-white/20">
-          <CardContent className="p-8 text-center">
-            <p className="text-white text-lg">Produit non trouvé.</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+          <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+            <CardContent className="p-8 text-center">
+              <p className="text-white text-lg">Produit non trouvé.</p>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 pt-20 pb-12">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          {/* Product Image */}
-          <Card className="bg-white/10 backdrop-blur-lg border-white/20 overflow-hidden">
-            <CardContent className="p-0">
-              <AspectRatio ratio={1 / 1} className="w-full">
-                <img
-                  src={product.image_url}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-              </AspectRatio>
-            </CardContent>
-          </Card>
-
-          {/* Product Details */}
-          <div className="space-y-6">
-            <Card className="bg-white/10 backdrop-blur-lg border-white/20">
-              <CardHeader>
-                <CardTitle className="text-3xl font-bold text-white flex items-center gap-3">
-                  {product.name}
-                  {product.tickets_offered && product.tickets_offered > 0 && (
-                    <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black border-0 animate-pulse">
-                      <Star className="h-4 w-4 mr-1" />
-                      {product.tickets_offered} tickets
-                    </Badge>
-                  )}
-                </CardTitle>
-                <CardDescription className="text-gray-300 text-lg">
-                  {product.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-3xl font-bold text-white">
-                    {product.price.toFixed(2)} €
-                  </span>
-                  {hasCustomization() && (
-                    <Badge className="bg-green-500/20 text-green-300 border-green-500/50 animate-pulse">
-                      <Sparkles className="h-4 w-4 mr-1" />
-                      Personnalisé
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Color Selector */}
-                {mockup && mockup.colors && mockup.colors.length > 0 && (
-                  <div>
-                    <Label className="text-white font-medium mb-3 block">Couleur:</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {mockup.colors.map((color) => (
-                        <button
-                          key={color.name}
-                          onClick={() => setSelectedColor(color)}
-                          className={`px-4 py-2 rounded-lg border-2 transition-all duration-200 ${
-                            selectedColor?.name === color.name 
-                              ? 'border-blue-400 bg-blue-400/20 text-white shadow-lg shadow-blue-400/25' 
-                              : 'border-white/30 bg-white/10 text-gray-300 hover:border-white/50 hover:bg-white/20'
-                          }`}
-                        >
-                          {color.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Size Selector */}
-                {product.available_sizes && product.available_sizes.length > 0 && (
-                  <div>
-                    <Label className="text-white font-medium mb-3 block">Taille:</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {product.available_sizes.map((size) => (
-                        <button
-                          key={size}
-                          onClick={() => setSelectedSize(size)}
-                          className={`px-4 py-2 rounded-lg border-2 transition-all duration-200 ${
-                            selectedSize === size 
-                              ? 'border-purple-400 bg-purple-400/20 text-white shadow-lg shadow-purple-400/25' 
-                              : 'border-white/30 bg-white/10 text-gray-300 hover:border-white/50 hover:bg-white/20'
-                          }`}
-                        >
-                          {size}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Lottery Selection */}
-                <LotterySelector
-                  lotteries={lotteries}
-                  selectedLottery={selectedLottery}
-                  onLotteryChange={setSelectedLottery}
-                  ticketsOffered={product.tickets_offered || 0}
-                />
-
-                {/* Quantity Input */}
-                <div>
-                  <Label htmlFor="quantity" className="text-white font-medium mb-3 block">
-                    Quantité:
-                  </Label>
-                  <Input
-                    type="number"
-                    id="quantity"
-                    value={quantity}
-                    onChange={(e) => setQuantity(parseInt(e.target.value))}
-                    min="1"
-                    className="w-24 bg-white/10 border-white/30 text-white"
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      
+      <div className="flex-1 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 pt-20 pb-12">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            {/* Product Image */}
+            <Card className="bg-white/10 backdrop-blur-lg border-white/20 overflow-hidden">
+              <CardContent className="p-0">
+                <AspectRatio ratio={1 / 1} className="w-full">
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
                   />
-                </div>
-
-                {/* Customization Button */}
-                {product.is_customizable && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsCustomizationModalOpen(true)}
-                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0 text-white font-semibold py-3 transition-all duration-200 transform hover:scale-105"
-                  >
-                    <Palette className="mr-2 h-5 w-5" />
-                    <Zap className="mr-2 h-4 w-4" />
-                    Personnaliser ce produit
-                  </Button>
-                )}
-
-                {/* Add to Cart Button */}
-                <Button
-                  onClick={handleAddToCart}
-                  disabled={isAdding}
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-4 text-lg transition-all duration-200 transform hover:scale-105 shadow-lg shadow-green-500/25"
-                >
-                  {isAdding ? (
-                    <>
-                      <ReloadIcon className="mr-2 h-5 w-5 animate-spin" />
-                      Ajout au panier...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-2 h-5 w-5" />
-                      Ajouter au panier
-                    </>
-                  )}
-                </Button>
+                </AspectRatio>
               </CardContent>
             </Card>
-          </div>
-        </div>
 
-        {/* Customization Modal */}
-        {product.is_customizable && isCustomizationModalOpen && (
-          <ModalPersonnalisation
-            open={isCustomizationModalOpen}
-            onClose={() => setIsCustomizationModalOpen(false)}
-            currentViewSide={currentViewSide}
-            onViewSideChange={setCurrentViewSide}
-            productName={product.name}
-            productImageUrl={product.image_url}
-            productAvailableColors={product.available_colors}
-            mockup={mockup}
-            selectedMockupColor={selectedColor}
-            onMockupColorChange={setSelectedColor}
-            selectedDesignFront={selectedDesignFront}
-            selectedDesignBack={selectedDesignBack}
-            onSelectDesign={handleSelectDesign}
-            onFileUpload={handleFileUpload}
-            onAIImageGenerated={handleAIImageGenerated}
-            onRemoveBackground={handleRemoveBackground}
-            isRemovingBackground={isRemovingBackground}
-            svgColorFront={svgColorFront}
-            svgColorBack={svgColorBack}
-            svgContentFront={svgContentFront}
-            svgContentBack={svgContentBack}
-            onSvgColorChange={handleSvgColorChange}
-            onSvgContentChange={handleSvgContentChange}
-            textContentFront={textContentFront}
-            textContentBack={textContentBack}
-            textFontFront={textFontFront}
-            textFontBack={textFontBack}
-            textColorFront={textColorFront}
-            textColorBack={textColorBack}
-            textStylesFront={textStylesFront}
-            textStylesBack={textStylesBack}
-            textTransformFront={textTransformFront}
-            textTransformBack={textTransformBack}
-            onTextContentChange={handleTextContentChange}
-            onTextFontChange={handleTextFontChange}
-            onTextColorChange={handleTextColorChange}
-            onTextStylesChange={handleTextStylesChange}
-            onTextTransformChange={handleTextTransformChange}
-            designTransformFront={designTransformFront}
-            designTransformBack={designTransformBack}
-            selectedSizeFront={selectedSizeFront}
-            selectedSizeBack={selectedSizeBack}
-            onDesignTransformChange={handleDesignTransformChange}
-            onSizeChange={handleSizeChange}
-            onDesignMouseDown={handleDesignMouseDown}
-            onTextMouseDown={handleTextMouseDown}
-            onTouchMove={handleMouseMove}
-          />
-        )}
+            {/* Product Details */}
+            <div className="space-y-6">
+              <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-3xl font-bold text-white flex items-center gap-3">
+                    {product.name}
+                    {product.tickets_offered && product.tickets_offered > 0 && (
+                      <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black border-0 animate-pulse">
+                        <Star className="h-4 w-4 mr-1" />
+                        {product.tickets_offered} tickets
+                      </Badge>
+                    )}
+                  </CardTitle>
+                  <CardDescription className="text-gray-300 text-lg">
+                    {product.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <span className="text-3xl font-bold text-white">
+                      {product.price.toFixed(2)} €
+                    </span>
+                    {hasCustomization() && (
+                      <Badge className="bg-green-500/20 text-green-300 border-green-500/50 animate-pulse">
+                        <Sparkles className="h-4 w-4 mr-1" />
+                        Personnalisé
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Color Selector */}
+                  {mockup && mockup.colors && mockup.colors.length > 0 && (
+                    <div>
+                      <Label className="text-white font-medium mb-3 block">Couleur:</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {mockup.colors.map((color) => (
+                          <button
+                            key={color.name}
+                            onClick={() => setSelectedColor(color)}
+                            className={`px-4 py-2 rounded-lg border-2 transition-all duration-200 ${
+                              selectedColor?.name === color.name 
+                                ? 'border-blue-400 bg-blue-400/20 text-white shadow-lg shadow-blue-400/25' 
+                                : 'border-white/30 bg-white/10 text-gray-300 hover:border-white/50 hover:bg-white/20'
+                            }`}
+                          >
+                            {color.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Size Selector */}
+                  {product.available_sizes && product.available_sizes.length > 0 && (
+                    <div>
+                      <Label className="text-white font-medium mb-3 block">Taille:</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {product.available_sizes.map((size) => (
+                          <button
+                            key={size}
+                            onClick={() => setSelectedSize(size)}
+                            className={`px-4 py-2 rounded-lg border-2 transition-all duration-200 ${
+                              selectedSize === size 
+                                ? 'border-purple-400 bg-purple-400/20 text-white shadow-lg shadow-purple-400/25' 
+                                : 'border-white/30 bg-white/10 text-gray-300 hover:border-white/50 hover:bg-white/20'
+                            }`}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Lottery Selection */}
+                  <LotterySelector
+                    lotteries={lotteries}
+                    selectedLottery={selectedLottery}
+                    onLotteryChange={setSelectedLottery}
+                    ticketsOffered={product.tickets_offered || 0}
+                  />
+
+                  {/* Quantity Input */}
+                  <div>
+                    <Label htmlFor="quantity" className="text-white font-medium mb-3 block">
+                      Quantité:
+                    </Label>
+                    <Input
+                      type="number"
+                      id="quantity"
+                      value={quantity}
+                      onChange={(e) => setQuantity(parseInt(e.target.value))}
+                      min="1"
+                      className="w-24 bg-white/10 border-white/30 text-white"
+                    />
+                  </div>
+
+                  {/* Customization Button */}
+                  {product.is_customizable && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsCustomizationModalOpen(true)}
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0 text-white font-semibold py-3 transition-all duration-200 transform hover:scale-105"
+                    >
+                      <Palette className="mr-2 h-5 w-5" />
+                      <Zap className="mr-2 h-4 w-4" />
+                      Personnaliser ce produit
+                    </Button>
+                  )}
+
+                  {/* Add to Cart Button */}
+                  <Button
+                    onClick={handleAddToCart}
+                    disabled={isAdding}
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-4 text-lg transition-all duration-200 transform hover:scale-105 shadow-lg shadow-green-500/25"
+                  >
+                    {isAdding ? (
+                      <>
+                        <ReloadIcon className="mr-2 h-5 w-5 animate-spin" />
+                        Ajout au panier...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-5 w-5" />
+                        Ajouter au panier
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Customization Modal */}
+          {product.is_customizable && isCustomizationModalOpen && (
+            <ModalPersonnalisation
+              open={isCustomizationModalOpen}
+              onClose={() => setIsCustomizationModalOpen(false)}
+              currentViewSide={currentViewSide}
+              onViewSideChange={setCurrentViewSide}
+              productName={product.name}
+              productImageUrl={product.image_url}
+              productAvailableColors={product.available_colors}
+              mockup={mockup}
+              selectedMockupColor={selectedColor}
+              onMockupColorChange={setSelectedColor}
+              selectedDesignFront={selectedDesignFront}
+              selectedDesignBack={selectedDesignBack}
+              onSelectDesign={handleSelectDesign}
+              onFileUpload={handleFileUpload}
+              onAIImageGenerated={handleAIImageGenerated}
+              onRemoveBackground={handleRemoveBackground}
+              isRemovingBackground={isRemovingBackground}
+              svgColorFront={svgColorFront}
+              svgColorBack={svgColorBack}
+              svgContentFront={svgContentFront}
+              svgContentBack={svgContentBack}
+              onSvgColorChange={handleSvgColorChange}
+              onSvgContentChange={handleSvgContentChange}
+              textContentFront={textContentFront}
+              textContentBack={textContentBack}
+              textFontFront={textFontFront}
+              textFontBack={textFontBack}
+              textColorFront={textColorFront}
+              textColorBack={textColorBack}
+              textStylesFront={textStylesFront}
+              textStylesBack={textStylesBack}
+              textTransformFront={textTransformFront}
+              textTransformBack={textTransformBack}
+              onTextContentChange={handleTextContentChange}
+              onTextFontChange={handleTextFontChange}
+              onTextColorChange={handleTextColorChange}
+              onTextStylesChange={handleTextStylesChange}
+              onTextTransformChange={handleTextTransformChange}
+              designTransformFront={designTransformFront}
+              designTransformBack={designTransformBack}
+              selectedSizeFront={selectedSizeFront}
+              selectedSizeBack={selectedSizeBack}
+              onDesignTransformChange={handleDesignTransformChange}
+              onSizeChange={handleSizeChange}
+              onDesignMouseDown={handleDesignMouseDown}
+              onTextMouseDown={handleTextMouseDown}
+              onTouchMove={handleMouseMove}
+            />
+          )}
+        </div>
       </div>
+      
+      <Footer />
     </div>
   );
 };
