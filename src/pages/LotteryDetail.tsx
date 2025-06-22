@@ -80,18 +80,22 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
           </div>
         ) : (
           <div className="container mx-auto px-4 py-10">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left Column - Lottery Image */}
-              <GlassCard className="p-6">
-                <img
-                  src={lottery.image_url}
-                  alt={lottery.title}
-                  className="w-full h-auto rounded-lg"
-                />
-              </GlassCard>
+            {/* Layout mobile-first vertical, puis horizontal sur large screens */}
+            <div className="flex flex-col lg:flex-row gap-8 lg:h-[calc(100vh-200px)]">
+              
+              {/* Left Column - Image fixe (sur desktop) */}
+              <div className="lg:w-1/2 lg:sticky lg:top-32 lg:self-start">
+                <GlassCard className="p-6 h-full lg:min-h-[calc(100vh-200px)] flex items-center justify-center">
+                  <img
+                    src={lottery.image_url}
+                    alt={lottery.title}
+                    className="w-full h-auto max-h-full object-contain rounded-lg"
+                  />
+                </GlassCard>
+              </div>
 
-              {/* Right Column - Lottery Info */}
-              <div className="space-y-6">
+              {/* Right Column - Contenu scrollable */}
+              <div className="lg:w-1/2 lg:overflow-y-auto lg:max-h-[calc(100vh-200px)] space-y-6">
                 <GlassCard className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
@@ -140,7 +144,7 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
                       <p className="mt-2 text-foreground/60">Chargement des produits...</p>
                     </div>
                   ) : products.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
                       {products.map((product) => (
                         <div key={product.id} onClick={() => handleViewProduct(product.id)}>
                           <ProductCard
