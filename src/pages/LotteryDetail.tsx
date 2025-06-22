@@ -85,11 +85,11 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
               
               {/* Left Column - Image fixe (sur desktop) */}
               <div className="lg:w-1/2 lg:sticky lg:top-32 lg:self-start">
-                <GlassCard className="p-6 h-full lg:min-h-[calc(100vh-200px)] flex items-center justify-center">
+                <GlassCard className="p-6 h-full lg:min-h-[calc(100vh-200px)]">
                   <img
                     src={lottery.image_url}
                     alt={lottery.title}
-                    className="w-full h-auto max-h-full object-contain rounded-lg"
+                    className="w-full h-full object-cover rounded-lg"
                   />
                 </GlassCard>
               </div>
