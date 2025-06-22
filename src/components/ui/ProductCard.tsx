@@ -96,13 +96,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
   }, []);
   
   const handleCardClick = () => {
-    navigate(`/product/${id}`);
+    navigate(`/products/${id}`);
   };
 
   const handleButtonClick = (e: React.MouseEvent, action: 'add' | 'view') => {
     e.stopPropagation();
     if (action === 'view') {
-      navigate(`/product/${id}`);
+      navigate(`/products/${id}`);
     }
     // Pour 'add', on peut ajouter la logique d'ajout au panier ici plus tard
   };

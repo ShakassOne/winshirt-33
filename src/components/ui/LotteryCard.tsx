@@ -123,7 +123,7 @@ const LotteryCard: React.FC<LotteryCardProps> = ({
   }, []);
 
   return (
-    <Link to={`/lottery/${id}`}>
+    <Link to={`/lotteries/${id}`}>
       <div 
         ref={cardRef} 
         className={cn(

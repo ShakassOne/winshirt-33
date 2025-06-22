@@ -60,7 +60,7 @@ const LotteryDetail: React.FC<LotteryDetailProps> = () => {
   };
 
   const handleViewProduct = (productId: string) => {
-    navigate(`/product/${productId}`);
+    navigate(`/products/${productId}`);
   };
 
   return (
