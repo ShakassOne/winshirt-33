@@ -82,28 +82,28 @@ const Dashboard = () => {
       title: "Livraison",
       description: "Options de livraison",
       icon: Truck,
-      path: "/admin/shipping-options",
+      path: "/admin/shipping",
       color: "bg-gradient-to-br from-red-500 to-red-600"
     },
     {
       title: "Emails",
       description: "Notifications automatiques",
       icon: Mail,
-      path: "/admin/emails",
+      path: "/admin/email",
       color: "bg-gradient-to-br from-emerald-500 to-emerald-600"
     },
     {
       title: "Réseaux Sociaux",
       description: "Configuration des liens sociaux",
       icon: Globe,
-      path: "/admin/social-networks",
+      path: "/admin/social",
       color: "bg-gradient-to-br from-violet-500 to-violet-600"
     },
     {
       title: "Lexique",
       description: "Gestion du lexique et glossaire",
       icon: BookOpen,
-      path: "/Lexique",
+      path: "/admin/lexique",
       color: "bg-gradient-to-br from-teal-500 to-teal-600"
     },
     {
