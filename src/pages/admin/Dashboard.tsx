@@ -1,6 +1,7 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react';
 
 const Dashboard = () => {
+  
   const adminSections = [
     {
       title: "Analytics",
@@ -116,67 +118,75 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="container mx-auto py-8 pt-32">
-      <div className="mb-12 text-center">
-        <h1 className="text-4xl font-bold mb-4 text-gradient">Tableau de bord Admin</h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Gérez tous les aspects de votre plateforme WinShirt depuis ce tableau de bord centralisé
-        </p>
-      </div>
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      
+      <main className="flex-grow mt-16 pb-20">
+        <div className="container mx-auto py-8">
+          <div className="mb-12 text-center">
+            <h1 className="text-4xl font-bold mb-4 text-gradient">Tableau de bord Admin</h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Gérez tous les aspects de votre plateforme WinShirt depuis ce tableau de bord centralisé
+            </p>
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-        {adminSections.map((section) => {
-          const Icon = section.icon;
-          return (
-            <Link key={section.path} to={section.path} className="group">
-              <Card className="h-full hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 hover:border-primary/20">
-                <CardHeader className="pb-4">
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <div className={`p-6 rounded-2xl ${section.color} text-white shadow-lg group-hover:shadow-xl transition-shadow`}>
-                      <Icon className="h-8 w-8" />
-                    </div>
-                    <CardTitle className="text-xl font-bold">{section.title}</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <CardDescription className="text-base leading-relaxed">
-                    {section.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {adminSections.map((section) => {
+              const Icon = section.icon;
+              return (
+                <Link key={section.path} to={section.path} className="group">
+                  <Card className="h-full hover:shadow-2xl transition-all duration-300 hover:scale-105 border-2 hover:border-primary/20">
+                    <CardHeader className="pb-4">
+                      <div className="flex flex-col items-center text-center space-y-4">
+                        <div className={`p-6 rounded-2xl ${section.color} text-white shadow-lg group-hover:shadow-xl transition-shadow`}>
+                          <Icon className="h-8 w-8" />
+                        </div>
+                        <CardTitle className="text-xl font-bold">{section.title}</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="text-center">
+                      <CardDescription className="text-base leading-relaxed">
+                        {section.description}
+                      </CardDescription>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
 
-      <div className="mt-16">
-        <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-2xl">
-              <BarChart3 className="h-6 w-6 text-primary" />
-              Aperçu rapide des statistiques
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="text-center p-6 bg-white/50 rounded-xl">
-              <div className="text-3xl font-bold text-primary mb-2">-</div>
-              <div className="text-sm font-medium text-muted-foreground">Commandes totales</div>
-            </div>
-            <div className="text-center p-6 bg-white/50 rounded-xl">
-              <div className="text-3xl font-bold text-primary mb-2">-</div>
-              <div className="text-sm font-medium text-muted-foreground">Produits actifs</div>
-            </div>
-            <div className="text-center p-6 bg-white/50 rounded-xl">
-              <div className="text-3xl font-bold text-primary mb-2">-</div>
-              <div className="text-sm font-medium text-muted-foreground">Utilisateurs inscrits</div>
-            </div>
-            <div className="text-center p-6 bg-white/50 rounded-xl">
-              <div className="text-3xl font-bold text-primary mb-2">-</div>
-              <div className="text-sm font-medium text-muted-foreground">Loteries actives</div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          <div className="mt-16">
+            <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-2xl">
+                  <BarChart3 className="h-6 w-6 text-primary" />
+                  Aperçu rapide des statistiques
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div className="text-center p-6 bg-white/50 rounded-xl">
+                  <div className="text-3xl font-bold text-primary mb-2">-</div>
+                  <div className="text-sm font-medium text-muted-foreground">Commandes totales</div>
+                </div>
+                <div className="text-center p-6 bg-white/50 rounded-xl">
+                  <div className="text-3xl font-bold text-primary mb-2">-</div>
+                  <div className="text-sm font-medium text-muted-foreground">Produits actifs</div>
+                </div>
+                <div className="text-center p-6 bg-white/50 rounded-xl">
+                  <div className="text-3xl font-bold text-primary mb-2">-</div>
+                  <div className="text-sm font-medium text-muted-foreground">Utilisateurs inscrits</div>
+                </div>
+                <div className="text-center p-6 bg-white/50 rounded-xl">
+                  <div className="text-3xl font-bold text-primary mb-2">-</div>
+                  <div className="text-sm font-medium text-muted-foreground">Loteries actives</div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </main>
+      
+      <Footer />
     </div>
   );
 };
