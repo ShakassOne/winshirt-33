@@ -1,9 +1,9 @@
 
 import React from "react";
-import { SimpleNavigation } from "./SimpleNavigation";
+import { FluidDropNavigation } from "./FluidDropNavigation";
 
 const Navbar = () => {
-  return <SimpleNavigation />;
+  return <FluidDropNavigation />;
 };
 
 export default Navbar;
