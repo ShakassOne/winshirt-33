@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -579,14 +580,16 @@ const ProductDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="flex flex-col min-h-screen">
         <Navbar />
-        <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
-            <p className="text-white text-lg">Chargement du produit...</p>
+        <main className="flex-grow mt-16 pb-20">
+          <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
+              <p className="text-white text-lg">Chargement du produit...</p>
+            </div>
           </div>
-        </div>
+        </main>
         <Footer />
       </div>
     );
@@ -594,42 +597,48 @@ const ProductDetail = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="flex flex-col min-h-screen">
         <Navbar />
-        <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-          <Card className="bg-white/10 backdrop-blur-lg border-white/20">
-            <CardContent className="p-8 text-center">
-              <p className="text-white text-lg">Produit non trouvé.</p>
-            </CardContent>
-          </Card>
-        </div>
+        <main className="flex-grow mt-16 pb-20">
+          <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+            <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+              <CardContent className="p-8 text-center">
+                <p className="text-white text-lg">Produit non trouvé.</p>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
         <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex flex-col min-h-screen">
       <Navbar />
       
-      <div className="flex-1 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 pt-20 pb-12">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-            {/* Product Image */}
-            <Card className="bg-white/10 backdrop-blur-lg border-white/20 overflow-hidden">
-              <CardContent className="p-0">
-                <AspectRatio ratio={1 / 1} className="w-full">
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                </AspectRatio>
-              </CardContent>
-            </Card>
+      <main className="flex-grow mt-16 pb-20">
+        <div className="container mx-auto px-4 py-8">
+          {/* Layout mobile-first vertical, puis horizontal sur large screens */}
+          <div className="flex flex-col lg:flex-row gap-8 lg:h-[calc(100vh-200px)]">
+            
+            {/* Left Column - Image fixe (sur desktop) */}
+            <div className="lg:w-1/2 lg:sticky lg:top-32 lg:self-start">
+              <Card className="bg-white/10 backdrop-blur-lg border-white/20 overflow-hidden h-full lg:min-h-[calc(100vh-200px)]">
+                <CardContent className="p-6 h-full">
+                  <AspectRatio ratio={1 / 1} className="w-full h-full">
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  </AspectRatio>
+                </CardContent>
+              </Card>
+            </div>
 
-            {/* Product Details */}
-            <div className="space-y-6">
+            {/* Right Column - Contenu scrollable */}
+            <div className="lg:w-1/2 lg:overflow-y-auto lg:max-h-[calc(100vh-200px)] space-y-6">
               <Card className="bg-white/10 backdrop-blur-lg border-white/20">
                 <CardHeader>
                   <CardTitle className="text-3xl font-bold text-white flex items-center gap-3">
@@ -814,7 +823,7 @@ const ProductDetail = () => {
             />
           )}
         </div>
-      </div>
+      </main>
       
       <Footer />
     </div>

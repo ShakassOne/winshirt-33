@@ -13,6 +13,9 @@ import { useToast } from '@/hooks/use-toast';
 import { EmailService, EmailTemplate, EmailSettings, EmailLog } from '@/services/email.service';
 import { Mail, Settings, FileText, Send, TestTube, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
+
 const EmailAdmin = () => {
   const {
     isAdmin
@@ -26,6 +29,7 @@ const EmailAdmin = () => {
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [testEmail, setTestEmail] = useState('');
+
   useEffect(() => {
     if (isAdmin) {
       loadData();
@@ -164,257 +168,278 @@ const EmailAdmin = () => {
       setLoading(false);
     }
   };
+
   if (!isAdmin) {
-    return <div className="flex items-center justify-center h-96">
-        <p className="text-muted-foreground">Accès non autorisé</p>
-      </div>;
-  }
-  return <div className="container mx-auto py-[120px]">
-      <div className="flex items-center gap-2 mb-8">
-        <Mail className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold">Gestion des Emails</h1>
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-grow mt-16 pb-20">
+          <div className="flex items-center justify-center h-96">
+            <p className="text-muted-foreground">Accès non autorisé</p>
+          </div>
+        </main>
+        <Footer />
       </div>
+    );
+  }
 
-      <Tabs defaultValue="settings" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="settings">
-            <Settings className="h-4 w-4 mr-2" />
-            Paramètres SMTP
-          </TabsTrigger>
-          <TabsTrigger value="templates">
-            <FileText className="h-4 w-4 mr-2" />
-            Templates
-          </TabsTrigger>
-          <TabsTrigger value="test">
-            <TestTube className="h-4 w-4 mr-2" />
-            Tests & Envois
-          </TabsTrigger>
-          <TabsTrigger value="logs">
-            <Clock className="h-4 w-4 mr-2" />
-            Historique
-          </TabsTrigger>
-        </TabsList>
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      
+      <main className="flex-grow mt-16 pb-20">
+        <div className="container mx-auto py-8">
+          <div className="flex items-center gap-2 mb-8">
+            <Mail className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold">Gestion des Emails</h1>
+          </div>
 
-        <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configuration SMTP</CardTitle>
-              <CardDescription>
-                Paramètres de votre serveur email IONOS
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={e => {
-              e.preventDefault();
-              handleSaveSettings(new FormData(e.target as HTMLFormElement));
-            }} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="smtp_host">Serveur SMTP</Label>
-                    <Input id="smtp_host" name="smtp_host" defaultValue={emailSettings?.smtp_host || 'smtp.ionos.fr'} required />
-                  </div>
-                  <div>
-                    <Label htmlFor="smtp_port">Port</Label>
-                    <Input id="smtp_port" name="smtp_port" type="number" defaultValue={emailSettings?.smtp_port || 587} required />
-                  </div>
-                </div>
+          <Tabs defaultValue="settings" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="settings">
+                <Settings className="h-4 w-4 mr-2" />
+                Paramètres SMTP
+              </TabsTrigger>
+              <TabsTrigger value="templates">
+                <FileText className="h-4 w-4 mr-2" />
+                Templates
+              </TabsTrigger>
+              <TabsTrigger value="test">
+                <TestTube className="h-4 w-4 mr-2" />
+                Tests & Envois
+              </TabsTrigger>
+              <TabsTrigger value="logs">
+                <Clock className="h-4 w-4 mr-2" />
+                Historique
+              </TabsTrigger>
+            </TabsList>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="smtp_user">Utilisateur</Label>
-                    <Input id="smtp_user" name="smtp_user" defaultValue={emailSettings?.smtp_user || ''} placeholder="contact@winshirt.fr" required />
-                  </div>
-                  <div>
-                    <Label htmlFor="smtp_password">Mot de passe</Label>
-                    <Input id="smtp_password" name="smtp_password" type="password" defaultValue={emailSettings?.smtp_password || ''} required />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="from_email">Email expéditeur</Label>
-                    <Input id="from_email" name="from_email" type="email" defaultValue={emailSettings?.from_email || 'contact@winshirt.fr'} required />
-                  </div>
-                  <div>
-                    <Label htmlFor="from_name">Nom expéditeur</Label>
-                    <Input id="from_name" name="from_name" defaultValue={emailSettings?.from_name || 'WinShirt'} required />
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch id="smtp_secure" name="smtp_secure" defaultChecked={emailSettings?.smtp_secure !== false} />
-                  <Label htmlFor="smtp_secure">Connexion sécurisée (TLS)</Label>
-                </div>
-
-                <Button type="submit" disabled={loading}>
-                  {loading ? 'Sauvegarde...' : 'Sauvegarder'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="templates">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Templates d'emails</CardTitle>
-                <CardDescription>
-                  Personnalisez vos templates HTML pour chaque type d'email
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <Select onValueChange={value => {
-                  const template = templates.find(t => t.type === value);
-                  setSelectedTemplate(template || null);
-                }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un template" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {templates.map(template => <SelectItem key={template.id} value={template.type}>
-                          {template.name}
-                          <Badge className="ml-2" variant={template.is_active ? "default" : "secondary"}>
-                            {template.is_active ? "Actif" : "Inactif"}
-                          </Badge>
-                        </SelectItem>)}
-                    </SelectContent>
-                  </Select>
-
-                  {selectedTemplate && <form onSubmit={e => {
+            <TabsContent value="settings">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Configuration SMTP</CardTitle>
+                  <CardDescription>
+                    Paramètres de votre serveur email IONOS
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={e => {
                   e.preventDefault();
-                  handleSaveTemplate(new FormData(e.target as HTMLFormElement));
+                  handleSaveSettings(new FormData(e.target as HTMLFormElement));
                 }} className="space-y-4">
-                      <input type="hidden" name="type" value={selectedTemplate.type} />
-                      
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="name">Nom du template</Label>
-                        <Input id="name" name="name" defaultValue={selectedTemplate.name} required />
+                        <Label htmlFor="smtp_host">Serveur SMTP</Label>
+                        <Input id="smtp_host" name="smtp_host" defaultValue={emailSettings?.smtp_host || 'smtp.ionos.fr'} required />
                       </div>
-
                       <div>
-                        <Label htmlFor="subject">Sujet de l'email</Label>
-                        <Input id="subject" name="subject" defaultValue={selectedTemplate.subject} required />
+                        <Label htmlFor="smtp_port">Port</Label>
+                        <Input id="smtp_port" name="smtp_port" type="number" defaultValue={emailSettings?.smtp_port || 587} required />
                       </div>
-
-                      <div>
-                        <Label htmlFor="html_content">Contenu HTML</Label>
-                        <Textarea id="html_content" name="html_content" defaultValue={selectedTemplate.html_content} rows={15} className="font-mono text-sm" required />
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Switch id="is_active" name="is_active" defaultChecked={selectedTemplate.is_active} />
-                        <Label htmlFor="is_active">Template actif</Label>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button type="submit" disabled={loading}>
-                          {loading ? 'Sauvegarde...' : 'Sauvegarder'}
-                        </Button>
-                        <Button type="button" variant="outline" onClick={() => handleTestEmail(selectedTemplate.type)} disabled={loading || !testEmail}>
-                          <Send className="h-4 w-4 mr-2" />
-                          Tester
-                        </Button>
-                      </div>
-                    </form>}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="test">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Tests et envois manuels</CardTitle>
-                <CardDescription>
-                  Testez vos templates et envoyez des notifications manuellement
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <Label htmlFor="test-email">Email de test</Label>
-                  <Input id="test-email" type="email" value={testEmail} onChange={e => setTestEmail(e.target.value)} placeholder="votre-email@exemple.com" />
-                </div>
-
-                <Separator />
-
-                <div className="grid gap-4">
-                  <h3 className="font-semibold">Tests des templates</h3>
-                  <div className="flex gap-2 flex-wrap">
-                    <Button variant="outline" onClick={() => handleTestEmail('order_confirmation')} disabled={loading || !testEmail}>
-                      <TestTube className="h-4 w-4 mr-2" />
-                      Test Confirmation commande
-                    </Button>
-                    <Button variant="outline" onClick={() => handleTestEmail('shipping_notification')} disabled={loading || !testEmail}>
-                      <TestTube className="h-4 w-4 mr-2" />
-                      Test Notification expédition
-                    </Button>
-                    <Button variant="outline" onClick={() => handleTestEmail('lottery_reminder')} disabled={loading || !testEmail}>
-                      <TestTube className="h-4 w-4 mr-2" />
-                      Test Rappel loterie
-                    </Button>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="grid gap-4">
-                  <h3 className="font-semibold">Envois manuels</h3>
-                  <Button onClick={handleSendLotteryReminders} disabled={loading} className="w-fit">
-                    <Send className="h-4 w-4 mr-2" />
-                    {loading ? 'Envoi en cours...' : 'Envoyer rappels loteries'}
-                  </Button>
-                  <p className="text-sm text-muted-foreground">
-                    Envoie un rappel à tous les clients pour les loteries se terminant dans les 3 prochains jours
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="logs">
-          <Card>
-            <CardHeader>
-              <CardTitle>Historique des envois</CardTitle>
-              <CardDescription>
-                Derniers emails envoyés par le système
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {emailLogs.map(log => <div key={log.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        {log.status === 'sent' ? <CheckCircle className="h-4 w-4 text-green-500" /> : log.status === 'failed' ? <XCircle className="h-4 w-4 text-red-500" /> : <Clock className="h-4 w-4 text-yellow-500" />}
-                        <span className="font-medium">{log.subject}</span>
-                        <Badge variant={log.status === 'sent' ? 'default' : log.status === 'failed' ? 'destructive' : 'secondary'}>
-                          {log.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        À: {log.recipient_email} {log.recipient_name && `(${log.recipient_name})`}
-                      </p>
-                      {log.error_message && <p className="text-sm text-red-500 mt-1">
-                          Erreur: {log.error_message}
-                        </p>}
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {log.sent_at ? new Date(log.sent_at).toLocaleString('fr-FR') : new Date(log.created_at).toLocaleString('fr-FR')}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="smtp_user">Utilisateur</Label>
+                        <Input id="smtp_user" name="smtp_user" defaultValue={emailSettings?.smtp_user || ''} placeholder="contact@winshirt.fr" required />
+                      </div>
+                      <div>
+                        <Label htmlFor="smtp_password">Mot de passe</Label>
+                        <Input id="smtp_password" name="smtp_password" type="password" defaultValue={emailSettings?.smtp_password || ''} required />
+                      </div>
                     </div>
-                  </div>)}
-                
-                {emailLogs.length === 0 && <p className="text-center text-muted-foreground py-8">
-                    Aucun email envoyé pour le moment
-                  </p>}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="from_email">Email expéditeur</Label>
+                        <Input id="from_email" name="from_email" type="email" defaultValue={emailSettings?.from_email || 'contact@winshirt.fr'} required />
+                      </div>
+                      <div>
+                        <Label htmlFor="from_name">Nom expéditeur</Label>
+                        <Input id="from_name" name="from_name" defaultValue={emailSettings?.from_name || 'WinShirt'} required />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch id="smtp_secure" name="smtp_secure" defaultChecked={emailSettings?.smtp_secure !== false} />
+                      <Label htmlFor="smtp_secure">Connexion sécurisée (TLS)</Label>
+                    </div>
+
+                    <Button type="submit" disabled={loading}>
+                      {loading ? 'Sauvegarde...' : 'Sauvegarder'}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="templates">
+              <div className="grid gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Templates d'emails</CardTitle>
+                    <CardDescription>
+                      Personnalisez vos templates HTML pour chaque type d'email
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <Select onValueChange={value => {
+                      const template = templates.find(t => t.type === value);
+                      setSelectedTemplate(template || null);
+                    }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner un template" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {templates.map(template => <SelectItem key={template.id} value={template.type}>
+                              {template.name}
+                              <Badge className="ml-2" variant={template.is_active ? "default" : "secondary"}>
+                                {template.is_active ? "Actif" : "Inactif"}
+                              </Badge>
+                            </SelectItem>)}
+                        </SelectContent>
+                      </Select>
+
+                      {selectedTemplate && <form onSubmit={e => {
+                      e.preventDefault();
+                      handleSaveTemplate(new FormData(e.target as HTMLFormElement));
+                    }} className="space-y-4">
+                          <input type="hidden" name="type" value={selectedTemplate.type} />
+                          
+                          <div>
+                            <Label htmlFor="name">Nom du template</Label>
+                            <Input id="name" name="name" defaultValue={selectedTemplate.name} required />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="subject">Sujet de l'email</Label>
+                            <Input id="subject" name="subject" defaultValue={selectedTemplate.subject} required />
+                          </div>
+
+                          <div>
+                            <Label htmlFor="html_content">Contenu HTML</Label>
+                            <Textarea id="html_content" name="html_content" defaultValue={selectedTemplate.html_content} rows={15} className="font-mono text-sm" required />
+                          </div>
+
+                          <div className="flex items-center space-x-2">
+                            <Switch id="is_active" name="is_active" defaultChecked={selectedTemplate.is_active} />
+                            <Label htmlFor="is_active">Template actif</Label>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Button type="submit" disabled={loading}>
+                              {loading ? 'Sauvegarde...' : 'Sauvegarder'}
+                            </Button>
+                            <Button type="button" variant="outline" onClick={() => handleTestEmail(selectedTemplate.type)} disabled={loading || !testEmail}>
+                              <Send className="h-4 w-4 mr-2" />
+                              Tester
+                            </Button>
+                          </div>
+                        </form>}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>;
+            </TabsContent>
+
+            <TabsContent value="test">
+              <div className="grid gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Tests et envois manuels</CardTitle>
+                    <CardDescription>
+                      Testez vos templates et envoyez des notifications manuellement
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div>
+                      <Label htmlFor="test-email">Email de test</Label>
+                      <Input id="test-email" type="email" value={testEmail} onChange={e => setTestEmail(e.target.value)} placeholder="votre-email@exemple.com" />
+                    </div>
+
+                    <Separator />
+
+                    <div className="grid gap-4">
+                      <h3 className="font-semibold">Tests des templates</h3>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button variant="outline" onClick={() => handleTestEmail('order_confirmation')} disabled={loading || !testEmail}>
+                          <TestTube className="h-4 w-4 mr-2" />
+                          Test Confirmation commande
+                        </Button>
+                        <Button variant="outline" onClick={() => handleTestEmail('shipping_notification')} disabled={loading || !testEmail}>
+                          <TestTube className="h-4 w-4 mr-2" />
+                          Test Notification expédition
+                        </Button>
+                        <Button variant="outline" onClick={() => handleTestEmail('lottery_reminder')} disabled={loading || !testEmail}>
+                          <TestTube className="h-4 w-4 mr-2" />
+                          Test Rappel loterie
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="grid gap-4">
+                      <h3 className="font-semibold">Envois manuels</h3>
+                      <Button onClick={handleSendLotteryReminders} disabled={loading} className="w-fit">
+                        <Send className="h-4 w-4 mr-2" />
+                        {loading ? 'Envoi en cours...' : 'Envoyer rappels loteries'}
+                      </Button>
+                      <p className="text-sm text-muted-foreground">
+                        Envoie un rappel à tous les clients pour les loteries se terminant dans les 3 prochains jours
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="logs">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Historique des envois</CardTitle>
+                  <CardDescription>
+                    Derniers emails envoyés par le système
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {emailLogs.map(log => <div key={log.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            {log.status === 'sent' ? <CheckCircle className="h-4 w-4 text-green-500" /> : log.status === 'failed' ? <XCircle className="h-4 w-4 text-red-500" /> : <Clock className="h-4 w-4 text-yellow-500" />}
+                            <span className="font-medium">{log.subject}</span>
+                            <Badge variant={log.status === 'sent' ? 'default' : log.status === 'failed' ? 'destructive' : 'secondary'}>
+                              {log.status}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            À: {log.recipient_email} {log.recipient_name && `(${log.recipient_name})`}
+                          </p>
+                          {log.error_message && <p className="text-sm text-red-500 mt-1">
+                              Erreur: {log.error_message}
+                            </p>}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {log.sent_at ? new Date(log.sent_at).toLocaleString('fr-FR') : new Date(log.created_at).toLocaleString('fr-FR')}
+                        </div>
+                      </div>)}
+                    
+                    {emailLogs.length === 0 && <p className="text-center text-muted-foreground py-8">
+                        Aucun email envoyé pour le moment
+                      </p>}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </main>
+      
+      <Footer />
+    </div>
+  );
 };
+
 export default EmailAdmin;
