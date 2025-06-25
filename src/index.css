@@ -160,110 +160,154 @@
     will-change: transform, opacity, border-radius, width, height;
   }
 
-  /* Animation de goutte d'eau ultra réaliste avec forme vraie de goutte */
+  /* Animation de goutte d'eau ultra réaliste - EXACTEMENT comme votre version */
   @keyframes fluidDropAnimationUltraRealistic {
     0% {
       opacity: 0;
       transform: translateY(-300px) scale(0);
-      border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;
-      width: 15px;
-      height: 35px;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      width: 20px;
+      height: 30px;
       filter: blur(3px);
     }
-    8% {
+    5% {
+      opacity: 0.2;
+      transform: translateY(-280px) scale(0.2);
+      border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%;
+      width: 22px;
+      height: 35px;
+      filter: blur(2.8px);
+    }
+    10% {
       opacity: 0.4;
-      transform: translateY(-220px) scale(0.4);
-      border-radius: 50% 50% 50% 50% / 85% 85% 15% 15%;
-      width: 18px;
+      transform: translateY(-250px) scale(0.3);
+      border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;
+      width: 25px;
       height: 40px;
       filter: blur(2.5px);
     }
-    16% {
-      opacity: 0.6;
-      transform: translateY(-140px) scale(0.6);
-      border-radius: 50% 50% 50% 50% / 90% 90% 10% 10%;
-      width: 22px;
+    15% {
+      opacity: 0.5;
+      transform: translateY(-200px) scale(0.4);
+      border-radius: 50% 50% 50% 50% / 85% 85% 15% 15%;
+      width: 28px;
       height: 45px;
       filter: blur(2px);
     }
-    24% {
-      opacity: 0.8;
-      transform: translateY(-60px) scale(0.8);
+    20% {
+      opacity: 0.6;
+      transform: translateY(-150px) scale(0.5);
+      border-radius: 50% 50% 50% 50% / 90% 90% 10% 10%;
+      width: 32px;
+      height: 50px;
+      filter: blur(1.8px);
+    }
+    25% {
+      opacity: 0.7;
+      transform: translateY(-100px) scale(0.6);
       border-radius: 50% 50% 50% 50% / 95% 95% 5% 5%;
-      width: 28px;
-      height: 52px;
+      width: 38px;
+      height: 55px;
       filter: blur(1.5px);
     }
-    32% {
-      opacity: 0.9;
-      transform: translateY(-20px) scale(0.9);
+    30% {
+      opacity: 0.8;
+      transform: translateY(-50px) scale(0.7);
       border-radius: 50% 50% 50% 50% / 98% 98% 2% 2%;
-      width: 35px;
-      height: 58px;
+      width: 45px;
+      height: 60px;
       filter: blur(1px);
+    }
+    35% {
+      opacity: 0.9;
+      transform: translateY(-20px) scale(0.8);
+      border-radius: 50% 50% 50% 50% / 100% 100% 0% 0%;
+      width: 52px;
+      height: 65px;
+      filter: blur(0.5px);
     }
     40% {
       opacity: 1;
-      transform: translateY(-5px) scale(0.95);
-      border-radius: 50% 50% 50% 50% / 100% 100% 0% 0%;
-      width: 42px;
-      height: 62px;
-      filter: blur(0.5px);
-    }
-    48% {
-      opacity: 1;
-      transform: translateY(0px) scale(1);
+      transform: translateY(-5px) scale(0.9);
       border-radius: 50% 50% 50% 50% / 95% 95% 50% 50%;
       width: 60px;
-      height: 65px;
+      height: 68px;
       filter: blur(0px);
     }
-    56% {
+    45% {
       opacity: 1;
-      transform: translateY(2px) scale(1.05);
+      transform: translateY(0px) scale(0.95);
       border-radius: 50% 50% 50% 50% / 80% 80% 60% 60%;
-      width: 90px;
+      width: 80px;
+      height: 65px;
+    }
+    50% {
+      opacity: 1;
+      transform: translateY(2px) scale(1);
+      border-radius: 50% 50% 50% 50% / 60% 60% 70% 70%;
+      width: 120px;
       height: 62px;
     }
-    64% {
-      opacity: 1;
-      transform: translateY(0px) scale(1);
-      border-radius: 50% 50% 50% 50% / 60% 60% 70% 70%;
-      width: 140px;
-      height: 58px;
-    }
-    72% {
+    55% {
       opacity: 1;
       transform: translateY(0px) scale(1);
       border-radius: 65% 35% 35% 65% / 50% 50% 75% 75%;
-      width: 220px;
+      width: 180px;
       height: 60px;
+    }
+    60% {
+      opacity: 1;
+      transform: translateY(0px) scale(1);
+      border-radius: 60% 40% 40% 60% / 45% 45% 80% 80%;
+      width: 250px;
+      height: 62px;
+    }
+    65% {
+      opacity: 1;
+      transform: translateY(0px) scale(1);
+      border-radius: 58% 42% 42% 58% / 48% 48% 78% 78%;
+      width: 320px;
+      height: 64px;
+    }
+    70% {
+      opacity: 1;
+      transform: translateY(0px) scale(1);
+      border-radius: 55% 45% 45% 55% / 50% 50% 75% 75%;
+      width: 400px;
+      height: 66px;
+    }
+    75% {
+      opacity: 1;
+      transform: translateY(0px) scale(1);
+      border-radius: 53% 47% 47% 53% / 52% 52% 70% 70%;
+      width: 480px;
+      height: 68px;
     }
     80% {
       opacity: 1;
       transform: translateY(0px) scale(1);
-      border-radius: 55px 45px 45px 55px;
-      width: 350px;
-      height: 64px;
+      border-radius: 52% 48% 48% 52% / 53% 53% 65% 65%;
+      width: 560px;
+      height: 70px;
     }
-    88% {
+    85% {
       opacity: 1;
       transform: translateY(0px) scale(1);
-      border-radius: 52px 48px 48px 52px;
-      width: 500px;
-      height: 68px;
+      border-radius: 51% 49% 49% 51% / 54% 54% 60% 60%;
+      width: 620px;
+      height: 72px;
     }
-    94% {
+    90% {
       opacity: 1;
       transform: translateY(0px) scale(1);
-      border-radius: 50px;
-      width: 650px;
+      border-radius: 50.5% 49.5% 49.5% 50.5% / 55% 55% 55% 55%;
+      width: 680px;
       height: auto;
     }
-    97% {
+    95% {
       opacity: 1;
       transform: translateY(0px) scale(1);
-      border-radius: 50px;
+      border-radius: 50.2% 49.8% 49.8% 50.2% / 52% 52% 52% 52%;
       width: 720px;
       height: auto;
     }
@@ -388,7 +432,7 @@
     }
   }
 
-  /* Rolling text effect corrigé pour textes plus longs */
+  /* Rolling text effect - CORRIGÉ pour les textes longs */
   .rolling-text {
     display: inline-block;
     color: rgba(255, 255, 255, 0.9);
@@ -401,11 +445,11 @@
     transition: all 0.3s ease;
     position: relative;
     white-space: nowrap;
-    overflow: hidden;
+    overflow: visible; /* Changé de hidden à visible */
     height: 48px;
     line-height: 20px;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    min-width: fit-content;
+    min-width: max-content; /* Assure que le texte ne soit pas tronqué */
   }
 
   .rolling-text:hover {
@@ -420,21 +464,37 @@
     text-shadow: 0 2px 8px rgba(78, 205, 196, 0.5);
   }
 
-  /* Effet rolling amélioré */
+  /* Texte visible par défaut */
+  .rolling-text::before {
+    content: attr(data-hover);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 1;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    width: max-content;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    text-shadow: inherit;
+  }
+
+  /* Effet rolling amélioré - SIMPLIFIÉ */
   .rolling-text .top, .rolling-text .bot {
     position: absolute;
     left: 50%;
-    right: 0;
     transform: translateX(-50%);
     text-align: center;
     font-size: 17px;
     line-height: 20px;
     color: inherit;
     transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    width: 100%;
+    width: max-content;
+    opacity: 0; /* Cachés par défaut */
   }
 
-  .rolling-text .top:before, .rolling-text .bot:before {
+  .rolling-text .top::before, .rolling-text .bot::before {
     content: attr(data-hover);
     position: absolute;
     left: 50%;
@@ -448,11 +508,17 @@
     overflow: hidden;
   }
 
+  .rolling-text:hover::before {
+    opacity: 0;
+    transform: translate(-50%, -150%);
+  }
+
   .rolling-text:hover .top {
+    opacity: 1;
     transform: translateX(-50%) translateY(-100%);
   }
 
-  .rolling-text .top:before {
+  .rolling-text .top::before {
     bottom: -50px;
   }
 
@@ -462,11 +528,15 @@
     overflow: hidden;
   }
 
-  .rolling-text .bot:before {
+  .rolling-text .bot::before {
     top: -50px;
   }
 
-  .rolling-text:hover .bot:before {
+  .rolling-text:hover .bot {
+    opacity: 1;
+  }
+
+  .rolling-text:hover .bot::before {
     transform: translateX(-50%) translateY(-50px);
   }
 
