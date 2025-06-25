@@ -142,7 +142,7 @@
   }
 
   .fluid-menu-container {
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(20px);
     border-radius: 50px;
     padding: 12px 24px;
