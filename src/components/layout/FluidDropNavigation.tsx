@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Menu, X } from 'lucide-react';
 import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { useCart } from '@/context/CartContext';
@@ -59,54 +59,73 @@ export const FluidDropNavigation: React.FC = () => {
 
   if (isMobile) {
     return (
-      <header className="fixed top-0 left-0 w-full z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="text-xl font-bold text-gradient">
-              WinShirt
-            </Link>
+      <>
+        {/* Header mobile avec animation de goutte adaptée */}
+        <header className="fluid-header-mobile">
+          <div className="fluid-menu-container-mobile">
+            {/* Logo */}
+            <div className="fluid-logo-mobile">
+              <Link to="/">
+                <img 
+                  src="https://shakass.com/wp-content/uploads/2025/06/Logo-Winshirt-Blanc.svg" 
+                  alt="Logo Winshirt" 
+                />
+              </Link>
+            </div>
 
-            <Button
-              variant="ghost" 
-              size="icon"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden"
-            >
-              {mobileMenuOpen ? '×' : '☰'}
-            </Button>
-
-            <Link to="/cart" className="relative lg:hidden">
-              <ShoppingCart className="h-6 w-6" />
-              {itemCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-winshirt-purple text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {itemCount > 9 ? '9+' : itemCount}
-                </span>
-              )}
-            </Link>
+            {/* Actions mobiles */}
+            <div className="fluid-actions-mobile">
+              <Link to="/cart" className="fluid-cart-button-mobile">
+                <ShoppingCart className="h-5 w-5" />
+                {itemCount > 0 && (
+                  <span className="fluid-cart-count-mobile">
+                    {itemCount > 9 ? '9+' : itemCount}
+                  </span>
+                )}
+              </Link>
+              
+              <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="fluid-menu-toggle"
+              >
+                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
           </div>
+        </header>
 
-          {mobileMenuOpen && (
-            <div className="lg:hidden bg-background/95 backdrop-blur-sm border-t border-border">
-              <nav className="py-4">
-                {navItems.map((item) => (
+        {/* Menu mobile avec animation */}
+        {mobileMenuOpen && (
+          <div className="fluid-mobile-menu">
+            <div className="fluid-mobile-menu-content">
+              <nav className="fluid-mobile-nav">
+                {navItems.map((item, index) => (
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`block px-4 py-2 text-sm ${
-                      isActivePath(item.path)
-                        ? 'text-winshirt-purple font-medium'
-                        : 'text-foreground hover:text-winshirt-purple'
-                    }`}
+                    className={`fluid-mobile-nav-item ${isActivePath(item.path) ? 'active' : ''}`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {item.label}
                   </Link>
                 ))}
               </nav>
+              
+              <div className="fluid-mobile-auth">
+                {isAuthenticated ? (
+                  <button onClick={handleSignOut} className="fluid-mobile-contact-button">
+                    Déconnexion
+                  </button>
+                ) : (
+                  <Link to="/auth" className="fluid-mobile-contact-button" onClick={() => setMobileMenuOpen(false)}>
+                    Contact
+                  </Link>
+                )}
+              </div>
             </div>
-          )}
-        </div>
-      </header>
+          </div>
+        )}
+      </>
     );
   }
 
