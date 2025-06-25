@@ -5,6 +5,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Design } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
 import { sanitizeSvg } from '@/utils/sanitizeSvg';
+import { DynamicColorMockup } from './DynamicColorMockup';
 
 interface ProductPreviewProps {
   // Product data
@@ -133,6 +134,13 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
     return productImageUrl;
   };
 
+  const getBaseProductImage = () => {
+    if (mockup) {
+      return currentViewSide === 'front' ? mockup.svg_front_url : mockup.svg_back_url || productImageUrl;
+    }
+    return productImageUrl;
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="mb-4">
@@ -140,6 +148,11 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
         <p className="text-sm text-white/60 text-center">
           {currentViewSide === 'front' ? 'Vue avant' : 'Vue arrière'}
         </p>
+        {selectedMockupColor && (
+          <p className="text-xs text-white/50 text-center mt-1">
+            Couleur: {selectedMockupColor.name}
+          </p>
+        )}
       </div>
 
       <div className="flex-1 flex flex-col min-h-0">
@@ -153,12 +166,15 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
           }} 
           onTouchMove={onTouchMove}
         >
-          <img
-            src={getProductImage()}
+          {/* Image de base avec coloration dynamique */}
+          <DynamicColorMockup
+            baseImageUrl={getBaseProductImage()}
+            selectedColor={selectedMockupColor}
             alt={productName}
-            className="w-full h-full object-contain"
+            className="w-full h-full"
           />
 
+          {/* Design Layer */}
           {getCurrentDesign() && (
             <div
               className="absolute cursor-move select-none"
@@ -200,6 +216,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
             </div>
           )}
           
+          {/* Text Layer */}
           {getCurrentTextContent() && (
             <div 
               className="absolute cursor-move select-none" 
