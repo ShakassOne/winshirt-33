@@ -45,11 +45,11 @@ export const FluidDropNavigation: React.FC = () => {
     return false;
   };
 
-  // Fonction pour créer l'effet rolling text
-  const createRollingText = (text: string, href: string) => (
+  // Fonction pour créer l'effet SMN_effect-66
+  const createSMNEffect = (text: string, href: string) => (
     <Link
       to={href}
-      className={`rolling-text ${isActivePath(href) ? 'active' : ''}`}
+      className={`SMN_effect-66 ${isActivePath(href) ? 'active' : ''}`}
       data-hover={text}
     >
       <div className="top" data-hover={text}></div>
@@ -123,11 +123,11 @@ export const FluidDropNavigation: React.FC = () => {
           </Link>
         </div>
 
-        {/* Navigation avec rolling text */}
+        {/* Navigation avec effet SMN_effect-66 */}
         <nav className="fluid-nav-menu">
           {navItems.map((item, index) => (
             <li key={item.path} className={`fluid-nav-item fluid-nav-item-${index + 1}`}>
-              {createRollingText(item.label, item.path)}
+              {createSMNEffect(item.label, item.path)}
             </li>
           ))}
         </nav>
