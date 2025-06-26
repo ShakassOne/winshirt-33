@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +21,8 @@ import { ReloadIcon } from "@radix-ui/react-icons"
 import { Palette, Star, Zap, Sparkles } from "lucide-react"
 import { ModalPersonnalisation } from '@/components/product/ModalPersonnalisation';
 import { LotterySelector } from '@/components/product/LotterySelector';
+import { ProductColorSelector } from '@/components/product/ProductColorSelector';
+import { DynamicColorMockup } from '@/components/product/DynamicColorMockup';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
@@ -627,11 +628,20 @@ const ProductDetail = () => {
               <Card className="bg-white/10 backdrop-blur-lg border-white/20 overflow-hidden h-full lg:min-h-[calc(100vh-200px)]">
                 <CardContent className="p-6 h-full">
                   <AspectRatio ratio={1 / 1} className="w-full h-full">
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
+                    {mockup && selectedColor ? (
+                      <DynamicColorMockup
+                        baseImageUrl={selectedColor.front_image_url || product.image_url}
+                        selectedColor={selectedColor}
+                        alt={product.name}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    )}
                   </AspectRatio>
                 </CardContent>
               </Card>
@@ -667,26 +677,14 @@ const ProductDetail = () => {
                     )}
                   </div>
 
-                  {/* Color Selector */}
+                  {/* Mockup Color Selector */}
                   {mockup && mockup.colors && mockup.colors.length > 0 && (
-                    <div>
-                      <Label className="text-white font-medium mb-3 block">Couleur:</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {mockup.colors.map((color) => (
-                          <button
-                            key={color.name}
-                            onClick={() => setSelectedColor(color)}
-                            className={`px-4 py-2 rounded-lg border-2 transition-all duration-200 ${
-                              selectedColor?.name === color.name 
-                                ? 'border-blue-400 bg-blue-400/20 text-white shadow-lg shadow-blue-400/25' 
-                                : 'border-white/30 bg-white/10 text-gray-300 hover:border-white/50 hover:bg-white/20'
-                            }`}
-                          >
-                            {color.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                    <ProductColorSelector
+                      colors={mockup.colors}
+                      selectedColor={selectedColor}
+                      onColorSelect={setSelectedColor}
+                      className="mb-6"
+                    />
                   )}
 
                   {/* Size Selector */}
