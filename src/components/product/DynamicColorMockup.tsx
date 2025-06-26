@@ -49,24 +49,22 @@ export const DynamicColorMockup: React.FC<DynamicColorMockupProps> = ({
     };
   };
 
-  // Générer les filtres CSS optimisés pour les textiles
+  // Générer les filtres CSS optimisés pour les textiles (mode subtil)
   const generateTextileFilter = (colorCode: string) => {
     if (!colorCode || colorCode === '#ffffff') return 'none';
     
     const hsl = hexToHsl(colorCode);
     
-    // Filtres CSS spécialement conçus pour les textiles
-    // Utilise une approche plus douce qui préserve les détails
+    // Filtres CSS très subtils pour préserver l'image de base
     const hueShift = hsl.h;
-    const saturation = Math.min(150, Math.max(80, hsl.s + 20)); // Ajuste la saturation
-    const brightness = Math.min(120, Math.max(70, hsl.l + 10)); // Ajuste la luminosité
+    const saturation = Math.min(110, Math.max(90, hsl.s)); // Saturation plus douce
+    const brightness = Math.min(105, Math.max(95, hsl.l)); // Luminosité très proche de l'original
     
     return `
       hue-rotate(${hueShift}deg) 
       saturate(${saturation}%) 
       brightness(${brightness}%)
-      contrast(105%)
-      sepia(15%)
+      contrast(102%)
     `.trim();
   };
 
@@ -85,27 +83,40 @@ export const DynamicColorMockup: React.FC<DynamicColorMockupProps> = ({
         }}
       />
       
-      {/* Overlay couleur avec mix-blend-mode pour un effet textile réaliste */}
+      {/* Couche principale : Mode COLOR (équivalent Photoshop "Produit") */}
       {selectedColor?.color_code && selectedColor.color_code !== '#ffffff' && (
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundColor: selectedColor.color_code,
-            mixBlendMode: 'multiply',
-            opacity: 0.3,
+            mixBlendMode: 'color', // Mode COLOR : change la teinte sans affecter les valeurs
+            opacity: 0.7,
             borderRadius: 'inherit'
           }}
         />
       )}
       
-      {/* Overlay supplémentaire pour les couleurs très saturées */}
+      {/* Couche d'ombres : Mode MULTIPLY à très faible opacité */}
       {selectedColor?.color_code && selectedColor.color_code !== '#ffffff' && (
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundColor: selectedColor.color_code,
-            mixBlendMode: 'soft-light',
-            opacity: 0.15,
+            mixBlendMode: 'multiply', // Pour renforcer les ombres naturelles
+            opacity: 0.1, // Très subtil
+            borderRadius: 'inherit'
+          }}
+        />
+      )}
+      
+      {/* Couche de finition : Mode SOFT-LIGHT pour l'effet textile */}
+      {selectedColor?.color_code && selectedColor.color_code !== '#ffffff' && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundColor: selectedColor.color_code,
+            mixBlendMode: 'soft-light', // Effet doux et naturel
+            opacity: 0.2,
             borderRadius: 'inherit'
           }}
         />
