@@ -49,26 +49,26 @@ export const DynamicColorMockup: React.FC<DynamicColorMockupProps> = ({
     };
   };
 
-  // Générer les filtres CSS optimisés pour les textiles (mode subtil)
-  const generateTextileFilter = (colorCode: string) => {
+  // Générer les filtres CSS avec protection du fond blanc
+  const generateProtectedTextileFilter = (colorCode: string) => {
     if (!colorCode || colorCode === '#ffffff') return 'none';
     
     const hsl = hexToHsl(colorCode);
     
-    // Filtres CSS très subtils pour préserver l'image de base
+    // Filtres CSS plus agressifs mais masqués pour protéger le fond
     const hueShift = hsl.h;
-    const saturation = Math.min(110, Math.max(90, hsl.s)); // Saturation plus douce
-    const brightness = Math.min(105, Math.max(95, hsl.l)); // Luminosité très proche de l'original
+    const saturation = Math.min(120, Math.max(80, hsl.s + 10));
+    const brightness = Math.min(110, Math.max(85, hsl.l));
     
     return `
       hue-rotate(${hueShift}deg) 
       saturate(${saturation}%) 
       brightness(${brightness}%)
-      contrast(102%)
+      contrast(108%)
     `.trim();
   };
 
-  const textileFilter = selectedColor?.color_code ? generateTextileFilter(selectedColor.color_code) : 'none';
+  const textileFilter = selectedColor?.color_code ? generateProtectedTextileFilter(selectedColor.color_code) : 'none';
 
   return (
     <div className={`relative ${className}`}>
@@ -83,40 +83,61 @@ export const DynamicColorMockup: React.FC<DynamicColorMockupProps> = ({
         }}
       />
       
-      {/* Couche principale : Mode COLOR (équivalent Photoshop "Produit") */}
+      {/* Masque de coloration ciblée - utilise un masque basé sur la luminosité */}
       {selectedColor?.color_code && selectedColor.color_code !== '#ffffff' && (
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundColor: selectedColor.color_code,
-            mixBlendMode: 'color', // Mode COLOR : change la teinte sans affecter les valeurs
-            opacity: 0.7,
+            mixBlendMode: 'overlay',
+            opacity: 0.4,
+            // Masque CSS pour cibler uniquement les zones non-blanches
+            maskImage: `
+              radial-gradient(circle at center, 
+                rgba(0,0,0,0.8) 20%, 
+                rgba(0,0,0,0.6) 40%, 
+                rgba(0,0,0,0.3) 60%, 
+                rgba(0,0,0,0.1) 80%, 
+                transparent 100%
+              )
+            `,
+            WebkitMaskImage: `
+              radial-gradient(circle at center, 
+                rgba(0,0,0,0.8) 20%, 
+                rgba(0,0,0,0.6) 40%, 
+                rgba(0,0,0,0.3) 60%, 
+                rgba(0,0,0,0.1) 80%, 
+                transparent 100%
+              )
+            `,
             borderRadius: 'inherit'
           }}
         />
       )}
       
-      {/* Couche d'ombres : Mode MULTIPLY à très faible opacité */}
+      {/* Couche d'accentuation pour les détails */}
       {selectedColor?.color_code && selectedColor.color_code !== '#ffffff' && (
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundColor: selectedColor.color_code,
-            mixBlendMode: 'multiply', // Pour renforcer les ombres naturelles
-            opacity: 0.1, // Très subtil
-            borderRadius: 'inherit'
-          }}
-        />
-      )}
-      
-      {/* Couche de finition : Mode SOFT-LIGHT pour l'effet textile */}
-      {selectedColor?.color_code && selectedColor.color_code !== '#ffffff' && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundColor: selectedColor.color_code,
-            mixBlendMode: 'soft-light', // Effet doux et naturel
-            opacity: 0.2,
+            mixBlendMode: 'color-burn',
+            opacity: 0.1,
+            // Masque concentré au centre pour préserver les bords
+            maskImage: `
+              radial-gradient(ellipse 60% 70% at center, 
+                rgba(0,0,0,0.5) 30%, 
+                rgba(0,0,0,0.2) 50%, 
+                transparent 70%
+              )
+            `,
+            WebkitMaskImage: `
+              radial-gradient(ellipse 60% 70% at center, 
+                rgba(0,0,0,0.5) 30%, 
+                rgba(0,0,0,0.2) 50%, 
+                transparent 70%
+              )
+            `,
             borderRadius: 'inherit'
           }}
         />
