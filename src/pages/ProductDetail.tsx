@@ -630,7 +630,7 @@ const ProductDetail = () => {
                   <AspectRatio ratio={1 / 1} className="w-full h-full">
                     {mockup && selectedColor ? (
                       <DynamicColorMockup
-                        baseImageUrl={selectedColor.front_image_url || product.image_url}
+                        baseImageUrl={mockup.svg_front_url || product.image_url}
                         selectedColor={selectedColor}
                         alt={product.name}
                         className="w-full h-full object-cover rounded-lg"

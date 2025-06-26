@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Trash } from 'lucide-react';
-import { UploadButton } from '@/components/ui/upload-button';
 import { MockupColor } from '@/types/mockup.types';
 
 interface MockupColorFormProps {
@@ -24,14 +23,6 @@ const MockupColorForm: React.FC<MockupColorFormProps> = ({
 }) => {
   const handleFieldChange = (field: keyof MockupColor, value: string) => {
     onChange(index, { ...color, [field]: value });
-  };
-
-  const handleFrontImageUpload = (url: string) => {
-    handleFieldChange('front_image_url', url);
-  };
-
-  const handleBackImageUpload = (url: string) => {
-    handleFieldChange('back_image_url', url);
   };
 
   return (
@@ -86,48 +77,12 @@ const MockupColorForm: React.FC<MockupColorFormProps> = ({
             />
           </div>
         </div>
+      </div>
 
-        <div className="space-y-2">
-          <Label htmlFor={`front-image-${index}`}>Image avant (optionnel)</Label>
-          <div className="flex gap-2">
-            <Input
-              id={`front-image-${index}`}
-              value={color.front_image_url || ''}
-              onChange={(e) => handleFieldChange('front_image_url', e.target.value)}
-              placeholder="URL de l'image avant"
-              className="flex-1"
-            />
-            <UploadButton
-              onUpload={handleFrontImageUpload}
-              size="icon"
-              acceptTypes=".png,.jpg,.jpeg,.webp"
-            />
-          </div>
-          <p className="text-xs text-white/50">
-            Laissez vide pour utiliser la coloration dynamique
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor={`back-image-${index}`}>Image arrière (optionnel)</Label>
-          <div className="flex gap-2">
-            <Input
-              id={`back-image-${index}`}
-              value={color.back_image_url || ''}
-              onChange={(e) => handleFieldChange('back_image_url', e.target.value)}
-              placeholder="URL de l'image arrière"
-              className="flex-1"
-            />
-            <UploadButton
-              onUpload={handleBackImageUpload}
-              size="icon"
-              acceptTypes=".png,.jpg,.jpeg,.webp"
-            />
-          </div>
-          <p className="text-xs text-white/50">
-            Laissez vide pour utiliser la coloration dynamique
-          </p>
-        </div>
+      <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+        <p className="text-sm text-blue-300">
+          💡 <strong>Coloration dynamique activée :</strong> La couleur sera appliquée automatiquement sur l'image PNG blanche du mockup via des filtres CSS avancés.
+        </p>
       </div>
     </div>
   );

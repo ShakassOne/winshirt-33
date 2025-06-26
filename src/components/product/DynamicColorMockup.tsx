@@ -49,42 +49,63 @@ export const DynamicColorMockup: React.FC<DynamicColorMockupProps> = ({
     };
   };
 
-  // Générer les filtres CSS pour appliquer la couleur
-  const generateColorFilter = (colorCode: string) => {
+  // Générer les filtres CSS optimisés pour les textiles
+  const generateTextileFilter = (colorCode: string) => {
     if (!colorCode || colorCode === '#ffffff') return 'none';
     
     const hsl = hexToHsl(colorCode);
     
-    // Filtres CSS pour simuler la couleur du textile
+    // Filtres CSS spécialement conçus pour les textiles
+    // Utilise une approche plus douce qui préserve les détails
+    const hueShift = hsl.h;
+    const saturation = Math.min(150, Math.max(80, hsl.s + 20)); // Ajuste la saturation
+    const brightness = Math.min(120, Math.max(70, hsl.l + 10)); // Ajuste la luminosité
+    
     return `
-      hue-rotate(${hsl.h}deg) 
-      saturate(${Math.max(0.8, hsl.s / 100)}%) 
-      brightness(${Math.max(0.7, hsl.l / 100)}%)
-      contrast(1.1)
+      hue-rotate(${hueShift}deg) 
+      saturate(${saturation}%) 
+      brightness(${brightness}%)
+      contrast(105%)
+      sepia(15%)
     `.trim();
   };
 
-  const colorFilter = selectedColor?.color_code ? generateColorFilter(selectedColor.color_code) : 'none';
+  const textileFilter = selectedColor?.color_code ? generateTextileFilter(selectedColor.color_code) : 'none';
 
   return (
     <div className={`relative ${className}`}>
-      {/* Image de base (neutre) */}
+      {/* Image de base (PNG blanc) */}
       <img
         src={baseImageUrl}
         alt={alt}
         className="w-full h-full object-contain"
         style={{
-          filter: colorFilter,
-          transition: 'filter 0.3s ease'
+          filter: textileFilter,
+          transition: 'filter 0.4s ease'
         }}
       />
       
-      {/* Overlay couleur supplémentaire pour les couleurs très foncées */}
+      {/* Overlay couleur avec mix-blend-mode pour un effet textile réaliste */}
       {selectedColor?.color_code && selectedColor.color_code !== '#ffffff' && (
         <div
-          className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-20"
+          className="absolute inset-0 pointer-events-none"
           style={{
             backgroundColor: selectedColor.color_code,
+            mixBlendMode: 'multiply',
+            opacity: 0.3,
+            borderRadius: 'inherit'
+          }}
+        />
+      )}
+      
+      {/* Overlay supplémentaire pour les couleurs très saturées */}
+      {selectedColor?.color_code && selectedColor.color_code !== '#ffffff' && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundColor: selectedColor.color_code,
+            mixBlendMode: 'soft-light',
+            opacity: 0.15,
             borderRadius: 'inherit'
           }}
         />
