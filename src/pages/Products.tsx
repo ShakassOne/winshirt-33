@@ -51,7 +51,7 @@ const Products = () => {
       
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="relative py-20 bg-gradient-to-b from-winshirt-purple/20 to-transparent">
+        <section className="relative bg-gradient-to-b from-winshirt-purple/20 to-transparent py-0">
           <div className="container mx-auto px-4">
             <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center my-[230px]">
               Nos <span className="text-gradient">Produits</span>
