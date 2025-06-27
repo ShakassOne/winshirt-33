@@ -15,7 +15,7 @@ interface ProductShowcaseProps {
 }
 
 const ProductShowcase: React.FC<ProductShowcaseProps> = ({ className }) => {
-  const { data: products, isLoading, error, refetch, forceRefresh } = useProductsUnified();
+  const { data: products, isLoading, error, refetch } = useProductsUnified();
 
   logger.log('[ProductShowcase] Rendering with products count:', products?.length || 0);
 
@@ -48,9 +48,6 @@ const ProductShowcase: React.FC<ProductShowcaseProps> = ({ className }) => {
               <Button onClick={() => refetch()}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Réessayer
-              </Button>
-              <Button onClick={forceRefresh} variant="outline">
-                Force Refresh
               </Button>
               <UnlockButton />
             </div>

@@ -1,633 +1,199 @@
-import logger from '@/utils/logger';
+
 import { supabase } from '@/integrations/supabase/client';
-import axios from 'axios';
-import { Design, Mockup, Product, Lottery, SocialNetwork } from '@/types/supabase.types';
+import { Product, Lottery, Mockup, Design } from '@/types/supabase.types';
 
-export const fetchAllDesigns = async (): Promise<Design[]> => {
-  logger.log('Fetching all designs...');
-  try {
-    const { data, error } = await supabase
-      .from('designs')
-      .select('*')
-      .order('created_at', { ascending: false });
+// Cache simple pour éviter les requêtes répétées
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-    if (error) {
-      console.error('Error fetching designs:', error);
-      throw error;
-    }
-
-    logger.log('Designs fetched successfully:', data);
-    return data || [];
-  } catch (error) {
-    console.error('Failed to fetch designs:', error);
-    return [];
+const getCachedData = <T>(key: string): T | null => {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
   }
+  cache.delete(key);
+  return null;
 };
 
-export const createDesign = async (designData: any): Promise<Design> => {
-  logger.log('Creating design:', designData);
-  try {
-    const { data, error } = await supabase
-      .from('designs')
-      .insert([designData])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating design:', error);
-      throw error;
-    }
-
-    logger.log('Design created successfully:', data);
-    return data;
-  } catch (error) {
-    console.error('Failed to create design:', error);
-    throw error;
-  }
+const setCachedData = <T>(key: string, data: T): void => {
+  cache.set(key, { data, timestamp: Date.now() });
 };
 
-export const updateDesign = async (id: string, designData: any): Promise<Design> => {
-  logger.log(`Updating design with id ${id}:`, designData);
-  try {
-    const { data, error } = await supabase
-      .from('designs')
-      .update(designData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`Error updating design with id ${id}:`, error);
-      throw error;
-    }
-
-    logger.log(`Design with id ${id} updated successfully:`, data);
-    return data;
-  } catch (error) {
-    console.error(`Failed to update design with id ${id}:`, error);
-    throw error;
-  }
-};
-
-export const deleteDesign = async (id: string): Promise<void> => {
-  logger.log(`Deleting design with id ${id}`);
-  try {
-    const { error } = await supabase
-      .from('designs')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error(`Error deleting design with id ${id}:`, error);
-      throw error;
-    }
-
-    logger.log(`Design with id ${id} deleted successfully`);
-  } catch (error) {
-    console.error(`Failed to delete design with id ${id}:`, error);
-    throw error;
-  }
-};
-
+// Products
 export const fetchAllProducts = async (): Promise<Product[]> => {
-  logger.log('Fetching all products...');
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const cacheKey = 'products';
+  const cached = getCachedData<Product[]>(cacheKey);
+  if (cached) return cached;
 
-    if (error) {
-      console.error('Error fetching products:', error);
-      throw error;
-    }
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false });
 
-    logger.log('Products fetched successfully:', data);
-    return data || [];
-  } catch (error) {
-    console.error('Failed to fetch products:', error);
-    return [];
-  }
-};
-
-export const createProduct = async (productData: any): Promise<Product> => {
-  logger.log('Creating product:', productData);
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .insert([productData])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating product:', error);
-      throw error;
-    }
-
-    logger.log('Product created successfully:', data);
-    return data;
-  } catch (error) {
-    console.error('Failed to create product:', error);
-    throw error;
-  }
-};
-
-export const updateProduct = async (id: string, productData: any): Promise<Product> => {
-  logger.log(`Updating product with id ${id}:`, productData);
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .update(productData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`Error updating product with id ${id}:`, error);
-      throw error;
-    }
-
-    logger.log(`Product with id ${id} updated successfully:`, data);
-    return data;
-  } catch (error) {
-    console.error(`Failed to update product with id ${id}:`, error);
-    throw error;
-  }
-};
-
-export const deleteProduct = async (id: string): Promise<void> => {
-  logger.log(`Deleting product with id ${id}`);
-  try {
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error(`Error deleting product with id ${id}:`, error);
-      throw error;
-    }
-
-    logger.log(`Product with id ${id} deleted successfully`);
-  } catch (error) {
-    console.error(`Failed to delete product with id ${id}:`, error);
-    throw error;
-  }
-};
-
-export const fetchAllMockups = async (): Promise<Mockup[]> => {
-  logger.log('Fetching all mockups...');
-  try {
-    const { data, error } = await supabase
-      .from('mockups')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching mockups:', error);
-      throw error;
-    }
-
-    logger.log('Mockups fetched successfully:', data);
-    return data || [];
-  } catch (error) {
-    console.error('Failed to fetch mockups:', error);
-    return [];
-  }
-};
-
-export const createMockup = async (mockupData: any): Promise<Mockup> => {
-  logger.log('Creating mockup:', mockupData);
-  try {
-    const { data, error } = await supabase
-      .from('mockups')
-      .insert([mockupData])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating mockup:', error);
-      throw error;
-    }
-
-    logger.log('Mockup created successfully:', data);
-    return data;
-  } catch (error) {
-    console.error('Failed to create mockup:', error);
-    throw error;
-  }
-};
-
-export const updateMockup = async (id: string, mockupData: any): Promise<Mockup> => {
-  logger.log(`Updating mockup with id ${id}:`, mockupData);
-  try {
-    const { data, error } = await supabase
-      .from('mockups')
-      .update(mockupData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`Error updating mockup with id ${id}:`, error);
-      throw error;
-    }
-
-    logger.log(`Mockup with id ${id} updated successfully:`, data);
-    return data;
-  } catch (error) {
-    console.error(`Failed to update mockup with id ${id}:`, error);
-    throw error;
-  }
-};
-
-export const deleteMockup = async (id: string): Promise<void> => {
-  logger.log(`Deleting mockup with id ${id}`);
-  try {
-    const { error } = await supabase
-      .from('mockups')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error(`Error deleting mockup with id ${id}:`, error);
-      throw error;
-    }
-
-    logger.log(`Mockup with id ${id} deleted successfully`);
-  } catch (error) {
-    console.error(`Failed to delete mockup with id ${id}:`, error);
-    throw error;
-  }
-};
-
-export const fetchAllLotteries = async (): Promise<Lottery[]> => {
-  logger.log('Fetching all lotteries...');
-  try {
-    const { data, error } = await supabase
-      .from('lotteries')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching lotteries:', error);
-      throw error;
-    }
-
-    logger.log('Lotteries fetched successfully:', data);
-    return data || [];
-  } catch (error) {
-    console.error('Failed to fetch lotteries:', error);
-    return [];
-  }
-};
-
-export const fetchFeaturedLotteries = async (): Promise<Lottery[]> => {
-  logger.log('Fetching featured lotteries...');
-  try {
-    const { data, error } = await supabase
-      .from('lotteries')
-      .select('*')
-      .eq('is_featured', true)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching featured lotteries:', error);
-      throw error;
-    }
-
-    logger.log('Featured lotteries fetched successfully:', data);
-    return data || [];
-  } catch (error) {
-    console.error('Failed to fetch featured lotteries:', error);
-    return [];
-  }
-};
-
-export const fetchLotteryById = async (id: string): Promise<Lottery | null> => {
-  logger.log(`Fetching lottery with id ${id}...`);
-  try {
-    const { data, error } = await supabase
-      .from('lotteries')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-
-    if (error) {
-      console.error(`Error fetching lottery with id ${id}:`, error);
-      throw error;
-    }
-
-    logger.log(`Lottery with id ${id} fetched successfully:`, data);
-    return data;
-  } catch (error) {
-    console.error(`Failed to fetch lottery with id ${id}:`, error);
-    return null;
-  }
-};
-
-export const createLottery = async (lotteryData: any): Promise<Lottery> => {
-  logger.log('Creating lottery:', lotteryData);
-  try {
-    const { data, error } = await supabase
-      .from('lotteries')
-      .insert([lotteryData])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating lottery:', error);
-      throw error;
-    }
-
-    logger.log('Lottery created successfully:', data);
-    return data;
-  } catch (error) {
-    console.error('Failed to create lottery:', error);
-    throw error;
-  }
-};
-
-export const updateLottery = async (id: string, lotteryData: any): Promise<Lottery> => {
-  logger.log(`Updating lottery with id ${id}:`, lotteryData);
-  try {
-    const { data, error } = await supabase
-      .from('lotteries')
-      .update(lotteryData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`Error updating lottery with id ${id}:`, error);
-      throw error;
-    }
-
-    logger.log(`Lottery with id ${id} updated successfully:`, data);
-    return data;
-  } catch (error) {
-    console.error(`Failed to update lottery with id ${id}:`, error);
-    throw error;
-  }
-};
-
-export const deleteLottery = async (id: string): Promise<void> => {
-  logger.log(`Deleting lottery with id ${id}`);
-  try {
-    const { error } = await supabase
-      .from('lotteries')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error(`Error deleting lottery with id ${id}:`, error);
-      throw error;
-    }
-
-    logger.log(`Lottery with id ${id} deleted successfully`);
-  } catch (error) {
-    console.error(`Failed to delete lottery with id ${id}:`, error);
-    throw error;
-  }
+  if (error) throw error;
+  
+  const products = data || [];
+  setCachedData(cacheKey, products);
+  return products;
 };
 
 export const fetchProductById = async (id: string): Promise<Product | null> => {
-  logger.log(`Fetching product with id ${id}...`);
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', id)
+    .single();
 
-    if (error) {
-      console.error(`Error fetching product with id ${id}:`, error);
-      throw error;
-    }
-
-    logger.log(`Product with id ${id} fetched successfully:`, data);
-    return data;
-  } catch (error) {
-    console.error(`Failed to fetch product with id ${id}:`, error);
-    return null;
-  }
+  if (error) throw error;
+  return data;
 };
 
-export const fetchMockupById = async (id: string): Promise<Mockup | null> => {
-  logger.log(`Fetching mockup with id ${id}...`);
-  try {
-    const { data, error } = await supabase
-      .from('mockups')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
+// Lotteries
+export const fetchAllLotteries = async (): Promise<Lottery[]> => {
+  const cacheKey = 'lotteries';
+  const cached = getCachedData<Lottery[]>(cacheKey);
+  if (cached) return cached;
 
-    if (error) {
-      console.error(`Error fetching mockup with id ${id}:`, error);
-      throw error;
-    }
+  const { data, error } = await supabase
+    .from('lotteries')
+    .select('*')
+    .eq('is_active', true)
+    .order('draw_date', { ascending: true });
 
-    logger.log(`Mockup with id ${id} fetched successfully:`, data);
-    return data;
-  } catch (error) {
-    console.error(`Failed to fetch mockup with id ${id}:`, error);
-    return null;
-  }
-};
-
-export const fetchProductsWithTickets = async (): Promise<Product[]> => {
-  logger.log('Fetching products with tickets...');
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .gt('tickets_offered', 0)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching products with tickets:', error);
-      throw error;
-    }
-
-    logger.log('Products with tickets fetched successfully:', data);
-    return data || [];
-  } catch (error) {
-    console.error('Failed to fetch products with tickets:', error);
-    return [];
-  }
-};
-
-export const fetchAllSocialNetworks = async (): Promise<SocialNetwork[]> => {
-  logger.log('Fetching all social networks...');
-  try {
-    const { data, error } = await supabase
-      .from('social_networks')
-      .select('*')
-      .order('priority', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching social networks:', error);
-      throw error;
-    }
-
-    logger.log('Social networks fetched successfully:', data);
-    return data || [];
-  } catch (error) {
-    console.error('Failed to fetch social networks:', error);
-    return [];
-  }
-};
-
-export const fetchActiveSocialNetworks = async (): Promise<SocialNetwork[]> => {
-  logger.log('Fetching active social networks...');
-  try {
-    const { data, error } = await supabase
-      .from('social_networks')
-      .select('*')
-      .eq('is_active', true)
-      .order('priority', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching active social networks:', error);
-      throw error;
-    }
-
-    logger.log('Active social networks fetched successfully:', data);
-    return data || [];
-  } catch (error) {
-    console.error('Failed to fetch active social networks:', error);
-    return [];
-  }
-};
-
-export const createSocialNetwork = async (socialNetworkData: any): Promise<SocialNetwork> => {
-  logger.log('Creating social network:', socialNetworkData);
-  try {
-    const { data, error } = await supabase
-      .from('social_networks')
-      .insert([socialNetworkData])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating social network:', error);
-      throw error;
-    }
-
-    logger.log('Social network created successfully:', data);
-    return data;
-  } catch (error) {
-    console.error('Failed to create social network:', error);
-    throw error;
-  }
-};
-
-export const updateSocialNetwork = async (id: string, socialNetworkData: any): Promise<SocialNetwork> => {
-  logger.log(`Updating social network with id ${id}:`, socialNetworkData);
-  try {
-    const { data, error } = await supabase
-      .from('social_networks')
-      .update(socialNetworkData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`Error updating social network with id ${id}:`, error);
-      throw error;
-    }
-
-    logger.log(`Social network with id ${id} updated successfully:`, data);
-    return data;
-  } catch (error) {
-    console.error(`Failed to update social network with id ${id}:`, error);
-    throw error;
-  }
-};
-
-export const deleteSocialNetwork = async (id: string): Promise<void> => {
-  logger.log(`Deleting social network with id ${id}`);
-  try {
-    const { error } = await supabase
-      .from('social_networks')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error(`Error deleting social network with id ${id}:`, error);
-      throw error;
-    }
-
-    logger.log(`Social network with id ${id} deleted successfully`);
-  } catch (error) {
-    console.error(`Failed to delete social network with id ${id}:`, error);
-    throw error;
-  }
-};
-
-export const generateDesign = async (
-  orderId: string,
-  json: any
-): Promise<any> => {
-  logger.log('[API] Generating design for order', orderId);
-  try {
-    const response = await axios.post('/api/generate-design', {
-      orderId,
-      json,
-    });
-    logger.log('[API] Design generation response:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('[API] Error generating design:', error);
-    throw error;
-  }
-};
-
-export const uploadToExternalScript = async (file: File): Promise<string> => {
-  logger.log('[API] Upload vers media.winshirt.fr/upload-visuel.php:', file.name);
+  if (error) throw error;
   
-  const formData = new FormData();
-  formData.append('file', file);
-  
-  try {
-    const response = await axios.post('https://media.winshirt.fr/upload-visuel.php', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      timeout: 30000,
-    });
-    
-    logger.log('[API] Réponse du script PHP:', response.data);
-    
-    if (response.data?.success === true && response.data?.url) {
-      logger.log('[API] Upload réussi vers media.winshirt.fr:', response.data.url);
-      return response.data.url;
-    } else {
-      console.error('[API] Script PHP retourne success:false:', response.data);
-      const errorMessage = response.data?.error || response.data?.message || 'Upload échoué sur le serveur';
-      throw new Error(errorMessage);
-    }
-  } catch (error) {
-    console.error('[API] Erreur lors de l\'upload vers media.winshirt.fr:', error);
-    
-    if (axios.isAxiosError(error)) {
-      if (error.response?.data?.error) {
-        throw new Error(error.response.data.error);
-      } else if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      } else if (error.code === 'ECONNABORTED') {
-        throw new Error('Timeout - le serveur met trop de temps à répondre');
-      } else if (error.response?.status === 413) {
-        throw new Error('Fichier trop volumineux');
-      } else if (error.response?.status >= 500) {
-        throw new Error('Erreur serveur - veuillez réessayer plus tard');
-      }
-    }
-    
-    throw new Error('Erreur de connexion au serveur d\'upload');
-  }
+  const lotteries = data || [];
+  setCachedData(cacheKey, lotteries);
+  return lotteries;
 };
 
-// Suppression de uploadFileToStorage - plus utilisé
+// Mockups
+export const fetchAllMockups = async (): Promise<Mockup[]> => {
+  const cacheKey = 'mockups';
+  const cached = getCachedData<Mockup[]>(cacheKey);
+  if (cached) return cached;
+
+  const { data, error } = await supabase
+    .from('mockups')
+    .select('*')
+    .eq('is_active', true)
+    .order('name');
+
+  if (error) throw error;
+  
+  const mockups = data || [];
+  setCachedData(cacheKey, mockups);
+  return mockups;
+};
+
+// Designs
+export const fetchAllDesigns = async (): Promise<Design[]> => {
+  const cacheKey = 'designs';
+  const cached = getCachedData<Design[]>(cacheKey);
+  if (cached) return cached;
+
+  const { data, error } = await supabase
+    .from('designs')
+    .select('*')
+    .eq('is_active', true)
+    .order('name');
+
+  if (error) throw error;
+  
+  const designs = data || [];
+  setCachedData(cacheKey, designs);
+  return designs;
+};
+
+// CRUD Operations
+export const createProduct = async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
+  const { data, error } = await supabase
+    .from('products')
+    .insert([product])
+    .select()
+    .single();
+
+  if (error) throw error;
+  
+  // Invalider le cache
+  cache.delete('products');
+  return data;
+};
+
+export const updateProduct = async (id: string, product: Partial<Product>) => {
+  const { data, error } = await supabase
+    .from('products')
+    .update(product)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  
+  // Invalider le cache
+  cache.delete('products');
+  return data;
+};
+
+export const deleteProduct = async (id: string) => {
+  const { error } = await supabase
+    .from('products')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+  
+  // Invalider le cache
+  cache.delete('products');
+};
+
+export const createLottery = async (lottery: Omit<Lottery, 'id' | 'created_at' | 'updated_at'>) => {
+  const { data, error } = await supabase
+    .from('lotteries')
+    .insert([lottery])
+    .select()
+    .single();
+
+  if (error) throw error;
+  
+  // Invalider le cache
+  cache.delete('lotteries');
+  return data;
+};
+
+export const updateLottery = async (id: string, lottery: Partial<Lottery>) => {
+  const { data, error } = await supabase
+    .from('lotteries')
+    .update(lottery)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  
+  // Invalider le cache
+  cache.delete('lotteries');
+  return data;
+};
+
+export const deleteLottery = async (id: string) => {
+  const { error } = await supabase
+    .from('lotteries')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+  
+  // Invalider le cache
+  cache.delete('lotteries');
+};
+
+// Cache utilities
+export const clearCache = () => {
+  cache.clear();
+};
+
+export const clearCacheKey = (key: string) => {
+  cache.delete(key);
+};
