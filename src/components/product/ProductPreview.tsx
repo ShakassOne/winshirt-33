@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -141,17 +140,24 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
     return productImageUrl;
   };
 
-  // Enhanced SVG rendering with content and color support
+  // Enhanced SVG rendering with proper content handling
   const renderSvgDesign = () => {
     const svgContent = getCurrentSvgContent();
     const svgColor = getCurrentSvgColor();
     const currentDesign = getCurrentDesign();
     
-    // If we have SVG content, use it
-    if (svgContent) {
+    console.log('Rendering SVG:', { 
+      hasSvgContent: !!svgContent, 
+      svgColor, 
+      designUrl: currentDesign?.image_url,
+      isSvgDesign: isSvgDesign()
+    });
+    
+    // Priority 1: If we have processed SVG content, use it
+    if (svgContent && svgContent.includes('<svg')) {
       let coloredSvg = svgContent;
       if (svgColor && svgColor !== '#ffffff') {
-        // Replace fill and stroke colors in SVG
+        // Apply color transformations
         coloredSvg = svgContent
           .replace(/fill="[^"]*"/g, `fill="${svgColor}"`)
           .replace(/stroke="[^"]*"/g, `stroke="${svgColor}"`)
@@ -159,16 +165,19 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
           .replace(/stroke:[^;"]*/g, `stroke:${svgColor}`);
       }
       
+      // Ensure proper SVG structure
+      if (!coloredSvg.includes('viewBox')) {
+        coloredSvg = coloredSvg.replace(
+          /<svg([^>]*)>/i,
+          '<svg$1 viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">'
+        );
+      }
+      
       return (
         <div
           className="w-[200px] h-[200px] flex items-center justify-center"
           dangerouslySetInnerHTML={{
-            __html: sanitizeSvg(
-              coloredSvg.replace(
-                /<svg([^>]*)>/i,
-                '<svg$1 width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">'
-              )
-            )
+            __html: sanitizeSvg(coloredSvg)
           }}
           style={{ 
             maxWidth: '200px', 
@@ -177,21 +186,35 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
           }}
         />
       );
-    } 
-    // Fallback to regular image display
-    else if (currentDesign) {
-      return (
+    }
+    
+    // Priority 2: Regular image display (including SVG URLs)
+    if (currentDesign) {
+      const imageElement = (
         <img
           src={currentDesign.image_url}
           alt={currentDesign.name}
           className="max-w-[200px] max-h-[200px] w-auto h-auto"
           draggable={false}
-          style={isSvgDesign() && getCurrentSvgColor() !== '#ffffff' ? {
-            filter: `hue-rotate(${getCurrentSvgColor() === '#ff0000' ? '0deg' : getCurrentSvgColor() === '#00ff00' ? '120deg' : getCurrentSvgColor() === '#0000ff' ? '240deg' : '0deg'})`
-          } : {}}
+          onLoad={() => console.log('Design image loaded successfully')}
+          onError={(e) => console.error('Design image failed to load:', e)}
         />
       );
+
+      // Apply color filter for SVG images if needed
+      if (isSvgDesign() && svgColor && svgColor !== '#ffffff') {
+        return (
+          <div style={{
+            filter: `hue-rotate(${svgColor === '#ff0000' ? '0deg' : svgColor === '#00ff00' ? '120deg' : svgColor === '#0000ff' ? '240deg' : '0deg'})`
+          }}>
+            {imageElement}
+          </div>
+        );
+      }
+
+      return imageElement;
     }
+    
     return null;
   };
 

@@ -260,17 +260,35 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   const handleDesignSelection = (design: Design) => {
     onSelectDesign(design);
     
-    // Check if it's an SVG and fetch content
+    // Check if it's an SVG and fetch content for proper rendering
     if (design.image_url?.toLowerCase().includes('.svg') || design.image_url?.includes('data:image/svg')) {
       fetch(design.image_url)
         .then(response => response.text())
         .then(svgText => {
+          console.log('SVG content loaded:', svgText.substring(0, 100) + '...');
           onSvgContentChange(svgText);
         })
         .catch(error => {
           console.error('Error loading SVG content:', error);
+          // Fallback: try to use the URL directly
+          onSvgContentChange(`<svg viewBox="0 0 200 200"><image href="${design.image_url}" width="200" height="200"/></svg>`);
         });
     }
+  };
+
+  const handleAIImageGenerated = (imageUrl: string, imageName: string) => {
+    // Create AI design object and select it
+    const aiDesign: Design = {
+      id: `ai-${Date.now()}`,
+      name: imageName,
+      image_url: imageUrl,
+      category: 'AI Generated',
+      is_active: true
+    };
+    handleDesignSelection(aiDesign);
+    
+    // Call the original handler for additional logic
+    onAIImageGenerated(imageUrl, imageName);
   };
 
   const handleRemoveDesign = () => {
@@ -419,7 +437,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
             <TabsContent value="ai" className="h-full overflow-y-auto">
               <div className="h-full">
-                <CompactAIGenerator onImageGenerated={onAIImageGenerated} />
+                <CompactAIGenerator onImageGenerated={handleAIImageGenerated} />
               </div>
             </TabsContent>
 

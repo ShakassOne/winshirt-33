@@ -1,11 +1,11 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
-import { Sparkles, Download, Wand2, Trash2 } from 'lucide-react';
+import { Sparkles, Wand2, Trash2, AlertTriangle, Zap, Recycle } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { generateImage, getGenerationStats, getAvailableAIImages, GenerationStats, AIImage } from '@/services/aiImages.service';
 
 interface CompactAIGeneratorProps {
   onImageGenerated: (imageUrl: string, imageName: string) => void;
@@ -17,7 +17,29 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<Array<{ url: string; name: string }>>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [availableImages, setAvailableImages] = useState<AIImage[]>([]);
+  const [stats, setStats] = useState<GenerationStats>({ totalGenerations: 0, remainingGenerations: 3 });
+  const [isLoadingGallery, setIsLoadingGallery] = useState(true);
+
+  // Load stats and available images on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [generationStats, availableAIImages] = await Promise.all([
+          getGenerationStats(),
+          getAvailableAIImages(50)
+        ]);
+        setStats(generationStats);
+        setAvailableImages(availableAIImages);
+      } catch (error) {
+        console.error('Error loading AI data:', error);
+      } finally {
+        setIsLoadingGallery(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -29,54 +51,60 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
       return;
     }
 
+    if (stats.remainingGenerations <= 0) {
+      toast({
+        variant: "destructive",
+        title: "Limite atteinte",
+        description: "Vous avez utilisé toutes vos générations. Parcourez les images disponibles ci-dessous."
+      });
+      return;
+    }
+
     setIsGenerating(true);
     try {
-      // Simulate AI generation - In real app, this would call an AI service
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      const result = await generateImage(prompt);
       
-      // Create a mock generated image
-      const canvas = document.createElement('canvas');
-      canvas.width = 512;
-      canvas.height = 512;
-      const ctx = canvas.getContext('2d');
-      
-      if (ctx) {
-        // Create a gradient background
-        const gradient = ctx.createLinearGradient(0, 0, 512, 512);
-        gradient.addColorStop(0, '#FF6B6B');
-        gradient.addColorStop(0.5, '#4ECDC4');
-        gradient.addColorStop(1, '#45B7D1');
-        
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, 512, 512);
-        
-        // Add some text
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 32px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('IA', 256, 200);
-        ctx.font = '24px Arial';
-        ctx.fillText('Généré', 256, 240);
-        ctx.font = '16px Arial';
-        ctx.fillText(prompt.substring(0, 30), 256, 280);
+      if (result.error) {
+        if (result.limitReached) {
+          toast({
+            variant: "destructive",
+            title: "Limite atteinte",
+            description: result.error
+          });
+          // Refresh stats
+          const newStats = await getGenerationStats();
+          setStats(newStats);
+          return;
+        }
+        throw new Error(result.error);
       }
+
+      const imageName = result.recycled 
+        ? `IA (Recyclée): ${prompt.substring(0, 20)}...`
+        : `IA: ${prompt.substring(0, 20)}...`;
       
-      const imageUrl = canvas.toDataURL('image/png');
-      const imageName = `IA_${prompt.substring(0, 20).replace(/\s+/g, '_')}_${Date.now()}`;
-      
-      const newImage = { url: imageUrl, name: imageName };
+      // Add to local generated images
+      const newImage = { url: result.imageUrl, name: imageName };
       setGeneratedImages(prev => [newImage, ...prev]);
       
+      // Refresh available images and stats
+      const [newStats, newAvailableImages] = await Promise.all([
+        getGenerationStats(),
+        getAvailableAIImages(50)
+      ]);
+      setStats(newStats);
+      setAvailableImages(newAvailableImages);
+      
       toast({
-        title: "Image générée",
-        description: `L'image "${imageName}" a été générée avec succès.`
+        title: result.recycled ? "Image recyclée trouvée!" : "Image générée",
+        description: result.message || `${imageName} créée avec succès.`
       });
     } catch (error) {
       console.error('Error generating image:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de générer l'image. Veuillez réessayer."
+        description: error instanceof Error ? error.message : "Impossible de générer l'image."
       });
     } finally {
       setIsGenerating(false);
@@ -95,24 +123,30 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
     setGeneratedImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const imageUrl = e.target?.result as string;
-      const imageName = `Upload_${file.name.replace(/\.[^/.]+$/, "")}_${Date.now()}`;
-      
-      const newImage = { url: imageUrl, name: imageName };
-      setGeneratedImages(prev => [newImage, ...prev]);
-    };
-    reader.readAsDataURL(file);
-  };
+  // Combine generated and available images
+  const allImages = [...generatedImages, ...availableImages.map(img => ({
+    url: img.image_url,
+    name: `IA: ${img.prompt.substring(0, 30)}...`,
+    usage_count: img.usage_count
+  }))];
 
   return (
     <div className="h-full flex flex-col space-y-4">
-      {/* Generation controls - Compact */}
+      {/* Generation stats */}
+      <div className="bg-white/10 rounded-lg p-3">
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-1 text-green-400">
+            <Zap className="h-3 w-3" />
+            <span>Restantes: {stats.remainingGenerations}/3</span>
+          </div>
+          <div className="flex items-center gap-1 text-blue-400">
+            <Sparkles className="h-3 w-3" />
+            <span>Total: {stats.totalGenerations}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Generation controls */}
       <div className="space-y-3">
         <div>
           <Label className="text-white text-sm">Description de l'image</Label>
@@ -121,50 +155,43 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Ex: Un chat noir avec des lunettes..."
             className="bg-white/10 border-white/20 text-white placeholder:text-white/50 mt-1"
+            disabled={isGenerating}
           />
         </div>
         
-        <div className="flex gap-2">
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-          >
-            {isGenerating ? (
-              <>
-                <Sparkles className="mr-2 h-4 w-4 animate-spin" />
-                Génération...
-              </>
-            ) : (
-              <>
-                <Wand2 className="mr-2 h-4 w-4" />
-                Générer
-              </>
-            )}
-          </Button>
-          
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            variant="outline"
-            className="border-white/30 hover:bg-white/10"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button
+          onClick={handleGenerate}
+          disabled={isGenerating || stats.remainingGenerations <= 0}
+          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+        >
+          {isGenerating ? (
+            <>
+              <Sparkles className="mr-2 h-4 w-4 animate-spin" />
+              Génération...
+            </>
+          ) : (
+            <>
+              <Wand2 className="mr-2 h-4 w-4" />
+              Générer ({stats.remainingGenerations} restantes)
+            </>
+          )}
+        </Button>
+
+        {stats.remainingGenerations <= 0 && (
+          <div className="flex items-start gap-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+            <AlertTriangle className="h-3 w-3 text-yellow-500 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-yellow-200">
+              Limite atteinte. Parcourez les images disponibles ci-dessous.
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Generated images gallery - Full width grid */}
+      {/* Images gallery */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <div className="flex items-center justify-between mb-3">
           <Label className="text-white text-sm">
-            Images générées ({generatedImages.length})
+            Images disponibles ({allImages.length})
           </Label>
           {generatedImages.length > 0 && (
             <Button
@@ -174,22 +201,27 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
               className="h-6 text-xs border-red-500/30 hover:bg-red-500/20 text-red-400"
             >
               <Trash2 className="h-3 w-3 mr-1" />
-              Tout effacer
+              Nettoyer
             </Button>
           )}
         </div>
         
-        {generatedImages.length === 0 ? (
+        {isLoadingGallery ? (
+          <div className="flex-1 flex items-center justify-center text-white/50 text-sm py-8">
+            <Sparkles className="h-4 w-4 mr-2 animate-spin" />
+            Chargement...
+          </div>
+        ) : allImages.length === 0 ? (
           <div className="flex-1 flex items-center justify-center text-white/50 text-sm text-center py-8">
-            Aucune image générée.<br />
+            Aucune image disponible.<br />
             Entrez une description et cliquez sur "Générer".
           </div>
         ) : (
           <div className="h-full overflow-y-auto pr-2 -mr-2">
             <div className="grid grid-cols-3 gap-3">
-              {generatedImages.map((image, index) => (
+              {allImages.map((image, index) => (
                 <div
-                  key={index}
+                  key={`${image.url}-${index}`}
                   className="group relative bg-black/40 rounded-lg overflow-hidden cursor-pointer transition-all hover:scale-[1.02] border border-white/10 hover:border-purple-500/50"
                 >
                   <div className="aspect-square overflow-hidden">
@@ -211,20 +243,28 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
                       >
                         Utiliser
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleImageDelete(index)}
-                        className="text-xs h-6 px-2"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                      {index < generatedImages.length && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleImageDelete(index)}
+                          className="text-xs h-6 px-2"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                   
-                  {/* Image name */}
+                  {/* Image info */}
                   <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-1">
                     <p className="text-xs text-white truncate">{image.name}</p>
+                    {'usage_count' in image && (
+                      <div className="flex items-center gap-1 text-xs text-green-400">
+                        <Recycle className="h-2 w-2" />
+                        <span>{image.usage_count}x utilisée</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
