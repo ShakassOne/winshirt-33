@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { WinShirtThemeProvider } from "@/components/theme/theme-provider-wrapper";
 import { GlobalCaptureElements } from "@/components/capture/GlobalCaptureElements";
+import { useScrollReset } from "@/hooks/useScrollReset";
 import Index from "@/pages/Index";
 import Products from "@/pages/Products";
 import ProductDetail from "@/pages/ProductDetail";
@@ -54,6 +55,7 @@ import { createOptimizedQueryClient } from "@/lib/queryClient";
 const queryClient = createOptimizedQueryClient();
 
 function App() {
+  useScrollReset();
   return (
     <QueryClientProvider client={queryClient}>
       <WinShirtThemeProvider>
