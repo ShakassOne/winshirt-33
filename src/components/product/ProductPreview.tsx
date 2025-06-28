@@ -119,10 +119,17 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
 
   const isSvgDesign = () => {
     const currentDesign = getCurrentDesign();
+    const svgContent = getCurrentSvgContent();
+    if (svgContent && svgContent.includes('<svg')) return true;
     if (!currentDesign?.image_url) return false;
-    
+
     const url = currentDesign.image_url.toLowerCase();
-    return url.includes('.svg') || url.includes('svg') || currentDesign.image_url.includes('data:image/svg');
+    return (
+      url.includes('.svg') ||
+      url.includes('svg') ||
+      url.startsWith('blob:') ||
+      currentDesign.image_url.includes('data:image/svg')
+    );
   };
 
   const getProductImage = () => {
