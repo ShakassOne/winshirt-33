@@ -268,16 +268,24 @@ const ProductDetail = () => {
     }
   };
 
-  // File upload handler - now properly implemented
+  // File upload handler with better SVG support
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     try {
-      // Create a temporary URL for the uploaded file
-      const imageUrl = URL.createObjectURL(file);
-      
-      // Create a temporary design object
+      let imageUrl: string;
+
+      // Handle SVG files differently so that color editing works
+      if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
+        const text = await file.text();
+        imageUrl = `data:image/svg+xml;base64,${btoa(text)}`;
+        handleSvgContentChange(text);
+      } else {
+        // Create a temporary URL for the uploaded file
+        imageUrl = URL.createObjectURL(file);
+      }
+
       const uploadedDesign: Design = {
         id: `upload-${Date.now()}`,
         name: file.name,
@@ -287,7 +295,7 @@ const ProductDetail = () => {
       };
 
       handleSelectDesign(uploadedDesign);
-      
+
       toast({
         title: "Image uploadée",
         description: `${file.name} a été ajoutée avec succès.`,
@@ -319,7 +327,36 @@ const ProductDetail = () => {
     });
   };
 
-  // Background removal handler - now properly implemented
+  // Simple background removal using canvas
+  const removeWhiteBackground = (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas not supported'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i] > 240 && data[i + 1] > 240 && data[i + 2] > 240) {
+            data[i + 3] = 0;
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+        resolve(canvas.toDataURL());
+      };
+      img.onerror = (e) => reject(e);
+      img.src = url;
+    });
+  };
+
   const handleRemoveBackground = async () => {
     const currentDesign = currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack;
     if (!currentDesign) {
@@ -333,22 +370,21 @@ const ProductDetail = () => {
 
     setIsRemovingBackground(true);
     try {
-      // Simulate background removal process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Create a new design with background removed
+      const cleanedUrl = await removeWhiteBackground(currentDesign.image_url);
+
       const cleanedDesign: Design = {
         ...currentDesign,
         id: `${currentDesign.id}-cleaned`,
         name: `${currentDesign.name} (Fond supprimé)`,
+        image_url: cleanedUrl,
         category: 'AI Generated Cleaned'
       };
-      
+
       handleSelectDesign(cleanedDesign);
-      
+
       toast({
         title: "Fond supprimé",
-        description: "Le fond de l'image a été supprimé avec succès.",
+        description: "Le fond de l'image a été supprimé avec succès."
       });
     } catch (error) {
       console.error('Error removing background:', error);

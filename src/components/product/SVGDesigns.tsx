@@ -75,9 +75,14 @@ export const SVGDesigns: React.FC<SVGDesignsProps> = ({
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const isSvgDesign = () => {
+    if (svgAnalysis || selectedFile) return true;
     if (!selectedDesign?.image_url) return false;
     const url = selectedDesign.image_url.toLowerCase();
-    return url.includes('.svg') || url.includes('svg') || selectedDesign.image_url.includes('data:image/svg');
+    return (
+      url.includes('.svg') ||
+      url.includes('svg') ||
+      selectedDesign.image_url.includes('data:image/svg')
+    );
   };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,7 +98,11 @@ export const SVGDesigns: React.FC<SVGDesignsProps> = ({
       logger.log('🔍 [SVGDesigns] Analyse du SVG:', file.name);
       const analysis = await SVGAnalyzerService.analyzeSVG(file);
       setSvgAnalysis(analysis);
-      
+
+      // Préparer le contenu pour la coloration
+      const text = await file.text();
+      onSvgContentChange(text);
+
       if (!analysis.needsFix) {
         // SVG propre, procéder à l'upload direct
         onFileUpload(event);
@@ -111,23 +120,33 @@ export const SVGDesigns: React.FC<SVGDesignsProps> = ({
 
   const handleSvgCleanupComplete = (cleanedFile: File) => {
     logger.log('✅ [SVGDesigns] SVG nettoyé, procédure d\'upload:', cleanedFile.name);
-    
-    // Créer un événement synthetic pour le fichier nettoyé
-    const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(cleanedFile);
-    
-    const syntheticEvent = {
-      target: {
-        files: dataTransfer.files
-      }
-    } as React.ChangeEvent<HTMLInputElement>;
-    
-    // Procéder à l'upload du fichier nettoyé
-    onFileUpload(syntheticEvent);
-    
-    // Reset de l'état
-    setSelectedFile(null);
-    setSvgAnalysis(null);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const content = reader.result as string;
+
+      // Mettre à jour le contenu SVG pour la coloration
+      onSvgContentChange(content);
+
+      // Créer un événement synthetic pour le fichier nettoyé
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(cleanedFile);
+
+      const syntheticEvent = {
+        target: {
+          files: dataTransfer.files
+        }
+      } as React.ChangeEvent<HTMLInputElement>;
+
+      // Procéder à l'upload du fichier nettoyé
+      onFileUpload(syntheticEvent);
+
+      // Reset de l'état
+      setSelectedFile(null);
+      setSvgAnalysis(null);
+    };
+
+    reader.readAsText(cleanedFile);
   };
 
   return (

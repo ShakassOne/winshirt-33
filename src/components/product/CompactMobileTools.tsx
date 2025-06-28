@@ -106,7 +106,12 @@ export const CompactMobileTools: React.FC<CompactMobileToolsProps> = ({
   const isSvgDesign = () => {
     if (!selectedDesign?.image_url) return false;
     const url = selectedDesign.image_url.toLowerCase();
-    return url.includes('.svg') || url.includes('svg') || selectedDesign.image_url.includes('data:image/svg');
+    return (
+      url.includes('.svg') ||
+      url.includes('svg') ||
+      url.startsWith('blob:') ||
+      selectedDesign.image_url.includes('data:image/svg')
+    );
   };
 
   const ColorButton = ({ color, isSelected, onClick }: { color: string; isSelected: boolean; onClick: () => void }) => (
