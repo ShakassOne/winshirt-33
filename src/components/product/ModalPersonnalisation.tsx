@@ -159,15 +159,15 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   textStylesBack,
   textTransformFront,
   textTransformBack,
+  designTransformFront,
+  designTransformBack,
+  selectedSizeFront,
+  selectedSizeBack,
   onTextContentChange,
   onTextFontChange,
   onTextColorChange,
   onTextStylesChange,
   onTextTransformChange,
-  designTransformFront,
-  designTransformBack,
-  selectedSizeFront,
-  selectedSizeBack,
   onDesignTransformChange,
   onSizeChange,
   onDesignMouseDown,
@@ -432,6 +432,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             <TabsContent value="upload" className="h-full overflow-y-auto">
               <CompactUpload
                 onFileUpload={onFileUpload}
+                onRemoveBackground={handleEnhancedRemoveBackground}
+                isRemovingBackground={isRemovingBackground}
                 currentDesign={currentData.design}
               />
             </TabsContent>
