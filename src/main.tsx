@@ -3,7 +3,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { createOptimizedQueryClient } from "@/lib/optimizedQueryClient";
+import { createOptimizedQueryClient } from "@/lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 
 // Créer le client optimisé

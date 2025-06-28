@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CartProvider } from "@/context/CartContext";
@@ -46,7 +47,7 @@ import AnalyticsAdmin from "@/pages/admin/AnalyticsAdmin";
 import DTFProductionAdmin from "@/pages/admin/DTFProductionAdmin";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { createOptimizedQueryClient } from "@/lib/optimizedQueryClient";
+import { createOptimizedQueryClient } from "@/lib/queryClient";
 
 // Create the query client instance
 const queryClient = createOptimizedQueryClient();
