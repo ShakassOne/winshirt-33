@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { getDTFOrders, updateDTFProductionStatus, DTFOrderWithDetails, DTFProductionStatus } from '@/services/dtf.service';
 import { OrderItemDetails } from '@/components/order/OrderItemDetails';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { ArrowLeft, ChevronRight, Search, Calendar, Package, Wrench, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Search, Calendar, Package, Wrench, AlertCircle, CheckCircle, RefreshCw, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +27,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { Skeleton } from '@/components/ui/skeleton';
+import { useRetroactiveCapture } from '@/hooks/useRetroactiveCapture';
+import { Progress } from '@/components/ui/progress';
 
 const DTFProductionAdmin = () => {
   const [orders, setOrders] = useState<DTFOrderWithDetails[]>([]);
@@ -38,6 +39,15 @@ const DTFProductionAdmin = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
+  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  const [isBatchDialogOpen, setIsBatchDialogOpen] = useState(false);
+  
+  const { 
+    regenerateSingleOrder, 
+    regenerateMultipleOrders, 
+    isRegenerating, 
+    regenerationProgress 
+  } = useRetroactiveCapture();
   
   useEffect(() => {
     fetchOrders();
@@ -102,6 +112,74 @@ const DTFProductionAdmin = () => {
     } finally {
       setUpdatingStatus(null);
     }
+  };
+
+  const handleRegenerateSingle = async (orderId: string) => {
+    try {
+      const result = await regenerateSingleOrder(orderId);
+      
+      if (result.success) {
+        toast({
+          title: "Fichiers HD régénérés",
+          description: `Commande ${orderId.substring(0, 8)} : ${result.frontUrl ? 'Recto ' : ''}${result.backUrl ? 'Verso' : ''} mis à jour`,
+        });
+        
+        // Rafraîchir les données
+        await fetchOrders();
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erreur de régénération",
+          description: result.error || "Impossible de régénérer les fichiers HD",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la régénération",
+      });
+    }
+  };
+
+  const handleRegenerateBatch = async () => {
+    if (selectedOrders.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Veuillez sélectionner au moins une commande",
+      });
+      return;
+    }
+
+    try {
+      const results = await regenerateMultipleOrders(selectedOrders);
+      const successCount = results.filter(r => r.success).length;
+      const failCount = results.length - successCount;
+      
+      toast({
+        title: "Régénération batch terminée",
+        description: `${successCount} succès, ${failCount} échecs sur ${results.length} commandes`,
+      });
+      
+      setSelectedOrders([]);
+      setIsBatchDialogOpen(false);
+      await fetchOrders();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la régénération batch",
+      });
+    }
+  };
+
+  const toggleOrderSelection = (orderId: string) => {
+    setSelectedOrders(prev => 
+      prev.includes(orderId) 
+        ? prev.filter(id => id !== orderId)
+        : [...prev, orderId]
+    );
   };
   
   const getStatusColor = (status: DTFProductionStatus) => {
@@ -203,18 +281,47 @@ const DTFProductionAdmin = () => {
                   </SelectContent>
                 </Select>
                 
+                {selectedOrders.length > 0 && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsBatchDialogOpen(true)}
+                    disabled={isRegenerating}
+                    className="gap-2"
+                  >
+                    <Zap className="h-4 w-4" />
+                    Régénérer ({selectedOrders.length})
+                  </Button>
+                )}
+                
                 <Button 
                   variant="outline" 
                   onClick={fetchOrders}
                   className="gap-2"
                 >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
+                  <RefreshCw className="h-4 w-4" />
                   Actualiser
                 </Button>
               </div>
             </div>
+
+            {/* Progress bar pour la régénération */}
+            {isRegenerating && regenerationProgress.total > 0 && (
+              <div className="mb-6">
+                <div className="flex justify-between text-sm text-gray-400 mb-2">
+                  <span>Régénération en cours...</span>
+                  <span>{regenerationProgress.current}/{regenerationProgress.total}</span>
+                </div>
+                <Progress 
+                  value={(regenerationProgress.current / regenerationProgress.total) * 100} 
+                  className="mb-2"
+                />
+                {regenerationProgress.currentOrderId && (
+                  <p className="text-xs text-gray-500">
+                    Traitement: {regenerationProgress.currentOrderId.substring(0, 8)}
+                  </p>
+                )}
+              </div>
+            )}
             
             {loading ? (
               <div className="space-y-4">
@@ -239,48 +346,76 @@ const DTFProductionAdmin = () => {
                 {filteredOrders.map((order) => (
                   <GlassCard 
                     key={order.id} 
-                    className="p-5 cursor-pointer hover:bg-gray-800/30 transition-colors"
-                    onClick={() => {
-                      setSelectedOrder(order);
-                      setNotes(order.notes || '');
-                      setIsDetailOpen(true);
-                    }}
+                    className="p-5 hover:bg-gray-800/30 transition-colors"
                   >
                     <div className="flex flex-col md:flex-row justify-between gap-4">
-                      <div className="flex-grow">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-mono text-sm text-gray-400">#{order.order.id.substring(0, 8)}</span>
-                          <Badge variant="outline" className={`${getStatusColor(order.production_status)} flex items-center gap-1`}>
-                            {getStatusIcon(order.production_status)}
-                            <span>{getStatusText(order.production_status)}</span>
-                          </Badge>
-                        </div>
-                        <p className="font-medium">
-                          {order.order.shipping_first_name} {order.order.shipping_last_name}
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          {order.order.shipping_email}
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          {order.order.items?.length || 0} article(s) à produire
-                        </p>
-                        {order.notes && (
-                          <p className="text-sm text-orange-400 mt-1">
-                            Note: {order.notes}
+                      <div className="flex items-start gap-3 flex-grow">
+                        <input
+                          type="checkbox"
+                          checked={selectedOrders.includes(order.id)}
+                          onChange={() => toggleOrderSelection(order.id)}
+                          className="mt-1"
+                        />
+                        
+                        <div 
+                          className="flex-grow cursor-pointer"
+                          onClick={() => {
+                            setSelectedOrder(order);
+                            setNotes(order.notes || '');
+                            setIsDetailOpen(true);
+                          }}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-mono text-sm text-gray-400">#{order.order.id.substring(0, 8)}</span>
+                            <Badge variant="outline" className={`${getStatusColor(order.production_status)} flex items-center gap-1`}>
+                              {getStatusIcon(order.production_status)}
+                              <span>{getStatusText(order.production_status)}</span>
+                            </Badge>
+                          </div>
+                          <p className="font-medium">
+                            {order.order.shipping_first_name} {order.order.shipping_last_name}
                           </p>
-                        )}
+                          <p className="text-sm text-gray-400">
+                            {order.order.shipping_email}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            {order.order.items?.length || 0} article(s) à produire
+                          </p>
+                          {order.notes && (
+                            <p className="text-sm text-orange-400 mt-1">
+                              Note: {order.notes}
+                            </p>
+                          )}
+                        </div>
                       </div>
                       
-                      <div className="flex flex-col items-end justify-between">
+                      <div className="flex flex-col items-end justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-gray-400" />
                           <span className="text-sm text-gray-400">
                             {new Date(order.order.created_at).toLocaleDateString()}
                           </span>
                         </div>
+                        
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold">{order.order.total_amount.toFixed(2)} €</span>
-                          <ChevronRight className="h-5 w-5 text-gray-400" />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRegenerateSingle(order.id);
+                            }}
+                            disabled={isRegenerating}
+                            className="gap-1"
+                          >
+                            <RefreshCw className="h-3 w-3" />
+                            HD
+                          </Button>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">{order.order.total_amount.toFixed(2)} €</span>
+                            <ChevronRight className="h-5 w-5 text-gray-400" />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -324,6 +459,16 @@ const DTFProductionAdmin = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Gestion de production</h3>
                   <div className="space-y-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleRegenerateSingle(selectedOrder.id)}
+                      disabled={isRegenerating}
+                      className="w-full gap-2"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Régénérer fichiers HD
+                    </Button>
+                    
                     <div>
                       <label className="text-sm text-gray-400">Notes de production:</label>
                       <Textarea
@@ -387,6 +532,34 @@ const DTFProductionAdmin = () => {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog régénération batch */}
+      <Dialog open={isBatchDialogOpen} onOpenChange={setIsBatchDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Régénération batch des fichiers HD</DialogTitle>
+            <DialogDescription>
+              Vous allez régénérer les fichiers HD pour {selectedOrders.length} commande(s) sélectionnée(s).
+              Cette opération peut prendre plusieurs minutes.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-sm text-gray-400">
+              Commandes sélectionnées: {selectedOrders.map(id => id.substring(0, 8)).join(', ')}
+            </p>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBatchDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleRegenerateBatch} disabled={isRegenerating}>
+              {isRegenerating ? 'Régénération...' : 'Confirmer'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
