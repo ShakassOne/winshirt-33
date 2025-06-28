@@ -2,15 +2,15 @@
 import logger from '@/utils/logger';
 
 import { useCallback } from 'react';
-import { useProductionGeneration } from './useProductionGeneration';
+import { useProductionCapture } from './useProductionCapture';
 import { enrichCustomizationWithProductionFiles, validateUnifiedCustomization } from '@/services/unifiedCapture.service';
 
 export const useHDCaptureOnAddToCart = () => {
-  const { generateProductionFiles, isGenerating } = useProductionGeneration();
+  const { captureForProduction, isCapturing } = useProductionCapture();
 
-  const captureForProduction = useCallback(async (customization: any): Promise<any> => {
+  const captureForProductionCart = useCallback(async (customization: any): Promise<any> => {
     try {
-      logger.log('🎬 [HDCaptureOnAddToCart] Début capture pour production');
+      logger.log('🎬 [HDCaptureOnAddToCart] Début capture optimisée pour production');
       logger.log('📋 [HDCaptureOnAddToCart] Données reçues:', customization);
       
       // Valider la personnalisation
@@ -19,33 +19,29 @@ export const useHDCaptureOnAddToCart = () => {
         return customization;
       }
 
-      logger.log('✅ [HDCaptureOnAddToCart] Personnalisation valide, lancement génération...');
+      logger.log('✅ [HDCaptureOnAddToCart] Personnalisation valide, lancement capture optimisée...');
 
-      // Préparer les URLs de mockup
-      const mockupUrls = {
-        front: undefined, // À adapter selon vos besoins
-        back: undefined   // À adapter selon vos besoins
-      };
+      // Utiliser le service de capture optimisé
+      const productionFiles = await captureForProduction(customization);
       
-      const productInfo = {
-        name: 'Produit personnalisé',
-        id: 'temp-id'
-      };
-
-      logger.log('🚀 [HDCaptureOnAddToCart] Démarrage de la génération de production...');
-      const productionFiles = await generateProductionFiles(customization, mockupUrls, productInfo);
-      
-      logger.log('📤 [HDCaptureOnAddToCart] Résultat génération:', productionFiles);
+      logger.log('📤 [HDCaptureOnAddToCart] Résultat capture optimisée:', productionFiles);
 
       // Vérifier si au moins un fichier a été généré
-      const hasAnyFile = 
-        productionFiles.front.mockupUrl || productionFiles.back.mockupUrl || 
-        productionFiles.front.hdUrl || productionFiles.back.hdUrl;
+      const hasAnyFile = productionFiles.frontUrl || productionFiles.backUrl;
       
       if (hasAnyFile) {
-        logger.log('🎉 [HDCaptureOnAddToCart] Au moins un fichier généré');
+        logger.log('🎉 [HDCaptureOnAddToCart] Au moins un fichier HD généré');
         
-        const enrichedCustomization = enrichCustomizationWithProductionFiles(customization, productionFiles);
+        // Enrichir la customization avec les nouvelles URLs
+        const enrichedCustomization = {
+          ...customization,
+          visual_front_url: productionFiles.frontUrl || customization.visual_front_url,
+          visual_back_url: productionFiles.backUrl || customization.visual_back_url,
+          // Garder les URLs existantes pour compatibilité
+          hdRectoUrl: productionFiles.frontUrl || customization.hdRectoUrl,
+          hdVersoUrl: productionFiles.backUrl || customization.hdVersoUrl
+        };
+        
         logger.log('📦 [HDCaptureOnAddToCart] Customization enrichie:', enrichedCustomization);
         
         return enrichedCustomization;
@@ -54,14 +50,14 @@ export const useHDCaptureOnAddToCart = () => {
         return customization;
       }
     } catch (error) {
-      console.error('❌ [HDCaptureOnAddToCart] Erreur durant la génération:', error);
+      console.error('❌ [HDCaptureOnAddToCart] Erreur durant la capture optimisée:', error);
       // En cas d'erreur, retourner la customization originale sans bloquer l'ajout au panier
       return customization;
     }
-  }, [generateProductionFiles]);
+  }, [captureForProduction]);
 
   return {
-    captureForProduction,
-    isCapturing: isGenerating
+    captureForProduction: captureForProductionCart,
+    isCapturing
   };
 };

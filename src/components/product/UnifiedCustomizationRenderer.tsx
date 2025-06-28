@@ -85,7 +85,7 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
 
     const { designUrl, transform } = design;
     
-    // Gérer les SVG base64
+    // Gérer les SVG base64 avec une meilleure qualité pour la production
     if (isBase64SVG(designUrl)) {
       const svgContent = decodeSVGBase64(designUrl);
       if (svgContent) {
@@ -99,7 +99,10 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
               top: '50%',
               transform: `translate(-50%, -50%) translate(${transform.position.x * scale}px, ${transform.position.y * scale}px) scale(${transform.scale * scale}) rotate(${transform.rotation}deg)`,
               transformOrigin: 'center',
-              zIndex: 10
+              zIndex: 10,
+              // Optimisation pour la production HD
+              imageRendering: scale > 2 ? 'crisp-edges' : 'auto',
+              WebkitImageRendering: scale > 2 ? 'crisp-edges' : 'auto'
             }}
             dangerouslySetInnerHTML={{ __html: sanitizeSvg(processedSVG) }}
           />
@@ -107,7 +110,7 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
       }
     }
 
-    // Gérer les images classiques (PNG, JPG, etc.)
+    // Gérer les images classiques avec optimisation HD
     return (
       <div
         className="absolute"
@@ -122,11 +125,18 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
         <img
           src={designUrl}
           alt={design.designName}
-          className="max-w-[200px] max-h-[200px] object-contain"
+          className="object-contain"
           style={{
-            width: 'auto',
-            height: 'auto'
+            width: `${200 * scale}px`,
+            height: `${200 * scale}px`,
+            maxWidth: 'none',
+            maxHeight: 'none',
+            // Optimisation pour la production HD
+            imageRendering: scale > 2 ? 'high-quality' : 'auto',
+            WebkitImageRendering: scale > 2 ? 'high-quality' : 'auto'
           }}
+          loading="eager"
+          crossOrigin="anonymous"
         />
       </div>
     );
@@ -140,7 +150,7 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
     // Calculer l'ombre du texte
     let textShadow = 'none';
     if (shadow?.enabled) {
-      textShadow = `${shadow.offsetX}px ${shadow.offsetY}px ${shadow.blur}px ${shadow.color}`;
+      textShadow = `${shadow.offsetX * scale}px ${shadow.offsetY * scale}px ${shadow.blur * scale}px ${shadow.color}`;
     }
 
     return (
@@ -159,7 +169,10 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
           textDecoration: styles.underline ? 'underline' : 'none',
           textShadow: textShadow,
           zIndex: 20,
-          lineHeight: 1.2
+          lineHeight: 1.2,
+          // Optimisation pour la production HD
+          textRendering: scale > 2 ? 'geometricPrecision' : 'auto',
+          WebkitFontSmoothing: scale > 2 ? 'antialiased' : 'auto'
         }}
       >
         {content}
@@ -169,12 +182,14 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
 
   return (
     <div className={`relative w-full h-full ${className}`}>
-      {/* Background (T-shirt) */}
+      {/* Background (T-shirt) - uniquement si demandé */}
       {withBackground && backgroundUrl && (
         <img
           src={backgroundUrl}
           alt={`T-shirt ${side}`}
           className="w-full h-full object-contain"
+          loading="eager"
+          crossOrigin="anonymous"
         />
       )}
       
