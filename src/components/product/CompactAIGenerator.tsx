@@ -123,12 +123,15 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
     setGeneratedImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Combine generated and available images
-  const allImages = [...generatedImages, ...availableImages.map(img => ({
-    url: img.image_url,
-    name: `IA: ${img.prompt.substring(0, 30)}...`,
-    usage_count: img.usage_count
-  }))];
+  // Combine generated and available images with proper typing
+  const allImages = [
+    ...generatedImages,
+    ...availableImages.map(img => ({
+      url: img.image_url,
+      name: `IA: ${img.prompt.substring(0, 30)}...`,
+      usage_count: img.usage_count || 0
+    }))
+  ];
 
   return (
     <div className="h-full flex flex-col space-y-4">
