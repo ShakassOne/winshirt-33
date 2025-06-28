@@ -504,24 +504,62 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           onRemoveText={handleRemoveText}
         />
 
-        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2 pointer-events-auto">
-          <Button size="sm" variant="outline" onClick={handleManualRemoveBackground}>
+        <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-2 pointer-events-auto">
+          <Button
+            variant="outline"
+            className="text-lg min-w-[48px] min-h-[48px] pointer-events-auto"
+            onClick={handleManualRemoveBackground}
+          >
             Supprimer fond
           </Button>
           {currentData.design && (
-            <Button size="sm" variant="outline" onClick={handleRemoveDesign}>
+            <Button
+              variant="outline"
+              className="text-lg min-w-[48px] min-h-[48px] pointer-events-auto"
+              onClick={handleRemoveDesign}
+            >
               Supprimer
             </Button>
           )}
         </div>
       </div>
 
-      <div className="h-12 flex items-center justify-around border-t border-white/10 bg-black/80">
-        <Button variant="ghost" size="sm" onClick={() => openDrawer('designs')}><ImageIcon className="h-4 w-4" /></Button>
-        <Button variant="ghost" size="sm" onClick={() => openDrawer('upload')}><Upload className="h-4 w-4" /></Button>
-        <Button variant="ghost" size="sm" onClick={() => openDrawer('ai')}><Sparkles className="h-4 w-4" /></Button>
-        <Button variant="ghost" size="sm" onClick={() => openDrawer('text')}><Type className="h-4 w-4" /></Button>
-        <Button variant="ghost" size="sm" onClick={() => openDrawer('svg')}><Paintbrush className="h-4 w-4" /></Button>
+      <div className="fixed bottom-0 left-0 right-0 flex justify-around p-4 bg-black/70 z-50">
+        <Button
+          variant="ghost"
+          className="text-lg min-w-[48px] min-h-[48px] pointer-events-auto"
+          onClick={() => openDrawer('designs')}
+        >
+          <ImageIcon className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          className="text-lg min-w-[48px] min-h-[48px] pointer-events-auto"
+          onClick={() => openDrawer('upload')}
+        >
+          <Upload className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          className="text-lg min-w-[48px] min-h-[48px] pointer-events-auto"
+          onClick={() => openDrawer('ai')}
+        >
+          <Sparkles className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          className="text-lg min-w-[48px] min-h-[48px] pointer-events-auto"
+          onClick={() => openDrawer('text')}
+        >
+          <Type className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          className="text-lg min-w-[48px] min-h-[48px] pointer-events-auto"
+          onClick={() => openDrawer('svg')}
+        >
+          <Paintbrush className="h-5 w-5" />
+        </Button>
       </div>
 
       <Drawer open={drawerTab !== null} onOpenChange={(o) => !o && closeDrawer()}>

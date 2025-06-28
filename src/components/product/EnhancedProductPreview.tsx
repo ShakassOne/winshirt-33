@@ -223,7 +223,10 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
 
   return (
     <>
-      <div className="relative w-full h-full bg-gray-900/50 rounded-lg overflow-hidden" onClick={handleBackgroundClick}>
+      <div
+        className="relative flex justify-center items-center w-full max-h-[60vh] bg-gray-900/50 rounded-lg overflow-hidden"
+        onClick={handleBackgroundClick}
+      >
         {/* Preview Area avec rendu unifié - Vue principale visible */}
         <div 
           ref={previewRef}
