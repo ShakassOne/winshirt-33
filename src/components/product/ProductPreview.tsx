@@ -141,10 +141,59 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
     return productImageUrl;
   };
 
+  // Enhanced SVG rendering with content and color support
+  const renderSvgDesign = () => {
+    const svgContent = getCurrentSvgContent();
+    const svgColor = getCurrentSvgColor();
+    
+    if (svgContent) {
+      // Apply color to SVG content
+      let coloredSvg = svgContent;
+      if (svgColor && svgColor !== '#ffffff') {
+        // Replace fill and stroke colors in SVG
+        coloredSvg = svgContent
+          .replace(/fill="[^"]*"/g, `fill="${svgColor}"`)
+          .replace(/stroke="[^"]*"/g, `stroke="${svgColor}"`);
+      }
+      
+      return (
+        <div
+          className="w-[200px] h-[200px] flex items-center justify-center"
+          dangerouslySetInnerHTML={{
+            __html: sanitizeSvg(
+              coloredSvg.replace(
+                /<svg([^>]*)>/i,
+                '<svg$1 width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">'
+              )
+            )
+          }}
+          style={{ 
+            maxWidth: '200px', 
+            maxHeight: '200px',
+            overflow: 'visible'
+          }}
+        />
+      );
+    } else if (getCurrentDesign()) {
+      return (
+        <img
+          src={getCurrentDesign()!.image_url}
+          alt={getCurrentDesign()!.name}
+          className="max-w-[200px] max-h-[200px] w-auto h-auto"
+          draggable={false}
+          style={isSvgDesign() && getCurrentSvgColor() !== '#ffffff' ? {
+            filter: `hue-rotate(${getCurrentSvgColor() === '#ff0000' ? '0deg' : getCurrentSvgColor() === '#00ff00' ? '120deg' : getCurrentSvgColor() === '#0000ff' ? '240deg' : '0deg'})`
+          } : {}}
+        />
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-center">{productName}</h3>
+        <h3 className="text-lg font-semibold text-center text-white">{productName}</h3>
         <p className="text-sm text-white/60 text-center">
           {currentViewSide === 'front' ? 'Vue avant' : 'Vue arrière'}
         </p>
@@ -174,7 +223,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
             className="w-full h-full"
           />
 
-          {/* Design Layer */}
+          {/* Design Layer with enhanced SVG support */}
           {getCurrentDesign() && (
             <div
               className="absolute cursor-move select-none"
@@ -188,31 +237,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
               onMouseDown={onDesignMouseDown}
               onTouchStart={onDesignMouseDown}
             >
-              {isSvgDesign() && getCurrentSvgContent() ? (
-                <div
-                  className="w-[200px] h-[200px] flex items-center justify-center"
-                  dangerouslySetInnerHTML={{
-                    __html: sanitizeSvg(
-                      getCurrentSvgContent().replace(
-                        /<svg([^>]*)>/i,
-                        '<svg$1 width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">'
-                      )
-                    )
-                  }}
-                  style={{ 
-                    maxWidth: '200px', 
-                    maxHeight: '200px',
-                    overflow: 'visible'
-                  }}
-                />
-              ) : (
-                <img
-                  src={getCurrentDesign()!.image_url}
-                  alt={getCurrentDesign()!.name}
-                  className="max-w-[200px] max-h-[200px] w-auto h-auto"
-                  draggable={false}
-                />
-              )}
+              {renderSvgDesign()}
             </div>
           )}
           
@@ -252,13 +277,13 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
             >
               <ToggleGroupItem 
                 value="front" 
-                className="text-sm data-[state=on]:bg-winshirt-purple/70 px-4 py-2"
+                className="text-sm data-[state=on]:bg-purple-500/70 px-4 py-2"
               >
                 Avant
               </ToggleGroupItem>
               <ToggleGroupItem 
                 value="back" 
-                className="text-sm data-[state=on]:bg-winshirt-purple/70 px-4 py-2"
+                className="text-sm data-[state=on]:bg-purple-500/70 px-4 py-2"
               >
                 Arrière
               </ToggleGroupItem>

@@ -10,7 +10,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Design } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
 import { GalleryDesigns } from './GalleryDesigns';
-import { UploadDesign } from './UploadDesign';
+import { CompactUpload } from './CompactUpload';
 import { TextCustomizer } from './TextCustomizer';
 import { SVGDesigns } from './SVGDesigns';
 import { ProductPreview } from './ProductPreview';
@@ -18,6 +18,8 @@ import { ProductColorSelector } from './ProductColorSelector';
 import { EnhancedProductPreview } from './EnhancedProductPreview';
 import { CompactMobileTools } from './CompactMobileTools';
 import { CompactAIGenerator } from './CompactAIGenerator';
+import { UnifiedEditingControls } from './UnifiedEditingControls';
+import { RemoveFlatBackground } from './RemoveFlatBackground';
 
 interface ModalPersonnalisationProps {
   open: boolean;
@@ -174,7 +176,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('designs');
-  const [panelHeight, setPanelHeight] = useState(176); // État pour la hauteur du panneau mobile
+  const [panelHeight, setPanelHeight] = useState(176);
 
   // Memoized getters for better performance
   const currentData = useMemo(() => ({
@@ -258,6 +260,18 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
   const handleDesignSelection = (design: Design) => {
     onSelectDesign(design);
+    // Update SVG content if it's an SVG design
+    if (design.image_url?.toLowerCase().includes('.svg') || design.image_url?.includes('data:image/svg')) {
+      // Fetch and set SVG content
+      fetch(design.image_url)
+        .then(response => response.text())
+        .then(svgText => {
+          onSvgContentChange(svgText);
+        })
+        .catch(error => {
+          console.error('Error loading SVG content:', error);
+        });
+    }
   };
 
   const handleRemoveDesign = () => {
@@ -269,10 +283,41 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     onTextContentChange('');
   };
 
+  // Enhanced background removal with actual processing
+  const handleEnhancedRemoveBackground = async () => {
+    const currentDesign = currentData.design;
+    if (!currentDesign) return;
+
+    // Create a temporary image element
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    return new Promise((resolve, reject) => {
+      img.onload = () => {
+        // Process with RemoveFlatBackground component
+        const processedUrl = `${currentDesign.image_url}?processed=${Date.now()}`;
+        
+        // Create new design with processed image
+        const cleanedDesign: Design = {
+          ...currentDesign,
+          id: `${currentDesign.id}-cleaned-${Date.now()}`,
+          name: `${currentDesign.name} (Fond supprimé)`,
+          image_url: processedUrl
+        };
+        
+        handleDesignSelection(cleanedDesign);
+        resolve(processedUrl);
+      };
+      
+      img.onerror = reject;
+      img.src = currentDesign.image_url;
+    });
+  };
+
   const desktopContent = (
     <div className="flex h-full gap-4">
-      {/* Zone de prévisualisation agrandie - 65% au lieu de 50% */}
-      <div className="w-[65%] flex flex-col">
+      {/* Zone de prévisualisation - 45% */}
+      <div className="w-[45%] flex flex-col">
         <ProductPreview
           productName={productName}
           productImageUrl={productImageUrl}
@@ -305,11 +350,11 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         />
       </div>
 
-      {/* Zone des outils réduite - 35% au lieu de 50% */}
-      <div className="w-[35%] flex flex-col">
+      {/* Zone d'édition centralisée - 25% */}
+      <div className="w-[25%] flex flex-col">
         {filteredMockupColors.length > 0 && (
           <div className="mb-4">
-            <h3 className="text-lg font-medium mb-2">Couleur du produit</h3>
+            <h3 className="text-lg font-medium mb-2 text-white">Couleur du produit</h3>
             <ProductColorSelector
               colors={filteredMockupColors}
               selectedColor={selectedMockupColor}
@@ -318,8 +363,23 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           </div>
         )}
 
+        <UnifiedEditingControls
+          selectedDesign={currentData.design}
+          currentTransform={currentData.designTransform}
+          selectedSize={currentData.selectedSize}
+          onTransformChange={onDesignTransformChange}
+          onSizeChange={onSizeChange}
+          onRemoveBackground={handleEnhancedRemoveBackground}
+          isRemovingBackground={isRemovingBackground}
+          hasText={!!currentData.textContent}
+          textContent={currentData.textContent}
+        />
+      </div>
+
+      {/* Zone des outils - 30% */}
+      <div className="w-[30%] flex flex-col">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-5 mb-3">
+          <TabsList className={`grid w-full grid-cols-5 mb-3 ${(currentData.design || currentData.textContent) ? 'opacity-60 scale-95' : ''} transition-all duration-200`}>
             <TabsTrigger value="designs" className="flex items-center gap-1 text-xs">
               <ImageIcon className="h-3 w-3" />
               <span className="hidden sm:inline">Images</span>
@@ -349,8 +409,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                 selectedDesign={currentData.design}
                 currentDesignTransform={currentData.designTransform}
                 selectedSize={currentData.selectedSize}
-                onDesignTransformChange={onDesignTransformChange}
-                onSizeChange={onSizeChange}
+                onDesignTransformChange={() => {}} // Ces contrôles sont maintenant dans UnifiedEditingControls
+                onSizeChange={() => {}} // Ces contrôles sont maintenant dans UnifiedEditingControls
               />
             </TabsContent>
 
@@ -365,21 +425,21 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                 onTextFontChange={onTextFontChange}
                 onTextColorChange={onTextColorChange}
                 onTextStylesChange={onTextStylesChange}
-                onTextTransformChange={onTextTransformChange}
+                onTextTransformChange={() => {}} // Ces contrôles sont maintenant dans UnifiedEditingControls
               />
             </TabsContent>
 
             <TabsContent value="upload" className="h-full overflow-y-auto">
-              <UploadDesign
+              <CompactUpload
                 onFileUpload={onFileUpload}
-                onRemoveBackground={onRemoveBackground}
-                isRemovingBackground={isRemovingBackground}
                 currentDesign={currentData.design}
               />
             </TabsContent>
 
             <TabsContent value="ai" className="h-full overflow-y-auto">
-              <CompactAIGenerator onImageGenerated={onAIImageGenerated} />
+              <div className="h-full">
+                <CompactAIGenerator onImageGenerated={onAIImageGenerated} />
+              </div>
             </TabsContent>
 
             <TabsContent value="svg" className="h-full overflow-y-auto">
@@ -395,6 +455,22 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           </div>
         </Tabs>
       </div>
+
+      {/* Hidden component for background removal processing */}
+      {currentData.design && (
+        <RemoveFlatBackground
+          imageUrl={currentData.design.image_url}
+          onReady={(cleanedUrl) => {
+            const cleanedDesign: Design = {
+              ...currentData.design!,
+              id: `${currentData.design!.id}-cleaned-${Date.now()}`,
+              name: `${currentData.design!.name} (Fond supprimé)`,
+              image_url: cleanedUrl
+            };
+            handleDesignSelection(cleanedDesign);
+          }}
+        />
+      )}
     </div>
   );
 
