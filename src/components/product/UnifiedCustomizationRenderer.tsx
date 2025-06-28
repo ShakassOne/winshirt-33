@@ -101,8 +101,7 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
               transformOrigin: 'center',
               zIndex: 10,
               // Optimisation pour la production HD
-              imageRendering: scale > 2 ? 'crisp-edges' : 'auto',
-              WebkitImageRendering: scale > 2 ? 'crisp-edges' : 'auto'
+              imageRendering: scale > 2 ? 'crisp-edges' : 'auto'
             }}
             dangerouslySetInnerHTML={{ __html: sanitizeSvg(processedSVG) }}
           />
@@ -132,8 +131,7 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
             maxWidth: 'none',
             maxHeight: 'none',
             // Optimisation pour la production HD
-            imageRendering: scale > 2 ? 'high-quality' : 'auto',
-            WebkitImageRendering: scale > 2 ? 'high-quality' : 'auto'
+            imageRendering: scale > 2 ? 'crisp-edges' : 'auto'
           }}
           loading="eager"
           crossOrigin="anonymous"
@@ -169,10 +167,7 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
           textDecoration: styles.underline ? 'underline' : 'none',
           textShadow: textShadow,
           zIndex: 20,
-          lineHeight: 1.2,
-          // Optimisation pour la production HD
-          textRendering: scale > 2 ? 'geometricPrecision' : 'auto',
-          WebkitFontSmoothing: scale > 2 ? 'antialiased' : 'auto'
+          lineHeight: 1.2
         }}
       >
         {content}

@@ -71,11 +71,10 @@ class ProductionCaptureService {
         logging: false,
         imageTimeout: 15000,
         removeContainer: false,
-        // Paramètres de qualité maximum
-        pixelRatio: 2,
+        // Ignorer les éléments de fond du t-shirt
         ignoreElements: (element) => {
-          // Ignorer les éléments de fond du t-shirt
-          return element.tagName === 'IMG' && element.alt?.includes('T-shirt');
+          const imgElement = element as HTMLImageElement;
+          return element.tagName === 'IMG' && imgElement.alt?.includes('T-shirt');
         }
       });
 
