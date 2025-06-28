@@ -53,11 +53,15 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
 
   const getProductImage = () => {
     if (selectedMockupColor) {
-      return currentViewSide === 'front' ? selectedMockupColor.front_image_url : selectedMockupColor.back_image_url;
+      return currentViewSide === 'front'
+        ? selectedMockupColor.front_image_url
+        : selectedMockupColor.back_image_url || productImageUrl;
     } else if (mockup) {
-      return currentViewSide === 'front' ? mockup.svg_front_url : mockup.svg_back_url;
+      return currentViewSide === 'front'
+        ? mockup.svg_front_url
+        : mockup.svg_back_url || productImageUrl;
     }
-    return undefined;
+    return productImageUrl;
   };
 
   // Drag handlers
