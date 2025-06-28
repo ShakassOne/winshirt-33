@@ -30,7 +30,7 @@ export const FluidDropNavigation: React.FC = () => {
   };
 
   const navItems = [
-    { label: 'Produits', path: '/products' },
+    { label: 'Shop', path: '/products' },
     { label: 'Loteries', path: '/lotteries' },
     { label: 'Compte', path: '/account' },
   ];
