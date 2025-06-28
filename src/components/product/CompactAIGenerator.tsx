@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { Sparkles, Download, Wand2 } from 'lucide-react';
+import { Sparkles, Download, Wand2, Trash2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 
 interface CompactAIGeneratorProps {
@@ -91,6 +91,10 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
     });
   };
 
+  const handleImageDelete = (index: number) => {
+    setGeneratedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -107,8 +111,8 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col space-y-3">
-      {/* Generation controls */}
+    <div className="h-full flex flex-col space-y-4">
+      {/* Generation controls - Compact */}
       <div className="space-y-3">
         <div>
           <Label className="text-white text-sm">Description de l'image</Label>
@@ -156,11 +160,24 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
         </div>
       </div>
 
-      {/* Generated images gallery - Now takes full remaining height */}
-      <div className="flex-1 min-h-0">
-        <Label className="text-white text-sm mb-2 block">
-          Images générées ({generatedImages.length})
-        </Label>
+      {/* Generated images gallery - Full width grid */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex items-center justify-between mb-3">
+          <Label className="text-white text-sm">
+            Images générées ({generatedImages.length})
+          </Label>
+          {generatedImages.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setGeneratedImages([])}
+              className="h-6 text-xs border-red-500/30 hover:bg-red-500/20 text-red-400"
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              Tout effacer
+            </Button>
+          )}
+        </div>
         
         {generatedImages.length === 0 ? (
           <div className="flex-1 flex items-center justify-center text-white/50 text-sm text-center py-8">
@@ -168,25 +185,48 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
             Entrez une description et cliquez sur "Générer".
           </div>
         ) : (
-          <div className="h-full overflow-y-auto">
-            <div className="grid grid-cols-2 gap-2">
+          <div className="h-full overflow-y-auto pr-2 -mr-2">
+            <div className="grid grid-cols-3 gap-3">
               {generatedImages.map((image, index) => (
-                <Card
+                <div
                   key={index}
-                  className="bg-black/40 overflow-hidden cursor-pointer transition-all hover:scale-[1.02] border-white/10 hover:border-purple-500/50"
-                  onClick={() => handleImageSelect(image)}
+                  className="group relative bg-black/40 rounded-lg overflow-hidden cursor-pointer transition-all hover:scale-[1.02] border border-white/10 hover:border-purple-500/50"
                 >
                   <div className="aspect-square overflow-hidden">
                     <img
                       src={image.url}
                       alt={image.name}
                       className="object-cover w-full h-full"
+                      onClick={() => handleImageSelect(image)}
                     />
                   </div>
-                  <div className="p-2">
+                  
+                  {/* Overlay with actions */}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        onClick={() => handleImageSelect(image)}
+                        className="bg-green-500 hover:bg-green-600 text-white text-xs h-6 px-2"
+                      >
+                        Utiliser
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleImageDelete(index)}
+                        className="text-xs h-6 px-2"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Image name */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-1">
                     <p className="text-xs text-white truncate">{image.name}</p>
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
           </div>

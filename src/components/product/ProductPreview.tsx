@@ -145,15 +145,18 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
   const renderSvgDesign = () => {
     const svgContent = getCurrentSvgContent();
     const svgColor = getCurrentSvgColor();
+    const currentDesign = getCurrentDesign();
     
+    // If we have SVG content, use it
     if (svgContent) {
-      // Apply color to SVG content
       let coloredSvg = svgContent;
       if (svgColor && svgColor !== '#ffffff') {
         // Replace fill and stroke colors in SVG
         coloredSvg = svgContent
           .replace(/fill="[^"]*"/g, `fill="${svgColor}"`)
-          .replace(/stroke="[^"]*"/g, `stroke="${svgColor}"`);
+          .replace(/stroke="[^"]*"/g, `stroke="${svgColor}"`)
+          .replace(/fill:[^;"]*/g, `fill:${svgColor}`)
+          .replace(/stroke:[^;"]*/g, `stroke:${svgColor}`);
       }
       
       return (
@@ -174,11 +177,13 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
           }}
         />
       );
-    } else if (getCurrentDesign()) {
+    } 
+    // Fallback to regular image display
+    else if (currentDesign) {
       return (
         <img
-          src={getCurrentDesign()!.image_url}
-          alt={getCurrentDesign()!.name}
+          src={currentDesign.image_url}
+          alt={currentDesign.name}
           className="max-w-[200px] max-h-[200px] w-auto h-auto"
           draggable={false}
           style={isSvgDesign() && getCurrentSvgColor() !== '#ffffff' ? {

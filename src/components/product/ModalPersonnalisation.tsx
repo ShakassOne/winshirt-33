@@ -19,7 +19,6 @@ import { EnhancedProductPreview } from './EnhancedProductPreview';
 import { CompactMobileTools } from './CompactMobileTools';
 import { CompactAIGenerator } from './CompactAIGenerator';
 import { UnifiedEditingControls } from './UnifiedEditingControls';
-import { RemoveFlatBackground } from './RemoveFlatBackground';
 
 interface ModalPersonnalisationProps {
   open: boolean;
@@ -260,9 +259,9 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
   const handleDesignSelection = (design: Design) => {
     onSelectDesign(design);
-    // Update SVG content if it's an SVG design
+    
+    // Check if it's an SVG and fetch content
     if (design.image_url?.toLowerCase().includes('.svg') || design.image_url?.includes('data:image/svg')) {
-      // Fetch and set SVG content
       fetch(design.image_url)
         .then(response => response.text())
         .then(svgText => {
@@ -275,7 +274,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   };
 
   const handleRemoveDesign = () => {
-    // Cette fonction devrait être passée en props ou implémentée
     logger.log('Remove design not implemented');
   };
 
@@ -283,35 +281,16 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     onTextContentChange('');
   };
 
-  // Enhanced background removal with actual processing
-  const handleEnhancedRemoveBackground = async () => {
+  // Manual background removal only
+  const handleManualRemoveBackground = async () => {
     const currentDesign = currentData.design;
     if (!currentDesign) return;
 
-    // Create a temporary image element
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    return new Promise((resolve, reject) => {
-      img.onload = () => {
-        // Process with RemoveFlatBackground component
-        const processedUrl = `${currentDesign.image_url}?processed=${Date.now()}`;
-        
-        // Create new design with processed image
-        const cleanedDesign: Design = {
-          ...currentDesign,
-          id: `${currentDesign.id}-cleaned-${Date.now()}`,
-          name: `${currentDesign.name} (Fond supprimé)`,
-          image_url: processedUrl
-        };
-        
-        handleDesignSelection(cleanedDesign);
-        resolve(processedUrl);
-      };
-      
-      img.onerror = reject;
-      img.src = currentDesign.image_url;
-    });
+    try {
+      await onRemoveBackground();
+    } catch (error) {
+      console.error('Error removing background:', error);
+    }
   };
 
   const desktopContent = (
@@ -369,7 +348,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           selectedSize={currentData.selectedSize}
           onTransformChange={onDesignTransformChange}
           onSizeChange={onSizeChange}
-          onRemoveBackground={handleEnhancedRemoveBackground}
+          onRemoveBackground={handleManualRemoveBackground}
           isRemovingBackground={isRemovingBackground}
           hasText={!!currentData.textContent}
           textContent={currentData.textContent}
@@ -432,7 +411,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             <TabsContent value="upload" className="h-full overflow-y-auto">
               <CompactUpload
                 onFileUpload={onFileUpload}
-                onRemoveBackground={handleEnhancedRemoveBackground}
+                onRemoveBackground={handleManualRemoveBackground}
                 isRemovingBackground={isRemovingBackground}
                 currentDesign={currentData.design}
               />
@@ -457,22 +436,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           </div>
         </Tabs>
       </div>
-
-      {/* Hidden component for background removal processing */}
-      {currentData.design && (
-        <RemoveFlatBackground
-          imageUrl={currentData.design.image_url}
-          onReady={(cleanedUrl) => {
-            const cleanedDesign: Design = {
-              ...currentData.design!,
-              id: `${currentData.design!.id}-cleaned-${Date.now()}`,
-              name: `${currentData.design!.name} (Fond supprimé)`,
-              image_url: cleanedUrl
-            };
-            handleDesignSelection(cleanedDesign);
-          }}
-        />
-      )}
     </div>
   );
 
