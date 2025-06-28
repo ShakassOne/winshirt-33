@@ -262,7 +262,7 @@ export const CompactAIGenerator: React.FC<CompactAIGeneratorProps> = ({
                   {/* Image info */}
                   <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-1">
                     <p className="text-xs text-white truncate">{image.name}</p>
-                    {'usage_count' in image && (
+                    {'usage_count' in image && typeof image.usage_count === 'number' && (
                       <div className="flex items-center gap-1 text-xs text-green-400">
                         <Recycle className="h-2 w-2" />
                         <span>{image.usage_count}x utilisée</span>
