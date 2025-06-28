@@ -54,14 +54,20 @@ import { createOptimizedQueryClient } from "@/lib/queryClient";
 // Create the query client instance
 const queryClient = createOptimizedQueryClient();
 
-function App() {
+// Wrapper component to reset scroll on navigation
+const ScrollToTop: React.FC = () => {
   useScrollReset();
+  return null;
+};
+
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <WinShirtThemeProvider>
         <OptimizedAuthProvider>
           <CartProvider>
             <Router>
+              <ScrollToTop />
               <div className="min-h-screen bg-background">
                 <GlobalCaptureElements />
                 <Routes>
