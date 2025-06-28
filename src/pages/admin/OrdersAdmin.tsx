@@ -162,10 +162,11 @@ const OrdersAdmin = () => {
   const handleGenerateDTF = async () => {
     if (!selectedOrder) return;
     try {
-      await generateDesign(
-        selectedOrder.id,
-        (selectedOrder as any).json || selectedOrder.items?.[0]?.customization || {}
-      );
+      // Create a prompt string from the order data
+      const customization = selectedOrder.items?.[0]?.customization || {};
+      const prompt = `Generate DTF files for order ${selectedOrder.id} with customization: ${JSON.stringify(customization)}`;
+      
+      await generateDesign(prompt);
 
       toast({
         title: 'Fichiers générés',
