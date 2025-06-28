@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -162,7 +163,9 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
           .replace(/fill="[^"]*"/g, `fill="${svgColor}"`)
           .replace(/stroke="[^"]*"/g, `stroke="${svgColor}"`)
           .replace(/fill:[^;"]*/g, `fill:${svgColor}`)
-          .replace(/stroke:[^;"]*/g, `stroke:${svgColor}`);
+          .replace(/stroke:[^;"]*/g, `stroke:${svgColor}`)
+          .replace(/fill="currentColor"/g, `fill="${svgColor}"`)
+          .replace(/stroke="currentColor"/g, `stroke="${svgColor}"`);
       }
       
       // Ensure proper SVG structure
@@ -201,11 +204,28 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
         />
       );
 
-      // Apply color filter for SVG images if needed
-      if (isSvgDesign() && svgColor && svgColor !== '#ffffff') {
+      // Apply color filter for SVG images if needed (and no SVG content available)
+      if (isSvgDesign() && svgColor && svgColor !== '#ffffff' && !svgContent) {
+        const getFilterForColor = (color: string) => {
+          // Simple color mapping - you can extend this
+          switch (color.toLowerCase()) {
+            case '#ff0000':
+            case 'red':
+              return 'hue-rotate(0deg) saturate(2)';
+            case '#00ff00':
+            case 'green':
+              return 'hue-rotate(120deg) saturate(2)';
+            case '#0000ff':
+            case 'blue':
+              return 'hue-rotate(240deg) saturate(2)';
+            default:
+              return 'none';
+          }
+        };
+
         return (
           <div style={{
-            filter: `hue-rotate(${svgColor === '#ff0000' ? '0deg' : svgColor === '#00ff00' ? '120deg' : svgColor === '#0000ff' ? '240deg' : '0deg'})`
+            filter: getFilterForColor(svgColor)
           }}>
             {imageElement}
           </div>

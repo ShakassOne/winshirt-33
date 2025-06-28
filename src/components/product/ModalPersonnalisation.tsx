@@ -1,3 +1,4 @@
+
 import logger from '@/utils/logger';
 
 import React, { useState, useMemo } from 'react';
@@ -260,19 +261,25 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   const handleDesignSelection = (design: Design) => {
     onSelectDesign(design);
     
-    // Check if it's an SVG and fetch content for proper rendering
+    // Check if it's an SVG and handle content appropriately
     if (design.image_url?.toLowerCase().includes('.svg') || design.image_url?.includes('data:image/svg')) {
-      fetch(design.image_url)
-        .then(response => response.text())
-        .then(svgText => {
-          console.log('SVG content loaded:', svgText.substring(0, 100) + '...');
-          onSvgContentChange(svgText);
-        })
-        .catch(error => {
-          console.error('Error loading SVG content:', error);
-          // Fallback: try to use the URL directly
-          onSvgContentChange(`<svg viewBox="0 0 200 200"><image href="${design.image_url}" width="200" height="200"/></svg>`);
-        });
+      // Only fetch if it's a remote SVG URL, not a blob URL
+      if (design.image_url.startsWith('http') && !design.image_url.startsWith('blob:')) {
+        fetch(design.image_url)
+          .then(response => response.text())
+          .then(svgText => {
+            console.log('SVG content loaded:', svgText.substring(0, 100) + '...');
+            onSvgContentChange(svgText);
+          })
+          .catch(error => {
+            console.error('Error loading SVG content:', error);
+            // Fallback: try to use the URL directly
+            onSvgContentChange(`<svg viewBox="0 0 200 200"><image href="${design.image_url}" width="200" height="200"/></svg>`);
+          });
+      } else {
+        // For blob URLs or data URLs, we assume the content is already processed
+        console.log('SVG blob URL detected, skipping fetch');
+      }
     }
   };
 
@@ -299,13 +306,13 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     onTextContentChange('');
   };
 
-  // Manual background removal only
-  const handleManualRemoveBackground = async () => {
+  // Manual background removal - Fixed: removed incorrect await
+  const handleManualRemoveBackground = () => {
     const currentDesign = currentData.design;
     if (!currentDesign) return;
 
     try {
-      await onRemoveBackground();
+      onRemoveBackground();
     } catch (error) {
       console.error('Error removing background:', error);
     }
