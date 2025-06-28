@@ -1,11 +1,13 @@
-- name: Deploy to FTP
-  if: ${{ secrets.FTP_USERNAME != '' }}
-  uses: SamKirkland/FTP-Deploy-Action@4.3.4
-  with:
-    server: home804803562.1and1-data.host
-    username: ${{ secrets.FTP_USERNAME }}
-    password: ${{ secrets.FTP_PASSWORD }}
-    protocol: ftps
-    port: 21
-    server-dir: /Winshirt/wp-content/plugins/winshirt/
-    local-dir: wordpress/
+name: Skip deploy for Lovable
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  skip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip deploy
+        run: echo "✅ No deployment needed for this repo"
