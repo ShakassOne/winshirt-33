@@ -1,23 +1,11 @@
-name: Deploy WordPress plugin via FTPS
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Deploy to FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: home408430562.1and1-data.host
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          port: 21
-          server-dir: /Winshirt/wp-content/plugins/winshirt/
-          local-dir: winshirt/
-
+- name: Deploy to FTP
+  if: ${{ secrets.FTP_USERNAME != '' }}
+  uses: SamKirkland/FTP-Deploy-Action@4.3.4
+  with:
+    server: home804803562.1and1-data.host
+    username: ${{ secrets.FTP_USERNAME }}
+    password: ${{ secrets.FTP_PASSWORD }}
+    protocol: ftps
+    port: 21
+    server-dir: /Winshirt/wp-content/plugins/winshirt/
+    local-dir: wordpress/
