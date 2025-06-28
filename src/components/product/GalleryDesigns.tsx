@@ -1,3 +1,4 @@
+
 import logger from '@/utils/logger';
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -19,11 +20,11 @@ interface GalleryDesignsProps {
 }
 
 const sizePresets = [
-  { label: 'A3', min: 81, max: 100 },
-  { label: 'A4', min: 61, max: 80 },
-  { label: 'A5', min: 41, max: 60 },
-  { label: 'A6', min: 21, max: 40 },
-  { label: 'A7', min: 1, max: 20 }
+  { label: 'A3', min: 121, max: 140 },
+  { label: 'A4', min: 101, max: 120 },
+  { label: 'A5', min: 81, max: 100 },
+  { label: 'A6', min: 61, max: 80 },
+  { label: 'A7', min: 41, max: 60 }
 ];
 
 export const GalleryDesigns: React.FC<GalleryDesignsProps> = ({
@@ -201,7 +202,7 @@ export const GalleryDesigns: React.FC<GalleryDesignsProps> = ({
             <Slider
               value={[currentDesignTransform.scale * 100]}
               min={1}
-              max={100}
+              max={140}
               step={1}
               onValueChange={handleScaleChange}
               className="flex-1"
