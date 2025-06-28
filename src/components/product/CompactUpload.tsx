@@ -2,16 +2,20 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Upload, FileImage } from 'lucide-react';
+import { Upload, FileImage, Eraser, Sparkles } from 'lucide-react';
 import { Design } from '@/types/supabase.types';
 
 interface CompactUploadProps {
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveBackground: () => void;
+  isRemovingBackground: boolean;
   currentDesign?: Design | null;
 }
 
 export const CompactUpload: React.FC<CompactUploadProps> = ({
   onFileUpload,
+  onRemoveBackground,
+  isRemovingBackground,
   currentDesign
 }) => {
   return (
@@ -51,6 +55,29 @@ export const CompactUpload: React.FC<CompactUploadProps> = ({
           <span className="text-xs text-white truncate flex-1">
             {currentDesign.name}
           </span>
+        </div>
+      )}
+
+      {currentDesign && (
+        <div className="pt-2 border-t border-white/10">
+          <Button
+            variant="outline"
+            onClick={onRemoveBackground}
+            disabled={isRemovingBackground}
+            className="w-full border-white/30 hover:bg-red-500/20 hover:border-red-500/50"
+          >
+            {isRemovingBackground ? (
+              <>
+                <Sparkles className="mr-2 h-4 w-4 animate-spin" />
+                Suppression en cours...
+              </>
+            ) : (
+              <>
+                <Eraser className="mr-2 h-4 w-4" />
+                Supprimer le fond
+              </>
+            )}
+          </Button>
         </div>
       )}
     </div>
