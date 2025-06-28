@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserOrders } from '@/services/order.service';
@@ -47,7 +48,7 @@ interface LotteryParticipation {
 }
 
 const Account = () => {
-  const { user } = useOptimizedAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useOptimizedAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -71,11 +72,16 @@ const Account = () => {
   // Lottery participations state
   const [lotteryParticipations, setLotteryParticipations] = useState<LotteryParticipation[]>([]);
 
+  // Redirect to auth if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+
   useEffect(() => {
-    if (user) {
+    if (user && isAuthenticated) {
       fetchAllData();
     }
-  }, [user]);
+  }, [user, isAuthenticated]);
 
   const fetchAllData = async () => {
     if (!user) return;
@@ -243,7 +249,7 @@ const Account = () => {
   // Check if user is admin
   const isAdmin = user?.email === 'alan@shakass.com' || user?.email === 'admin@example.com';
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />

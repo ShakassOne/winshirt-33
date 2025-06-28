@@ -20,6 +20,7 @@ import Orders from "@/pages/Orders";
 import Auth from "@/pages/Auth";
 import Account from "@/pages/Account";
 import Profile from "@/pages/Profile";
+import Contact from "@/pages/Contact";
 import Lotteries from "@/pages/Lotteries";
 import LotteryDetail from "@/pages/LotteryDetail";
 import Winners from "@/pages/Winners";
@@ -75,6 +76,7 @@ function App() {
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/account" element={<Account />} />
                   <Route path="/profile" element={<Profile />} />
+                  <Route path="/contact" element={<Contact />} />
                   <Route path="/lotteries" element={<Lotteries />} />
                   <Route path="/lotteries/:id" element={<LotteryDetail />} />
                   <Route path="/winners" element={<Winners />} />

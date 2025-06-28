@@ -117,7 +117,7 @@ export const FluidDropNavigation: React.FC = () => {
                     Déconnexion
                   </button>
                 ) : (
-                  <Link to="/auth" className="fluid-mobile-contact-button" onClick={() => setMobileMenuOpen(false)}>
+                  <Link to="/contact" className="fluid-mobile-contact-button" onClick={() => setMobileMenuOpen(false)}>
                     Contact
                   </Link>
                 )}
@@ -158,7 +158,7 @@ export const FluidDropNavigation: React.FC = () => {
               Déconnexion
             </button>
           ) : (
-            <Link to="/auth" className="fluid-contact-button">
+            <Link to="/contact" className="fluid-contact-button">
               Contact
             </Link>
           )}
