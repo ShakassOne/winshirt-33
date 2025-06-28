@@ -64,20 +64,23 @@ export const CompactUpload: React.FC<CompactUploadProps> = ({
             variant="outline"
             onClick={onRemoveBackground}
             disabled={isRemovingBackground}
-            className="w-full border-white/30 hover:bg-red-500/20 hover:border-red-500/50"
+            className="w-full border-white/30 hover:bg-purple-500/20 hover:border-purple-500/50"
           >
             {isRemovingBackground ? (
               <>
                 <Sparkles className="mr-2 h-4 w-4 animate-spin" />
-                Suppression en cours...
+                Suppression IA en cours...
               </>
             ) : (
               <>
                 <Eraser className="mr-2 h-4 w-4" />
-                Supprimer le fond
+                Supprimer le fond (IA)
               </>
             )}
           </Button>
+          <p className="text-xs text-white/50 mt-2 text-center">
+            Suppression intelligente avec IA
+          </p>
         </div>
       )}
     </div>

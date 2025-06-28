@@ -25,6 +25,7 @@ import { ProductColorSelector } from '@/components/product/ProductColorSelector'
 import { DynamicColorMockup } from '@/components/product/DynamicColorMockup';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import { removeBackground, loadImageFromUrl } from '@/services/backgroundRemoval.service';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -327,36 +328,6 @@ const ProductDetail = () => {
     });
   };
 
-  // Simple background removal using canvas
-  const removeWhiteBackground = (url: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('Canvas not supported'));
-          return;
-        }
-        ctx.drawImage(img, 0, 0);
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imgData.data;
-        for (let i = 0; i < data.length; i += 4) {
-          if (data[i] > 240 && data[i + 1] > 240 && data[i + 2] > 240) {
-            data[i + 3] = 0;
-          }
-        }
-        ctx.putImageData(imgData, 0, 0);
-        resolve(canvas.toDataURL());
-      };
-      img.onerror = (e) => reject(e);
-      img.src = url;
-    });
-  };
-
   const handleRemoveBackground = async () => {
     const currentDesign = currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack;
     if (!currentDesign) {
@@ -370,28 +341,37 @@ const ProductDetail = () => {
 
     setIsRemovingBackground(true);
     try {
-      const cleanedUrl = await removeWhiteBackground(currentDesign.image_url);
+      console.log('Starting AI background removal for:', currentDesign.image_url);
+      
+      // Load the image
+      const imageElement = await loadImageFromUrl(currentDesign.image_url);
+      
+      // Remove background using AI
+      const cleanedBlob = await removeBackground(imageElement);
+      
+      // Create URL for the cleaned image
+      const cleanedUrl = URL.createObjectURL(cleanedBlob);
 
       const cleanedDesign: Design = {
         ...currentDesign,
-        id: `${currentDesign.id}-cleaned`,
-        name: `${currentDesign.name} (Fond supprimé)`,
+        id: `${currentDesign.id}-ai-cleaned`,
+        name: `${currentDesign.name} (Fond supprimé IA)`,
         image_url: cleanedUrl,
-        category: 'AI Generated Cleaned'
+        category: 'AI Background Removed'
       };
 
       handleSelectDesign(cleanedDesign);
 
       toast({
-        title: "Fond supprimé",
-        description: "Le fond de l'image a été supprimé avec succès."
+        title: "Fond supprimé avec IA",
+        description: "Le fond de l'image a été supprimé avec succès grâce à l'intelligence artificielle."
       });
     } catch (error) {
-      console.error('Error removing background:', error);
+      console.error('Error in AI background removal:', error);
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de supprimer le fond de l'image."
+        title: "Erreur IA",
+        description: "Impossible de supprimer le fond avec l'IA. Vérifiez votre connexion internet."
       });
     } finally {
       setIsRemovingBackground(false);
