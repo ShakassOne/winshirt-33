@@ -3,7 +3,7 @@ import logger from '@/utils/logger';
 
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { X, Palette, Type, Image as ImageIcon, Upload, Sparkles, Paintbrush } from 'lucide-react';
@@ -17,7 +17,7 @@ import { SVGDesigns } from './SVGDesigns';
 import { ProductPreview } from './ProductPreview';
 import { ProductColorSelector } from './ProductColorSelector';
 import { EnhancedProductPreview } from './EnhancedProductPreview';
-import { CompactMobileTools } from './CompactMobileTools';
+import { MobileToolsPanel } from './MobileToolsPanel';
 import { CompactAIGenerator } from './CompactAIGenerator';
 import { UnifiedEditingControls } from './UnifiedEditingControls';
 
@@ -43,6 +43,8 @@ interface ModalPersonnalisationProps {
   onSelectDesign: (design: Design) => void;
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onAIImageGenerated: (imageUrl: string, imageName: string) => void;
+  setSelectedDesignFront: (design: Design | null) => void;
+  setSelectedDesignBack: (design: Design | null) => void;
   onRemoveBackground: () => void;
   isRemovingBackground: boolean;
 
@@ -141,6 +143,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   onSelectDesign,
   onFileUpload,
   onAIImageGenerated,
+  setSelectedDesignFront,
+  setSelectedDesignBack,
   onRemoveBackground,
   isRemovingBackground,
   svgColorFront,
@@ -176,7 +180,14 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('designs');
-  const [panelHeight, setPanelHeight] = useState(176);
+  const [drawerTab, setDrawerTab] = useState<string | null>(null);
+
+  const openDrawer = (tab: string) => {
+    setActiveTab(tab);
+    setDrawerTab(tab);
+  };
+
+  const closeDrawer = () => setDrawerTab(null);
 
   // Memoized getters for better performance
   const currentData = useMemo(() => ({
@@ -281,6 +292,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         console.log('SVG blob URL detected, skipping fetch');
       }
     }
+
+    closeDrawer();
   };
 
   const handleAIImageGenerated = (imageUrl: string, imageName: string) => {
@@ -299,7 +312,16 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   };
 
   const handleRemoveDesign = () => {
-    logger.log('Remove design not implemented');
+    if (currentViewSide === 'front') {
+      setSelectedDesignFront(null);
+    } else {
+      setSelectedDesignBack(null);
+    }
+
+    const url = currentData.design?.designUrl?.toLowerCase() || '';
+    if (url.includes('.svg') || url.startsWith('data:image/svg')) {
+      onSvgContentChange('');
+    }
   };
 
   const handleRemoveText = () => {
@@ -464,13 +486,9 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     </div>
   );
 
-  const optimizedMobileContent = (
-    <div className="flex flex-col h-full">
-      {/* Maximized preview area - Dynamique basée sur la hauteur du panneau */}
-      <div 
-        className="flex-1 px-1 pt-1 overflow-hidden"
-        style={{ height: `calc(100vh - ${panelHeight + 60}px)` }}
-      >
+  const mobileContent = (
+    <div className="relative flex flex-col h-full">
+      <div className="flex-1 overflow-hidden">
         <EnhancedProductPreview
           productName={productName}
           productImageUrl={productImageUrl}
@@ -485,62 +503,71 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           onRemoveDesign={handleRemoveDesign}
           onRemoveText={handleRemoveText}
         />
+
+        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2 pointer-events-auto">
+          <Button size="sm" variant="outline" onClick={handleManualRemoveBackground}>
+            Supprimer fond
+          </Button>
+          {currentData.design && (
+            <Button size="sm" variant="outline" onClick={handleRemoveDesign}>
+              Supprimer
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Compacted options area - Hauteur dynamique */}
-      <div style={{ height: `${panelHeight}px` }} className="px-1 pb-1">
-        <CompactMobileTools
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          selectedDesign={currentData.design}
-          designTransform={currentData.designTransform}
-          selectedSize={currentData.selectedSize}
-          onDesignTransformChange={onDesignTransformChange}
-          onSizeChange={onSizeChange}
-          onSelectDesign={handleDesignSelection}
-          textContent={currentData.textContent}
-          textFont={currentData.textFont}
-          textColor={currentData.textColor}
-          textStyles={currentData.textStyles}
-          onTextContentChange={onTextContentChange}
-          onTextFontChange={onTextFontChange}
-          onTextColorChange={onTextColorChange}
-          onTextStylesChange={onTextStylesChange}
-          svgColor={currentData.svgColor}
-          onSvgColorChange={onSvgColorChange}
-          mockupColors={filteredMockupColors}
-          selectedMockupColor={selectedMockupColor}
-          onMockupColorChange={onMockupColorChange}
-          onFileUpload={onFileUpload}
-          onAIImageGenerated={onAIImageGenerated}
-          onRemoveBackground={onRemoveBackground}
-          isRemovingBackground={isRemovingBackground}
-          panelHeight={panelHeight}
-          onPanelHeightChange={setPanelHeight}
-        />
+      <div className="h-12 flex items-center justify-around border-t border-white/10 bg-black/80">
+        <Button variant="ghost" size="sm" onClick={() => openDrawer('designs')}><ImageIcon className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="sm" onClick={() => openDrawer('upload')}><Upload className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="sm" onClick={() => openDrawer('ai')}><Sparkles className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="sm" onClick={() => openDrawer('text')}><Type className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="sm" onClick={() => openDrawer('svg')}><Paintbrush className="h-4 w-4" /></Button>
       </div>
+
+      <Drawer open={drawerTab !== null} onOpenChange={(o) => !o && closeDrawer()}>
+        <DrawerContent className="bg-black/90 max-h-[60vh]">
+          {drawerTab && (
+            <MobileToolsPanel
+              activeTab={drawerTab}
+              hideTabs
+              onTabChange={setActiveTab}
+              selectedDesign={currentData.design}
+              designTransform={currentData.designTransform}
+              selectedSize={currentData.selectedSize}
+              onDesignTransformChange={onDesignTransformChange}
+              onSizeChange={onSizeChange}
+              onSelectDesign={handleDesignSelection}
+              textContent={currentData.textContent}
+              textFont={currentData.textFont}
+              textColor={currentData.textColor}
+              textStyles={currentData.textStyles}
+              onTextContentChange={onTextContentChange}
+              onTextFontChange={onTextFontChange}
+              onTextColorChange={onTextColorChange}
+              onTextStylesChange={onTextStylesChange}
+              svgColor={currentData.svgColor}
+              onSvgColorChange={onSvgColorChange}
+              mockupColors={filteredMockupColors}
+              selectedMockupColor={selectedMockupColor}
+              onMockupColorChange={onMockupColorChange}
+              onFileUpload={onFileUpload}
+              onAIImageGenerated={onAIImageGenerated}
+              onRemoveBackground={onRemoveBackground}
+              isRemovingBackground={isRemovingBackground}
+            />
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-        <DrawerContent className="bg-black/90 backdrop-blur-lg border-white/20 h-[100vh]">
-          <DrawerHeader className="border-b border-white/10 pb-1 px-2 py-1">
-            <div className="flex items-center justify-between">
-              <DrawerTitle className="text-sm font-semibold">
-                🎨 Personnalisation
-              </DrawerTitle>
-              <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </DrawerHeader>
-          <div className="flex-1 overflow-hidden">
-            {optimizedMobileContent}
-          </div>
-        </DrawerContent>
-      </Drawer>
+      <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) { onClose(); closeDrawer(); } }}>
+        <DialogContent className="bg-black/90 backdrop-blur-lg border-white/20 w-screen h-screen max-w-none p-0 rounded-none overflow-hidden">
+          {mobileContent}
+        </DialogContent>
+      </Dialog>
     );
   }
 

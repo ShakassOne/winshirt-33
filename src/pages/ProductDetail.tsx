@@ -800,6 +800,8 @@ const ProductDetail = () => {
               selectedDesignFront={selectedDesignFront}
               selectedDesignBack={selectedDesignBack}
               onSelectDesign={handleSelectDesign}
+              setSelectedDesignFront={setSelectedDesignFront}
+              setSelectedDesignBack={setSelectedDesignBack}
               onFileUpload={handleFileUpload}
               onAIImageGenerated={handleAIImageGenerated}
               onRemoveBackground={handleRemoveBackground}

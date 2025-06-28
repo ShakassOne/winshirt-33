@@ -14,9 +14,10 @@ import { CompactUpload } from './CompactUpload';
 import { CompactAIGenerator } from './CompactAIGenerator';
 import { MobilePanelDragHandle } from './MobilePanelDragHandle';
 
-interface CompactMobileToolsProps {
+interface MobileToolsPanelProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  hideTabs?: boolean;
   
   // Design props
   selectedDesign: Design | null;
@@ -56,7 +57,7 @@ interface CompactMobileToolsProps {
   onPanelHeightChange?: (height: number) => void;
 }
 
-export const CompactMobileTools: React.FC<CompactMobileToolsProps> = ({
+export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
   activeTab,
   onTabChange,
   selectedDesign,
@@ -83,7 +84,8 @@ export const CompactMobileTools: React.FC<CompactMobileToolsProps> = ({
   onRemoveBackground,
   isRemovingBackground,
   panelHeight = 176,
-  onPanelHeightChange
+  onPanelHeightChange,
+  hideTabs = false
 }) => {
   const activeStylesValue = useMemo(() => {
     const activeStyles = [];
@@ -138,6 +140,7 @@ export const CompactMobileTools: React.FC<CompactMobileToolsProps> = ({
 
       {/* Compact tabs */}
       <Tabs value={activeTab} onValueChange={onTabChange} className="flex-1 flex flex-col">
+        {!hideTabs && (
         <TabsList className="grid w-full grid-cols-5 mb-1 h-8 mx-2">
           <TabsTrigger value="designs" className="flex items-center gap-1 text-xs py-1">
             <ImageIcon className="h-3 w-3" />
@@ -160,6 +163,7 @@ export const CompactMobileTools: React.FC<CompactMobileToolsProps> = ({
             <span className="hidden sm:inline">SVG</span>
           </TabsTrigger>
         </TabsList>
+        )}
 
         {/* Compact content area */}
         <div className="flex-1 overflow-hidden bg-black/20 rounded mx-2 mb-2 border border-white/10">

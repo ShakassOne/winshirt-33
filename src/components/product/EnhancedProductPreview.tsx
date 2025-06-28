@@ -45,6 +45,12 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0 });
+  const [initialScale, setInitialScale] = useState(1);
+  const [isRotating, setIsRotating] = useState(false);
+  const [rotateStart, setRotateStart] = useState({ x: 0, y: 0 });
+  const [initialRotation, setInitialRotation] = useState(0);
 
   const currentData = {
     design: currentViewSide === 'front' ? customization?.frontDesign : customization?.backDesign,
@@ -104,11 +110,61 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
     }
   }, [isDragging, selectedElement, dragStart, initialPosition, onDesignTransformChange, onTextTransformChange]);
 
+  const handleResizeMove = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!isResizing || !selectedElement) return;
+    const clientX = 'touches' in e ? (e as TouchEvent).touches[0].clientX : (e as MouseEvent).clientX;
+    const deltaX = clientX - resizeStart.x;
+    const newScale = Math.max(0.1, initialScale + deltaX / 150);
+    if (selectedElement === 'design') {
+      onDesignTransformChange('scale', newScale);
+    } else {
+      onTextTransformChange('scale', newScale);
+    }
+  }, [isResizing, selectedElement, resizeStart, initialScale, onDesignTransformChange, onTextTransformChange]);
+
+  const handleRotateMove = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!isRotating || !selectedElement) return;
+    const clientX = 'touches' in e ? (e as TouchEvent).touches[0].clientX : (e as MouseEvent).clientX;
+    const delta = clientX - rotateStart.x;
+    const newRotation = initialRotation + delta;
+    if (selectedElement === 'design') {
+      onDesignTransformChange('rotation', newRotation);
+    } else {
+      onTextTransformChange('rotation', newRotation);
+    }
+  }, [isRotating, selectedElement, rotateStart, initialRotation, onDesignTransformChange, onTextTransformChange]);
+
+  const startResize = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!selectedElement) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const currentTransform = selectedElement === 'design' ? currentData.design?.transform : currentData.text?.transform;
+    if (!currentTransform) return;
+    setIsResizing(true);
+    setResizeStart({ x: clientX, y: 0 });
+    setInitialScale(currentTransform.scale);
+  }, [selectedElement, currentData]);
+
+  const startRotate = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!selectedElement) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const currentTransform = selectedElement === 'design' ? currentData.design?.transform : currentData.text?.transform;
+    if (!currentTransform) return;
+    setIsRotating(true);
+    setRotateStart({ x: clientX, y: 0 });
+    setInitialRotation(currentTransform.rotation);
+  }, [selectedElement, currentData]);
+
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+    setIsResizing(false);
+    setIsRotating(false);
   }, []);
 
-  // Global event listeners for drag
+  // Global event listeners for drag / resize / rotate
   React.useEffect(() => {
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
@@ -124,6 +180,36 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
       };
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
+
+  React.useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleResizeMove);
+      document.addEventListener('touchmove', handleResizeMove, { passive: false });
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchend', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleResizeMove);
+        document.removeEventListener('touchmove', handleResizeMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchend', handleMouseUp);
+      };
+    }
+  }, [isResizing, handleResizeMove, handleMouseUp]);
+
+  React.useEffect(() => {
+    if (isRotating) {
+      document.addEventListener('mousemove', handleRotateMove);
+      document.addEventListener('touchmove', handleRotateMove, { passive: false });
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchend', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleRotateMove);
+        document.removeEventListener('touchmove', handleRotateMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchend', handleMouseUp);
+      };
+    }
+  }, [isRotating, handleRotateMove, handleMouseUp]);
 
   // Deselect when clicking outside
   const handleBackgroundClick = useCallback(() => {
@@ -178,6 +264,26 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
                 className="max-w-[200px] max-h-[200px] w-auto h-auto pointer-events-none"
                 draggable={false}
               />
+              {selectedElement === 'design' && (
+                <>
+                  <div
+                    className="absolute bottom-0 right-0 w-4 h-4 bg-white rounded-full border border-black"
+                    onMouseDown={startResize}
+                    onTouchStart={startResize}
+                  />
+                  <div
+                    className="absolute -top-5 left-1/2 -ml-2 w-4 h-4 bg-white rounded-full border border-black"
+                    onMouseDown={startRotate}
+                    onTouchStart={startRotate}
+                  />
+                  <button
+                    className="absolute -top-5 -right-5 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center"
+                    onClick={onRemoveDesign}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </>
+              )}
             </div>
           )}
 
@@ -206,6 +312,26 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
               onClick={(e) => handleElementClick('text', e)}
             >
               {currentData.text.content}
+              {selectedElement === 'text' && (
+                <>
+                  <div
+                    className="absolute bottom-0 right-0 w-4 h-4 bg-white rounded-full border border-black"
+                    onMouseDown={startResize}
+                    onTouchStart={startResize}
+                  />
+                  <div
+                    className="absolute -top-5 left-1/2 -ml-2 w-4 h-4 bg-white rounded-full border border-black"
+                    onMouseDown={startRotate}
+                    onTouchStart={startRotate}
+                  />
+                  <button
+                    className="absolute -top-5 -right-5 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center"
+                    onClick={onRemoveText}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
