@@ -49,7 +49,7 @@ export const SimpleNavigation: React.FC = () => {
 
   const navItems = [
     { label: 'Accueil', path: '/' },
-    { label: 'Produits', path: '/products' },
+    { label: 'Shop', path: '/products' },
     { label: 'Loteries', path: '/lotteries' },
     { label: 'Compte', path: '/account' },
   ];
