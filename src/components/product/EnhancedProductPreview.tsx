@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useCallback } from 'react';
 import { RotateCcw, Move, RotateCw, ZoomIn, ZoomOut, Trash2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,6 +27,7 @@ interface EnhancedProductPreviewProps {
 
 export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
   productName,
+  productImageUrl,
   currentViewSide,
   onViewSideChange,
   mockup,
@@ -58,16 +58,37 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
   };
 
   const getProductImage = () => {
+    let imageUrl;
+    
+    // Priorité 1: Couleur de mockup sélectionnée
     if (selectedMockupColor) {
-      return currentViewSide === 'front'
+      imageUrl = currentViewSide === 'front'
         ? selectedMockupColor.front_image_url
-        : selectedMockupColor.back_image_url || productImageUrl;
-    } else if (mockup) {
-      return currentViewSide === 'front'
-        ? mockup.svg_front_url
-        : mockup.svg_back_url || productImageUrl;
+        : selectedMockupColor.back_image_url;
     }
-    return productImageUrl;
+    
+    // Priorité 2: Mockup par défaut
+    if (!imageUrl && mockup) {
+      imageUrl = currentViewSide === 'front'
+        ? mockup.svg_front_url
+        : mockup.svg_back_url;
+    }
+    
+    // Priorité 3: Image produit par défaut
+    if (!imageUrl) {
+      imageUrl = productImageUrl;
+    }
+    
+    // Debug logs pour tracer le problème
+    console.log('🖼️ [EnhancedProductPreview] Image selection:', {
+      currentViewSide,
+      selectedMockupColor: selectedMockupColor?.name,
+      mockup: mockup?.name,
+      productImageUrl,
+      finalImageUrl: imageUrl
+    });
+    
+    return imageUrl;
   };
 
   // Drag handlers
@@ -221,6 +242,8 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
     setSelectedElement(elementType);
   }, []);
 
+  const productImage = getProductImage();
+
   return (
     <>
       <div
@@ -237,7 +260,8 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
               customization={customization}
               side={currentViewSide}
               withBackground={true}
-              backgroundUrl={getProductImage()}
+              backgroundUrl={productImage}
+              productImageUrl={productImageUrl}
               className="w-full h-full"
             />
           </div>

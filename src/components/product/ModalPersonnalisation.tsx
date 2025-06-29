@@ -1,4 +1,3 @@
-
 import logger from '@/utils/logger';
 
 import React, { useState, useMemo } from 'react';
@@ -181,6 +180,16 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('designs');
   const [drawerTab, setDrawerTab] = useState<string | null>(null);
+
+  // Debug pour tracer la transmission des props
+  console.log('🔍 [ModalPersonnalisation] Props debug:', {
+    productName,
+    productImageUrl,
+    mockup: mockup?.name,
+    selectedMockupColor: selectedMockupColor?.name,
+    currentViewSide,
+    isMobile
+  });
 
   const openDrawer = (tab: string) => {
     setActiveTab(tab);
@@ -503,6 +512,17 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           onRemoveDesign={handleRemoveDesign}
           onRemoveText={handleRemoveText}
         />
+
+        {/* Debug info pour mobile */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="absolute top-0 left-0 bg-black/80 text-white text-xs p-2 max-w-xs">
+            <div>Product: {productName}</div>
+            <div>Image: {productImageUrl ? '✅' : '❌'}</div>
+            <div>Mockup: {mockup?.name || '❌'}</div>
+            <div>Color: {selectedMockupColor?.name || '❌'}</div>
+            <div>Side: {currentViewSide}</div>
+          </div>
+        )}
 
         <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-2 pointer-events-auto">
           <Button

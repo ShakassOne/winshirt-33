@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { decodeSVGBase64, isBase64SVG, processSVGContent } from '@/utils/svgDecoder';
 import { sanitizeSvg } from '@/utils/sanitizeSvg';
 
@@ -65,6 +64,7 @@ interface UnifiedCustomizationRendererProps {
   side: 'front' | 'back';
   withBackground?: boolean;
   backgroundUrl?: string;
+  productImageUrl?: string;
   className?: string;
   scale?: number;
 }
@@ -74,11 +74,41 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
   side,
   withBackground = true,
   backgroundUrl,
+  productImageUrl,
   className = '',
   scale = 1
 }) => {
+  const [imageError, setImageError] = useState(false);
+  
   const design = side === 'front' ? customization.frontDesign : customization.backDesign;
   const text = side === 'front' ? customization.frontText : customization.backText;
+
+  // Détermine l'URL de l'image de fond avec fallback
+  const getBackgroundImageUrl = () => {
+    if (!withBackground) return null;
+    
+    const finalUrl = backgroundUrl || productImageUrl;
+    
+    console.log('🖼️ [UnifiedCustomizationRenderer] Background URL selection:', {
+      side,
+      backgroundUrl,
+      productImageUrl,
+      finalUrl,
+      imageError
+    });
+    
+    return finalUrl;
+  };
+
+  const handleImageError = () => {
+    console.error('🚨 [UnifiedCustomizationRenderer] Image failed to load:', getBackgroundImageUrl());
+    setImageError(true);
+  };
+
+  const handleImageLoad = () => {
+    console.log('✅ [UnifiedCustomizationRenderer] Image loaded successfully:', getBackgroundImageUrl());
+    setImageError(false);
+  };
 
   const renderDesign = () => {
     if (!design) return null;
@@ -175,17 +205,34 @@ export const UnifiedCustomizationRenderer: React.FC<UnifiedCustomizationRenderer
     );
   };
 
+  const backgroundImageUrl = getBackgroundImageUrl();
+
   return (
     <div className={`relative w-full h-full ${className}`}>
-      {/* Background (T-shirt) - uniquement si demandé */}
-      {withBackground && backgroundUrl && (
+      {/* Background (T-shirt) - avec gestion d'erreur améliorée */}
+      {withBackground && backgroundImageUrl && !imageError && (
         <img
-          src={backgroundUrl}
+          src={backgroundImageUrl}
           alt={`T-shirt ${side}`}
           className="w-full h-full object-contain"
           loading="eager"
           crossOrigin="anonymous"
+          onError={handleImageError}
+          onLoad={handleImageLoad}
         />
+      )}
+      
+      {/* Placeholder si l'image ne charge pas */}
+      {withBackground && (!backgroundImageUrl || imageError) && (
+        <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500">
+          <div className="text-center">
+            <div className="text-4xl mb-2">👕</div>
+            <div className="text-sm">Image non disponible</div>
+            <div className="text-xs mt-1">
+              {side === 'front' ? 'Face avant' : 'Face arrière'}
+            </div>
+          </div>
+        </div>
       )}
       
       {/* Design Layer */}
