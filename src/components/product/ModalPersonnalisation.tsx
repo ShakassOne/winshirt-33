@@ -327,7 +327,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
       setSelectedDesignBack(null);
     }
 
-    const url = currentData.design?.designUrl?.toLowerCase() || '';
+    const url = currentData.design?.image_url?.toLowerCase() || '';
     if (url.includes('.svg') || url.startsWith('data:image/svg')) {
       onSvgContentChange('');
     }
