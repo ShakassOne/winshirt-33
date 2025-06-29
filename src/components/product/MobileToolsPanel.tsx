@@ -83,7 +83,7 @@ export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
   onAIImageGenerated,
   onRemoveBackground,
   isRemovingBackground,
-  panelHeight = 176,
+  panelHeight = 320,
   onPanelHeightChange,
   hideTabs = false
 }) => {
@@ -127,14 +127,14 @@ export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
   );
 
   return (
-    <div className="h-full flex flex-col bg-black/40 rounded-t-lg border-t border-white/10">
+    <div className="h-full flex flex-col bg-black/40 rounded-t-lg border-t border-white/10" style={{ minHeight: `${panelHeight}px` }}>
       {/* Drag handle */}
       {onPanelHeightChange && (
         <MobilePanelDragHandle
           currentHeight={panelHeight}
           onHeightChange={onPanelHeightChange}
-          minHeight={120}
-          maxHeight={400}
+          minHeight={240}
+          maxHeight={500}
         />
       )}
 
@@ -165,29 +165,29 @@ export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
         </TabsList>
         )}
 
-        {/* Compact content area */}
-        <div className="flex-1 overflow-hidden bg-black/20 rounded mx-2 mb-2 border border-white/10">
-          <TabsContent value="designs" className="h-full overflow-y-auto p-2 m-0">
+        {/* Content area with increased height */}
+        <div className="flex-1 overflow-hidden bg-black/20 rounded mx-2 mb-2 border border-white/10" style={{ minHeight: `${panelHeight - 80}px` }}>
+          <TabsContent value="designs" className="h-full overflow-y-auto p-3 m-0">
             <CompactDesignGallery
               onSelectDesign={onSelectDesign}
               selectedDesign={selectedDesign}
             />
           </TabsContent>
 
-          <TabsContent value="text" className="h-full overflow-y-auto p-2 m-0 space-y-2">
+          <TabsContent value="text" className="h-full overflow-y-auto p-3 m-0 space-y-3">
             <div>
-              <Label className="text-white text-xs">Texte</Label>
+              <Label className="text-white text-sm">Texte</Label>
               <Input
                 value={textContent}
                 onChange={(e) => onTextContentChange(e.target.value)}
                 placeholder="Votre texte..."
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/50 text-xs h-6 mt-1"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50 text-sm h-8 mt-1"
               />
             </div>
             
             <div>
-              <Label className="text-white text-xs">Couleur</Label>
-              <div className="flex gap-1 mt-1">
+              <Label className="text-white text-sm">Couleur</Label>
+              <div className="flex gap-2 mt-2">
                 {colorOptions.map((color) => (
                   <ColorButton
                     key={color}
@@ -200,21 +200,21 @@ export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
             </div>
             
             <div>
-              <Label className="text-white text-xs">Style</Label>
+              <Label className="text-white text-sm">Style</Label>
               <ToggleGroup 
                 type="multiple" 
-                className="mt-1 h-6"
+                className="mt-2 h-8"
                 value={activeStylesValue}
                 onValueChange={handleStyleChange}
               >
-                <ToggleGroupItem value="bold" className="h-6 w-6 p-0">
-                  <Bold className="h-3 w-3" />
+                <ToggleGroupItem value="bold" className="h-8 w-8 p-0">
+                  <Bold className="h-4 w-4" />
                 </ToggleGroupItem>
-                <ToggleGroupItem value="italic" className="h-6 w-6 p-0">
-                  <Italic className="h-3 w-3" />
+                <ToggleGroupItem value="italic" className="h-8 w-8 p-0">
+                  <Italic className="h-4 w-4" />
                 </ToggleGroupItem>
-                <ToggleGroupItem value="underline" className="h-6 w-6 p-0">
-                  <Underline className="h-3 w-3" />
+                <ToggleGroupItem value="underline" className="h-8 w-8 p-0">
+                  <Underline className="h-4 w-4" />
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
@@ -222,9 +222,9 @@ export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
             {/* Product colors in text tab */}
             {mockupColors && mockupColors.length > 0 && (
               <div>
-                <Label className="text-white text-xs">Couleur produit</Label>
-                <div className="grid grid-cols-6 gap-1 mt-1">
-                  {mockupColors.slice(0, 6).map((color) => (
+                <Label className="text-white text-sm">Couleur produit</Label>
+                <div className="grid grid-cols-4 gap-2 mt-2">
+                  {mockupColors.slice(0, 8).map((color) => (
                     <button
                       key={color.id}
                       className={`aspect-square rounded border ${
@@ -245,7 +245,7 @@ export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
             )}
           </TabsContent>
 
-          <TabsContent value="upload" className="h-full overflow-y-auto p-2 m-0">
+          <TabsContent value="upload" className="h-full overflow-y-auto p-3 m-0">
             <CompactUpload
               onFileUpload={onFileUpload}
               onRemoveBackground={onRemoveBackground}
@@ -254,13 +254,13 @@ export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
             />
           </TabsContent>
 
-          <TabsContent value="ai" className="h-full overflow-y-auto p-2 m-0">
+          <TabsContent value="ai" className="h-full overflow-y-auto p-3 m-0">
             <CompactAIGenerator
               onImageGenerated={onAIImageGenerated}
             />
           </TabsContent>
 
-          <TabsContent value="svg" className="h-full overflow-y-auto p-2 m-0 space-y-2">
+          <TabsContent value="svg" className="h-full overflow-y-auto p-3 m-0 space-y-3">
             <CompactSVGGallery
               onSelectDesign={onSelectDesign}
               selectedDesign={selectedDesign}
@@ -270,8 +270,8 @@ export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
             
             {isSvgDesign() && (
               <div>
-                <Label className="text-white text-xs">Couleur SVG</Label>
-                <div className="flex flex-wrap gap-1 mt-1">
+                <Label className="text-white text-sm">Couleur SVG</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
                   {[...colorOptions, '#ff00ff', '#00ffff'].map((color) => (
                     <ColorButton
                       key={color}

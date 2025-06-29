@@ -1,3 +1,4 @@
+
 import logger from '@/utils/logger';
 
 import React, { useState, useMemo } from 'react';
@@ -524,7 +525,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           </div>
         )}
 
-        <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-2 pointer-events-auto">
+        <div className="absolute bottom-32 left-0 right-0 flex justify-center gap-2 pointer-events-auto">
           <Button
             variant="outline"
             className="text-lg min-w-[48px] min-h-[48px] pointer-events-auto"
@@ -583,7 +584,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
       </div>
 
       <Drawer open={drawerTab !== null} onOpenChange={(o) => !o && closeDrawer()}>
-        <DrawerContent className="bg-black/90 max-h-[60vh]">
+        <DrawerContent className="bg-black/90 max-h-[65vh]">
           {drawerTab && (
             <MobileToolsPanel
               activeTab={drawerTab}
@@ -612,6 +613,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               onAIImageGenerated={onAIImageGenerated}
               onRemoveBackground={onRemoveBackground}
               isRemovingBackground={isRemovingBackground}
+              panelHeight={400}
             />
           )}
         </DrawerContent>
