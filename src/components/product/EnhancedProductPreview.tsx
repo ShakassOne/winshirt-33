@@ -80,7 +80,6 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
       imageUrl = productImageUrl;
     }
     
-    // Debug logs pour tracer le problème
     console.log('🖼️ [EnhancedProductPreview] Image selection:', {
       currentViewSide,
       selectedMockupColor: selectedMockupColor?.name,
@@ -248,26 +247,51 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
   return (
     <>
       <div
-        className="relative flex justify-center items-center w-full min-h-[75vh] bg-gray-900/50 rounded-lg overflow-hidden"
+        className="relative flex justify-center items-center w-full h-full bg-gray-900/50 rounded-lg overflow-hidden"
+        style={{ minHeight: '80vh' }}
         onClick={handleBackgroundClick}
       >
-        {/* Preview Area avec rendu unifié - Vue principale visible */}
+        {/* Preview Area avec image de fond du t-shirt */}
         <div 
           ref={previewRef}
-          className="relative w-full h-full min-h-[75vh]"
+          className="relative w-full h-full flex items-center justify-center"
+          style={{ minHeight: '80vh' }}
         >
-          <div className="w-full h-full">
-            <UnifiedCustomizationRenderer
-              customization={customization}
-              side={currentViewSide}
-              withBackground={true}
-              backgroundUrl={productImage}
-              productImageUrl={productImageUrl}
-              className="w-full h-full"
+          {/* Image de fond du t-shirt - TOUJOURS VISIBLE */}
+          {productImage && (
+            <img
+              src={productImage}
+              alt={`T-shirt ${currentViewSide}`}
+              className="max-w-full max-h-full object-contain"
+              style={{
+                width: 'auto',
+                height: 'auto',
+                maxWidth: '90%',
+                maxHeight: '90%',
+                minWidth: '300px',
+                minHeight: '300px'
+              }}
+              onError={(e) => {
+                console.error('🚨 Erreur chargement image t-shirt:', e);
+                e.currentTarget.style.display = 'none';
+              }}
+              onLoad={() => {
+                console.log('✅ Image t-shirt chargée:', productImage);
+              }}
             />
-          </div>
+          )}
 
-          {/* Interactive design element */}
+          {/* Placeholder si aucune image */}
+          {!productImage && (
+            <div className="w-80 h-80 bg-gray-200 rounded-lg flex items-center justify-center">
+              <div className="text-center text-gray-500">
+                <div className="text-6xl mb-4">👕</div>
+                <div>T-shirt {currentViewSide === 'front' ? 'avant' : 'arrière'}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Design Layer - par-dessus l'image du t-shirt */}
           {currentData.design && (
             <div
               className={`absolute cursor-move select-none ${
@@ -315,7 +339,7 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
             </div>
           )}
 
-          {/* Interactive text element */}
+          {/* Text Layer - par-dessus l'image du t-shirt */}
           {currentData.text && (
             <div
               className={`absolute cursor-move select-none ${
