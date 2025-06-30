@@ -346,7 +346,7 @@ const ProductDetail = () => {
       // Load the image
       const imageElement = await loadImageFromUrl(currentDesign.image_url);
       
-      // Remove background using AI
+      // Remove background using AI with better error handling
       const cleanedBlob = await removeBackground(imageElement);
       
       // Create URL for the cleaned image
@@ -363,15 +363,22 @@ const ProductDetail = () => {
       handleSelectDesign(cleanedDesign);
 
       toast({
-        title: "Fond supprimé avec IA",
-        description: "Le fond de l'image a été supprimé avec succès grâce à l'intelligence artificielle."
+        title: "Fond supprimé avec succès",
+        description: "Le fond de l'image a été supprimé grâce à l'intelligence artificielle."
       });
     } catch (error) {
       console.error('Error in AI background removal:', error);
+      
+      let errorMessage = "Une erreur inattendue s'est produite.";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         variant: "destructive",
         title: "Erreur IA",
-        description: "Impossible de supprimer le fond avec l'IA. Vérifiez votre connexion internet."
+        description: errorMessage
       });
     } finally {
       setIsRemovingBackground(false);

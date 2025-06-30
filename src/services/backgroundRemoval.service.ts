@@ -31,12 +31,50 @@ function resizeImageIfNeeded(canvas: HTMLCanvasElement, ctx: CanvasRenderingCont
   return false;
 }
 
+// Check internet connection
+const checkConnection = async (): Promise<boolean> => {
+  try {
+    const response = await fetch('https://httpbin.org/get', { 
+      method: 'HEAD',
+      cache: 'no-cache',
+      signal: AbortSignal.timeout(5000)
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+};
+
 export const removeBackground = async (imageElement: HTMLImageElement): Promise<Blob> => {
   try {
     console.log('Starting AI background removal process...');
-    const segmenter = await pipeline('image-segmentation', 'Xenova/segformer-b0-finetuned-ade-512-512', {
-      device: 'webgpu',
-    });
+    
+    // Check internet connection first
+    const isConnected = await checkConnection();
+    if (!isConnected) {
+      throw new Error('Pas de connexion internet détectée. Vérifiez votre connexion et réessayez.');
+    }
+
+    let segmenter;
+    
+    try {
+      // Try with WebGPU first
+      console.log('Trying WebGPU device...');
+      segmenter = await pipeline('image-segmentation', 'Xenova/segformer-b2-finetuned-ade-512-512', {
+        device: 'webgpu',
+      });
+    } catch (webgpuError) {
+      console.warn('WebGPU failed, falling back to CPU:', webgpuError);
+      try {
+        // Fallback to CPU
+        segmenter = await pipeline('image-segmentation', 'Xenova/segformer-b2-finetuned-ade-512-512', {
+          device: 'cpu',
+        });
+      } catch (cpuError) {
+        console.error('Both WebGPU and CPU failed:', cpuError);
+        throw new Error('Impossible de charger le modèle IA. Veuillez réessayer dans quelques instants.');
+      }
+    }
     
     // Convert HTMLImageElement to canvas
     const canvas = document.createElement('canvas');
@@ -59,7 +97,7 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     console.log('AI segmentation result:', result);
     
     if (!result || !Array.isArray(result) || result.length === 0 || !result[0].mask) {
-      throw new Error('Invalid AI segmentation result');
+      throw new Error('Le modèle IA n\'a pas pu traiter cette image. Essayez avec une autre image.');
     }
     
     // Create a new canvas for the masked image
@@ -108,6 +146,16 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     });
   } catch (error) {
     console.error('Error in AI background removal:', error);
+    
+    // Provide more specific error messages
+    if (error.message.includes('fetch')) {
+      throw new Error('Erreur de connexion réseau. Vérifiez votre connexion internet et réessayez.');
+    } else if (error.message.includes('WebGL') || error.message.includes('WebGPU')) {
+      throw new Error('Votre navigateur ne supporte pas l\'accélération matérielle nécessaire. Essayez avec un navigateur plus récent.');
+    } else if (error.message.includes('quota') || error.message.includes('memory')) {
+      throw new Error('Mémoire insuffisante. Essayez avec une image plus petite.');
+    }
+    
     throw error;
   }
 };
