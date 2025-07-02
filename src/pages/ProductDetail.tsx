@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,7 +19,7 @@ import { toast } from "@/components/ui/use-toast"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { ReloadIcon } from "@radix-ui/react-icons"
 import { Palette, Star, Zap, Sparkles } from "lucide-react"
-import ModalPersonnalisation from '@/components/product/ModalPersonnalisation';
+import { ModalPersonnalisation } from '@/components/product/ModalPersonnalisation';
 import { LotterySelector } from '@/components/product/LotterySelector';
 import { ProductColorSelector } from '@/components/product/ProductColorSelector';
 import { DynamicColorMockup } from '@/components/product/DynamicColorMockup';
