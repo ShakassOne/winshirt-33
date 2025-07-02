@@ -10,14 +10,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
-import { FileImage, TextSelect, Color, Size, RotateCcw, RotateCw, ZoomIn, ZoomOut, Move, Download, Upload, Eraser, Sparkles } from "lucide-react"
+import { FileImage, TextSelect, Palette, Maximize, RotateCcw, RotateCw, ZoomIn, ZoomOut, Move, Download, Upload, Eraser, Sparkles } from "lucide-react"
 import { Design } from '@/types/supabase.types';
 import { MockupWithColors, MockupColor } from '@/types/mockup.types';
-import { ProductDesign } from '@/components/product/ProductDesign';
-import { ProductText } from '@/components/product/ProductText';
 import { CompactUpload } from '@/components/product/CompactUpload';
-import { AIImageGenerator } from '@/components/product/AIImageGenerator';
-import { SvgEditor } from '@/components/product/SvgEditor';
+import AIImageGenerator from '@/components/product/AIImageGenerator';
 
 interface ModalPersonnalisationProps {
   open: boolean;
@@ -165,20 +162,55 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                 onMouseUp={onClose}
                 onMouseLeave={onClose}
               >
-                <ProductDesign
-                  productImageUrl={productImageUrl}
-                  mockup={mockup}
-                  selectedMockupColor={selectedMockupColor}
-                  selectedDesign={currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack}
-                  designTransform={currentViewSide === 'front' ? designTransformFront : designTransformBack}
-                  textContent={currentViewSide === 'front' ? textContentFront : textContentBack}
-                  textFont={currentViewSide === 'front' ? textFontFront : textFontBack}
-                  textColor={currentViewSide === 'front' ? textColorFront : textColorBack}
-                  textStyles={currentViewSide === 'front' ? textStylesFront : textStylesBack}
-                  textTransform={currentViewSide === 'front' ? textTransformFront : textTransformBack}
-                  svgColor={currentViewSide === 'front' ? svgColorFront : svgColorBack}
-                  svgContent={currentViewSide === 'front' ? svgContentFront : svgContentBack}
+                {/* Simple mockup display */}
+                <img
+                  src={productImageUrl}
+                  alt={productName}
+                  className="w-full h-full object-cover rounded-lg"
                 />
+                
+                {/* Design overlay */}
+                {(currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack) && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '20%',
+                      left: '20%',
+                      width: '60%',
+                      height: '60%',
+                      transform: `translate(${(currentViewSide === 'front' ? designTransformFront : designTransformBack).position.x}px, ${(currentViewSide === 'front' ? designTransformFront : designTransformBack).position.y}px) scale(${(currentViewSide === 'front' ? designTransformFront : designTransformBack).scale}) rotate(${(currentViewSide === 'front' ? designTransformFront : designTransformBack).rotation}deg)`,
+                      pointerEvents: 'auto',
+                      cursor: 'move'
+                    }}
+                  >
+                    <img
+                      src={(currentViewSide === 'front' ? selectedDesignFront : selectedDesignBack)?.image_url}
+                      alt="Design"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                )}
+
+                {/* Text overlay */}
+                {(currentViewSide === 'front' ? textContentFront : textContentBack) && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '40%',
+                      left: '40%',
+                      transform: `translate(${(currentViewSide === 'front' ? textTransformFront : textTransformBack).position.x}px, ${(currentViewSide === 'front' ? textTransformFront : textTransformBack).position.y}px) scale(${(currentViewSide === 'front' ? textTransformFront : textTransformBack).scale}) rotate(${(currentViewSide === 'front' ? textTransformFront : textTransformBack).rotation}deg)`,
+                      color: currentViewSide === 'front' ? textColorFront : textColorBack,
+                      fontFamily: currentViewSide === 'front' ? textFontFront : textFontBack,
+                      fontWeight: (currentViewSide === 'front' ? textStylesFront : textStylesBack).bold ? 'bold' : 'normal',
+                      fontStyle: (currentViewSide === 'front' ? textStylesFront : textStylesBack).italic ? 'italic' : 'normal',
+                      textDecoration: (currentViewSide === 'front' ? textStylesFront : textStylesBack).underline ? 'underline' : 'none',
+                      pointerEvents: 'auto',
+                      cursor: 'move'
+                    }}
+                  >
+                    {currentViewSide === 'front' ? textContentFront : textContentBack}
+                  </div>
+                )}
               </div>
             </AspectRatio>
           </div>
@@ -200,27 +232,86 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                   <AIImageGenerator onAIImageGenerated={onAIImageGenerated} />
                 </div>
 
-                {/* Design Options */}
-                <ProductText
-                  textContent={currentViewSide === 'front' ? textContentFront : textContentBack}
-                  textFont={currentViewSide === 'front' ? textFontFront : textFontBack}
-                  textColor={currentViewSide === 'front' ? textColorFront : textColorBack}
-                  textStyles={currentViewSide === 'front' ? textStylesFront : textStylesBack}
-                  onTextContentChange={onTextContentChange}
-                  onTextFontChange={onTextFontChange}
-                  onTextColorChange={onTextColorChange}
-                  onTextStylesChange={onTextStylesChange}
-                  onTextTransformChange={onTextTransformChange}
-                  onTextMouseDown={onTextMouseDown}
-                />
+                {/* Text Input Section */}
+                <div className="space-y-3">
+                  <h3 className="text-white font-medium flex items-center gap-2">
+                    <TextSelect className="h-4 w-4" />
+                    Texte personnalisé
+                  </h3>
+                  
+                  <input
+                    type="text"
+                    placeholder="Votre texte ici..."
+                    value={currentViewSide === 'front' ? textContentFront : textContentBack}
+                    onChange={(e) => onTextContentChange(e.target.value)}
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60"
+                  />
+                  
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={currentViewSide === 'front' ? textColorFront : textColorBack}
+                      onChange={(e) => onTextColorChange(e.target.value)}
+                      className="w-12 h-10 rounded border border-white/20"
+                    />
+                    
+                    <select
+                      value={currentViewSide === 'front' ? textFontFront : textFontBack}
+                      onChange={(e) => onTextFontChange(e.target.value)}
+                      className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white"
+                    >
+                      <option value="Arial">Arial</option>
+                      <option value="Helvetica">Helvetica</option>
+                      <option value="Times New Roman">Times New Roman</option>
+                      <option value="Courier New">Courier New</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const currentStyles = currentViewSide === 'front' ? textStylesFront : textStylesBack;
+                        onTextStylesChange({ ...currentStyles, bold: !currentStyles.bold });
+                      }}
+                      className={`px-3 py-2 rounded border ${(currentViewSide === 'front' ? textStylesFront : textStylesBack).bold ? 'bg-white/20 border-white/40' : 'bg-white/10 border-white/20'} text-white font-bold`}
+                    >
+                      B
+                    </button>
+                    <button
+                      onClick={() => {
+                        const currentStyles = currentViewSide === 'front' ? textStylesFront : textStylesBack;
+                        onTextStylesChange({ ...currentStyles, italic: !currentStyles.italic });
+                      }}
+                      className={`px-3 py-2 rounded border ${(currentViewSide === 'front' ? textStylesFront : textStylesBack).italic ? 'bg-white/20 border-white/40' : 'bg-white/10 border-white/20'} text-white italic`}
+                    >
+                      I
+                    </button>
+                    <button
+                      onClick={() => {
+                        const currentStyles = currentViewSide === 'front' ? textStylesFront : textStylesBack;
+                        onTextStylesChange({ ...currentStyles, underline: !currentStyles.underline });
+                      }}
+                      className={`px-3 py-2 rounded border ${(currentViewSide === 'front' ? textStylesFront : textStylesBack).underline ? 'bg-white/20 border-white/40' : 'bg-white/10 border-white/20'} text-white underline`}
+                    >
+                      U
+                    </button>
+                  </div>
+                </div>
 
-                {/* SVG Editor */}
-                <SvgEditor
-                  svgColor={currentViewSide === 'front' ? svgColorFront : svgColorBack}
-                  svgContent={currentViewSide === 'front' ? svgContentFront : svgContentBack}
-                  onSvgColorChange={onSvgColorChange}
-                  onSvgContentChange={onSvgContentChange}
-                />
+                {/* SVG Color Editor */}
+                <div className="space-y-3">
+                  <h3 className="text-white font-medium flex items-center gap-2">
+                    <Palette className="h-4 w-4" />
+                    Couleur SVG
+                  </h3>
+                  
+                  <input
+                    type="color"
+                    value={currentViewSide === 'front' ? svgColorFront : svgColorBack}
+                    onChange={(e) => onSvgColorChange(e.target.value)}
+                    className="w-full h-12 rounded border border-white/20"
+                  />
+                </div>
               </div>
             </TabsContent>
 
