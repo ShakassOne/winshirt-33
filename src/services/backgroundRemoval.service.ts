@@ -1,3 +1,4 @@
+
 import { pipeline, env } from '@huggingface/transformers';
 
 // Configure transformers.js to always download models
@@ -169,13 +170,21 @@ export const loadImage = (file: Blob): Promise<HTMLImageElement> => {
   });
 };
 
-// Helper function to create image element from URL
+// Helper function to create image element from URL - Fixed for blob URLs
 export const loadImageFromUrl = (url: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    
+    // Only set crossOrigin for external URLs, not for blob URLs
+    if (!url.startsWith('blob:') && !url.startsWith('data:')) {
+      img.crossOrigin = 'anonymous';
+    }
+    
     img.onload = () => resolve(img);
-    img.onerror = reject;
+    img.onerror = (error) => {
+      console.error('Image loading error:', error);
+      reject(new Error('Impossible de charger l\'image. Vérifiez que l\'URL est accessible.'));
+    };
     img.src = url;
   });
 };
