@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
-import { FileImage, TextSelect, Palette, Maximize, RotateCcw, RotateCw, ZoomIn, ZoomOut, Move, Download, Upload, Eraser, Sparkles } from "lucide-react"
+import { FileImage, TextSelect, Palette, Sparkles } from "lucide-react"
 import { Design } from '@/types/supabase.types';
 import { MockupWithColors, MockupColor } from '@/types/mockup.types';
 import { CompactUpload } from '@/components/product/CompactUpload';
@@ -76,25 +76,17 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   onViewSideChange,
   productName,
   productImageUrl,
-  productAvailableColors,
   mockup,
   selectedMockupColor,
-  onMockupColorChange,
   selectedDesignFront,
   selectedDesignBack,
-  onSelectDesign,
-  setSelectedDesignFront,
-  setSelectedDesignBack,
   onFileUpload,
   onAIImageGenerated,
   onRemoveBackground,
   isRemovingBackground,
   svgColorFront,
   svgColorBack,
-  svgContentFront,
-  svgContentBack,
   onSvgColorChange,
-  onSvgContentChange,
   textContentFront,
   textContentBack,
   textFontFront,
@@ -109,13 +101,8 @@ const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   onTextFontChange,
   onTextColorChange,
   onTextStylesChange,
-  onTextTransformChange,
   designTransformFront,
   designTransformBack,
-  selectedSizeFront,
-  selectedSizeBack,
-  onDesignTransformChange,
-  onSizeChange,
   onDesignMouseDown,
   onTextMouseDown,
   onTouchMove
