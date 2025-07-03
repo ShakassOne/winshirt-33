@@ -1,10 +1,4 @@
 
-import { pipeline, env } from '@huggingface/transformers';
-
-// Configure transformers.js to always download models
-env.allowLocalModels = false;
-env.useBrowserCache = false;
-
 const MAX_IMAGE_DIMENSION = 1024;
 
 function resizeImageIfNeeded(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, image: HTMLImageElement) {
@@ -32,107 +26,75 @@ function resizeImageIfNeeded(canvas: HTMLCanvasElement, ctx: CanvasRenderingCont
   return false;
 }
 
-// Check internet connection
-const checkConnection = async (): Promise<boolean> => {
-  try {
-    const response = await fetch('https://httpbin.org/get', { 
-      method: 'HEAD',
-      cache: 'no-cache',
-      signal: AbortSignal.timeout(5000)
-    });
-    return response.ok;
-  } catch {
-    return false;
+/**
+ * Supprime automatiquement tout fond uni (quelque soit la couleur) autour d'un visuel.
+ * @param {HTMLImageElement} img - L'image source déjà chargée
+ * @param {number} tolerance - De 0 (strict) à 80 (large)
+ * @returns {HTMLCanvasElement} - Canvas avec fond rendu transparent
+ */
+function removeSolidBackground(img: HTMLImageElement, tolerance = 32): HTMLCanvasElement {
+  // Création du canvas
+  const canvas = document.createElement('canvas');
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Could not get canvas context');
+  
+  ctx.drawImage(img, 0, 0);
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+
+  // Prend la couleur du pixel (0,0) comme fond de référence
+  const baseR = data[0], baseG = data[1], baseB = data[2];
+
+  function isClose(r: number, g: number, b: number) {
+    return (
+      Math.abs(r - baseR) <= tolerance &&
+      Math.abs(g - baseG) <= tolerance &&
+      Math.abs(b - baseB) <= tolerance
+    );
   }
-};
+
+  // Parcourt tous les pixels
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    if (isClose(r, g, b)) {
+      data[i + 3] = 0; // Transparent
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
 
 export const removeBackground = async (imageElement: HTMLImageElement): Promise<Blob> => {
   try {
-    console.log('Starting AI background removal process...');
+    console.log('Starting simple background removal process...');
     
-    // Check internet connection first
-    const isConnected = await checkConnection();
-    if (!isConnected) {
-      throw new Error('Pas de connexion internet détectée. Vérifiez votre connexion et réessayez.');
-    }
-
-    let segmenter;
+    // Resize image if needed
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    if (!tempCtx) throw new Error('Could not get temp canvas context');
     
-    try {
-      // Try with WebGPU first
-      console.log('Trying WebGPU device...');
-      segmenter = await pipeline('image-segmentation', 'Xenova/segformer-b2-finetuned-ade-512-512', {
-        device: 'webgpu',
-      });
-    } catch (webgpuError) {
-      console.warn('WebGPU failed, falling back to CPU:', webgpuError);
-      try {
-        // Fallback to CPU
-        segmenter = await pipeline('image-segmentation', 'Xenova/segformer-b2-finetuned-ade-512-512', {
-          device: 'cpu',
-        });
-      } catch (cpuError) {
-        console.error('Both WebGPU and CPU failed:', cpuError);
-        throw new Error('Impossible de charger le modèle IA. Veuillez réessayer dans quelques instants.');
-      }
-    }
+    const wasResized = resizeImageIfNeeded(tempCanvas, tempCtx, imageElement);
+    console.log(`Image ${wasResized ? 'was' : 'was not'} resized. Final dimensions: ${tempCanvas.width}x${tempCanvas.height}`);
     
-    // Convert HTMLImageElement to canvas
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    // Create new image element from resized canvas if needed
+    const processImage = wasResized ? await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = tempCanvas.toDataURL();
+    }) : imageElement;
     
-    if (!ctx) throw new Error('Could not get canvas context');
-    
-    // Resize image if needed and draw it to canvas
-    const wasResized = resizeImageIfNeeded(canvas, ctx, imageElement);
-    console.log(`Image ${wasResized ? 'was' : 'was not'} resized. Final dimensions: ${canvas.width}x${canvas.height}`);
-    
-    // Get image data as base64
-    const imageData = canvas.toDataURL('image/jpeg', 0.8);
-    console.log('Image converted to base64');
-    
-    // Process the image with the segmentation model
-    console.log('Processing with AI segmentation model...');
-    const result = await segmenter(imageData);
-    
-    console.log('AI segmentation result:', result);
-    
-    if (!result || !Array.isArray(result) || result.length === 0 || !result[0].mask) {
-      throw new Error('Le modèle IA n\'a pas pu traiter cette image. Essayez avec une autre image.');
-    }
-    
-    // Create a new canvas for the masked image
-    const outputCanvas = document.createElement('canvas');
-    outputCanvas.width = canvas.width;
-    outputCanvas.height = canvas.height;
-    const outputCtx = outputCanvas.getContext('2d');
-    
-    if (!outputCtx) throw new Error('Could not get output canvas context');
-    
-    // Draw original image
-    outputCtx.drawImage(canvas, 0, 0);
-    
-    // Apply the mask
-    const outputImageData = outputCtx.getImageData(
-      0, 0,
-      outputCanvas.width,
-      outputCanvas.height
-    );
-    const data = outputImageData.data;
-    
-    // Apply inverted mask to alpha channel
-    for (let i = 0; i < result[0].mask.data.length; i++) {
-      // Invert the mask value (1 - value) to keep the subject instead of the background
-      const alpha = Math.round((1 - result[0].mask.data[i]) * 255);
-      data[i * 4 + 3] = alpha;
-    }
-    
-    outputCtx.putImageData(outputImageData, 0, 0);
-    console.log('AI mask applied successfully');
+    // Apply solid background removal
+    const resultCanvas = removeSolidBackground(processImage, 32);
+    console.log('Simple background removal applied successfully');
     
     // Convert canvas to blob
     return new Promise((resolve, reject) => {
-      outputCanvas.toBlob(
+      resultCanvas.toBlob(
         (blob) => {
           if (blob) {
             console.log('Successfully created transparent PNG blob');
@@ -146,18 +108,8 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
       );
     });
   } catch (error) {
-    console.error('Error in AI background removal:', error);
-    
-    // Provide more specific error messages
-    if (error.message.includes('fetch')) {
-      throw new Error('Erreur de connexion réseau. Vérifiez votre connexion internet et réessayez.');
-    } else if (error.message.includes('WebGL') || error.message.includes('WebGPU')) {
-      throw new Error('Votre navigateur ne supporte pas l\'accélération matérielle nécessaire. Essayez avec un navigateur plus récent.');
-    } else if (error.message.includes('quota') || error.message.includes('memory')) {
-      throw new Error('Mémoire insuffisante. Essayez avec une image plus petite.');
-    }
-    
-    throw error;
+    console.error('Error in simple background removal:', error);
+    throw new Error('Impossible de supprimer le fond de cette image. Vérifiez que l\'image a un fond uni.');
   }
 };
 
