@@ -68,9 +68,9 @@ function removeSolidBackground(img: HTMLImageElement, tolerance = 32): HTMLCanva
   return canvas;
 }
 
-export const removeBackground = async (imageElement: HTMLImageElement): Promise<Blob> => {
+export const removeBackground = async (imageElement: HTMLImageElement, tolerance: number = 32): Promise<Blob> => {
   try {
-    console.log('Starting simple background removal process...');
+    console.log('Starting simple background removal process with tolerance:', tolerance);
     
     // Resize image if needed
     const tempCanvas = document.createElement('canvas');
@@ -88,9 +88,9 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
       img.src = tempCanvas.toDataURL();
     }) : imageElement;
     
-    // Apply solid background removal
-    const resultCanvas = removeSolidBackground(processImage, 32);
-    console.log('Simple background removal applied successfully');
+    // Apply solid background removal with specified tolerance
+    const resultCanvas = removeSolidBackground(processImage, tolerance);
+    console.log('Simple background removal applied successfully with tolerance:', tolerance);
     
     // Convert canvas to blob
     return new Promise((resolve, reject) => {
@@ -122,21 +122,54 @@ export const loadImage = (file: Blob): Promise<HTMLImageElement> => {
   });
 };
 
-// Helper function to create image element from URL - Fixed for blob URLs
+// Helper function to create image element from URL - Fixed for CORS and new AI images
 export const loadImageFromUrl = (url: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     
-    // Only set crossOrigin for external URLs, not for blob URLs
+    // Set crossOrigin for external URLs to handle CORS properly
     if (!url.startsWith('blob:') && !url.startsWith('data:')) {
       img.crossOrigin = 'anonymous';
     }
     
-    img.onload = () => resolve(img);
-    img.onerror = (error) => {
-      console.error('Image loading error:', error);
-      reject(new Error('Impossible de charger l\'image. Vérifiez que l\'URL est accessible.'));
+    // Add a timeout for slow loading images
+    const timeout = setTimeout(() => {
+      img.src = '';
+      reject(new Error('Timeout lors du chargement de l\'image. L\'image peut être inaccessible.'));
+    }, 10000); // 10 second timeout
+    
+    img.onload = () => {
+      clearTimeout(timeout);
+      console.log('Image loaded successfully from:', url);
+      resolve(img);
     };
+    
+    img.onerror = (error) => {
+      clearTimeout(timeout);
+      console.error('Image loading error for URL:', url, error);
+      
+      // Try alternative loading method for AI generated images
+      if (url.includes('media.winshirt.fr')) {
+        console.log('Attempting alternative loading method for AI image...');
+        const proxyImg = new Image();
+        proxyImg.crossOrigin = 'use-credentials';
+        
+        proxyImg.onload = () => {
+          console.log('Alternative loading method succeeded');
+          resolve(proxyImg);
+        };
+        
+        proxyImg.onerror = () => {
+          console.error('Alternative loading method also failed');
+          reject(new Error('Impossible de charger l\'image IA. L\'URL peut être temporairement inaccessible.'));
+        };
+        
+        proxyImg.src = url;
+      } else {
+        reject(new Error('Impossible de charger l\'image. Vérifiez que l\'URL est accessible.'));
+      }
+    };
+    
     img.src = url;
   });
 };

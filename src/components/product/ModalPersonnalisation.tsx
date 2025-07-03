@@ -1,4 +1,3 @@
-
 import logger from '@/utils/logger';
 
 import React, { useState, useMemo } from 'react';
@@ -45,7 +44,7 @@ interface ModalPersonnalisationProps {
   onAIImageGenerated: (imageUrl: string, imageName: string) => void;
   setSelectedDesignFront: (design: Design | null) => void;
   setSelectedDesignBack: (design: Design | null) => void;
-  onRemoveBackground: () => void;
+  onRemoveBackground: (tolerance?: number) => void;
   isRemovingBackground: boolean;
 
   // SVG states
@@ -338,15 +337,16 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     onTextContentChange('');
   };
 
-  // Manual background removal - Fixed: removed incorrect await
-  const handleManualRemoveBackground = () => {
+  // Enhanced background removal with tolerance support
+  const handleManualRemoveBackground = (tolerance?: number) => {
     const currentDesign = currentData.design;
     if (!currentDesign) return;
 
     try {
-      onRemoveBackground();
+      console.log('Starting simple background removal with tolerance:', tolerance || 32);
+      onRemoveBackground(tolerance);
     } catch (error) {
-      console.error('Error removing background:', error);
+      console.error('Error in simple background removal:', error);
     }
   };
 

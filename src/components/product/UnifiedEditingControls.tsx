@@ -1,11 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { RotateCw, Eraser, Sparkles, Eye, FileImage, Type } from 'lucide-react';
+import { RotateCw, Eraser, Sparkles, Eye, FileImage, Type, Settings } from 'lucide-react';
 import { Design } from '@/types/supabase.types';
 
 interface UnifiedEditingControlsProps {
@@ -14,7 +14,7 @@ interface UnifiedEditingControlsProps {
   selectedSize: string;
   onTransformChange: (property: string, value: any) => void;
   onSizeChange: (size: string) => void;
-  onRemoveBackground: () => void;
+  onRemoveBackground: (tolerance?: number) => void;
   isRemovingBackground: boolean;
   hasText?: boolean;
   textContent?: string;
@@ -39,6 +39,9 @@ export const UnifiedEditingControls: React.FC<UnifiedEditingControlsProps> = ({
   hasText,
   textContent
 }) => {
+  const [tolerance, setTolerance] = useState(32);
+  const [showToleranceSlider, setShowToleranceSlider] = useState(false);
+
   const handleSizeClick = (label: string) => {
     const preset = sizePresets.find(p => p.label === label);
     if (preset) {
@@ -57,6 +60,10 @@ export const UnifiedEditingControls: React.FC<UnifiedEditingControlsProps> = ({
     };
     onTransformChange('scale', newScale);
     onSizeChange(getSizeLabel(newScale));
+  };
+
+  const handleRemoveBackground = () => {
+    onRemoveBackground(tolerance);
   };
 
   // Toujours afficher si au moins un élément est présent
@@ -162,11 +169,37 @@ export const UnifiedEditingControls: React.FC<UnifiedEditingControlsProps> = ({
             </div>
           </div>
 
-          {/* Suppression du fond */}
-          <div className="pt-2 border-t border-white/10">
+          {/* Suppression du fond avec contrôle de tolérance */}
+          <div className="pt-2 border-t border-white/10 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-white text-sm">Suppression du fond</Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowToleranceSlider(!showToleranceSlider)}
+                className="h-6 w-6 p-0 hover:bg-white/10"
+              >
+                <Settings className="h-3 w-3" />
+              </Button>
+            </div>
+
+            {showToleranceSlider && (
+              <div className="space-y-2">
+                <Label className="text-white text-xs">Tolérance: {tolerance} (0=strict, 80=large)</Label>
+                <Slider
+                  value={[tolerance]}
+                  min={0}
+                  max={80}
+                  step={1}
+                  onValueChange={(value) => setTolerance(value[0])}
+                  className="flex-1"
+                />
+              </div>
+            )}
+
             <Button
               variant="outline"
-              onClick={onRemoveBackground}
+              onClick={handleRemoveBackground}
               disabled={isRemovingBackground}
               className="w-full border-white/30 hover:bg-red-500/20 hover:border-red-500/50"
             >
