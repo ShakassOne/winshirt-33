@@ -7,7 +7,7 @@ import { Design } from '@/types/supabase.types';
 
 interface CompactUploadProps {
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onRemoveBackground: () => void;
+  onRemoveBackground: (tolerance?: number) => void;
   isRemovingBackground: boolean;
   currentDesign?: Design | null;
 }
@@ -62,7 +62,7 @@ export const CompactUpload: React.FC<CompactUploadProps> = ({
         <div className="pt-2 border-t border-white/10">
           <Button
             variant="outline"
-            onClick={onRemoveBackground}
+            onClick={() => onRemoveBackground(32)}
             disabled={isRemovingBackground}
             className="w-full border-white/30 hover:bg-purple-500/20 hover:border-purple-500/50"
           >

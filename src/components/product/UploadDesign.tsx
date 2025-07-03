@@ -9,7 +9,7 @@ import { Design } from '@/types/supabase.types';
 
 interface UploadDesignProps {
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onRemoveBackground: () => void;
+  onRemoveBackground: (tolerance?: number) => void;
   isRemovingBackground: boolean;
   currentDesign: Design | null;
 }
@@ -63,7 +63,7 @@ export const UploadDesign: React.FC<UploadDesignProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={onRemoveBackground}
+              onClick={() => onRemoveBackground(32)}
               disabled={isRemovingBackground}
               className="flex items-center gap-2"
             >
