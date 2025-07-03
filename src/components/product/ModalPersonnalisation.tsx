@@ -616,7 +616,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               onMockupColorChange={onMockupColorChange}
               onFileUpload={onFileUpload}
               onAIImageGenerated={onAIImageGenerated}
-              onRemoveBackground={onRemoveBackground}
+                onRemoveBackground={handleManualRemoveBackground}
               isRemovingBackground={isRemovingBackground}
               panelHeight={400}
             />

@@ -49,7 +49,7 @@ interface MobileToolsPanelProps {
   // Other props
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onAIImageGenerated: (imageUrl: string, imageName: string) => void;
-  onRemoveBackground: () => void;
+  onRemoveBackground: (tolerance?: number) => void;
   isRemovingBackground: boolean;
   
   // Panel height management
