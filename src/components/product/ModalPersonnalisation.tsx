@@ -350,6 +350,11 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     }
   };
 
+  // Wrapper function for mobile button click
+  const handleMobileRemoveBackground = () => {
+    handleManualRemoveBackground(32); // Use default tolerance of 32
+  };
+
   const desktopContent = (
     <div className="flex h-full gap-4">
       {/* Zone de prévisualisation - 45% */}
@@ -529,7 +534,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           <Button
             variant="outline"
             className="text-lg min-w-[48px] min-h-[48px] pointer-events-auto"
-            onClick={handleManualRemoveBackground}
+            onClick={handleMobileRemoveBackground}
           >
             Supprimer fond
           </Button>
