@@ -91,3 +91,124 @@ export const uploadToExternalScript = async (file: File): Promise<string> => {
     throw new Error(`Erreur d'upload: ${error.message}`);
   }
 };
+
+// Mock functions for all the missing API calls
+export const fetchActiveSocialNetworks = async () => {
+  // Mock implementation - replace with actual API call
+  return [];
+};
+
+export const createLottery = async (data: any) => {
+  // Mock implementation - replace with actual API call
+  return data;
+};
+
+export const updateLottery = async (id: string, data: any) => {
+  // Mock implementation - replace with actual API call
+  return data;
+};
+
+export const createMockup = async (data: any) => {
+  // Mock implementation - replace with actual API call
+  return data;
+};
+
+export const updateMockup = async (id: string, data: any) => {
+  // Mock implementation - replace with actual API call
+  return data;
+};
+
+export const createProduct = async (data: any) => {
+  // Mock implementation - replace with actual API call
+  return data;
+};
+
+export const updateProduct = async (id: string, data: any) => {
+  // Mock implementation - replace with actual API call
+  return data;
+};
+
+export const fetchFeaturedLotteries = async () => {
+  // Mock implementation - replace with actual API call
+  return [];
+};
+
+export const fetchAllDesigns = async () => {
+  // Mock implementation - replace with actual API call
+  return [];
+};
+
+export const fetchLotteryById = async (id: string) => {
+  // Mock implementation - replace with actual API call
+  return null;
+};
+
+export const fetchProductsWithTickets = async () => {
+  // Mock implementation - replace with actual API call
+  return [];
+};
+
+export const createDesign = async (data: any) => {
+  // Mock implementation - replace with actual API call
+  return data;
+};
+
+export const updateDesign = async (id: string, data: any) => {
+  // Mock implementation - replace with actual API call
+  return data;
+};
+
+export const deleteDesign = async (id: string) => {
+  // Mock implementation - replace with actual API call
+  return;
+};
+
+export const fetchAllLotteries = async () => {
+  // Mock implementation - replace with actual API call
+  return [];
+};
+
+export const deleteLottery = async (id: string) => {
+  // Mock implementation - replace with actual API call
+  return;
+};
+
+export const fetchAllMockups = async () => {
+  // Mock implementation - replace with actual API call
+  return [];
+};
+
+export const generateDesign = async (data: any) => {
+  // Mock implementation - replace with actual API call
+  return data;
+};
+
+export const fetchAllProducts = async () => {
+  // Mock implementation - replace with actual API call
+  return [];
+};
+
+export const deleteProduct = async (id: string) => {
+  // Mock implementation - replace with actual API call
+  return;
+};
+
+export const fetchAllSocialNetworks = async () => {
+  // Mock implementation - replace with actual API call
+  return [];
+};
+
+export const createSocialNetwork = async (data: any) => {
+  // Mock implementation - replace with actual API call
+  return data;
+};
+
+export const updateSocialNetwork = async (id: string, data: any) => {
+  // Mock implementation - replace with actual API call
+  return data;
+};
+
+export const deleteSocialNetwork = async (id: string) => {
+  // Mock implementation - replace with actual API call
+  return;
+};
