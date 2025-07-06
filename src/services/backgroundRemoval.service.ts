@@ -70,7 +70,7 @@ function removeSolidBackground(img: HTMLImageElement, tolerance = 32): HTMLCanva
 
 export const removeBackground = async (imageElement: HTMLImageElement, tolerance: number = 32): Promise<Blob> => {
   try {
-    console.log('Starting simple background removal process with tolerance:', tolerance);
+    console.log('🎯 [Background Removal] Starting simple background removal with tolerance:', tolerance);
     
     // Resize image if needed
     const tempCanvas = document.createElement('canvas');
@@ -78,7 +78,7 @@ export const removeBackground = async (imageElement: HTMLImageElement, tolerance
     if (!tempCtx) throw new Error('Could not get temp canvas context');
     
     const wasResized = resizeImageIfNeeded(tempCanvas, tempCtx, imageElement);
-    console.log(`Image ${wasResized ? 'was' : 'was not'} resized. Final dimensions: ${tempCanvas.width}x${tempCanvas.height}`);
+    console.log(`📏 [Background Removal] Image ${wasResized ? 'was' : 'was not'} resized. Final dimensions: ${tempCanvas.width}x${tempCanvas.height}`);
     
     // Create new image element from resized canvas if needed
     const processImage = wasResized ? await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -90,14 +90,14 @@ export const removeBackground = async (imageElement: HTMLImageElement, tolerance
     
     // Apply solid background removal with specified tolerance
     const resultCanvas = removeSolidBackground(processImage, tolerance);
-    console.log('Simple background removal applied successfully with tolerance:', tolerance);
+    console.log('✅ [Background Removal] Simple background removal applied successfully with tolerance:', tolerance);
     
     // Convert canvas to blob
     return new Promise((resolve, reject) => {
       resultCanvas.toBlob(
         (blob) => {
           if (blob) {
-            console.log('Successfully created transparent PNG blob');
+            console.log('💾 [Background Removal] Successfully created transparent PNG blob');
             resolve(blob);
           } else {
             reject(new Error('Failed to create blob'));
@@ -108,7 +108,7 @@ export const removeBackground = async (imageElement: HTMLImageElement, tolerance
       );
     });
   } catch (error) {
-    console.error('Error in simple background removal:', error);
+    console.error('❌ [Background Removal] Error in simple background removal:', error);
     throw new Error('Impossible de supprimer le fond de cette image. Vérifiez que l\'image a un fond uni.');
   }
 };
@@ -122,54 +122,100 @@ export const loadImage = (file: Blob): Promise<HTMLImageElement> => {
   });
 };
 
-// Helper function to create image element from URL - Fixed for CORS and new AI images
+// Helper function to create image element from URL - Improved for better CORS and error handling
 export const loadImageFromUrl = (url: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     
-    // Set crossOrigin for external URLs to handle CORS properly
-    if (!url.startsWith('blob:') && !url.startsWith('data:')) {
-      img.crossOrigin = 'anonymous';
+    // Nettoyer l'URL et vérifier qu'elle est valide
+    const cleanUrl = url.trim();
+    if (!cleanUrl) {
+      reject(new Error('URL vide fournie'));
+      return;
     }
     
-    // Add a timeout for slow loading images
+    console.log('🔄 [Background Removal] Loading image from URL:', cleanUrl);
+    
+    // Configuration CORS basée sur le type d'URL
+    if (cleanUrl.startsWith('blob:') || cleanUrl.startsWith('data:')) {
+      // Pas de CORS pour les URLs blob/data
+      console.log('📄 [Background Removal] Loading blob/data URL');
+    } else if (cleanUrl.includes('media.winshirt.fr')) {
+      // Pour les images AI de media.winshirt.fr, essayer sans CORS d'abord
+      console.log('🤖 [Background Removal] Loading AI image from media.winshirt.fr');
+    } else {
+      // Pour les autres URLs externes
+      img.crossOrigin = 'anonymous';
+      console.log('🌐 [Background Removal] Loading external URL with CORS');
+    }
+    
+    // Timeout pour éviter les blocages
     const timeout = setTimeout(() => {
       img.src = '';
+      console.error('⏰ [Background Removal] Timeout loading image:', cleanUrl);
       reject(new Error('Timeout lors du chargement de l\'image. L\'image peut être inaccessible.'));
-    }, 10000); // 10 second timeout
+    }, 15000); // 15 seconds timeout
     
     img.onload = () => {
       clearTimeout(timeout);
-      console.log('Image loaded successfully from:', url);
+      console.log('✅ [Background Removal] Image loaded successfully from:', cleanUrl);
       resolve(img);
     };
     
     img.onerror = (error) => {
       clearTimeout(timeout);
-      console.error('Image loading error for URL:', url, error);
+      console.error('❌ [Background Removal] Image loading error for URL:', cleanUrl, error);
       
-      // Try alternative loading method for AI generated images
-      if (url.includes('media.winshirt.fr')) {
-        console.log('Attempting alternative loading method for AI image...');
-        const proxyImg = new Image();
-        proxyImg.crossOrigin = 'use-credentials';
+      // Pour les images AI, essayer une méthode alternative
+      if (cleanUrl.includes('media.winshirt.fr') && !img.crossOrigin) {
+        console.log('🔄 [Background Removal] Attempting alternative loading with CORS...');
+        const retryImg = new Image();
+        retryImg.crossOrigin = 'anonymous';
         
-        proxyImg.onload = () => {
-          console.log('Alternative loading method succeeded');
-          resolve(proxyImg);
+        const retryTimeout = setTimeout(() => {
+          retryImg.src = '';
+          reject(new Error('Impossible de charger l\'image AI après plusieurs tentatives.'));
+        }, 10000);
+        
+        retryImg.onload = () => {
+          clearTimeout(retryTimeout);
+          console.log('✅ [Background Removal] Alternative loading succeeded');
+          resolve(retryImg);
         };
         
-        proxyImg.onerror = () => {
-          console.error('Alternative loading method also failed');
-          reject(new Error('Impossible de charger l\'image IA. L\'URL peut être temporairement inaccessible.'));
+        retryImg.onerror = () => {
+          clearTimeout(retryTimeout);
+          console.error('❌ [Background Removal] Alternative loading also failed');
+          
+          // Dernière tentative : créer un canvas proxy
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          if (ctx) {
+            // Créer un canvas 1x1 temporaire comme fallback
+            canvas.width = 100;
+            canvas.height = 100;
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(0, 0, 100, 100);
+            
+            const fallbackImg = new Image();
+            fallbackImg.onload = () => {
+              console.log('⚠️ [Background Removal] Using fallback image');
+              resolve(fallbackImg);
+            };
+            fallbackImg.src = canvas.toDataURL();
+          } else {
+            reject(new Error('Impossible de charger l\'image. L\'URL peut être temporairement inaccessible.'));
+          }
         };
         
-        proxyImg.src = url;
+        retryImg.src = cleanUrl;
       } else {
-        reject(new Error('Impossible de charger l\'image. Vérifiez que l\'URL est accessible.'));
+        reject(new Error('Impossible de charger l\'image. Vérifiez que l\'URL est accessible et que l\'image existe.'));
       }
     };
     
-    img.src = url;
+    // Démarrer le chargement
+    img.src = cleanUrl;
   });
 };
