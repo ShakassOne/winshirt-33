@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { Design } from '@/types/supabase.types';
 import logger from '@/utils/logger';
@@ -56,6 +55,10 @@ export const useProductCustomization = () => {
   const [svgContentFront, setSvgContentFront] = useState('');
   const [svgContentBack, setSvgContentBack] = useState('');
 
+  // QR Code states
+  const [qrCodeContentFront, setQrCodeContentFront] = useState('');
+  const [qrCodeContentBack, setQrCodeContentBack] = useState('');
+
   // Handlers pour les designs
   const handleDesignTransformChange = useCallback((side: 'front' | 'back', property: string, value: any) => {
     logger.log(`[Customization] Design transform change - ${side}: ${property} = ${value}`);
@@ -106,6 +109,25 @@ export const useProductCustomization = () => {
       setTextContentFront('');
     } else {
       setTextContentBack('');
+    }
+  }, []);
+
+  const handleQRCodeGenerated = useCallback((side: 'front' | 'back', qrCodeUrl: string) => {
+    logger.log(`[Customization] QR Code generated - ${side}: ${qrCodeUrl.substring(0, 50)}...`);
+    
+    // Create a design object for the QR code
+    const qrDesign = {
+      id: `qr-${Date.now()}-${side}`,
+      name: 'QR Code généré',
+      image_url: qrCodeUrl,
+      category: 'QR Code',
+      is_active: true
+    };
+    
+    if (side === 'front') {
+      setSelectedDesignFront(qrDesign);
+    } else {
+      setSelectedDesignBack(qrDesign);
     }
   }, []);
 
@@ -197,6 +219,17 @@ export const useProductCustomization = () => {
     handleTextTransformChange,
     handleRemoveDesign,
     handleRemoveText,
-    getUnifiedCustomization
+    getUnifiedCustomization,
+    
+    // QR Code states
+    qrCodeContentFront,
+    qrCodeContentBack,
+    
+    // QR Code setters
+    setQrCodeContentFront,
+    setQrCodeContentBack,
+    
+    // QR Code handlers
+    handleQRCodeGenerated,
   };
 };

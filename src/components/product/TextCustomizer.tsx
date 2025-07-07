@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bold, Italic, Underline, RotateCw } from 'lucide-react';
+import { Bold, Italic, Underline, RotateCw, Type, QrCode } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
+import { QRCodeGenerator } from './QRCodeGenerator';
 
 interface TextCustomizerProps {
   textContent: string;
@@ -19,6 +20,7 @@ interface TextCustomizerProps {
   onTextColorChange: (color: string) => void;
   onTextStylesChange: (styles: { bold: boolean; italic: boolean; underline: boolean }) => void;
   onTextTransformChange: (property: string, value: any) => void;
+  onQRCodeGenerated?: (qrCodeUrl: string) => void;
 }
 
 // Liste étendue et organisée des polices Google Fonts avec catégories
@@ -156,175 +158,215 @@ export const TextCustomizer: React.FC<TextCustomizerProps> = ({
   onTextFontChange,
   onTextColorChange,
   onTextStylesChange,
-  onTextTransformChange
+  onTextTransformChange,
+  onQRCodeGenerated
 }) => {
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [mode, setMode] = useState<'text' | 'qrcode'>('text');
+
+  const handleQRCodeGenerated = (qrCodeUrl: string) => {
+    if (onQRCodeGenerated) {
+      onQRCodeGenerated(qrCodeUrl);
+    }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Contenu du texte */}
-      <div className="space-y-2">
-        <Label htmlFor="textContent">Votre texte</Label>
-        <Input
-          id="textContent"
-          value={textContent}
-          onChange={(e) => onTextContentChange(e.target.value)}
-          placeholder="Entrez votre texte ici..."
-          className="bg-white/5 border-white/20"
-        />
+      {/* Mode selector */}
+      <div className="flex gap-2">
+        <Button
+          variant={mode === 'text' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setMode('text')}
+          className="flex-1"
+        >
+          <Type className="h-4 w-4 mr-2" />
+          Texte
+        </Button>
+        <Button
+          variant={mode === 'qrcode' ? 'default' : 'outline'}
+          size="sm" 
+          onClick={() => setMode('qrcode')}
+          className="flex-1"
+        >
+          <QrCode className="h-4 w-4 mr-2" />
+          QR Code
+        </Button>
       </div>
 
-      {/* Police avec prévisualisation */}
-      <div className="space-y-2">
-        <Label htmlFor="textFont">Police</Label>
-        <Select value={textFont} onValueChange={onTextFontChange}>
-          <SelectTrigger className="bg-white/5 border-white/20">
-            <SelectValue placeholder="Choisir une police" />
-          </SelectTrigger>
-          <SelectContent className="max-h-[400px] bg-black/95 border-white/20 backdrop-blur-sm">
-            <SelectGroup>
-              {googleFonts.map(font => (
-                <SelectItem 
-                  key={font.value} 
-                  value={font.value}
-                  className="hover:bg-winshirt-purple/20 focus:bg-winshirt-purple/30"
-                  style={{ fontFamily: font.value }}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <span style={{ fontFamily: font.value, fontSize: '14px' }}>
-                      {font.label}
-                    </span>
-                    <span className="text-xs text-white/50 ml-2">
-                      {font.category}
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Styles de texte */}
-      <div className="space-y-2">
-        <Label>Style de texte</Label>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className={textStyles.bold ? 'bg-winshirt-purple/40' : ''}
-            onClick={() => onTextStylesChange({ ...textStyles, bold: !textStyles.bold })}
-          >
-            <Bold className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className={textStyles.italic ? 'bg-winshirt-purple/40' : ''}
-            onClick={() => onTextStylesChange({ ...textStyles, italic: !textStyles.italic })}
-          >
-            <Italic className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className={textStyles.underline ? 'bg-winshirt-purple/40' : ''}
-            onClick={() => onTextStylesChange({ ...textStyles, underline: !textStyles.underline })}
-          >
-            <Underline className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Couleur */}
-      <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <Label>Couleur</Label>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowColorPicker(!showColorPicker)}
-            className="bg-white/5 border-white/20"
-          >
-            <div
-              className="w-4 h-4 mr-2 rounded"
-              style={{ backgroundColor: textColor }}
-            ></div>
-            {showColorPicker ? 'Fermer' : 'Choisir'}
-          </Button>
-        </div>
-        
-        {showColorPicker && (
-          <div className="mt-2">
-            <HexColorPicker
-              color={textColor}
-              onChange={onTextColorChange}
-              className="w-full"
+      {mode === 'text' ? (
+        <>
+          {/* Contenu du texte */}
+          <div className="space-y-2">
+            <Label htmlFor="textContent">Votre texte</Label>
+            <Input
+              id="textContent"
+              value={textContent}
+              onChange={(e) => onTextContentChange(e.target.value)}
+              placeholder="Entrez votre texte ici..."
+              className="bg-white/5 border-white/20"
             />
           </div>
-        )}
-      </div>
 
-      {/* Échelle */}
-      <div className="space-y-2">
-        <Label>Échelle ({Math.round(textTransform.scale * 100)}%)</Label>
-        <Slider
-          value={[textTransform.scale * 100]}
-          min={50}
-          max={200}
-          step={5}
-          onValueChange={(value) => onTextTransformChange('scale', value[0] / 100)}
-          className="flex-1"
+          {/* Police avec prévisualisation */}
+          <div className="space-y-2">
+            <Label htmlFor="textFont">Police</Label>
+            <Select value={textFont} onValueChange={onTextFontChange}>
+              <SelectTrigger className="bg-white/5 border-white/20">
+                <SelectValue placeholder="Choisir une police" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[400px] bg-black/95 border-white/20 backdrop-blur-sm">
+                <SelectGroup>
+                  {googleFonts.map(font => (
+                    <SelectItem 
+                      key={font.value} 
+                      value={font.value}
+                      className="hover:bg-winshirt-purple/20 focus:bg-winshirt-purple/30"
+                      style={{ fontFamily: font.value }}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span style={{ fontFamily: font.value, fontSize: '14px' }}>
+                          {font.label}
+                        </span>
+                        <span className="text-xs text-white/50 ml-2">
+                          {font.category}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Styles de texte */}
+          <div className="space-y-2">
+            <Label>Style de texte</Label>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className={textStyles.bold ? 'bg-winshirt-purple/40' : ''}
+                onClick={() => onTextStylesChange({ ...textStyles, bold: !textStyles.bold })}
+              >
+                <Bold className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className={textStyles.italic ? 'bg-winshirt-purple/40' : ''}
+                onClick={() => onTextStylesChange({ ...textStyles, italic: !textStyles.italic })}
+              >
+                <Italic className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className={textStyles.underline ? 'bg-winshirt-purple/40' : ''}
+                onClick={() => onTextStylesChange({ ...textStyles, underline: !textStyles.underline })}
+              >
+                <Underline className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Couleur */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Label>Couleur</Label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowColorPicker(!showColorPicker)}
+                className="bg-white/5 border-white/20"
+              >
+                <div
+                  className="w-4 h-4 mr-2 rounded"
+                  style={{ backgroundColor: textColor }}
+                ></div>
+                {showColorPicker ? 'Fermer' : 'Choisir'}
+              </Button>
+            </div>
+            
+            {showColorPicker && (
+              <div className="mt-2">
+                <HexColorPicker
+                  color={textColor}
+                  onChange={onTextColorChange}
+                  className="w-full"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Échelle */}
+          <div className="space-y-2">
+            <Label>Échelle ({Math.round(textTransform.scale * 100)}%)</Label>
+            <Slider
+              value={[textTransform.scale * 100]}
+              min={50}
+              max={200}
+              step={5}
+              onValueChange={(value) => onTextTransformChange('scale', value[0] / 100)}
+              className="flex-1"
+            />
+          </div>
+
+          {/* Rotation */}
+          <div className="space-y-2">
+            <Label>Rotation ({textTransform.rotation}°)</Label>
+            <div className="flex gap-2 items-center">
+              <Slider
+                value={[textTransform.rotation + 180]}
+                min={0}
+                max={360}
+                step={5}
+                onValueChange={(value) => onTextTransformChange('rotation', value[0] - 180)}
+                className="flex-1"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => onTextTransformChange('rotation', 0)}
+              >
+                <RotateCw className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Aperçu du texte amélioré */}
+          {textContent && (
+            <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+              <Label className="text-sm mb-2 block">Aperçu :</Label>
+              <div className="bg-white/10 rounded p-4 text-center">
+                <span
+                  style={{
+                    fontFamily: textFont,
+                    color: textColor,
+                    fontWeight: textStyles.bold ? 'bold' : 'normal',
+                    fontStyle: textStyles.italic ? 'italic' : 'normal',
+                    textDecoration: textStyles.underline ? 'underline' : 'none',
+                    fontSize: `${Math.round(textTransform.scale * 24)}px`,
+                    transform: `rotate(${textTransform.rotation}deg)`,
+                    display: 'inline-block',
+                    lineHeight: '1.2'
+                  }}
+                >
+                  {textContent}
+                </span>
+              </div>
+              <div className="mt-2 text-xs text-white/60 text-center">
+                Police : {textFont} • Couleur : {textColor}
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <QRCodeGenerator
+          onQRCodeGenerated={handleQRCodeGenerated}
+          defaultContent={textContent}
+          defaultColor={textColor}
         />
-      </div>
-
-      {/* Rotation */}
-      <div className="space-y-2">
-        <Label>Rotation ({textTransform.rotation}°)</Label>
-        <div className="flex gap-2 items-center">
-          <Slider
-            value={[textTransform.rotation + 180]}
-            min={0}
-            max={360}
-            step={5}
-            onValueChange={(value) => onTextTransformChange('rotation', value[0] - 180)}
-            className="flex-1"
-          />
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => onTextTransformChange('rotation', 0)}
-          >
-            <RotateCw className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Aperçu du texte amélioré */}
-      {textContent && (
-        <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-          <Label className="text-sm mb-2 block">Aperçu :</Label>
-          <div className="bg-white/10 rounded p-4 text-center">
-            <span
-              style={{
-                fontFamily: textFont,
-                color: textColor,
-                fontWeight: textStyles.bold ? 'bold' : 'normal',
-                fontStyle: textStyles.italic ? 'italic' : 'normal',
-                textDecoration: textStyles.underline ? 'underline' : 'none',
-                fontSize: `${Math.round(textTransform.scale * 24)}px`,
-                transform: `rotate(${textTransform.rotation}deg)`,
-                display: 'inline-block',
-                lineHeight: '1.2'
-              }}
-            >
-              {textContent}
-            </span>
-          </div>
-          <div className="mt-2 text-xs text-white/60 text-center">
-            Police : {textFont} • Couleur : {textColor}
-          </div>
-        </div>
       )}
     </div>
   );

@@ -1,11 +1,10 @@
-
 import React, { useMemo, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { ImageIcon, Type, Upload, Sparkles, Paintbrush, Bold, Italic, Underline } from 'lucide-react';
+import { ImageIcon, Type, Upload, Sparkles, Paintbrush, Bold, Italic, Underline, QrCode } from 'lucide-react';
 import { Design } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
 import { CompactDesignGallery } from './CompactDesignGallery';
@@ -13,6 +12,7 @@ import { CompactSVGGallery } from './CompactSVGGallery';
 import { CompactUpload } from './CompactUpload';
 import { CompactAIGenerator } from './CompactAIGenerator';
 import { MobilePanelDragHandle } from './MobilePanelDragHandle';
+import { QRCodeGenerator } from './QRCodeGenerator';
 
 interface MobileToolsPanelProps {
   activeTab: string;
@@ -87,6 +87,8 @@ export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
   onPanelHeightChange,
   hideTabs = false
 }) => {
+  const [qrMode, setQrMode] = useState(false);
+  
   const activeStylesValue = useMemo(() => {
     const activeStyles = [];
     if (textStyles.bold) activeStyles.push('bold');
@@ -103,6 +105,18 @@ export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
       italic: values.includes('italic'),
       underline: values.includes('underline')
     });
+  };
+
+  const handleQRCodeGenerated = (qrCodeUrl: string) => {
+    // Convert QR code to a design-like object
+    const qrDesign = {
+      id: `qr-${Date.now()}`,
+      name: 'QR Code généré',
+      image_url: qrCodeUrl,
+      category: 'QR Code',
+      is_active: true
+    };
+    onSelectDesign(qrDesign);
   };
 
   const isSvgDesign = () => {
@@ -175,49 +189,83 @@ export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
           </TabsContent>
 
           <TabsContent value="text" className="h-full overflow-y-auto p-3 m-0 space-y-3">
-            <div>
-              <Label className="text-white text-sm">Texte</Label>
-              <Input
-                value={textContent}
-                onChange={(e) => onTextContentChange(e.target.value)}
-                placeholder="Votre texte..."
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/50 text-sm h-8 mt-1"
-              />
-            </div>
-            
-            <div>
-              <Label className="text-white text-sm">Couleur</Label>
-              <div className="flex gap-2 mt-2">
-                {colorOptions.map((color) => (
-                  <ColorButton
-                    key={color}
-                    color={color}
-                    isSelected={textColor === color}
-                    onClick={() => onTextColorChange(color)}
-                  />
-                ))}
-              </div>
-            </div>
-            
-            <div>
-              <Label className="text-white text-sm">Style</Label>
-              <ToggleGroup 
-                type="multiple" 
-                className="mt-2 h-8"
-                value={activeStylesValue}
-                onValueChange={handleStyleChange}
+            {/* Mode selector */}
+            <div className="flex gap-2">
+              <Button
+                variant={!qrMode ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setQrMode(false)}
+                className="flex-1 h-8"
               >
-                <ToggleGroupItem value="bold" className="h-8 w-8 p-0">
-                  <Bold className="h-4 w-4" />
-                </ToggleGroupItem>
-                <ToggleGroupItem value="italic" className="h-8 w-8 p-0">
-                  <Italic className="h-4 w-4" />
-                </ToggleGroupItem>
-                <ToggleGroupItem value="underline" className="h-8 w-8 p-0">
-                  <Underline className="h-4 w-4" />
-                </ToggleGroupItem>
-              </ToggleGroup>
+                <Type className="h-3 w-3 mr-1" />
+                Texte
+              </Button>
+              <Button
+                variant={qrMode ? 'default' : 'outline'}
+                size="sm" 
+                onClick={() => setQrMode(true)}
+                className="flex-1 h-8"
+              >
+                <QrCode className="h-3 w-3 mr-1" />
+                QR Code
+              </Button>
             </div>
+
+            {!qrMode ? (
+              <>
+                <div>
+                  <Label className="text-white text-sm">Texte</Label>
+                  <Input
+                    value={textContent}
+                    onChange={(e) => onTextContentChange(e.target.value)}
+                    placeholder="Votre texte..."
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 text-sm h-8 mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label className="text-white text-sm">Couleur</Label>
+                  <div className="flex gap-2 mt-2">
+                    {colorOptions.map((color) => (
+                      <ColorButton
+                        key={color}
+                        color={color}
+                        isSelected={textColor === color}
+                        onClick={() => onTextColorChange(color)}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <Label className="text-white text-sm">Style</Label>
+                  <ToggleGroup 
+                    type="multiple" 
+                    className="mt-2 h-8"
+                    value={activeStylesValue}
+                    onValueChange={handleStyleChange}
+                  >
+                    <ToggleGroupItem value="bold" className="h-8 w-8 p-0">
+                      <Bold className="h-4 w-4" />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="italic" className="h-8 w-8 p-0">
+                      <Italic className="h-4 w-4" />
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="underline" className="h-8 w-8 p-0">
+                      <Underline className="h-4 w-4" />
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-3">
+                <QRCodeGenerator
+                  onQRCodeGenerated={handleQRCodeGenerated}
+                  defaultContent={textContent}
+                  defaultColor={textColor}
+                />
+              </div>
+            )}
 
             {/* Product colors in text tab */}
             {mockupColors && mockupColors.length > 0 && (
