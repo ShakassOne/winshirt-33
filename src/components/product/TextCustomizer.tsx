@@ -225,7 +225,7 @@ export const TextCustomizer: React.FC<TextCustomizerProps> = ({
                       style={{ fontFamily: font.value }}
                     >
                       <div className="flex items-center justify-between w-full">
-                        <span style={{ fontFamily: font.value, fontSize: '14px' }}>
+                        <span style={{ fontFamily: font.value, fontSize: '18px' }}>
                           {font.label}
                         </span>
                         <span className="text-xs text-white/50 ml-2">

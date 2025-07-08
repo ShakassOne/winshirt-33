@@ -8,6 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { HexColorPicker } from 'react-colorful';
 import { generateQRCode, validateQRContent, formatQRContent, QRCodeOptions } from '@/services/qrcode.service';
 import { QrCode, Check, AlertCircle } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 
 interface QRCodeGeneratorProps {
   onQRCodeGenerated: (qrCodeUrl: string) => void;
@@ -26,6 +27,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   const [contentType, setContentType] = useState<'text' | 'url' | 'email' | 'phone'>('text');
   const [color, setColor] = useState(defaultColor);
   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
+  const [isTransparent, setIsTransparent] = useState(true);
   const [size, setSize] = useState(defaultSize);
   const [errorLevel, setErrorLevel] = useState<'L' | 'M' | 'Q' | 'H'>('M');
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
@@ -45,7 +47,8 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         size,
         color,
         backgroundColor,
-        errorCorrectionLevel: errorLevel
+        errorCorrectionLevel: errorLevel,
+        transparent: isTransparent
       };
       
       const url = await generateQRCode(options);
@@ -73,7 +76,7 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     } else {
       setQrCodeUrl('');
     }
-  }, [content, contentType, color, backgroundColor, size, errorLevel]);
+  }, [content, contentType, color, backgroundColor, size, errorLevel, isTransparent]);
 
   const contentTypeLabels = {
     text: 'Texte simple',
@@ -162,20 +165,30 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label>Couleur fond</Label>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowBgColorPicker(!showBgColorPicker)}
-            className="w-full bg-white/5 border-white/20"
-          >
-            <div className="w-4 h-4 mr-2 rounded" style={{ backgroundColor: backgroundColor }}></div>
-            Fond
-          </Button>
-          {showBgColorPicker && (
-            <div className="mt-2">
-              <HexColorPicker color={backgroundColor} onChange={setBackgroundColor} />
-            </div>
+          <div className="flex items-center justify-between">
+            <Label>Fond transparent</Label>
+            <Switch
+              checked={isTransparent}
+              onCheckedChange={setIsTransparent}
+            />
+          </div>
+          {!isTransparent && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowBgColorPicker(!showBgColorPicker)}
+                className="w-full bg-white/5 border-white/20"
+              >
+                <div className="w-4 h-4 mr-2 rounded" style={{ backgroundColor: backgroundColor }}></div>
+                Couleur fond
+              </Button>
+              {showBgColorPicker && (
+                <div className="mt-2">
+                  <HexColorPicker color={backgroundColor} onChange={setBackgroundColor} />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

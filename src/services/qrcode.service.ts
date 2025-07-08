@@ -7,6 +7,7 @@ export interface QRCodeOptions {
   color: string;
   backgroundColor: string;
   errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H';
+  transparent?: boolean;
 }
 
 export const generateQRCode = async (options: QRCodeOptions): Promise<string> => {
@@ -16,7 +17,7 @@ export const generateQRCode = async (options: QRCodeOptions): Promise<string> =>
       margin: 1,
       color: {
         dark: options.color,
-        light: options.backgroundColor,
+        light: options.transparent ? 'rgba(0,0,0,0)' : options.backgroundColor,
       },
       errorCorrectionLevel: options.errorCorrectionLevel,
     };

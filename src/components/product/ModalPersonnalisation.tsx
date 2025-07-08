@@ -445,65 +445,128 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 
           <div className="flex-1 overflow-hidden">
             <TabsContent value="designs" className="h-full overflow-y-auto">
-              <GalleryDesigns
-                onSelectDesign={handleDesignSelection}
-                selectedDesign={currentData.design}
-                currentDesignTransform={currentData.designTransform}
-                selectedSize={currentData.selectedSize}
-                onDesignTransformChange={() => {}} // Ces contrôles sont maintenant dans UnifiedEditingControls
-                onSizeChange={() => {}} // Ces contrôles sont maintenant dans UnifiedEditingControls
-              />
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-sm font-medium">Designs disponibles</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDesignSelection(null)}
+                    disabled={!currentData.design}
+                  >
+                    Réinitialiser
+                  </Button>
+                </div>
+                <GalleryDesigns
+                  onSelectDesign={handleDesignSelection}
+                  selectedDesign={currentData.design}
+                  currentDesignTransform={currentData.designTransform}
+                  selectedSize={currentData.selectedSize}
+                  onDesignTransformChange={() => {}} // Ces contrôles sont maintenant dans UnifiedEditingControls
+                  onSizeChange={() => {}} // Ces contrôles sont maintenant dans UnifiedEditingControls
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="text" className="h-full overflow-y-auto">
-              <TextCustomizer
-                textContent={currentData.textContent}
-                textFont={currentData.textFont}
-                textColor={currentData.textColor}
-                textStyles={currentData.textStyles}
-                textTransform={currentData.textTransform}
-                onTextContentChange={onTextContentChange}
-                onTextFontChange={onTextFontChange}
-                onTextColorChange={onTextColorChange}
-                onTextStylesChange={onTextStylesChange}
-                onTextTransformChange={onTextTransformChange}
-                onQRCodeGenerated={(qrCodeUrl: string) => {
-                  const qrDesign: Design = {
-                    id: `qr-${Date.now()}`,
-                    name: 'QR Code généré',
-                    image_url: qrCodeUrl,
-                    category: 'QR Code',
-                    is_active: true
-                  };
-                  handleDesignSelection(qrDesign);
-                }}
-              />
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-sm font-medium">Personnalisation de texte</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDesignSelection(null)}
+                    disabled={!currentData.design}
+                  >
+                    Réinitialiser
+                  </Button>
+                </div>
+                <TextCustomizer
+                  textContent={currentData.textContent}
+                  textFont={currentData.textFont}
+                  textColor={currentData.textColor}
+                  textStyles={currentData.textStyles}
+                  textTransform={currentData.textTransform}
+                  onTextContentChange={onTextContentChange}
+                  onTextFontChange={onTextFontChange}
+                  onTextColorChange={onTextColorChange}
+                  onTextStylesChange={onTextStylesChange}
+                  onTextTransformChange={onTextTransformChange}
+                  onQRCodeGenerated={(qrCodeUrl: string) => {
+                    const qrDesign: Design = {
+                      id: `qr-${Date.now()}`,
+                      name: 'QR Code généré',
+                      image_url: qrCodeUrl,
+                      category: 'QR Code',
+                      is_active: true
+                    };
+                    handleDesignSelection(qrDesign);
+                  }}
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="upload" className="h-full overflow-y-auto">
-              <CompactUpload
-                onFileUpload={onFileUpload}
-                onRemoveBackground={handleManualRemoveBackground}
-                isRemovingBackground={isRemovingBackground}
-                currentDesign={currentData.design}
-              />
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-sm font-medium">Upload d'image</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDesignSelection(null)}
+                    disabled={!currentData.design}
+                  >
+                    Réinitialiser
+                  </Button>
+                </div>
+                <CompactUpload
+                  onFileUpload={onFileUpload}
+                  onRemoveBackground={handleManualRemoveBackground}
+                  isRemovingBackground={isRemovingBackground}
+                  currentDesign={currentData.design}
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="ai" className="h-full overflow-y-auto">
-              <div className="h-full">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-sm font-medium">Génération IA</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDesignSelection(null)}
+                    disabled={!currentData.design}
+                  >
+                    Réinitialiser
+                  </Button>
+                </div>
                 <CompactAIGenerator onImageGenerated={handleAIImageGenerated} />
               </div>
             </TabsContent>
 
             <TabsContent value="svg" className="h-full overflow-y-auto">
-              <SVGDesigns
-                onSelectDesign={handleDesignSelection}
-                selectedDesign={currentData.design}
-                onFileUpload={onFileUpload}
-                onSvgColorChange={onSvgColorChange}
-                onSvgContentChange={onSvgContentChange}
-                defaultSvgColor={currentData.svgColor}
-              />
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-sm font-medium">Designs SVG</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDesignSelection(null)}
+                    disabled={!currentData.design}
+                  >
+                    Réinitialiser
+                  </Button>
+                </div>
+                <SVGDesigns
+                  onSelectDesign={handleDesignSelection}
+                  selectedDesign={currentData.design}
+                  onFileUpload={onFileUpload}
+                  onSvgColorChange={onSvgColorChange}
+                  onSvgContentChange={onSvgContentChange}
+                  defaultSvgColor={currentData.svgColor}
+                />
+              </div>
             </TabsContent>
           </div>
         </Tabs>
