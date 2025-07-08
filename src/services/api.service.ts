@@ -1,5 +1,7 @@
 
 import axios from 'axios';
+import { supabase } from '@/integrations/supabase/client';
+import { Design } from '@/types/supabase.types';
 
 const API_BASE_URL = 'https://media.winshirt.fr';
 
@@ -133,9 +135,20 @@ export const fetchFeaturedLotteries = async () => {
   return [];
 };
 
-export const fetchAllDesigns = async () => {
-  // Mock implementation - replace with actual API call
-  return [];
+export const fetchAllDesigns = async (): Promise<Design[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('designs')
+      .select('*')
+      .eq('is_active', true)
+      .order('category', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching designs:', error);
+    return [];
+  }
 };
 
 export const fetchLotteryById = async (id: string) => {

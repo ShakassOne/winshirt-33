@@ -346,7 +346,7 @@ export const TextCustomizer: React.FC<TextCustomizerProps> = ({
                     fontWeight: textStyles.bold ? 'bold' : 'normal',
                     fontStyle: textStyles.italic ? 'italic' : 'normal',
                     textDecoration: textStyles.underline ? 'underline' : 'none',
-                    fontSize: `${Math.round(textTransform.scale * 24)}px`,
+                    fontSize: `${Math.round(textTransform.scale * 48)}px`,
                     transform: `rotate(${textTransform.rotation}deg)`,
                     display: 'inline-block',
                     lineHeight: '1.2'

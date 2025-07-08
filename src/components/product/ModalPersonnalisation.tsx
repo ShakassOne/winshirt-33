@@ -466,7 +466,17 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                 onTextFontChange={onTextFontChange}
                 onTextColorChange={onTextColorChange}
                 onTextStylesChange={onTextStylesChange}
-                onTextTransformChange={() => {}} // Ces contrôles sont maintenant dans UnifiedEditingControls
+                onTextTransformChange={onTextTransformChange}
+                onQRCodeGenerated={(qrCodeUrl: string) => {
+                  const qrDesign: Design = {
+                    id: `qr-${Date.now()}`,
+                    name: 'QR Code généré',
+                    image_url: qrCodeUrl,
+                    category: 'QR Code',
+                    is_active: true
+                  };
+                  handleDesignSelection(qrDesign);
+                }}
               />
             </TabsContent>
 
