@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { X, Palette, Type, Image as ImageIcon, Upload, Sparkles, Paintbrush } from 'lucide-react';
+import { X, Palette, Type, Image as ImageIcon, Upload, Sparkles, Paintbrush, QrCode } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Design } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
@@ -19,6 +19,7 @@ import { EnhancedProductPreview } from './EnhancedProductPreview';
 import { MobileToolsPanel } from './MobileToolsPanel';
 import { CompactAIGenerator } from './CompactAIGenerator';
 import { UnifiedEditingControls } from './UnifiedEditingControls';
+import { QRCodeTab } from './QRCodeTab';
 
 interface ModalPersonnalisationProps {
   open: boolean;
@@ -420,7 +421,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
       {/* Zone des outils - 30% */}
       <div className="w-[30%] flex flex-col">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <TabsList className={`grid w-full grid-cols-5 mb-3 ${(currentData.design || currentData.textContent) ? 'opacity-60 scale-95' : ''} transition-all duration-200`}>
+          <TabsList className={`grid w-full grid-cols-6 mb-3 ${(currentData.design || currentData.textContent) ? 'opacity-60 scale-95' : ''} transition-all duration-200`}>
             <TabsTrigger value="designs" className="flex items-center gap-1 text-xs">
               <ImageIcon className="h-3 w-3" />
               <span className="hidden sm:inline">Images</span>
@@ -428,6 +429,10 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             <TabsTrigger value="text" className="flex items-center gap-1 text-xs">
               <Type className="h-3 w-3" />
               <span className="hidden sm:inline">Texte</span>
+            </TabsTrigger>
+            <TabsTrigger value="qrcode" className="flex items-center gap-1 text-xs">
+              <QrCode className="h-3 w-3" />
+              <span className="hidden sm:inline">QR</span>
             </TabsTrigger>
             <TabsTrigger value="upload" className="flex items-center gap-1 text-xs">
               <Upload className="h-3 w-3" />
@@ -492,18 +497,25 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                   onTextColorChange={onTextColorChange}
                   onTextStylesChange={onTextStylesChange}
                   onTextTransformChange={onTextTransformChange}
-                  onQRCodeGenerated={(qrCodeUrl: string) => {
-                    const qrDesign: Design = {
-                      id: `qr-${Date.now()}`,
-                      name: 'QR Code généré',
-                      image_url: qrCodeUrl,
-                      category: 'QR Code',
-                      is_active: true
-                    };
-                    handleDesignSelection(qrDesign);
-                  }}
                 />
               </div>
+            </TabsContent>
+
+            <TabsContent value="qrcode" className="h-full overflow-y-auto">
+              <QRCodeTab
+                onQRCodeGenerated={(qrCodeUrl: string) => {
+                  const qrDesign: Design = {
+                    id: `qr-${Date.now()}`,
+                    name: 'QR Code généré',
+                    image_url: qrCodeUrl,
+                    category: 'QR Code',
+                    is_active: true
+                  };
+                  handleDesignSelection(qrDesign);
+                }}
+                onRemoveDesign={() => handleDesignSelection(null)}
+                selectedDesign={currentData.design}
+              />
             </TabsContent>
 
             <TabsContent value="upload" className="h-full overflow-y-auto">
@@ -634,6 +646,20 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         <Button
           variant="ghost"
           className="text-lg min-w-[48px] min-h-[48px] pointer-events-auto"
+          onClick={() => openDrawer('text')}
+        >
+          <Type className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          className="text-lg min-w-[48px] min-h-[48px] pointer-events-auto"
+          onClick={() => openDrawer('qrcode')}
+        >
+          <QrCode className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          className="text-lg min-w-[48px] min-h-[48px] pointer-events-auto"
           onClick={() => openDrawer('upload')}
         >
           <Upload className="h-5 w-5" />
@@ -644,13 +670,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           onClick={() => openDrawer('ai')}
         >
           <Sparkles className="h-5 w-5" />
-        </Button>
-        <Button
-          variant="ghost"
-          className="text-lg min-w-[48px] min-h-[48px] pointer-events-auto"
-          onClick={() => openDrawer('text')}
-        >
-          <Type className="h-5 w-5" />
         </Button>
         <Button
           variant="ghost"

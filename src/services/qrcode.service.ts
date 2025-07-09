@@ -17,7 +17,7 @@ export const generateQRCode = async (options: QRCodeOptions): Promise<string> =>
       margin: 1,
       color: {
         dark: options.color,
-        light: options.transparent ? 'rgba(0,0,0,0)' : options.backgroundColor,
+        light: options.transparent ? '#00000000' : options.backgroundColor,
       },
       errorCorrectionLevel: options.errorCorrectionLevel,
     };

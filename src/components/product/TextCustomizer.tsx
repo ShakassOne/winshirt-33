@@ -5,9 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bold, Italic, Underline, RotateCw, Type, QrCode } from 'lucide-react';
+import { Bold, Italic, Underline, RotateCw, Type } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
-import { QRCodeGenerator } from './QRCodeGenerator';
 
 interface TextCustomizerProps {
   textContent: string;
@@ -20,7 +19,6 @@ interface TextCustomizerProps {
   onTextColorChange: (color: string) => void;
   onTextStylesChange: (styles: { bold: boolean; italic: boolean; underline: boolean }) => void;
   onTextTransformChange: (property: string, value: any) => void;
-  onQRCodeGenerated?: (qrCodeUrl: string) => void;
 }
 
 // Liste étendue et organisée des polices Google Fonts avec catégories
@@ -158,44 +156,12 @@ export const TextCustomizer: React.FC<TextCustomizerProps> = ({
   onTextFontChange,
   onTextColorChange,
   onTextStylesChange,
-  onTextTransformChange,
-  onQRCodeGenerated
+  onTextTransformChange
 }) => {
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const [mode, setMode] = useState<'text' | 'qrcode'>('text');
-
-  const handleQRCodeGenerated = (qrCodeUrl: string) => {
-    if (onQRCodeGenerated) {
-      onQRCodeGenerated(qrCodeUrl);
-    }
-  };
 
   return (
     <div className="space-y-6">
-      {/* Mode selector */}
-      <div className="flex gap-2">
-        <Button
-          variant={mode === 'text' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setMode('text')}
-          className="flex-1"
-        >
-          <Type className="h-4 w-4 mr-2" />
-          Texte
-        </Button>
-        <Button
-          variant={mode === 'qrcode' ? 'default' : 'outline'}
-          size="sm" 
-          onClick={() => setMode('qrcode')}
-          className="flex-1"
-        >
-          <QrCode className="h-4 w-4 mr-2" />
-          QR Code
-        </Button>
-      </div>
-
-      {mode === 'text' ? (
-        <>
           {/* Contenu du texte */}
           <div className="space-y-2">
             <Label htmlFor="textContent">Votre texte</Label>
@@ -360,14 +326,6 @@ export const TextCustomizer: React.FC<TextCustomizerProps> = ({
               </div>
             </div>
           )}
-        </>
-      ) : (
-        <QRCodeGenerator
-          onQRCodeGenerated={handleQRCodeGenerated}
-          defaultContent={textContent}
-          defaultColor={textColor}
-        />
-      )}
     </div>
   );
 };

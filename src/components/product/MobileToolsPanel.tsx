@@ -87,7 +87,6 @@ export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
   onPanelHeightChange,
   hideTabs = false
 }) => {
-  const [qrMode, setQrMode] = useState(false);
   
   const activeStylesValue = useMemo(() => {
     const activeStyles = [];
@@ -155,7 +154,7 @@ export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
       {/* Compact tabs */}
       <Tabs value={activeTab} onValueChange={onTabChange} className="flex-1 flex flex-col">
         {!hideTabs && (
-        <TabsList className="grid w-full grid-cols-5 mb-1 h-8 mx-2">
+        <TabsList className="grid w-full grid-cols-6 mb-1 h-8 mx-2">
           <TabsTrigger value="designs" className="flex items-center gap-1 text-xs py-1">
             <ImageIcon className="h-3 w-3" />
             <span className="hidden sm:inline">Images</span>
@@ -163,6 +162,10 @@ export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
           <TabsTrigger value="text" className="flex items-center gap-1 text-xs py-1">
             <Type className="h-3 w-3" />
             <span className="hidden sm:inline">Texte</span>
+          </TabsTrigger>
+          <TabsTrigger value="qrcode" className="flex items-center gap-1 text-xs py-1">
+            <QrCode className="h-3 w-3" />
+            <span className="hidden sm:inline">QR</span>
           </TabsTrigger>
           <TabsTrigger value="upload" className="flex items-center gap-1 text-xs py-1">
             <Upload className="h-3 w-3" />
@@ -189,108 +192,57 @@ export const MobileToolsPanel: React.FC<MobileToolsPanelProps> = ({
           </TabsContent>
 
           <TabsContent value="text" className="h-full overflow-y-auto p-3 m-0 space-y-3">
-            {/* Mode selector */}
-            <div className="flex gap-2">
-              <Button
-                variant={!qrMode ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setQrMode(false)}
-                className="flex-1 h-8"
-              >
-                <Type className="h-3 w-3 mr-1" />
-                Texte
-              </Button>
-              <Button
-                variant={qrMode ? 'default' : 'outline'}
-                size="sm" 
-                onClick={() => setQrMode(true)}
-                className="flex-1 h-8"
-              >
-                <QrCode className="h-3 w-3 mr-1" />
-                QR Code
-              </Button>
+            <div>
+              <Label className="text-white text-sm">Texte</Label>
+              <Input
+                value={textContent}
+                onChange={(e) => onTextContentChange(e.target.value)}
+                placeholder="Votre texte..."
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50 text-sm h-8 mt-1"
+              />
             </div>
-
-            {!qrMode ? (
-              <>
-                <div>
-                  <Label className="text-white text-sm">Texte</Label>
-                  <Input
-                    value={textContent}
-                    onChange={(e) => onTextContentChange(e.target.value)}
-                    placeholder="Votre texte..."
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 text-sm h-8 mt-1"
+            
+            <div>
+              <Label className="text-white text-sm">Couleur</Label>
+              <div className="flex gap-2 mt-2">
+                {colorOptions.map((color) => (
+                  <ColorButton
+                    key={color}
+                    color={color}
+                    isSelected={textColor === color}
+                    onClick={() => onTextColorChange(color)}
                   />
-                </div>
-                
-                <div>
-                  <Label className="text-white text-sm">Couleur</Label>
-                  <div className="flex gap-2 mt-2">
-                    {colorOptions.map((color) => (
-                      <ColorButton
-                        key={color}
-                        color={color}
-                        isSelected={textColor === color}
-                        onClick={() => onTextColorChange(color)}
-                      />
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <Label className="text-white text-sm">Style</Label>
-                  <ToggleGroup 
-                    type="multiple" 
-                    className="mt-2 h-8"
-                    value={activeStylesValue}
-                    onValueChange={handleStyleChange}
-                  >
-                    <ToggleGroupItem value="bold" className="h-8 w-8 p-0">
-                      <Bold className="h-4 w-4" />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="italic" className="h-8 w-8 p-0">
-                      <Italic className="h-4 w-4" />
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="underline" className="h-8 w-8 p-0">
-                      <Underline className="h-4 w-4" />
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                </div>
-              </>
-            ) : (
-              <div className="space-y-3">
-                <QRCodeGenerator
-                  onQRCodeGenerated={handleQRCodeGenerated}
-                  defaultContent={textContent}
-                  defaultColor={textColor}
-                />
+                ))}
               </div>
-            )}
+            </div>
+            
+            <div>
+              <Label className="text-white text-sm">Style</Label>
+              <ToggleGroup 
+                type="multiple" 
+                className="mt-2 h-8"
+                value={activeStylesValue}
+                onValueChange={handleStyleChange}
+              >
+                <ToggleGroupItem value="bold" className="h-8 w-8 p-0">
+                  <Bold className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="italic" className="h-8 w-8 p-0">
+                  <Italic className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="underline" className="h-8 w-8 p-0">
+                  <Underline className="h-4 w-4" />
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+          </TabsContent>
 
-            {/* Product colors in text tab */}
-            {mockupColors && mockupColors.length > 0 && (
-              <div>
-                <Label className="text-white text-sm">Couleur produit</Label>
-                <div className="grid grid-cols-4 gap-2 mt-2">
-                  {mockupColors.slice(0, 8).map((color) => (
-                    <button
-                      key={color.id}
-                      className={`aspect-square rounded border ${
-                        selectedMockupColor?.id === color.id ? 'border-white' : 'border-white/30'
-                      }`}
-                      onClick={() => onMockupColorChange(color)}
-                    >
-                      <img
-                        src={color.front_image_url}
-                        alt={color.name}
-                        className="w-full h-full object-cover rounded"
-                        loading="lazy"
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+          <TabsContent value="qrcode" className="h-full overflow-y-auto p-3 m-0 space-y-3">
+            <QRCodeGenerator
+              onQRCodeGenerated={handleQRCodeGenerated}
+              defaultContent=""
+              defaultColor="#000000"
+            />
           </TabsContent>
 
           <TabsContent value="upload" className="h-full overflow-y-auto p-3 m-0">
