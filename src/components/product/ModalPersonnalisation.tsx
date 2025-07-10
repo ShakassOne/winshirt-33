@@ -20,10 +20,13 @@ import { MobileToolsPanel } from './MobileToolsPanel';
 import { CompactAIGenerator } from './CompactAIGenerator';
 import { UnifiedEditingControls } from './UnifiedEditingControls';
 import { QRCodeTab } from './QRCodeTab';
+import { useAdminCheck } from '@/hooks/useAdminCheck';
+import html2canvas from 'html2canvas';
 
 interface ModalPersonnalisationProps {
   open: boolean;
   onClose: () => void;
+  onValidate?: () => void;
   currentViewSide: 'front' | 'back';
   onViewSideChange: (side: 'front' | 'back') => void;
 
@@ -130,6 +133,7 @@ interface ModalPersonnalisationProps {
 export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   open,
   onClose,
+  onValidate,
   currentViewSide,
   onViewSideChange,
   productName,
@@ -181,6 +185,47 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('designs');
   const [drawerTab, setDrawerTab] = useState<string | null>(null);
+  const { isAdmin } = useAdminCheck();
+
+  // Fonctions pour les boutons de validation et test capture
+  const handleValidate = () => {
+    onValidate?.();
+    onClose();
+  };
+
+  const handleTestCapture = async () => {
+    const previewElement = document.querySelector('[data-capture-element]');
+    if (previewElement) {
+      try {
+        const canvas = await html2canvas(previewElement as HTMLElement, {
+          backgroundColor: null,
+          useCORS: true,
+          allowTaint: true,
+          scale: 2
+        });
+        
+        // Convertir en blob et télécharger
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `test-capture-${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }
+        }, 'image/png');
+        
+        console.log('✅ Test capture terminé avec succès');
+      } catch (error) {
+        console.error('❌ Erreur lors du test capture:', error);
+      }
+    } else {
+      console.error('❌ Element de capture non trouvé');
+    }
+  };
 
   // Debug pour tracer la transmission des props
   console.log('🔍 [ModalPersonnalisation] Props debug:', {
@@ -736,9 +781,31 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     }}>
       <DialogContent className="bg-black/90 backdrop-blur-lg border-white/20 max-w-[98vw] w-[98vw] h-[98vh] overflow-hidden">
         <DialogHeader className="border-b border-white/10 pb-3">
-          <DialogTitle className="text-xl font-semibold">
-            🎨 Personnalisation - {currentViewSide === 'front' ? 'Avant' : 'Arrière'}
-          </DialogTitle>
+          <div className="flex justify-between items-center">
+            <DialogTitle className="text-xl font-semibold">
+              🎨 Personnalisation - {currentViewSide === 'front' ? 'Avant' : 'Arrière'}
+            </DialogTitle>
+            <div className="flex gap-2">
+              {isAdmin && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleTestCapture}
+                  className="text-xs"
+                >
+                  Test Capture
+                </Button>
+              )}
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={handleValidate}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Valider
+              </Button>
+            </div>
+          </div>
         </DialogHeader>
         <div className="pt-3 h-full overflow-hidden">
           {desktopContent}

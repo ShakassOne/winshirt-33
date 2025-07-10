@@ -796,6 +796,11 @@ const ProductDetail = () => {
             <ModalPersonnalisation
               open={isCustomizationModalOpen}
               onClose={() => setIsCustomizationModalOpen(false)}
+              onValidate={() => {
+                setIsCustomizationModalOpen(false);
+                // Ici on pourrait sauvegarder la personnalisation
+                console.log('✅ Personnalisation validée');
+              }}
               currentViewSide={currentViewSide}
               onViewSideChange={setCurrentViewSide}
               productName={product.name}

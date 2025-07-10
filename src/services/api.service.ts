@@ -152,13 +152,36 @@ export const fetchAllDesigns = async (): Promise<Design[]> => {
 };
 
 export const fetchLotteryById = async (id: string) => {
-  // Mock implementation - replace with actual API call
-  return null;
+  try {
+    const { data, error } = await supabase
+      .from('lotteries')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching lottery by id:', error);
+    return null;
+  }
 };
 
 export const fetchProductsWithTickets = async () => {
-  // Mock implementation - replace with actual API call
-  return [];
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .gt('tickets_offered', 0)
+      .eq('is_active', true)
+      .order('tickets_offered', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching products with tickets:', error);
+    return [];
+  }
 };
 
 export const createDesign = async (data: any) => {
@@ -177,8 +200,18 @@ export const deleteDesign = async (id: string) => {
 };
 
 export const fetchAllLotteries = async () => {
-  // Mock implementation - replace with actual API call
-  return [];
+  try {
+    const { data, error } = await supabase
+      .from('lotteries')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching lotteries:', error);
+    return [];
+  }
 };
 
 export const deleteLottery = async (id: string) => {
@@ -187,8 +220,18 @@ export const deleteLottery = async (id: string) => {
 };
 
 export const fetchAllMockups = async () => {
-  // Mock implementation - replace with actual API call
-  return [];
+  try {
+    const { data, error } = await supabase
+      .from('mockups')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching mockups:', error);
+    return [];
+  }
 };
 
 export const generateDesign = async (data: any) => {
@@ -197,8 +240,18 @@ export const generateDesign = async (data: any) => {
 };
 
 export const fetchAllProducts = async () => {
-  // Mock implementation - replace with actual API call
-  return [];
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
 };
 
 export const deleteProduct = async (id: string) => {

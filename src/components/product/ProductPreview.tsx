@@ -269,6 +269,7 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
             aspectRatio: '1/1'
           }} 
           onTouchMove={onTouchMove}
+          data-capture-element
         >
           {/* Image de base avec coloration dynamique */}
           <DynamicColorMockup

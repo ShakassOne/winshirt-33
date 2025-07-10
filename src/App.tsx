@@ -47,6 +47,7 @@ import EmailAdmin from "@/pages/admin/EmailAdmin";
 import LexiqueAdmin from "@/pages/admin/LexiqueAdmin";
 import AnalyticsAdmin from "@/pages/admin/AnalyticsAdmin";
 import DTFProductionAdmin from "@/pages/admin/DTFProductionAdmin";
+import MyCustomizations from "@/pages/MyCustomizations";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { createOptimizedQueryClient } from "@/lib/queryClient";
@@ -84,6 +85,7 @@ function App() {
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/account" element={<Account />} />
                   <Route path="/profile" element={<Profile />} />
+                  <Route path="/my-customizations" element={<MyCustomizations />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/lotteries" element={<Lotteries />} />
                   <Route path="/lotteries/:id" element={<LotteryDetail />} />

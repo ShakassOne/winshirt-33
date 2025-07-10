@@ -103,7 +103,7 @@ export const LotterySelector: React.FC<LotterySelectorProps> = ({
         </div>
 
         {/* Liste des loteries avec miniatures - format compact horizontal */}
-        <div className="grid grid-cols-1 gap-3 max-h-80 overflow-y-auto">
+        <div className="grid grid-cols-1 gap-3 max-h-32 overflow-y-auto">
           {lotteries.map((lottery) => {
             const participants = participantCounts.get(lottery.title) || 0;
             const goal = 1000;
