@@ -918,6 +918,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_customizations: {
+        Row: {
+          created_at: string
+          customization: Json
+          hd_url: string | null
+          id: string
+          preview_url: string | null
+          product_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customization: Json
+          hd_url?: string | null
+          id?: string
+          preview_url?: string | null
+          product_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customization?: Json
+          hd_url?: string | null
+          id?: string
+          preview_url?: string | null
+          product_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

@@ -4,6 +4,7 @@ import { useOptimizedAuth } from '@/context/OptimizedAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserOrders } from '@/services/order.service';
 import { useLotteryRetroprocessing } from '@/hooks/useLotteryRetroprocessing';
+import { MyCustomizationsTab } from '@/components/account/MyCustomizationsTab';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
-import { Loader2, User, Package, Calendar, Euro, Eye, Trophy, Ticket, RefreshCw } from 'lucide-react';
+import { Loader2, User, Package, Calendar, Euro, Eye, Trophy, Ticket, RefreshCw, Palette, Download, Trash2 } from 'lucide-react';
 import { Order } from '@/types/supabase.types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -294,7 +295,7 @@ const Account = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="profile" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
                 Profil
@@ -306,6 +307,10 @@ const Account = () => {
               <TabsTrigger value="lotteries" className="flex items-center gap-2">
                 <Trophy className="h-4 w-4" />
                 Loteries ({lotteryParticipations.length})
+              </TabsTrigger>
+              <TabsTrigger value="customizations" className="flex items-center gap-2">
+                <Palette className="h-4 w-4" />
+                Mes Custos
               </TabsTrigger>
             </TabsList>
 
@@ -546,6 +551,10 @@ const Account = () => {
                   ))}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="customizations" className="mt-6">
+              <MyCustomizationsTab />
             </TabsContent>
           </Tabs>
         </div>

@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Product as ProductType, Mockup as MockupType, CartItem, Lottery, Design } from '@/types/supabase.types';
 import { MockupWithColors, MockupColor } from '@/types/mockup.types';
 import { useCart } from '@/context/CartContext';
+import { ProductPreview } from '@/components/product/ProductPreview';
+import { useCustomizationCapture } from '@/hooks/useCustomizationCapture';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,7 +32,8 @@ import { removeBackground, loadImageFromUrl } from '@/services/backgroundRemoval
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addItem } = useCart();
+  const { addItem, isLoading: cartLoading } = useCart();
+  const { captureAndSaveCustomization } = useCustomizationCapture();
 
   // Product and mockup states
   const [product, setProduct] = useState<ProductType | null>(null);
@@ -48,6 +51,8 @@ const ProductDetail = () => {
   // Customization modal state
   const [isCustomizationModalOpen, setIsCustomizationModalOpen] = useState(false);
   const [currentViewSide, setCurrentViewSide] = useState<'front' | 'back'>('front');
+  const [validatedCustomization, setValidatedCustomization] = useState<any>(null);
+  const [validatedViewSide, setValidatedViewSide] = useState<'front' | 'back'>('front');
 
   // Design states
   const [selectedDesignFront, setSelectedDesignFront] = useState<Design | null>(null);
@@ -650,22 +655,72 @@ const ProductDetail = () => {
             <div className="lg:w-1/2 lg:sticky lg:top-32 lg:self-start">
               <Card className="bg-white/10 backdrop-blur-lg border-white/20 overflow-hidden h-full lg:min-h-[calc(100vh-200px)]">
                 <CardContent className="p-6 h-full">
-                  <AspectRatio ratio={1 / 1} className="w-full h-full">
-                    {mockup && selectedColor ? (
-                      <DynamicColorMockup
-                        baseImageUrl={mockup.svg_front_url || product.image_url}
-                        selectedColor={selectedColor}
-                        alt={product.name}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                    ) : (
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
+                  <div className="space-y-4 h-full">
+                    <AspectRatio ratio={1 / 1} className="w-full" data-capture-element>
+                      {validatedCustomization ? (
+                        <ProductPreview
+                          productName={product.name}
+                          productImageUrl={product.image_url}
+                          currentViewSide={validatedViewSide}
+                          onViewSideChange={setValidatedViewSide}
+                          mockup={mockup}
+                          selectedMockupColor={validatedCustomization.mockupColor}
+                          hasTwoSides={mockup?.svg_back_url ? true : false}
+                          selectedDesignFront={validatedCustomization.frontDesign}
+                          selectedDesignBack={validatedCustomization.backDesign}
+                          designTransformFront={validatedCustomization.designTransformFront}
+                          designTransformBack={validatedCustomization.designTransformBack}
+                          svgColorFront={svgColorFront}
+                          svgColorBack={svgColorBack}
+                          svgContentFront={svgContentFront}
+                          svgContentBack={svgContentBack}
+                          textContentFront={validatedCustomization.frontText?.content || ''}
+                          textContentBack={validatedCustomization.backText?.content || ''}
+                          textFontFront={validatedCustomization.frontText?.font || 'Arial'}
+                          textFontBack={validatedCustomization.backText?.font || 'Arial'}
+                          textColorFront={validatedCustomization.frontText?.color || '#000000'}
+                          textColorBack={validatedCustomization.backText?.color || '#000000'}
+                          textStylesFront={validatedCustomization.frontText?.styles || { bold: false, italic: false, underline: false }}
+                          textStylesBack={validatedCustomization.backText?.styles || { bold: false, italic: false, underline: false }}
+                          textTransformFront={validatedCustomization.frontText?.transform || { position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
+                          textTransformBack={validatedCustomization.backText?.transform || { position: { x: 0, y: 0 }, scale: 1, rotation: 0 }}
+                        />
+                      ) : mockup && selectedColor ? (
+                        <DynamicColorMockup
+                          baseImageUrl={mockup.svg_front_url || product.image_url}
+                          selectedColor={selectedColor}
+                          alt={product.name}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <img
+                          src={product.image_url}
+                          alt={product.name}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      )}
+                    </AspectRatio>
+                    
+                    {/* Boutons recto/verso si personnalisation validée */}
+                    {validatedCustomization && mockup?.svg_back_url && (
+                      <div className="flex gap-2 justify-center">
+                        <Button
+                          variant={validatedViewSide === 'front' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setValidatedViewSide('front')}
+                        >
+                          Recto
+                        </Button>
+                        <Button
+                          variant={validatedViewSide === 'back' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setValidatedViewSide('back')}
+                        >
+                          Verso
+                        </Button>
+                      </div>
                     )}
-                  </AspectRatio>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -797,9 +852,40 @@ const ProductDetail = () => {
               open={isCustomizationModalOpen}
               onClose={() => setIsCustomizationModalOpen(false)}
               onValidate={() => {
+                // Capturer l'état actuel de la personnalisation
+                const currentCustomization = {
+                  frontDesign: selectedDesignFront,
+                  backDesign: selectedDesignBack,
+                  frontText: textContentFront ? {
+                    content: textContentFront,
+                    font: textFontFront,
+                    color: textColorFront,
+                    styles: textStylesFront,
+                    transform: textTransformFront
+                  } : null,
+                  backText: textContentBack ? {
+                    content: textContentBack,
+                    font: textFontBack,
+                    color: textColorBack,
+                    styles: textStylesBack,
+                    transform: textTransformBack
+                  } : null,
+                  designTransformFront,
+                  designTransformBack,
+                  selectedSizeFront,
+                  selectedSizeBack,
+                  mockupColor: selectedColor
+                };
+                
+                setValidatedCustomization(currentCustomization);
+                
+                // Sauvegarder automatiquement dans "Mes Custos" si il y a une vraie personnalisation
+                if (selectedDesignFront || selectedDesignBack || textContentFront || textContentBack) {
+                  captureAndSaveCustomization(product.name, currentCustomization);
+                }
+                
                 setIsCustomizationModalOpen(false);
-                // Ici on pourrait sauvegarder la personnalisation
-                console.log('✅ Personnalisation validée');
+                console.log('✅ Personnalisation validée et sauvegardée:', currentCustomization);
               }}
               currentViewSide={currentViewSide}
               onViewSideChange={setCurrentViewSide}

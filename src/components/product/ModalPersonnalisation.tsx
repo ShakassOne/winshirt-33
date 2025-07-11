@@ -188,12 +188,28 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   const { isAdmin } = useAdminCheck();
 
   // Fonctions pour les boutons de validation et test capture
-  const handleValidate = () => {
+  const handleValidate = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    // Nettoyer tous les event listeners tactiles potentiellement conflictuels
+    const elements = document.querySelectorAll('[data-draggable]');
+    elements.forEach(el => {
+      const htmlEl = el as HTMLElement;
+      htmlEl.style.pointerEvents = 'auto';
+    });
+    
     onValidate?.();
     onClose();
   };
 
-  const handleTestCapture = async () => {
+  const handleTestCapture = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     const previewElement = document.querySelector('[data-capture-element]');
     if (previewElement) {
       try {
@@ -677,6 +693,28 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               Supprimer
             </Button>
           )}
+          
+          {/* Boutons de validation et test pour mobile */}
+          <div className="absolute -top-20 right-4 flex gap-2">
+            {isAdmin && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleTestCapture}
+                className="text-xs"
+              >
+                Test Capture
+              </Button>
+            )}
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={handleValidate}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Valider
+            </Button>
+          </div>
         </div>
       </div>
 
