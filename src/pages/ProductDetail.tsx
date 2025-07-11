@@ -590,11 +590,6 @@ const ProductDetail = () => {
       };
 
       await addItem(cartItem);
-      
-      toast({
-        title: "Produit ajouté au panier",
-        description: `${product.name} a été ajouté à votre panier.`,
-      });
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast({
