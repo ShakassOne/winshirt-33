@@ -180,10 +180,29 @@ const ProductDetail = () => {
 
   const hasCustomization = () => {
     const customization = generateCustomization();
-    return !!(customization.frontDesign || customization.backDesign || 
+    return !!(customization.frontDesign || customization.backDesign ||
               customization.frontText || customization.backText ||
               customization.svgContentFront || customization.svgContentBack);
   };
+
+  useEffect(() => {
+    if (!validatedCustomization || !product) return;
+
+    const { frontDesign, backDesign, frontText, backText } = validatedCustomization;
+    const hasDesignOrText =
+      frontDesign ||
+      backDesign ||
+      (frontText && frontText.content) ||
+      (backText && backText.content);
+
+    if (!hasDesignOrText) return;
+
+    const timeout = setTimeout(() => {
+      captureAndSaveCustomization(product.name, validatedCustomization);
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [validatedCustomization]);
 
   // Drag & Drop handlers
   const handleDesignMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
@@ -873,11 +892,6 @@ const ProductDetail = () => {
                 };
                 
                 setValidatedCustomization(currentCustomization);
-                
-                // Sauvegarder automatiquement dans "Mes Custos" si il y a une vraie personnalisation
-                if (selectedDesignFront || selectedDesignBack || textContentFront || textContentBack) {
-                  captureAndSaveCustomization(product.name, currentCustomization);
-                }
                 
                 setIsCustomizationModalOpen(false);
                 console.log('✅ Personnalisation validée et sauvegardée:', currentCustomization);
