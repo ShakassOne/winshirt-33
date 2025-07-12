@@ -695,7 +695,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           )}
           
           {/* Boutons de validation et test pour mobile */}
-          <div className="absolute -top-20 right-4 flex gap-2">
+          <div className="absolute bottom-4 right-4 flex gap-2">
             {isAdmin && (
               <Button 
                 variant="outline" 
@@ -817,36 +817,37 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         onClose();
       }
     }}>
-      <DialogContent className="bg-black/90 backdrop-blur-lg border-white/20 max-w-[98vw] w-[98vw] h-[98vh] overflow-hidden">
+      <DialogContent className="relative bg-black/90 backdrop-blur-lg border-white/20 max-w-[98vw] w-[98vw] h-[98vh] overflow-hidden">
         <DialogHeader className="border-b border-white/10 pb-3">
           <div className="flex justify-between items-center">
             <DialogTitle className="text-xl font-semibold">
               🎨 Personnalisation - {currentViewSide === 'front' ? 'Avant' : 'Arrière'}
             </DialogTitle>
-            <div className="flex gap-2">
-              {isAdmin && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleTestCapture}
-                  className="text-xs"
-                >
-                  Test Capture
-                </Button>
-              )}
-              <Button 
-                variant="default" 
-                size="sm"
-                onClick={handleValidate}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                Valider
-              </Button>
-            </div>
+            
           </div>
         </DialogHeader>
         <div className="pt-3 h-full overflow-hidden">
           {desktopContent}
+        </div>
+        <div className="absolute bottom-4 right-4 flex gap-2">
+          {isAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTestCapture}
+              className="text-xs"
+            >
+              Test Capture
+            </Button>
+          )}
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleValidate}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            Valider
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
