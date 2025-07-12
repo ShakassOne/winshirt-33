@@ -30,21 +30,42 @@ const MemoizedCartProvider = memo(({ children }: { children: React.ReactNode }) 
   
   const { captureUnified, isCapturing } = useUnifiedCapture();
   
-  // Generate a cart token if not exists
+  // Generate or load cart token on mount
   useEffect(() => {
     const initToken = async () => {
-      if (!cartToken) {
-        const newCartToken = uuidv4();
+      const storedToken = typeof window !== 'undefined' ? localStorage.getItem('cartToken') : null;
+
+      if (storedToken) {
+        setCartToken(storedToken);
+        logger.log('Loaded cart token from localStorage:', storedToken);
         try {
-          await getOrCreateCartToken(newCartToken);
+          await getOrCreateCartToken(storedToken);
         } catch (err) {
-          console.error('Error creating cart token:', err);
+          console.error('Error verifying cart token:', err);
         }
-        setCartToken(newCartToken);
-        logger.log('Created new cart token:', newCartToken);
+        return;
       }
+
+      const newCartToken = uuidv4();
+      try {
+        await getOrCreateCartToken(newCartToken);
+      } catch (err) {
+        console.error('Error creating cart token:', err);
+      }
+      setCartToken(newCartToken);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('cartToken', newCartToken);
+      }
+      logger.log('Created new cart token:', newCartToken);
     };
     initToken();
+  }, []);
+
+  // Persist cart token whenever it changes
+  useEffect(() => {
+    if (cartToken && typeof window !== 'undefined') {
+      localStorage.setItem('cartToken', cartToken);
+    }
   }, [cartToken]);
   
   // Check for auth state changes
@@ -101,8 +122,8 @@ const MemoizedCartProvider = memo(({ children }: { children: React.ReactNode }) 
   }, [cartToken]);
   
   // Load cart items when cartToken is available and initialized
-  const loadCartItems = useCallback(async () => {
-    if (!cartToken || !isInitialized) return;
+  const loadCartItems = useCallback(async (): Promise<boolean> => {
+    if (!cartToken || !isInitialized) return false;
     
     logger.log("Loading cart items for token:", cartToken);
     setIsLoading(true);
@@ -111,9 +132,11 @@ const MemoizedCartProvider = memo(({ children }: { children: React.ReactNode }) 
       logger.log("Loaded cart items:", cartItems);
       setItems(cartItems);
       setError(null);
+      return true;
     } catch (err: any) {
       setError(err.message);
       console.error("Error loading cart items:", err);
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -233,7 +256,12 @@ const MemoizedCartProvider = memo(({ children }: { children: React.ReactNode }) 
       };
       
       await addToCart(cartToken, itemWithProductionFiles, currentUser?.id);
-      await loadCartItems();
+      const loaded = await loadCartItems();
+      if (loaded) {
+        logger.log("Cart items reloaded after addItem");
+      } else {
+        logger.log("Failed to reload cart items after addItem");
+      }
       
       toast({
         title: "Produit ajouté au panier",
