@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import {
-  fetchAllDesigns as fetchDesigns, createDesign, updateDesign, deleteDesign
+  fetchAllDesignsAdmin as fetchDesigns, createDesign, updateDesign, deleteDesign
 } from '@/services/api.service';
 import { Design } from '@/types/supabase.types';
 import { Button } from '@/components/ui/button';
