@@ -135,6 +135,22 @@ export const fetchFeaturedLotteries = async () => {
   return [];
 };
 
+// Fetch all designs without filtering by active status for admin usage
+export const fetchAllDesignsAdmin = async (): Promise<Design[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('designs')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching admin designs:', error);
+    return [];
+  }
+};
+
 export const fetchAllDesigns = async (): Promise<Design[]> => {
   try {
     const { data, error } = await supabase
@@ -184,19 +200,37 @@ export const fetchProductsWithTickets = async () => {
   }
 };
 
-export const createDesign = async (data: any) => {
-  // Mock implementation - replace with actual API call
-  return data;
+// CRUD operations for designs
+export const createDesign = async (data: Omit<Design, 'id' | 'created_at' | 'updated_at'>): Promise<Design> => {
+  const { data: result, error } = await supabase
+    .from('designs')
+    .insert(data)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return result as Design;
 };
 
-export const updateDesign = async (id: string, data: any) => {
-  // Mock implementation - replace with actual API call
-  return data;
+export const updateDesign = async (id: string, data: Partial<Design>): Promise<Design> => {
+  const { data: result, error } = await supabase
+    .from('designs')
+    .update(data)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return result as Design;
 };
 
-export const deleteDesign = async (id: string) => {
-  // Mock implementation - replace with actual API call
-  return;
+export const deleteDesign = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('designs')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
 };
 
 export const fetchAllLotteries = async () => {
