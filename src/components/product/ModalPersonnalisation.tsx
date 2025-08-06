@@ -43,7 +43,7 @@ interface ModalPersonnalisationProps {
   // Design states
   selectedDesignFront: Design | null;
   selectedDesignBack: Design | null;
-  onSelectDesign: (design: Design) => void;
+  onSelectDesign: (design: Design | null) => void;
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onAIImageGenerated: (imageUrl: string, imageName: string) => void;
   setSelectedDesignFront: (design: Design | null) => void;
@@ -340,12 +340,10 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     textTransformFront, textTransformBack
   ]);
 
-  const handleDesignSelection = (design: Design) => {
+  const handleDesignSelection = (design: Design | null) => {
     onSelectDesign(design);
-    
-    // Check if it's an SVG and handle content appropriately
-    if (design.image_url?.toLowerCase().includes('.svg') || design.image_url?.includes('data:image/svg')) {
-      // Only fetch if it's a remote SVG URL, not a blob URL
+
+    if (design?.image_url?.toLowerCase().includes('.svg') || design?.image_url?.includes('data:image/svg')) {
       if (design.image_url.startsWith('http') && !design.image_url.startsWith('blob:')) {
         fetch(design.image_url)
           .then(response => response.text())
@@ -355,13 +353,13 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           })
           .catch(error => {
             console.error('Error loading SVG content:', error);
-            // Fallback: try to use the URL directly
-            onSvgContentChange(`<svg viewBox="0 0 200 200"><image href="${design.image_url}" width="200" height="200"/></svg>`);
+            onSvgContentChange(`\x3csvg viewBox="0 0 200 200"\x3e<image href="${design.image_url}" width="200" height="200"/>\x3c/svg\x3e`);
           });
       } else {
-        // For blob URLs or data URLs, we assume the content is already processed
         console.log('SVG blob URL detected, skipping fetch');
       }
+    } else {
+      onSvgContentChange('');
     }
 
     closeDrawer();
