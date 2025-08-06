@@ -60,9 +60,9 @@ export const FluidDropNavigation: React.FC = () => {
   if (isMobile) {
     return (
       <>
-        {/* Header mobile avec animation de goutte adaptée */}
-        <header className="fluid-header-mobile">
-          <div className="fluid-menu-container-mobile">
+        {/* Header mobile clean */}
+        <header className="fluid-header">
+          <div className="fluid-menu-container">
             {/* Logo */}
             <div className="fluid-logo-mobile">
               <Link to="/">

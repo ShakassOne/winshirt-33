@@ -9,81 +9,57 @@ interface HeroProps {
 
 const Hero: React.FC<HeroProps> = ({ className }) => {
   return (
-    <section className={cn('relative min-h-screen flex items-center pt-16', className)}>
-      {/* Background elements */}
+    <section className={cn('relative min-h-screen flex items-center justify-center bg-background', className)}>
+      {/* Hero background with automotive pattern */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/2 left-1/4 w-72 h-72 bg-winshirt-purple/20 rounded-full filter blur-3xl animate-pulse-light" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-winshirt-blue/20 rounded-full filter blur-3xl animate-pulse-light" style={{ animationDelay: '1s' }} />
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-muted/20"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1)_0%,transparent_50%)] opacity-20"></div>
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-4xl">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in-up">
-            Portez <span className="text-gradient">votre style</span>, 
-            <br />tentez votre <span className="text-gradient">chance</span>
+      <div className="container mx-auto px-4 relative z-10 text-center">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 tracking-tight">
+            <span className="block text-foreground">BMW M2</span>
+            <span className="block text-4xl md:text-5xl lg:text-6xl font-normal text-muted-foreground mt-4">
+              COMPÉTITION
+            </span>
+            <span className="block text-3xl md:text-4xl lg:text-5xl font-light text-muted-foreground/80 mt-2">
+              by Winshirt
+            </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-white/80 mb-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            Un concept innovant qui allie mode et loterie. Chaque achat vous donne une chance de gagner des prix exceptionnels.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-       <a href="/products">
-  <Button size="lg" className="bg-gradient-purple hover:opacity-90">
-    Découvrir les produits
-  </Button>
-</a>
-<a href="/lotteries">
-  <Button size="lg" variant="outline" className="border-winshirt-purple text-white">
-    Voir les loteries
-  </Button>
-</a>
-          </div>
-          
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-            <Stat value="1000+" label="Produits vendus" />
-            <Stat value="24" label="Loteries actives" />
-            <Stat value="120" label="Gagnants" />
-            <Stat value="50 000€" label="Prix distribués" />
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mt-12">
+            <Button 
+              size="lg" 
+              className="clean-button-primary px-8 py-4 text-lg font-medium rounded-none uppercase tracking-wider"
+            >
+              Allez-y Joue
+            </Button>
           </div>
         </div>
-      </div>
-      
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-        <button 
-          className="flex flex-col items-center text-white/70 hover:text-white transition-colors animate-bounce"
-          onClick={() => window.scrollTo({
-            top: window.innerHeight,
-            behavior: 'smooth'
-          })}
-        >
-          <span className="text-sm mb-2">Explorer</span>
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            width="24" 
-            height="24" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          >
-            <path d="m6 9 6 6 6-6"/>
-          </svg>
-        </button>
+        
+        <div className="mt-20">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4 uppercase tracking-wider">
+            Porte ton style, tente ta chance !
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 max-w-4xl mx-auto">
+            <div className="flex flex-col items-start text-left">
+              <h3 className="text-xl font-semibold text-foreground mb-2">T-Shirt M2</h3>
+              <p className="text-lg text-foreground font-bold">19,00€</p>
+              <ul className="text-sm text-muted-foreground mt-4 space-y-2">
+                <li>• Un vêtement toujours tendance, vers une mode plus responsable.</li>
+                <li>• Essentiel, bio et coloré.</li>
+                <li>• Tous les coloris sont fabriqués à partir de coton en conversion biologique.</li>
+                <li>• Encolure ronde en bord-côte avec élasthanne.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
 };
 
-const Stat = ({ value, label }: { value: string; label: string }) => {
-  return (
-    <div className="text-center">
-      <p className="text-2xl md:text-3xl font-bold text-white mb-1">{value}</p>
-      <p className="text-sm text-white/60">{label}</p>
-    </div>
-  );
-};
 
 export default Hero;

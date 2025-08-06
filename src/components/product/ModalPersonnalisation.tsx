@@ -420,7 +420,37 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
   const desktopContent = (
     <div className="flex h-full gap-4">
       {/* Zone de prévisualisation - 45% */}
-      <div className="w-[45%] flex flex-col">
+      <div className="w-[45%] flex flex-col bg-background/50 rounded-lg border border-border/10">
+        {/* Contrôles Vue Front/Back */}
+        <div className="p-4 border-b border-border/10">
+          <div className="flex gap-2 justify-center">
+            <Button
+              variant={currentViewSide === 'front' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onViewSideChange('front')}
+              className={`px-8 py-2 rounded-full font-medium transition-all ${
+                currentViewSide === 'front' 
+                  ? 'clean-button-primary' 
+                  : 'clean-button-secondary'
+              }`}
+            >
+              Front
+            </Button>
+            <Button
+              variant={currentViewSide === 'back' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onViewSideChange('back')}
+              className={`px-8 py-2 rounded-full font-medium transition-all ${
+                currentViewSide === 'back' 
+                  ? 'clean-button-primary' 
+                  : 'clean-button-secondary'
+              }`}
+            >
+              Back
+            </Button>
+          </div>
+        </div>
+        
         <ProductPreview
           productName={productName}
           productImageUrl={productImageUrl}
@@ -454,10 +484,10 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
       </div>
 
       {/* Zone d'édition centralisée - 25% */}
-      <div className="w-[25%] flex flex-col">
+      <div className="w-[25%] flex flex-col bg-background/30 rounded-lg border border-border/10 p-4">
         {filteredMockupColors.length > 0 && (
           <div className="mb-4">
-            <h3 className="text-lg font-medium mb-2 text-white">Couleur du produit</h3>
+            <h3 className="text-lg font-medium mb-2 text-foreground">Couleur du produit</h3>
             <ProductColorSelector
               colors={filteredMockupColors}
               selectedColor={selectedMockupColor}
@@ -480,9 +510,12 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
       </div>
 
       {/* Zone des outils - 30% */}
-      <div className="w-[30%] flex flex-col">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <TabsList className={`grid w-full grid-cols-6 mb-3 ${(currentData.design || currentData.textContent) ? 'opacity-60 scale-95' : ''} transition-all duration-200`}>
+      <div className="w-[30%] flex flex-col clean-sidebar rounded-lg border border-border/10">
+        <div className="p-4 border-b border-border/10">
+          <h3 className="text-lg font-medium text-foreground mb-4">Galerie de designs</h3>
+        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col p-4">
+          <TabsList className={`grid w-full grid-cols-6 mb-3 bg-secondary/20 ${(currentData.design || currentData.textContent) ? 'opacity-60 scale-95' : ''} transition-all duration-200`}>
             <TabsTrigger value="designs" className="flex items-center gap-1 text-xs">
               <ImageIcon className="h-3 w-3" />
               <span className="hidden sm:inline">Images</span>
@@ -817,13 +850,20 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         onClose();
       }
     }}>
-      <DialogContent className="relative bg-black/90 backdrop-blur-lg border-white/20 max-w-[98vw] w-[98vw] h-[98vh] overflow-hidden">
-        <DialogHeader className="border-b border-white/10 pb-3">
-          <div className="flex justify-between items-center">
-            <DialogTitle className="text-xl font-semibold">
-              🎨 Personnalisation - {currentViewSide === 'front' ? 'Avant' : 'Arrière'}
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 clean-modal border border-border/10">
+        <DialogHeader className="px-6 py-4 clean-modal border-b border-border/10">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-xl font-medium text-foreground">
+              Personnaliser votre {productName}
             </DialogTitle>
-            
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onClose}
+              className="text-muted-foreground hover:text-foreground hover:bg-secondary/20"
+            >
+              <X className="h-5 w-5" />
+            </Button>
           </div>
         </DialogHeader>
         <div className="pt-3 h-full overflow-hidden">
@@ -835,7 +875,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               variant="outline"
               size="sm"
               onClick={handleTestCapture}
-              className="text-xs"
+              className="text-xs clean-button-secondary"
             >
               Test Capture
             </Button>
@@ -844,7 +884,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             variant="default"
             size="sm"
             onClick={handleValidate}
-            className="bg-green-600 hover:bg-green-700"
+            className="clean-button-primary"
           >
             Valider
           </Button>
