@@ -58,6 +58,13 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
     text: currentViewSide === 'front' ? customization?.frontText : customization?.backText
   };
 
+  const getDesignLabel = () => {
+    const category = currentData.design?.designCategory;
+    if (category === 'QR Code') return 'QR Code';
+    if (category === 'AI Generated') return 'IA';
+    return 'Image';
+    };
+
   const getProductImage = () => {
     let imageUrl;
     
@@ -443,7 +450,7 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
                   onClick={() => setSelectedElement('design')}
                 >
                   <Move className="h-3 w-3 mr-1" />
-                  Design
+                  {getDesignLabel()}
                 </Button>
               )}
               
