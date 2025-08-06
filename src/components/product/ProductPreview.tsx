@@ -284,8 +284,10 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
             <div
               className="absolute cursor-move select-none"
               style={{
-                transform: `translate(${getCurrentDesignTransform().position.x}px, ${getCurrentDesignTransform().position.y}px) 
-                               rotate(${getCurrentDesignTransform().rotation}deg) 
+                left: '50%',
+                top: '50%',
+                transform: `translate(-50%, -50%) translate(${getCurrentDesignTransform().position.x}px, ${getCurrentDesignTransform().position.y}px)
+                               rotate(${getCurrentDesignTransform().rotation}deg)
                                scale(${getCurrentDesignTransform().scale})`,
                 transformOrigin: 'center',
                 zIndex: 10
@@ -299,11 +301,13 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
           
           {/* Text Layer */}
           {getCurrentTextContent() && (
-            <div 
-              className="absolute cursor-move select-none" 
+            <div
+              className="absolute cursor-move select-none"
               style={{
-                transform: `translate(${getCurrentTextTransform().position.x}px, ${getCurrentTextTransform().position.y}px) 
-                             rotate(${getCurrentTextTransform().rotation}deg) 
+                left: '50%',
+                top: '50%',
+                transform: `translate(-50%, -50%) translate(${getCurrentTextTransform().position.x}px, ${getCurrentTextTransform().position.y}px)
+                             rotate(${getCurrentTextTransform().rotation}deg)
                              scale(${getCurrentTextTransform().scale})`,
                 transformOrigin: 'center',
                 fontFamily: getCurrentTextFont(),
@@ -314,8 +318,8 @@ export const ProductPreview: React.FC<ProductPreviewProps> = ({
                 fontSize: '24px',
                 textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
                 zIndex: 20
-              }} 
-              onMouseDown={onTextMouseDown} 
+              }}
+              onMouseDown={onTextMouseDown}
               onTouchStart={onTextMouseDown}
             >
               {getCurrentTextContent()}

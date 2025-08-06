@@ -295,6 +295,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
       designId: selectedDesignFront.id,
       designUrl: selectedDesignFront.image_url,
       designName: selectedDesignFront.name,
+      designCategory: selectedDesignFront.category,
       printSize: selectedSizeFront || 'A4',
       transform: designTransformFront
     } : null;
@@ -303,6 +304,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
       designId: selectedDesignBack.id,
       designUrl: selectedDesignBack.image_url,
       designName: selectedDesignBack.name,
+      designCategory: selectedDesignBack.category,
       printSize: selectedSizeBack || 'A4',
       transform: designTransformBack
     } : null;
