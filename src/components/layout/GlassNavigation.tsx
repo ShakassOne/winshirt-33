@@ -84,10 +84,18 @@ export const GlassNavigation: React.FC = () => {
                 </Link>
                 {isAuthenticated && isAdmin && (
                   <>
-                    <Link to="/admin" className="block text-white/70 hover:text-white px-3 py-2 rounded-md" onClick={() => setIsMenuOpen(false)}>
-                      Admin
+                    <Link
+                      to="/admin/designs"
+                      className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Visuels
                     </Link>
-                    <Link to="/admin/users" className="block text-white/70 hover:text-white px-3 py-2 rounded-md" onClick={() => setIsMenuOpen(false)}>
+                    <Link
+                      to="/admin/users"
+                      className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
                       Utilisateurs
                     </Link>
                   </>
@@ -198,7 +206,7 @@ export const GlassNavigation: React.FC = () => {
                       {isAdmin && (
                         <>
                           <DropdownMenuItem className="hover:bg-white/5">
-                            <Link to="/admin" className="flex w-full">Administration</Link>
+                            <Link to="/admin/designs" className="flex w-full">Visuels</Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem className="hover:bg-white/5">
                             <Link to="/admin/users" className="flex w-full">Utilisateurs</Link>
