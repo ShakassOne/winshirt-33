@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { RotateCw, Eraser, Sparkles, Eye, FileImage, Type, Settings } from 'lucide-react';
+import { RotateCw, Eraser, Sparkles, FileImage, Type, Settings } from 'lucide-react';
 import { Design } from '@/types/supabase.types';
 
 interface UnifiedEditingControlsProps {
@@ -66,16 +66,9 @@ export const UnifiedEditingControls: React.FC<UnifiedEditingControlsProps> = ({
     onRemoveBackground(tolerance);
   };
 
-  // Toujours afficher si au moins un élément est présent
+  // Hide the editing panel when nothing is selected
   if (!selectedDesign && !hasText) {
-    return (
-      <Card className="bg-white/5 border-white/10 p-4">
-        <div className="text-center text-white/50 text-sm">
-          <Eye className="h-6 w-6 mx-auto mb-2 opacity-50" />
-          Sélectionnez un design ou ajoutez du texte pour voir les options d'édition
-        </div>
-      </Card>
-    );
+    return null;
   }
 
   return (

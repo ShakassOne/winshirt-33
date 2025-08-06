@@ -1,10 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Settings, Heart, User, Menu, X, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
 import CartIcon from '@/components/cart/CartIcon';
 import SignOutButton from '@/components/auth/SignOutButton';
@@ -22,7 +28,7 @@ const navItems: NavItem[] = [
   { id: 'home', icon: Home, path: '/', label: 'Accueil' },
   { id: 'products', icon: ShoppingCart, path: '/products', label: 'Shop' },
   { id: 'lotteries', icon: Heart, path: '/lotteries', label: 'Loteries' },
-  { id: 'account', icon: User, path: '/account', label: 'Compte' }
+  { id: 'account', icon: User, path: '/account', label: 'Compte' },
 ];
 
 export const GlassNavigation: React.FC = () => {
@@ -33,7 +39,7 @@ export const GlassNavigation: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Déterminer l'index actif basé sur la route
+  // Détermine l'index actif selon la route
   useEffect(() => {
     const currentPath = location.pathname;
     const index = navItems.findIndex(item => {
@@ -44,10 +50,10 @@ export const GlassNavigation: React.FC = () => {
     setActiveIndex(index >= 0 ? index : 0);
   }, [location.pathname]);
 
+  // Version Mobile
   if (isMobile) {
     return (
       <>
-        {/* Mobile Header */}
         <header className="fixed top-0 left-0 w-full z-50">
           <div className="container mx-auto px-4 pt-4 py-[20px]">
             <div className="max-w-4xl mx-auto rounded-full bg-black/60 backdrop-blur-lg border border-white/10 shadow-lg">
@@ -55,7 +61,6 @@ export const GlassNavigation: React.FC = () => {
                 <Link to="/" className="flex-shrink-0">
                   <span className="text-xl font-bold text-gradient">WinShirt</span>
                 </Link>
-
                 <div className="flex items-center space-x-2">
                   <ThemeToggle />
                   <CartIcon />
@@ -70,7 +75,6 @@ export const GlassNavigation: React.FC = () => {
               </div>
             </div>
 
-            {/* Mobile Menu */}
             {isMenuOpen && (
               <div className="md:hidden py-4 mt-2 glass-card max-w-4xl mx-auto px-4">
                 <Link to="/" className="block text-white/70 hover:text-white px-3 py-2 rounded-md" onClick={() => setIsMenuOpen(false)}>
@@ -91,20 +95,17 @@ export const GlassNavigation: React.FC = () => {
                     >
                       Visuels
                     </Link>
-                    <Link
-                      to="/admin/users"
-                      className="block text-white/70 hover:text-white px-3 py-2 rounded-md"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Utilisateurs
-                    </Link>
                   </>
                 )}
                 <div className="px-3 py-2">
                   {isAuthenticated ? (
                     <SignOutButton variant="outline" className="w-full" />
                   ) : (
-                    <Link to="/auth" className="block text-white/70 hover:text-white px-3 py-2 rounded-md text-center" onClick={() => setIsMenuOpen(false)}>
+                    <Link
+                      to="/auth"
+                      className="block text-white/70 hover:text-white px-3 py-2 rounded-md text-center"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
                       Se connecter
                     </Link>
                   )}
@@ -114,13 +115,11 @@ export const GlassNavigation: React.FC = () => {
           </div>
         </header>
 
-        {/* Mobile Bottom Navigation */}
         <div className="glass-nav-mobile">
           <div className="flex justify-around items-center relative">
             {navItems.map((item, index) => {
               const Icon = item.icon;
               const isActive = index === activeIndex;
-              
               return (
                 <Link
                   key={item.id}
@@ -128,9 +127,7 @@ export const GlassNavigation: React.FC = () => {
                   className={`glass-nav-mobile-item ${isActive ? 'active' : ''}`}
                   style={{ flex: '1' }}
                 >
-                  {isActive && (
-                    <div className="glass-nav-mobile-indicator" />
-                  )}
+                  {isActive && <div className="glass-nav-mobile-indicator" />}
                   <Icon className={`h-5 w-5 relative z-10 ${isActive ? 'text-white' : 'text-white/60'}`} />
                   <span className={`text-xs mt-1 relative z-10 ${isActive ? 'text-white' : 'text-white/60'}`}>
                     {item.label}
@@ -144,21 +141,18 @@ export const GlassNavigation: React.FC = () => {
     );
   }
 
-  // Desktop Navigation
+  // Version Desktop
   return (
     <header className="fixed top-0 left-0 w-full z-50">
       <div className="container mx-auto px-4 pt-4 py-[20px]">
         <div className="max-w-4xl mx-auto glass-nav">
           <div className="flex items-center justify-between h-16 px-8">
-            {/* Logo */}
             <Link to="/" className="flex-shrink-0">
               <span className="text-xl font-bold text-gradient">WinShirt</span>
             </Link>
 
-            {/* Desktop Glass Navigation */}
             <nav className="flex items-center space-x-2 relative">
               <div className="flex space-x-1 relative p-1">
-                {/* Sliding Indicator */}
                 <div
                   className="glass-nav-indicator"
                   style={{
@@ -167,11 +161,9 @@ export const GlassNavigation: React.FC = () => {
                     transform: `translateX(${activeIndex * 52}px)`,
                   }}
                 />
-                
                 {navItems.map((item, index) => {
                   const Icon = item.icon;
                   const isActive = index === activeIndex;
-                  
                   return (
                     <Link
                       key={item.id}
@@ -186,7 +178,6 @@ export const GlassNavigation: React.FC = () => {
               </div>
             </nav>
 
-            {/* User Menu, Theme Toggle and Cart */}
             <div className="flex items-center space-x-1">
               <ThemeToggle />
               <DropdownMenu>
@@ -204,14 +195,9 @@ export const GlassNavigation: React.FC = () => {
                         <Link to="/account" className="flex w-full">Profil</Link>
                       </DropdownMenuItem>
                       {isAdmin && (
-                        <>
-                          <DropdownMenuItem className="hover:bg-white/5">
-                            <Link to="/admin/designs" className="flex w-full">Visuels</Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="hover:bg-white/5">
-                            <Link to="/admin/users" className="flex w-full">Utilisateurs</Link>
-                          </DropdownMenuItem>
-                        </>
+                        <DropdownMenuItem className="hover:bg-white/5">
+                          <Link to="/admin/designs" className="flex w-full">Visuels</Link>
+                        </DropdownMenuItem>
                       )}
                       <DropdownMenuSeparator className="bg-white/10" />
                       <DropdownMenuItem className="hover:bg-white/5 p-0">

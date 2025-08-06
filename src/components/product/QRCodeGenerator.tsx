@@ -24,7 +24,10 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   defaultSize = 200
 }) => {
   const [content, setContent] = useState(defaultContent);
-  const [contentType, setContentType] = useState<'text' | 'url' | 'email' | 'phone'>('text');
+  const [contentType, setContentType] = useState<'text' | 'url' | 'vcard' | 'image'>('url');
+  const [vcardName, setVcardName] = useState('');
+  const [vcardPhone, setVcardPhone] = useState('');
+  const [vcardEmail, setVcardEmail] = useState('');
   const [color, setColor] = useState(defaultColor);
   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
   const [isTransparent, setIsTransparent] = useState(true);
@@ -36,21 +39,20 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   const [showBgColorPicker, setShowBgColorPicker] = useState(false);
   const [isValid, setIsValid] = useState(true);
 
-  const generateQR = async () => {
-    if (!content.trim()) return;
-    
+  const generateQR = async (finalContent: string) => {
+    if (!finalContent.trim()) return;
+
     setIsGenerating(true);
     try {
-      const formattedContent = formatQRContent(content, contentType);
       const options: QRCodeOptions = {
-        content: formattedContent,
+        content: finalContent,
         size,
         color,
         backgroundColor,
         errorCorrectionLevel: errorLevel,
         transparent: isTransparent
       };
-      
+
       const url = await generateQRCode(options);
       setQrCodeUrl(url);
     } catch (error) {
@@ -66,30 +68,54 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     }
   };
 
+  const formatVCard = () => {
+    const lines = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      vcardName && `FN:${vcardName}`,
+      vcardPhone && `TEL:${vcardPhone}`,
+      vcardEmail && `EMAIL:${vcardEmail}`,
+      'END:VCARD'
+    ].filter(Boolean);
+    return lines.join('\n');
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setContent(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   useEffect(() => {
-    const valid = validateQRContent(content, contentType);
+    let formatted = '';
+    if (contentType === 'vcard') {
+      formatted = formatVCard();
+    } else {
+      formatted = formatQRContent(content, contentType);
+    }
+
+    const valid = validateQRContent(formatted, contentType);
     setIsValid(valid);
-    
-    if (valid && content.trim()) {
-      const timer = setTimeout(generateQR, 500);
+
+    if (valid && formatted.trim()) {
+      const timer = setTimeout(() => generateQR(formatted), 500);
       return () => clearTimeout(timer);
     } else {
       setQrCodeUrl('');
     }
-  }, [content, contentType, color, backgroundColor, size, errorLevel, isTransparent]);
+  }, [content, contentType, color, backgroundColor, size, errorLevel, isTransparent, vcardName, vcardPhone, vcardEmail]);
 
   const contentTypeLabels = {
-    text: 'Texte simple',
-    url: 'URL/Site web',
-    email: 'Adresse email',
-    phone: 'Numéro de téléphone'
-  };
-
-  const contentTypePlaceholders = {
-    text: 'Votre texte ici...',
-    url: 'https://example.com',
-    email: 'contact@example.com',
-    phone: '+33 1 23 45 67 89'
+    url: 'URL',
+    text: 'Texte',
+    vcard: 'vCard',
+    image: 'Image'
   };
 
   return (
@@ -109,28 +135,82 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         </Select>
       </div>
 
-      {/* Contenu */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Label>Contenu</Label>
-          {!isValid && <AlertCircle className="h-4 w-4 text-red-400" />}
-          {isValid && content && <Check className="h-4 w-4 text-green-400" />}
+      {/* Contenu dynamique */}
+      {contentType === 'url' && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Label>URL</Label>
+            {!isValid && <AlertCircle className="h-4 w-4 text-red-400" />}
+            {isValid && content && <Check className="h-4 w-4 text-green-400" />}
+          </div>
+          <Input
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="https://example.com"
+            className={`bg-white/5 border-white/20 ${!isValid ? 'border-red-400' : ''}`}
+          />
+          {!isValid && (
+            <p className="text-xs text-red-400">URL invalide</p>
+          )}
         </div>
-        <Input
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder={contentTypePlaceholders[contentType]}
-          className={`bg-white/5 border-white/20 ${!isValid ? 'border-red-400' : ''}`}
-        />
-        {!isValid && (
-          <p className="text-xs text-red-400">
-            {contentType === 'url' && 'URL invalide'}
-            {contentType === 'email' && 'Adresse email invalide'}
-            {contentType === 'phone' && 'Numéro de téléphone invalide'}
-            {contentType === 'text' && 'Texte trop long (max 2048 caractères)'}
-          </p>
-        )}
-      </div>
+      )}
+
+      {contentType === 'text' && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Label>Texte</Label>
+            {!isValid && <AlertCircle className="h-4 w-4 text-red-400" />}
+            {isValid && content && <Check className="h-4 w-4 text-green-400" />}
+          </div>
+          <Input
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Votre texte ici..."
+            className={`bg-white/5 border-white/20 ${!isValid ? 'border-red-400' : ''}`}
+          />
+          {!isValid && (
+            <p className="text-xs text-red-400">Texte trop long (max 2048 caractères)</p>
+          )}
+        </div>
+      )}
+
+      {contentType === 'vcard' && (
+        <div className="space-y-2">
+          <Label>Nom</Label>
+          <Input
+            value={vcardName}
+            onChange={(e) => setVcardName(e.target.value)}
+            placeholder="Nom"
+            className="bg-white/5 border-white/20"
+          />
+          <Label>Téléphone</Label>
+          <Input
+            value={vcardPhone}
+            onChange={(e) => setVcardPhone(e.target.value)}
+            placeholder="+33 1 23 45 67 89"
+            className="bg-white/5 border-white/20"
+          />
+          <Label>Email</Label>
+          <Input
+            value={vcardEmail}
+            onChange={(e) => setVcardEmail(e.target.value)}
+            placeholder="contact@example.com"
+            className="bg-white/5 border-white/20"
+          />
+        </div>
+      )}
+
+      {contentType === 'image' && (
+        <div className="space-y-2">
+          <Label>Image</Label>
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="bg-white/5 border-white/20"
+          />
+        </div>
+      )}
 
       {/* Taille */}
       <div className="space-y-2">

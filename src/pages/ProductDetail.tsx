@@ -285,7 +285,7 @@ const ProductDetail = () => {
   }, [isDragging, dragTarget, dragStart, initialPosition]);
 
   // Design selection handler
-  const handleSelectDesign = (design: Design) => {
+  const handleSelectDesign = (design: Design | null) => {
     if (currentViewSide === 'front') {
       setSelectedDesignFront(design);
     } else {
