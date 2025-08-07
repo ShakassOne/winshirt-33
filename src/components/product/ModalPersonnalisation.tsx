@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { X, Palette, Type, Image as ImageIcon, Upload, Sparkles, Paintbrush, QrCode } from 'lucide-react';
+import { X, Palette, Type, Image as ImageIcon, Upload, Sparkles, Paintbrush, QrCode, Shirt, Layers } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Design } from '@/types/supabase.types';
 import { MockupColor } from '@/types/mockup.types';
@@ -184,6 +184,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('designs');
+  const [activeTool, setActiveTool] = useState('images'); // New state for left sidebar tools
   const [drawerTab, setDrawerTab] = useState<string | null>(null);
   const { isAdmin } = useAdminCheck();
 
@@ -417,77 +418,129 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
     handleManualRemoveBackground(32); // Use default tolerance of 32
   };
 
+  // Tools configuration for left sidebar
+  const tools = [
+    { id: 'product', icon: Shirt, label: 'Produit', tab: 'designs' },
+    { id: 'images', icon: ImageIcon, label: 'Images', tab: 'designs' },
+    { id: 'text', icon: Type, label: 'Texte', tab: 'text' },
+    { id: 'layers', icon: Layers, label: 'Calques', tab: 'svg' },
+    { id: 'qrcode', icon: QrCode, label: 'QR Code', tab: 'qrcode' },
+    { id: 'ai', icon: Sparkles, label: 'IA', tab: 'ai' }
+  ];
+
+  const handleToolClick = (toolId: string, tabId: string) => {
+    setActiveTool(toolId);
+    setActiveTab(tabId);
+  };
+
   const desktopContent = (
-    <div className="flex h-full gap-4">
-      {/* Zone de prévisualisation - 45% */}
-      <div className="w-[45%] flex flex-col bg-background/50 rounded-lg border border-border/10">
-        {/* Contrôles Vue Front/Back */}
-        <div className="p-4 border-b border-border/10">
-          <div className="flex gap-2 justify-center">
-            <Button
-              variant={currentViewSide === 'front' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onViewSideChange('front')}
-              className={`px-8 py-2 rounded-full font-medium transition-all ${
-                currentViewSide === 'front' 
-                  ? 'clean-button-primary' 
-                  : 'clean-button-secondary'
+    <div className="flex h-full bg-white">
+      {/* Left Sidebar - Tools */}
+      <div className="w-20 bg-white flex flex-col items-center py-5 gap-4 shadow-[2px_0_15px_rgba(0,0,0,0.1)] relative z-10">
+        {tools.map((tool) => {
+          const Icon = tool.icon;
+          const isActive = activeTool === tool.id;
+          return (
+            <div
+              key={tool.id}
+              className={`w-10 h-10 bg-white rounded-[10px] flex items-center justify-center cursor-pointer transition-all duration-300 text-gray-800 shadow-[0_2px_10px_rgba(0,0,0,0.1)] border border-black/5 ${
+                isActive 
+                  ? 'transform -translate-y-1 shadow-[0_5px_20px_rgba(0,0,0,0.2)] border-black/10' 
+                  : 'hover:transform hover:-translate-y-1 hover:shadow-[0_5px_20px_rgba(0,0,0,0.15)] hover:text-black'
               }`}
+              onClick={() => handleToolClick(tool.id, tool.tab)}
+              title={tool.label}
             >
-              Front
-            </Button>
-            <Button
-              variant={currentViewSide === 'back' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onViewSideChange('back')}
-              className={`px-8 py-2 rounded-full font-medium transition-all ${
-                currentViewSide === 'back' 
-                  ? 'clean-button-primary' 
-                  : 'clean-button-secondary'
-              }`}
-            >
-              Back
-            </Button>
-          </div>
-        </div>
-        
-        <ProductPreview
-          productName={productName}
-          productImageUrl={productImageUrl}
-          currentViewSide={currentViewSide}
-          onViewSideChange={onViewSideChange}
-          mockup={mockup}
-          selectedMockupColor={selectedMockupColor}
-          hasTwoSides={hasTwoSides}
-          selectedDesignFront={selectedDesignFront}
-          selectedDesignBack={selectedDesignBack}
-          designTransformFront={designTransformFront}
-          designTransformBack={designTransformBack}
-          svgColorFront={svgColorFront}
-          svgColorBack={svgColorBack}
-          svgContentFront={svgContentFront}
-          svgContentBack={svgContentBack}
-          textContentFront={textContentFront}
-          textContentBack={textContentBack}
-          textFontFront={textFontFront}
-          textFontBack={textFontBack}
-          textColorFront={textColorFront}
-          textColorBack={textColorBack}
-          textStylesFront={textStylesFront}
-          textStylesBack={textStylesBack}
-          textTransformFront={textTransformFront}
-          textTransformBack={textTransformBack}
-          onDesignMouseDown={onDesignMouseDown}
-          onTextMouseDown={onTextMouseDown}
-          onTouchMove={onTouchMove}
-        />
+              <Icon className="w-5 h-5" />
+            </div>
+          );
+        })}
       </div>
 
-      {/* Zone d'édition centralisée - 25% */}
-      <div className="w-[25%] flex flex-col bg-background/30 rounded-lg border border-border/10 p-4">
+      {/* Central Area - T-shirt Preview */}
+      <div className="flex-1 flex flex-col items-center justify-center p-5 bg-white overflow-auto">
+        {/* View Controls */}
+        <div className="flex gap-5 mb-8">
+          <button
+            className={`px-5 py-2 border-2 rounded-[25px] cursor-pointer transition-all duration-300 ${
+              currentViewSide === 'front'
+                ? 'bg-blue-500 text-white border-blue-500'
+                : 'bg-white border-gray-300 hover:bg-gray-50'
+            }`}
+            onClick={() => onViewSideChange('front')}
+          >
+            Front
+          </button>
+          <button
+            className={`px-5 py-2 border-2 rounded-[25px] cursor-pointer transition-all duration-300 ${
+              currentViewSide === 'back'
+                ? 'bg-blue-500 text-white border-blue-500'
+                : 'bg-white border-gray-300 hover:bg-gray-50'
+            }`}
+            onClick={() => onViewSideChange('back')}
+          >
+            Back
+          </button>
+        </div>
+
+        {/* T-shirt Container */}
+        <div className="relative mb-8">
+          <div className="w-[700px] h-[800px] bg-white rounded-[25px] shadow-[0_15px_40px_rgba(0,0,0,0.15)] flex items-center justify-center relative transition-transform duration-300 hover:scale-[1.005]">
+            <div className="w-full h-full relative">
+              <ProductPreview
+                productName={productName}
+                productImageUrl={productImageUrl}
+                currentViewSide={currentViewSide}
+                onViewSideChange={onViewSideChange}
+                mockup={mockup}
+                selectedMockupColor={selectedMockupColor}
+                hasTwoSides={hasTwoSides}
+                selectedDesignFront={selectedDesignFront}
+                selectedDesignBack={selectedDesignBack}
+                designTransformFront={designTransformFront}
+                designTransformBack={designTransformBack}
+                svgColorFront={svgColorFront}
+                svgColorBack={svgColorBack}
+                svgContentFront={svgContentFront}
+                svgContentBack={svgContentBack}
+                textContentFront={textContentFront}
+                textContentBack={textContentBack}
+                textFontFront={textFontFront}
+                textFontBack={textFontBack}
+                textColorFront={textColorFront}
+                textColorBack={textColorBack}
+                textStylesFront={textStylesFront}
+                textStylesBack={textStylesBack}
+                textTransformFront={textTransformFront}
+                textTransformBack={textTransformBack}
+                onDesignMouseDown={onDesignMouseDown}
+                onTextMouseDown={onTextMouseDown}
+                onTouchMove={onTouchMove}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Size Controls */}
+        <div className="flex gap-4 flex-wrap justify-center">
+          {['A4', 'A3', 'Cœur', 'Poche', 'Full'].map((size) => (
+            <button
+              key={size}
+              className={`px-4 py-2 border border-gray-300 bg-white rounded-[20px] cursor-pointer transition-all duration-300 text-xs ${
+                currentData.selectedSize === size
+                  ? 'bg-gray-100 border-blue-500'
+                  : 'hover:bg-gray-50 hover:border-blue-500'
+              }`}
+              onClick={() => onSizeChange(size)}
+            >
+              {size}
+            </button>
+          ))}
+        </div>
+
+        {/* Color Selector */}
         {filteredMockupColors.length > 0 && (
-          <div className="mb-4">
-            <h3 className="text-lg font-medium mb-2 text-foreground">Couleur du produit</h3>
+          <div className="mt-6">
             <ProductColorSelector
               colors={filteredMockupColors}
               selectedColor={selectedMockupColor}
@@ -496,62 +549,76 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           </div>
         )}
 
-        <UnifiedEditingControls
-          selectedDesign={currentData.design}
-          currentTransform={currentData.designTransform}
-          selectedSize={currentData.selectedSize}
-          onTransformChange={onDesignTransformChange}
-          onSizeChange={onSizeChange}
-          onRemoveBackground={handleManualRemoveBackground}
-          isRemovingBackground={isRemovingBackground}
-          hasText={!!currentData.textContent}
-          textContent={currentData.textContent}
-        />
+        {/* Unified Editing Controls */}
+        {(currentData.design || currentData.textContent) && (
+          <div className="mt-6 w-full max-w-md">
+            <UnifiedEditingControls
+              selectedDesign={currentData.design}
+              currentTransform={currentData.designTransform}
+              selectedSize={currentData.selectedSize}
+              onTransformChange={onDesignTransformChange}
+              onSizeChange={onSizeChange}
+              onRemoveBackground={handleManualRemoveBackground}
+              isRemovingBackground={isRemovingBackground}
+              hasText={!!currentData.textContent}
+              textContent={currentData.textContent}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Zone des outils - 30% */}
-      <div className="w-[30%] flex flex-col clean-sidebar rounded-lg border border-border/10">
-        <div className="p-4 border-b border-border/10">
-          <h3 className="text-lg font-medium text-foreground mb-4">Galerie de designs</h3>
+      {/* Right Sidebar - Dynamic Content */}
+      <div className="w-[350px] bg-gray-50 flex flex-col border-l border-gray-200">
+        {/* Sidebar Header */}
+        <div className="p-5 bg-white border-b border-gray-200">
+          <h2 className="text-base font-semibold mb-4 text-gray-800">
+            {activeTool === 'images' && 'Galerie de designs'}
+            {activeTool === 'text' && 'Options de texte'}
+            {activeTool === 'qrcode' && 'Générateur QR Code'}
+            {activeTool === 'ai' && 'Génération IA'}
+            {activeTool === 'layers' && 'Designs SVG'}
+            {activeTool === 'product' && 'Produit'}
+          </h2>
+          
+          {/* Filter tabs for images */}
+          {activeTool === 'images' && (
+            <div className="flex flex-wrap gap-2">
+              {['Tous', 'Animaux', 'Nature', 'Humour', 'Abstrait', 'Sport', 'Vintage'].map((filter) => (
+                <div
+                  key={filter}
+                  className="px-3 py-1.5 bg-gray-100 rounded-xl text-xs cursor-pointer transition-all duration-300 text-gray-600 hover:bg-gray-800 hover:text-white"
+                >
+                  {filter}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col p-4">
-          <TabsList className={`grid w-full grid-cols-6 mb-3 bg-secondary/20 ${(currentData.design || currentData.textContent) ? 'opacity-60 scale-95' : ''} transition-all duration-200`}>
-            <TabsTrigger value="designs" className="flex items-center gap-1 text-xs">
-              <ImageIcon className="h-3 w-3" />
-              <span className="hidden sm:inline">Images</span>
-            </TabsTrigger>
-            <TabsTrigger value="text" className="flex items-center gap-1 text-xs">
-              <Type className="h-3 w-3" />
-              <span className="hidden sm:inline">Texte</span>
-            </TabsTrigger>
-            <TabsTrigger value="qrcode" className="flex items-center gap-1 text-xs">
-              <QrCode className="h-3 w-3" />
-              <span className="hidden sm:inline">QR</span>
-            </TabsTrigger>
-            <TabsTrigger value="upload" className="flex items-center gap-1 text-xs">
-              <Upload className="h-3 w-3" />
-              <span className="hidden sm:inline">Upload</span>
-            </TabsTrigger>
-            <TabsTrigger value="ai" className="flex items-center gap-1 text-xs">
-              <Sparkles className="h-3 w-3" />
-              <span className="hidden sm:inline">IA</span>
-            </TabsTrigger>
-            <TabsTrigger value="svg" className="flex items-center gap-1 text-xs">
-              <Paintbrush className="h-3 w-3" />
-              <span className="hidden sm:inline">SVG</span>
-            </TabsTrigger>
-          </TabsList>
 
-          <div className="flex-1 overflow-hidden">
-            <TabsContent value="designs" className="h-full overflow-y-auto">
+        {/* Gallery Content */}
+        <div className="flex-1 p-5 overflow-y-auto bg-gray-50">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+            {/* Upload Button */}
+            {(activeTool === 'images' || activeTool === 'product') && (
+              <div className="mb-5">
+                <CompactUpload
+                  onFileUpload={onFileUpload}
+                  onRemoveBackground={handleManualRemoveBackground}
+                  isRemovingBackground={isRemovingBackground}
+                  currentDesign={currentData.design}
+                />
+              </div>
+            )}
+
+            <TabsContent value="designs" className="h-full">
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-medium">Designs disponibles</h3>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleDesignSelection(null)}
                     disabled={!currentData.design}
+                    className="mb-4"
                   >
                     Réinitialiser
                   </Button>
@@ -561,21 +628,21 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                   selectedDesign={currentData.design}
                   currentDesignTransform={currentData.designTransform}
                   selectedSize={currentData.selectedSize}
-                  onDesignTransformChange={() => {}} // Ces contrôles sont maintenant dans UnifiedEditingControls
-                  onSizeChange={() => {}} // Ces contrôles sont maintenant dans UnifiedEditingControls
+                  onDesignTransformChange={() => {}}
+                  onSizeChange={() => {}}
                 />
               </div>
             </TabsContent>
 
-            <TabsContent value="text" className="h-full overflow-y-auto">
+            <TabsContent value="text" className="h-full">
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-medium">Personnalisation de texte</h3>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDesignSelection(null)}
-                    disabled={!currentData.design}
+                    onClick={handleRemoveText}
+                    disabled={!currentData.textContent}
+                    className="mb-4"
                   >
                     Réinitialiser
                   </Button>
@@ -595,7 +662,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               </div>
             </TabsContent>
 
-            <TabsContent value="qrcode" className="h-full overflow-y-auto">
+            <TabsContent value="qrcode" className="h-full">
               <QRCodeTab
                 onQRCodeGenerated={(qrCodeUrl: string) => {
                   const qrDesign: Design = {
@@ -612,37 +679,15 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               />
             </TabsContent>
 
-            <TabsContent value="upload" className="h-full overflow-y-auto">
+            <TabsContent value="ai" className="h-full">
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-medium">Upload d'image</h3>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleDesignSelection(null)}
                     disabled={!currentData.design}
-                  >
-                    Réinitialiser
-                  </Button>
-                </div>
-                <CompactUpload
-                  onFileUpload={onFileUpload}
-                  onRemoveBackground={handleManualRemoveBackground}
-                  isRemovingBackground={isRemovingBackground}
-                  currentDesign={currentData.design}
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="ai" className="h-full overflow-y-auto">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-medium">Génération IA</h3>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDesignSelection(null)}
-                    disabled={!currentData.design}
+                    className="mb-4"
                   >
                     Réinitialiser
                   </Button>
@@ -651,15 +696,15 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               </div>
             </TabsContent>
 
-            <TabsContent value="svg" className="h-full overflow-y-auto">
+            <TabsContent value="svg" className="h-full">
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-medium">Designs SVG</h3>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleDesignSelection(null)}
                     disabled={!currentData.design}
+                    className="mb-4"
                   >
                     Réinitialiser
                   </Button>
@@ -674,8 +719,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
                 />
               </div>
             </TabsContent>
-          </div>
-        </Tabs>
+          </Tabs>
+        </div>
       </div>
     </div>
   );
@@ -850,24 +895,22 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         onClose();
       }
     }}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 clean-modal border border-border/10">
-        <DialogHeader className="px-6 py-4 clean-modal border-b border-border/10">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-medium text-foreground">
-              Personnaliser votre {productName}
-            </DialogTitle>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={onClose}
-              className="text-muted-foreground hover:text-foreground hover:bg-secondary/20"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-        </DialogHeader>
-        <div className="pt-3 h-full overflow-hidden">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 bg-white border border-gray-200">
+        {/* Simple white header delimiter */}
+        <div className="h-px w-full bg-white" />
+        
+        <div className="h-full overflow-hidden relative">
           {desktopContent}
+          
+          {/* Close button */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onClose}
+            className="absolute top-4 right-4 z-50 text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
         <div className="absolute bottom-4 right-4 flex gap-2">
           {isAdmin && (
