@@ -3,7 +3,7 @@ import React, { useRef, useState, useCallback } from 'react';
 import { RotateCcw, Move, RotateCw, ZoomIn, ZoomOut, Trash2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Design } from '@/types/supabase.types';
-import { MockupColor } from '@/types/mockup.types';
+import { MockupColor, PrintArea } from '@/types/mockup.types';
 import { UnifiedCustomizationRenderer } from './UnifiedCustomizationRenderer';
 import { ElementManipulationControls } from './ElementManipulationControls';
 
@@ -52,11 +52,25 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
   const [isRotating, setIsRotating] = useState(false);
   const [rotateStart, setRotateStart] = useState({ x: 0, y: 0 });
   const [initialRotation, setInitialRotation] = useState(0);
+  const [selectedPrintAreaId, setSelectedPrintAreaId] = useState<string | null>(null);
 
   const currentData = {
     design: currentViewSide === 'front' ? customization?.frontDesign : customization?.backDesign,
     text: currentViewSide === 'front' ? customization?.frontText : customization?.backText
   };
+
+  React.useEffect(() => {
+    if (!mockup?.print_areas) {
+      setSelectedPrintAreaId(null);
+      return;
+    }
+    const areas = (mockup.print_areas as PrintArea[]).filter((area) => area.side === currentViewSide);
+    if (areas.length > 0) {
+      setSelectedPrintAreaId((prev) => areas.some((a) => a.id === prev) ? prev : areas[0].id);
+    } else {
+      setSelectedPrintAreaId(null);
+    }
+  }, [mockup, currentViewSide]);
 
   const getDesignLabel = () => {
     const category = currentData.design?.designCategory;
@@ -97,6 +111,18 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
     
     return imageUrl;
   };
+
+  const currentPrintArea = mockup?.print_areas?.find(
+    (area: PrintArea) => area.id === selectedPrintAreaId
+  ) as PrintArea | undefined;
+  const AREA_BASE_SIZE = 400;
+  const areaWidth = currentPrintArea?.width ?? 200;
+  const areaHeight = currentPrintArea?.height ?? 200;
+  const areaX = currentPrintArea?.x ?? currentPrintArea?.position_x ?? 100;
+  const areaY = currentPrintArea?.y ?? currentPrintArea?.position_y ?? 100;
+  const offsetX = areaX + areaWidth / 2 - AREA_BASE_SIZE / 2;
+  const offsetY = areaY + areaHeight / 2 - AREA_BASE_SIZE / 2;
+  const printAreasForSide = mockup?.print_areas?.filter((area: PrintArea) => area.side === currentViewSide) || [];
 
   // Drag handlers
   const handleElementMouseDown = useCallback((elementType: 'design' | 'text', e: React.MouseEvent | React.TouchEvent) => {
@@ -305,13 +331,15 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
                 selectedElement === 'design' ? 'ring-2 ring-blue-400 ring-opacity-50' : ''
               }`}
               style={{
-                transform: `translate(${currentData.design.transform.position.x}px, ${currentData.design.transform.position.y}px) rotate(${currentData.design.transform.rotation}deg) scale(${currentData.design.transform.scale})`,
+                transform: `translate(${currentData.design.transform.position.x + offsetX}px, ${currentData.design.transform.position.y + offsetY}px) rotate(${currentData.design.transform.rotation}deg) scale(${currentData.design.transform.scale})`,
                 transformOrigin: 'center',
                 zIndex: 10,
                 left: '50%',
                 top: '50%',
-                marginLeft: '-100px',
-                marginTop: '-100px'
+                marginLeft: `-${areaWidth / 2}px`,
+                marginTop: `-${areaHeight / 2}px`,
+                width: `${areaWidth}px`,
+                height: `${areaHeight}px`
               }}
               onMouseDown={(e) => handleElementMouseDown('design', e)}
               onTouchStart={(e) => handleElementMouseDown('design', e)}
@@ -320,7 +348,7 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
               <img
                 src={currentData.design.designUrl}
                 alt={currentData.design.designName}
-                className="max-w-[200px] max-h-[200px] w-auto h-auto pointer-events-none"
+                className="max-w-full max-h-full w-auto h-auto pointer-events-none"
                 draggable={false}
               />
               {selectedElement === 'design' && (
@@ -353,7 +381,7 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
                 selectedElement === 'text' ? 'ring-2 ring-green-400 ring-opacity-50' : ''
               }`}
               style={{
-                transform: `translate(${currentData.text.transform.position.x}px, ${currentData.text.transform.position.y}px) rotate(${currentData.text.transform.rotation}deg) scale(${currentData.text.transform.scale})`,
+                transform: `translate(${currentData.text.transform.position.x + offsetX}px, ${currentData.text.transform.position.y + offsetY}px) rotate(${currentData.text.transform.rotation}deg) scale(${currentData.text.transform.scale})`,
                 transformOrigin: 'center',
                 fontFamily: currentData.text.font,
                 color: currentData.text.color,
@@ -364,7 +392,11 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
                 textShadow: '0px 0px 3px rgba(0,0,0,0.5)',
                 zIndex: 20,
                 left: '50%',
-                top: '50%'
+                top: '50%',
+                marginLeft: `-${areaWidth / 2}px`,
+                marginTop: `-${areaHeight / 2}px`,
+                width: `${areaWidth}px`,
+                height: `${areaHeight}px`
               }}
               onMouseDown={(e) => handleElementMouseDown('text', e)}
               onTouchStart={(e) => handleElementMouseDown('text', e)}
@@ -436,6 +468,28 @@ export const EnhancedProductPreview: React.FC<EnhancedProductPreviewProps> = ({
             onRemove={selectedElement === 'design' ? onRemoveDesign : onRemoveText}
             onDeselect={() => setSelectedElement(null)}
           />
+        )}
+
+        {/* Print area controls */}
+        {printAreasForSide.length > 0 && (
+          <div className="size-controls absolute bottom-14 left-1/2 -translate-x-1/2 flex gap-2 bg-black/70 rounded-md p-1">
+            {printAreasForSide.map((area: PrintArea) => (
+              <button
+                key={area.id}
+                className={`size-btn px-2 py-1 text-xs rounded ${
+                  selectedPrintAreaId === area.id
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-white/20 text-white hover:bg-white/30'
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedPrintAreaId(area.id);
+                }}
+              >
+                {area.name}
+              </button>
+            ))}
+          </div>
         )}
 
         {/* Quick Controls (simplified when element is selected) */}
