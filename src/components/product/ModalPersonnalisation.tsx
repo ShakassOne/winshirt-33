@@ -464,8 +464,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           <button
             className={`px-5 py-2 border-2 rounded-[25px] cursor-pointer transition-all duration-300 ${
               currentViewSide === 'front'
-                ? 'bg-blue-500 text-white border-blue-500'
-                : 'bg-white border-gray-300 hover:bg-gray-50'
+                ? 'bg-black text-white border-black'
+                : 'bg-white border-gray-300 hover:bg-gray-50 text-black'
             }`}
             onClick={() => onViewSideChange('front')}
           >
@@ -474,8 +474,8 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           <button
             className={`px-5 py-2 border-2 rounded-[25px] cursor-pointer transition-all duration-300 ${
               currentViewSide === 'back'
-                ? 'bg-blue-500 text-white border-blue-500'
-                : 'bg-white border-gray-300 hover:bg-gray-50'
+                ? 'bg-black text-white border-black'
+                : 'bg-white border-gray-300 hover:bg-gray-50 text-black'
             }`}
             onClick={() => onViewSideChange('back')}
           >
@@ -895,7 +895,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         onClose();
       }
     }}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 bg-white border border-gray-200">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0 bg-white border border-gray-200 fixed inset-0" style={{zIndex: 9999}}>
         {/* Simple white header delimiter */}
         <div className="h-px w-full bg-white" />
         
@@ -903,34 +903,28 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
           {desktopContent}
           
           {/* Close button */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <button 
             onClick={onClose}
-            className="absolute top-4 right-4 z-50 text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+            className="absolute top-4 right-4 z-50 w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-lg text-black hover:bg-gray-50 hover:border-gray-400 transition-colors"
           >
-            <X className="h-5 w-5" />
-          </Button>
+            <X className="h-4 w-4" />
+          </button>
         </div>
         <div className="absolute bottom-4 right-4 flex gap-2">
           {isAdmin && (
-            <Button
-              variant="outline"
-              size="sm"
+            <button
               onClick={handleTestCapture}
-              className="text-xs clean-button-secondary"
+              className="px-4 py-2 border border-gray-300 bg-white text-black rounded-lg hover:bg-gray-50 transition-colors text-sm"
             >
               Test Capture
-            </Button>
+            </button>
           )}
-          <Button
-            variant="default"
-            size="sm"
+          <button
             onClick={handleValidate}
-            className="clean-button-primary"
+            className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm"
           >
             Valider
-          </Button>
+          </button>
         </div>
       </DialogContent>
     </Dialog>
