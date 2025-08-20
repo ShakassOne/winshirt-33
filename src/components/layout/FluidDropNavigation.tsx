@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Menu, X } from 'lucide-react';
@@ -17,6 +16,26 @@ export const FluidDropNavigation: React.FC = () => {
   const { isAdmin } = useAdminCheck();
   const { itemCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  // Handle scroll to hide/show navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const handleSignOut = async () => {
     try {
@@ -49,7 +68,7 @@ export const FluidDropNavigation: React.FC = () => {
   const createSMNEffect = (text: string, href: string) => (
     <Link
       to={href}
-      className={`SMN_effect-66 ${isActivePath(href) ? 'active' : ''}`}
+      className={`SMN_effect-66 ${isActivePath(href) ? 'active' : ''} text-foreground`}
       data-hover={text}
     >
       <div className="top" data-hover={text}></div>
@@ -61,21 +80,18 @@ export const FluidDropNavigation: React.FC = () => {
     return (
       <>
         {/* Header mobile clean */}
-        <header className="fluid-header">
+        <header className={`fluid-header ${isVisible ? 'navbar-visible' : 'navbar-hidden'}`}>
           <div className="fluid-menu-container">
             {/* Logo */}
             <div className="fluid-logo-mobile">
-              <Link to="/">
-                <img 
-                  src="https://shakass.com/wp-content/uploads/2025/06/Logo-Winshirt-Blanc.svg" 
-                  alt="Logo Winshirt" 
-                />
+              <Link to="/" className="text-foreground font-bold text-xl">
+                WinShirt
               </Link>
             </div>
 
             {/* Actions mobiles */}
             <div className="fluid-actions-mobile">
-              <Link to="/cart" className="fluid-cart-button-mobile">
+              <Link to="/cart" className="fluid-cart-button-mobile text-foreground">
                 <ShoppingCart className="h-5 w-5" />
                 {itemCount > 0 && (
                   <span className="fluid-cart-count-mobile">
@@ -86,7 +102,7 @@ export const FluidDropNavigation: React.FC = () => {
               
               <button 
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="fluid-menu-toggle"
+                className="fluid-menu-toggle text-foreground"
               >
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
@@ -103,7 +119,7 @@ export const FluidDropNavigation: React.FC = () => {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`fluid-mobile-nav-item ${isActivePath(item.path) ? 'active' : ''}`}
+                    className={`fluid-mobile-nav-item text-foreground ${isActivePath(item.path) ? 'active' : ''}`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {item.label}
@@ -130,15 +146,12 @@ export const FluidDropNavigation: React.FC = () => {
   }
 
   return (
-    <header className="fluid-header">
+    <header className={`fluid-header ${isVisible ? 'navbar-visible' : 'navbar-hidden'}`}>
       <div className="fluid-menu-container">
         {/* Logo */}
         <div className="fluid-logo">
-          <Link to="/">
-            <img 
-              src="https://shakass.com/wp-content/uploads/2025/06/Logo-Winshirt-Blanc.svg" 
-              alt="Logo Winshirt" 
-            />
+          <Link to="/" className="text-foreground font-bold text-2xl">
+            WinShirt
           </Link>
         </div>
 
@@ -163,7 +176,7 @@ export const FluidDropNavigation: React.FC = () => {
             </Link>
           )}
           
-          <Link to="/cart" className="fluid-cart-button">
+          <Link to="/cart" className="fluid-cart-button text-foreground">
             <ShoppingCart className="h-4 w-4" />
             {itemCount > 0 && (
               <span className="fluid-cart-count">

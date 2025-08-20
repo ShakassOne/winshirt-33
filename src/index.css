@@ -168,6 +168,55 @@
     @apply h-full rounded-full bg-accent transition-all duration-300;
   }
 
+  /* Global text colors - ensure proper contrast */
+  body {
+    color: hsl(var(--foreground));
+  }
+
+  /* Override any remaining white text */
+  .text-white {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  .text-white\/70 {
+    color: hsl(var(--foreground) / 0.7) !important;
+  }
+
+  .text-white\/60 {
+    color: hsl(var(--foreground) / 0.6) !important;
+  }
+
+  .text-white\/50 {
+    color: hsl(var(--foreground) / 0.5) !important;
+  }
+
+  .text-gray-400 {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+
+  .text-gray-500 {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+
+  .text-gray-600 {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+
+  /* Navigation hide/show animations */
+  .navbar-hidden {
+    transform: translateY(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .navbar-visible {
+    transform: translateY(0);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .modal-open .fluid-header {
+    display: none;
+  }
+
   /* Clean Navigation Header */
   .fluid-header {
     position: fixed;

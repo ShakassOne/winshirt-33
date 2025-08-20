@@ -1,6 +1,6 @@
 import logger from '@/utils/logger';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -878,6 +878,19 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
       </Drawer>
     </div>
   );
+
+  // Add/remove modal-open class to body when modal opens/closes
+  useEffect(() => {
+    if (open) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [open]);
 
   if (isMobile) {
     return (
