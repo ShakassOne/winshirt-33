@@ -22,6 +22,9 @@ import { UnifiedEditingControls } from './UnifiedEditingControls';
 import { QRCodeTab } from './QRCodeTab';
 import { LayersPanel } from './LayersPanel';
 import { ProductPanel } from './ProductPanel';
+import { ImagesPanel } from './ImagesPanel';
+import { TextPanel } from './TextPanel';
+import { AIPanel } from './AIPanel';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import html2canvas from 'html2canvas';
 
@@ -610,7 +613,7 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
         </div>
 
         {/* Dynamic Content based on active tool */}
-        <div className="flex-1 overflow-y-auto bg-gray-50">
+        <div className="flex-1 overflow-y-auto bg-gray-50 p-5">
           {activeTool === 'product' && (
             <ProductPanel
               productName={productName}
@@ -634,111 +637,68 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
               textContentBack={textContentBack}
               onRemoveDesign={handleRemoveDesign}
               onRemoveText={handleRemoveText}
+              onElementSelect={(elementId: string) => {
+                // Layer selection logic will be implemented later
+              }}
             />
           )}
 
-          {(activeTool === 'images' || activeTool === 'text' || activeTool === 'qrcode' || activeTool === 'ai') && (
-            <div className="p-5">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-                {/* Upload Button */}
-                {activeTool === 'images' && (
-                  <div className="mb-5">
-                    <CompactUpload
-                      onFileUpload={onFileUpload}
-                      onRemoveBackground={handleManualRemoveBackground}
-                      isRemovingBackground={isRemovingBackground}
-                      currentDesign={currentData.design}
-                    />
-                  </div>
-                )}
+          {activeTool === 'images' && (
+            <ImagesPanel
+              onSelectDesign={onSelectDesign}
+              selectedDesign={currentData.design}
+              onFileUpload={onFileUpload}
+              onRemoveBackground={onRemoveBackground}
+              isRemovingBackground={isRemovingBackground}
+              svgColor={currentData.svgColor}
+              onSvgColorChange={onSvgColorChange}
+              onRemoveDesign={handleRemoveDesign}
+              designTransform={currentData.designTransform}
+              selectedSize={currentData.selectedSize}
+              onDesignTransformChange={onDesignTransformChange}
+              onSizeChange={onSizeChange}
+            />
+          )}
 
-                <TabsContent value="designs" className="h-full">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDesignSelection(null)}
-                        disabled={!currentData.design}
-                        className="mb-4"
-                      >
-                        Réinitialiser
-                      </Button>
-                    </div>
-                    <GalleryDesigns
-                      onSelectDesign={handleDesignSelection}
-                      selectedDesign={currentData.design}
-                      currentDesignTransform={currentData.designTransform}
-                      selectedSize={currentData.selectedSize}
-                      onDesignTransformChange={() => {}}
-                      onSizeChange={() => {}}
-                    />
-                  </div>
-                </TabsContent>
+          {activeTool === 'text' && (
+            <TextPanel
+              textContent={currentData.textContent}
+              textFont={currentData.textFont}
+              textColor={currentData.textColor}
+              textStyles={currentData.textStyles}
+              textTransform={currentData.textTransform}
+              onTextContentChange={onTextContentChange}
+              onTextFontChange={onTextFontChange}
+              onTextColorChange={onTextColorChange}
+              onTextStylesChange={onTextStylesChange}
+              onTextTransformChange={onTextTransformChange}
+              onRemoveText={handleRemoveText}
+            />
+          )}
 
-                <TabsContent value="text" className="h-full">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleRemoveText}
-                        disabled={!currentData.textContent}
-                        className="mb-4"
-                      >
-                        Réinitialiser
-                      </Button>
-                    </div>
-                    <TextCustomizer
-                      textContent={currentData.textContent}
-                      textFont={currentData.textFont}
-                      textColor={currentData.textColor}
-                      textStyles={currentData.textStyles}
-                      textTransform={currentData.textTransform}
-                      onTextContentChange={onTextContentChange}
-                      onTextFontChange={onTextFontChange}
-                      onTextColorChange={onTextColorChange}
-                      onTextStylesChange={onTextStylesChange}
-                      onTextTransformChange={onTextTransformChange}
-                    />
-                  </div>
-                </TabsContent>
+          {activeTool === 'qrcode' && (
+            <QRCodeTab
+              onQRCodeGenerated={(qrCodeUrl: string) => {
+                const qrDesign: Design = {
+                  id: `qr-${Date.now()}`,
+                  name: 'QR Code généré',
+                  image_url: qrCodeUrl,
+                  category: 'QR Code',
+                  is_active: true
+                };
+                handleDesignSelection(qrDesign);
+              }}
+              onRemoveDesign={handleRemoveDesign}
+              selectedDesign={currentData.design}
+            />
+          )}
 
-                <TabsContent value="qrcode" className="h-full">
-                  <QRCodeTab
-                    onQRCodeGenerated={(qrCodeUrl: string) => {
-                      const qrDesign: Design = {
-                        id: `qr-${Date.now()}`,
-                        name: 'QR Code généré',
-                        image_url: qrCodeUrl,
-                        category: 'QR Code',
-                        is_active: true
-                      };
-                      handleDesignSelection(qrDesign);
-                    }}
-                    onRemoveDesign={() => handleDesignSelection(null)}
-                    selectedDesign={currentData.design}
-                  />
-                </TabsContent>
-
-                <TabsContent value="ai" className="h-full">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDesignSelection(null)}
-                        disabled={!currentData.design}
-                        className="mb-4"
-                      >
-                        Réinitialiser
-                      </Button>
-                    </div>
-                    <CompactAIGenerator onImageGenerated={handleAIImageGenerated} />
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
+          {activeTool === 'ai' && (
+            <AIPanel
+              onAIImageGenerated={handleAIImageGenerated}
+              onRemoveDesign={handleRemoveDesign}
+              selectedDesign={currentData.design}
+            />
           )}
         </div>
       </div>
