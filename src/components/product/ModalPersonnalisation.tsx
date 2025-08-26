@@ -537,51 +537,6 @@ export const ModalPersonnalisation: React.FC<ModalPersonnalisationProps> = ({
             </div>
           </div>
         </div>
-
-        {/* Size Controls */}
-        <div className="flex gap-4 flex-wrap justify-center">
-          {['A4', 'A3', 'Cœur', 'Poche', 'Full'].map((size) => (
-            <button
-              key={size}
-              className={`px-4 py-2 border border-gray-300 bg-white rounded-[20px] cursor-pointer transition-all duration-300 text-xs ${
-                currentData.selectedSize === size
-                  ? 'bg-gray-100 border-blue-500'
-                  : 'hover:bg-gray-50 hover:border-blue-500'
-              }`}
-              onClick={() => onSizeChange(size)}
-            >
-              {size}
-            </button>
-          ))}
-        </div>
-
-        {/* Color Selector */}
-        {filteredMockupColors.length > 0 && (
-          <div className="mt-6">
-            <ProductColorSelector
-              colors={filteredMockupColors}
-              selectedColor={selectedMockupColor}
-              onColorSelect={onMockupColorChange}
-            />
-          </div>
-        )}
-
-        {/* Unified Editing Controls */}
-        {(currentData.design || currentData.textContent) && (
-          <div className="mt-6 w-full max-w-md">
-            <UnifiedEditingControls
-              selectedDesign={currentData.design}
-              currentTransform={currentData.designTransform}
-              selectedSize={currentData.selectedSize}
-              onTransformChange={onDesignTransformChange}
-              onSizeChange={onSizeChange}
-              onRemoveBackground={handleManualRemoveBackground}
-              isRemovingBackground={isRemovingBackground}
-              hasText={!!currentData.textContent}
-              textContent={currentData.textContent}
-            />
-          </div>
-        )}
       </div>
 
       {/* Right Sidebar - Dynamic Content */}
