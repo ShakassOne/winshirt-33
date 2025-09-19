@@ -127,7 +127,7 @@ const LotteryCard: React.FC<LotteryCardProps> = ({
       <div 
         ref={cardRef} 
         className={cn(
-          "tilt-card relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-lg border border-white/10 shadow-lg",
+          "tilt-card relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-lg border border-white/10 shadow-lg text-white",
           isFeatured ? "md:col-span-2 md:row-span-2" : ""
         )}
       >
@@ -152,7 +152,7 @@ const LotteryCard: React.FC<LotteryCardProps> = ({
               {isActive ? 'Active' : 'Terminée'}
             </div>
             {isFeatured && (
-              <div className="px-3 py-1 rounded-full text-xs font-medium bg-winshirt-purple/70 backdrop-blur-sm">
+              <div className="px-3 py-1 rounded-full text-xs font-medium bg-winshirt-purple/70 backdrop-blur-sm text-white">
                 En vedette
               </div>
             )}
@@ -187,8 +187,8 @@ const LotteryCard: React.FC<LotteryCardProps> = ({
             
             <div className="flex items-center text-sm text-white mb-1">
               <Users className="h-4 w-4 mr-1 text-winshirt-purple" />
-              <span className="mr-2">{participants} participants</span>
-              <span>Objectif: {goal}</span>
+              <span className="mr-2 text-white">{participants} participants</span>
+              <span className="text-white">Objectif: {goal}</span>
             </div>
             
             <div className="progress-bar">
@@ -201,19 +201,19 @@ const LotteryCard: React.FC<LotteryCardProps> = ({
         </div>
         
         {drawDate && (
-          <div className="p-3 border-t border-white/10 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4 text-winshirt-blue" />
-              <span className="text-sm">Tirage le {formattedDate}</span>
+            <div className="p-3 border-t border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4 text-winshirt-blue" />
+                <span className="text-sm text-white">Tirage le {formattedDate}</span>
+              </div>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="bg-winshirt-purple/20 hover:bg-winshirt-purple/40 text-white text-xs px-3"
+              >
+                Participer
+              </Button>
             </div>
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              className="bg-winshirt-purple/20 hover:bg-winshirt-purple/40 text-white text-xs px-3"
-            >
-              Participer
-            </Button>
-          </div>
         )}
       </div>
     </Link>
