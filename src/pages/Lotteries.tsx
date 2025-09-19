@@ -94,11 +94,11 @@ const Lotteries = () => {
               alt={currentFeaturedLottery.title} 
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-60" />
             
             <div className="absolute inset-0 flex flex-col justify-end pb-16 px-6 md:px-12 lg:container lg:mx-auto">
               <div className="max-w-3xl">
-                <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4">{currentFeaturedLottery.title}</h1>
+                <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 text-white">{currentFeaturedLottery.title}</h1>
                 <p className="text-xl md:text-2xl font-semibold text-white/90 mb-6">
                   {new Intl.NumberFormat('fr-FR', { 
                     style: 'currency', 
@@ -160,9 +160,9 @@ const Lotteries = () => {
                 )}
                 
                 <div className="mb-8">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2 text-white">
                     <span className="text-white/70">Progression</span>
-                    <span className="font-semibold">{currentFeaturedLottery.participants}/{currentFeaturedLottery.goal}</span>
+                    <span className="font-semibold text-white">{currentFeaturedLottery.participants}/{currentFeaturedLottery.goal}</span>
                   </div>
                   <div className="h-2 bg-white/20 rounded-full">
                     <div 
