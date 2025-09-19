@@ -190,6 +190,15 @@
     color: hsl(var(--foreground) / 0.5) !important;
   }
 
+  /* Lottery card specific white text - force white color */
+  .lottery-text-white {
+    color: hsl(0 0% 100%) !important;
+  }
+
+  .lottery-text-white-70 {
+    color: hsl(0 0% 100% / 0.7) !important;
+  }
+
   .text-gray-400 {
     color: hsl(var(--muted-foreground)) !important;
   }

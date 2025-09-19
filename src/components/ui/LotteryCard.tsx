@@ -127,7 +127,7 @@ const LotteryCard: React.FC<LotteryCardProps> = ({
       <div 
         ref={cardRef} 
         className={cn(
-          "tilt-card relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-lg border border-white/10 shadow-lg text-white",
+          "tilt-card relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-lg border border-white/10 shadow-lg lottery-text-white",
           isFeatured ? "md:col-span-2 md:row-span-2" : ""
         )}
       >
@@ -146,49 +146,49 @@ const LotteryCard: React.FC<LotteryCardProps> = ({
             <div className={cn(
               "px-3 py-1 rounded-full text-xs font-medium",
               isActive
-                ? "bg-green-500/70 backdrop-blur-sm text-white"
-                : "bg-gray-500/70 backdrop-blur-sm text-white"
+                ? "bg-green-500/70 backdrop-blur-sm lottery-text-white"
+                : "bg-gray-500/70 backdrop-blur-sm lottery-text-white"
             )}>
               {isActive ? 'Active' : 'Terminée'}
             </div>
             {isFeatured && (
-              <div className="px-3 py-1 rounded-full text-xs font-medium bg-winshirt-purple/70 backdrop-blur-sm text-white">
+              <div className="px-3 py-1 rounded-full text-xs font-medium bg-winshirt-purple/70 backdrop-blur-sm lottery-text-white">
                 En vedette
               </div>
             )}
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className="text-xl font-bold text-white mb-1">{title}</h3>
-            <p className="text-lg font-bold text-white mb-2">Valeur: {formattedValue}</p>
+            <h3 className="text-xl font-bold lottery-text-white mb-1">{title}</h3>
+            <p className="text-lg font-bold lottery-text-white mb-2">Valeur: {formattedValue}</p>
             
             {isActive && drawDate && (
               <div className="mb-3">
-                <p className="text-sm text-white/70 mb-1 flex items-center">
+                <p className="text-sm lottery-text-white-70 mb-1 flex items-center">
                   <Clock className="h-4 w-4 mr-1 text-winshirt-blue" />
                   <span>Temps restant avant le tirage:</span>
                 </p>
-                <div className="flex gap-2 text-white">
-                  <div className="bg-black/40 backdrop-blur-sm px-2 py-1 rounded text-center min-w-[3rem]">
-                    <div className="text-md font-bold">{timeLeft.days}</div>
-                    <div className="text-[10px] text-white/70">JOURS</div>
-                  </div>
-                  <div className="bg-black/40 backdrop-blur-sm px-2 py-1 rounded text-center min-w-[3rem]">
-                    <div className="text-md font-bold">{timeLeft.hours}</div>
-                    <div className="text-[10px] text-white/70">HEURES</div>
-                  </div>
-                  <div className="bg-black/40 backdrop-blur-sm px-2 py-1 rounded text-center min-w-[3rem]">
-                    <div className="text-md font-bold">{timeLeft.minutes}</div>
-                    <div className="text-[10px] text-white/70">MINUTES</div>
-                  </div>
+                <div className="flex gap-2 lottery-text-white">
+                    <div className="bg-black/40 backdrop-blur-sm px-2 py-1 rounded text-center min-w-[3rem]">
+                      <div className="text-md font-bold lottery-text-white">{timeLeft.days}</div>
+                      <div className="text-[10px] lottery-text-white-70">JOURS</div>
+                    </div>
+                    <div className="bg-black/40 backdrop-blur-sm px-2 py-1 rounded text-center min-w-[3rem]">
+                      <div className="text-md font-bold lottery-text-white">{timeLeft.hours}</div>
+                      <div className="text-[10px] lottery-text-white-70">HEURES</div>
+                    </div>
+                    <div className="bg-black/40 backdrop-blur-sm px-2 py-1 rounded text-center min-w-[3rem]">
+                      <div className="text-md font-bold lottery-text-white">{timeLeft.minutes}</div>
+                      <div className="text-[10px] lottery-text-white-70">MINUTES</div>
+                    </div>
                 </div>
               </div>
             )}
             
-            <div className="flex items-center text-sm text-white mb-1">
+            <div className="flex items-center text-sm lottery-text-white mb-1">
               <Users className="h-4 w-4 mr-1 text-winshirt-purple" />
-              <span className="mr-2 text-white">{participants} participants</span>
-              <span className="text-white">Objectif: {goal}</span>
+              <span className="mr-2 lottery-text-white">{participants} participants</span>
+              <span className="lottery-text-white">Objectif: {goal}</span>
             </div>
             
             <div className="progress-bar">
@@ -204,12 +204,12 @@ const LotteryCard: React.FC<LotteryCardProps> = ({
             <div className="p-3 border-t border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CalendarIcon className="h-4 w-4 text-winshirt-blue" />
-                <span className="text-sm text-white">Tirage le {formattedDate}</span>
+                <span className="text-sm lottery-text-white">Tirage le {formattedDate}</span>
               </div>
               <Button 
                 size="sm" 
                 variant="ghost" 
-                className="bg-winshirt-purple/20 hover:bg-winshirt-purple/40 text-white text-xs px-3"
+                className="bg-winshirt-purple/20 hover:bg-winshirt-purple/40 lottery-text-white text-xs px-3"
               >
                 Participer
               </Button>
