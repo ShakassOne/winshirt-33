@@ -31,6 +31,21 @@ export const LotterySelector: React.FC<LotterySelectorProps> = ({
     setParticipantCounts(initialCounts);
   }, [lotteries]);
 
+  // Sélectionner automatiquement la seule loterie disponible le cas échéant
+  useEffect(() => {
+    if (lotteries.length === 1) {
+      const onlyLotteryTitle = lotteries[0].title;
+      if (selectedLottery !== onlyLotteryTitle) {
+        onLotteryChange(onlyLotteryTitle);
+      }
+      return;
+    }
+
+    if (lotteries.length === 0 && selectedLottery !== 'none') {
+      onLotteryChange('none');
+    }
+  }, [lotteries, selectedLottery, onLotteryChange]);
+
   if (!ticketsOffered || ticketsOffered === 0 || lotteries.length === 0) {
     return null;
   }

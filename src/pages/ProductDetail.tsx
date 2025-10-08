@@ -166,7 +166,9 @@ const ProductDetail = () => {
       transform: textTransformBack
     } : null;
 
-    return {
+    const lotteryName = selectedLottery !== 'none' ? selectedLottery : null;
+
+    const customization: Record<string, any> = {
       frontDesign,
       backDesign,
       frontText,
@@ -176,13 +178,20 @@ const ProductDetail = () => {
       svgContentFront: svgContentFront || null,
       svgContentBack: svgContentBack || null
     };
+
+    if (lotteryName) {
+      customization.lotteryName = lotteryName;
+    }
+
+    return customization;
   };
 
-  const hasCustomization = () => {
-    const customization = generateCustomization();
+  const hasCustomization = (customizationOverride?: ReturnType<typeof generateCustomization>) => {
+    const customization = customizationOverride || generateCustomization();
     return !!(customization.frontDesign || customization.backDesign ||
               customization.frontText || customization.backText ||
-              customization.svgContentFront || customization.svgContentBack);
+              customization.svgContentFront || customization.svgContentBack ||
+              customization.lotteryName);
   };
 
   useEffect(() => {
@@ -592,7 +601,8 @@ const ProductDetail = () => {
     try {
       setIsAdding(true);
       
-      const customization = hasCustomization() ? generateCustomization() : null;
+      const customizationData = generateCustomization();
+      const customization = hasCustomization(customizationData) ? customizationData : null;
       
       const cartItem: CartItem = {
         productId: product.id,
